@@ -7,7 +7,7 @@ namespace Genilog_WebApi.Profiles
     {
         public PlacesProfile()
         {
-            CreateMap<HotelDataModel, HotelDataTableDto>()
+            CreateMap<HotelDataModel, HotelDataModelDto>()
                 .ReverseMap();
             CreateMap<HotelImages, HotelImagesDto>()
              .ReverseMap();

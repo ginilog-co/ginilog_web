@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Genilog_WebApi.Migrations
 {
     /// <inheritdoc />
-    public partial class InitAllData : Migration
+    public partial class InitFistData : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -33,6 +33,38 @@ namespace Genilog_WebApi.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AdminModelTables", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CompanyModelDatas",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CompanyEmail = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CompanyName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CompanyLogo = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CompanyRegNo = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CompanyInfo = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Rating = table.Column<int>(type: "int", nullable: false),
+                    ValueCharge = table.Column<double>(type: "float", nullable: false),
+                    NoOfTrucks = table.Column<int>(type: "int", nullable: false),
+                    NofOfBikes = table.Column<int>(type: "int", nullable: false),
+                    Available = table.Column<bool>(type: "bit", nullable: false),
+                    CompanyAddress = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PostCodes = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Locality = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    State = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Latitude = table.Column<double>(type: "float", nullable: false),
+                    Longitude = table.Column<double>(type: "float", nullable: false),
+                    BankName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AccountName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AccountNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CompanyModelDatas", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -156,64 +188,6 @@ namespace Genilog_WebApi.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "LogisticsChatModelDatas",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    SenderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ReceiverId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    GroupChatId = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Message = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    MessageType = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    IsRead = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_LogisticsChatModelDatas", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "LogisticsDataModels",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CompanyName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LogisticsLogo = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Rating = table.Column<int>(type: "int", nullable: false),
-                    ValueCharge = table.Column<double>(type: "float", nullable: false),
-                    CompanyAddress = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CompanyRegNo = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CompanyInfo = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    NoOfTrucks = table.Column<int>(type: "int", nullable: false),
-                    NofOfBikes = table.Column<int>(type: "int", nullable: false),
-                    IsVerified = table.Column<bool>(type: "bit", nullable: true),
-                    IsIndividual = table.Column<bool>(type: "bit", nullable: true),
-                    Available = table.Column<bool>(type: "bit", nullable: false),
-                    IdCardUpload = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    IdCardVerification = table.Column<bool>(type: "bit", nullable: false),
-                    LicenseUpload = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LicenseVerification = table.Column<bool>(type: "bit", nullable: false),
-                    Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PostCodes = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Locality = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    State = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Latitude = table.Column<double>(type: "float", nullable: false),
-                    Longitude = table.Column<double>(type: "float", nullable: false),
-                    BankName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    AccountName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    AccountNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_LogisticsDataModels", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "NotificationModels",
                 columns: table => new
                 {
@@ -224,6 +198,7 @@ namespace Genilog_WebApi.Migrations
                     DeviceToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     NotificationType = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IsRead = table.Column<bool>(type: "bit", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
@@ -371,6 +346,54 @@ namespace Genilog_WebApi.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "RidersChatModelDatas",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SenderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ReceiverId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    GroupChatId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Message = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    MessageType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IsRead = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RidersChatModelDatas", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RidersModelDatas",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CompanyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CompanyName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ProfilePicture = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Rating = table.Column<int>(type: "int", nullable: false),
+                    IsVerified = table.Column<bool>(type: "bit", nullable: false),
+                    Available = table.Column<bool>(type: "bit", nullable: false),
+                    Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PostCodes = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Locality = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    State = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Latitude = table.Column<double>(type: "float", nullable: false),
+                    Longitude = table.Column<double>(type: "float", nullable: false),
+                    BankName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AccountName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AccountNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RidersModelDatas", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Roles",
                 columns: table => new
                 {
@@ -408,6 +431,30 @@ namespace Genilog_WebApi.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_UsersDataModelTables", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CompanyReviewModels",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ProfileImage = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ReviewMessage = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RatingNum = table.Column<double>(type: "float", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CompanyModelDataId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CompanyReviewModels", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CompanyReviewModels_CompanyModelDatas_CompanyModelDataId",
+                        column: x => x.CompanyModelDataId,
+                        principalTable: "CompanyModelDatas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -615,30 +662,6 @@ namespace Genilog_WebApi.Migrations
                         name: "FK_HotelWednesday_HotelDataModels_HotelDataModelId",
                         column: x => x.HotelDataModelId,
                         principalTable: "HotelDataModels",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "LogisticsReviewModels",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ProfileImage = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ReviewMessage = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    RatingNum = table.Column<double>(type: "float", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    LogisticsDataModelId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_LogisticsReviewModels", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_LogisticsReviewModels_LogisticsDataModels_LogisticsDataModelId",
-                        column: x => x.LogisticsDataModelId,
-                        principalTable: "LogisticsDataModels",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -874,6 +897,30 @@ namespace Genilog_WebApi.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "RidersReviewModels",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ProfileImage = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ReviewMessage = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RatingNum = table.Column<double>(type: "float", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RidersModelDataId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RidersReviewModels", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RidersReviewModels_RidersModelDatas_RidersModelDataId",
+                        column: x => x.RidersModelDataId,
+                        principalTable: "RidersModelDatas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "User_Roles",
                 columns: table => new
                 {
@@ -925,6 +972,11 @@ namespace Genilog_WebApi.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CompanyReviewModels_CompanyModelDataId",
+                table: "CompanyReviewModels",
+                column: "CompanyModelDataId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DeliveryAddresses_UsersDataModelTableId",
@@ -989,11 +1041,6 @@ namespace Genilog_WebApi.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_LogisticsReviewModels_LogisticsDataModelId",
-                table: "LogisticsReviewModels",
-                column: "LogisticsDataModelId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_PlaceFacilities_PlacesDataModelId",
                 table: "PlaceFacilities",
                 column: "PlacesDataModelId");
@@ -1056,6 +1103,11 @@ namespace Genilog_WebApi.Migrations
                 column: "PlacesDataModelId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_RidersReviewModels_RidersModelDataId",
+                table: "RidersReviewModels",
+                column: "RidersModelDataId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_User_Roles_GeneralUsersId",
                 table: "User_Roles",
                 column: "GeneralUsersId");
@@ -1071,6 +1123,9 @@ namespace Genilog_WebApi.Migrations
         {
             migrationBuilder.DropTable(
                 name: "AdminModelTables");
+
+            migrationBuilder.DropTable(
+                name: "CompanyReviewModels");
 
             migrationBuilder.DropTable(
                 name: "DeliveryAddresses");
@@ -1113,12 +1168,6 @@ namespace Genilog_WebApi.Migrations
 
             migrationBuilder.DropTable(
                 name: "HotelWednesday");
-
-            migrationBuilder.DropTable(
-                name: "LogisticsChatModelDatas");
-
-            migrationBuilder.DropTable(
-                name: "LogisticsReviewModels");
 
             migrationBuilder.DropTable(
                 name: "NotificationModels");
@@ -1166,7 +1215,16 @@ namespace Genilog_WebApi.Migrations
                 name: "PlaceWhatToExpects");
 
             migrationBuilder.DropTable(
+                name: "RidersChatModelDatas");
+
+            migrationBuilder.DropTable(
+                name: "RidersReviewModels");
+
+            migrationBuilder.DropTable(
                 name: "User_Roles");
+
+            migrationBuilder.DropTable(
+                name: "CompanyModelDatas");
 
             migrationBuilder.DropTable(
                 name: "UsersDataModelTables");
@@ -1175,10 +1233,10 @@ namespace Genilog_WebApi.Migrations
                 name: "HotelDataModels");
 
             migrationBuilder.DropTable(
-                name: "LogisticsDataModels");
+                name: "PlacesDataModels");
 
             migrationBuilder.DropTable(
-                name: "PlacesDataModels");
+                name: "RidersModelDatas");
 
             migrationBuilder.DropTable(
                 name: "GeneralUsers");

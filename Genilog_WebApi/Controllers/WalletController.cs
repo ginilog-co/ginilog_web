@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Genilog_WebApi.Key;
 using Genilog_WebApi.Model;
 using Genilog_WebApi.Model.WalletModel;
 using Genilog_WebApi.Repository.LogisticsRepo;
@@ -7,23 +6,25 @@ using Genilog_WebApi.Repository.WalletRepo;
 using Google.Cloud.Firestore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Genilog_WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class WalletController(IHostEnvironment _env, IMapper mapper, ILogisticsRepository logisticsRepository,
-        IWalletRepository walletRepository) : ControllerBase
+    public class WalletController(IHostEnvironment _env, IMapper mapper, IRidersRepository ridersRepository,
+        IWalletRepository walletRepository, IHubContext<WalletHubRepository> _hubContext) : ControllerBase
     {
         private readonly IHostEnvironment _env = _env;
         private readonly IMapper mapper = mapper;
-        private readonly ILogisticsRepository logisticsRepository = logisticsRepository;
+        private readonly IRidersRepository ridersRepository = ridersRepository;
         private readonly IWalletRepository walletRepository = walletRepository;
+        private readonly IHubContext<WalletHubRepository> _hubContext = _hubContext;
         readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2json");
 
 
         [HttpGet("payout-transfer")]
-        [Authorize(Roles = "Station_User,Rider_User,Super_Admin,Admin")]
+        [Authorize(Roles = "Station_User,Rider,Super_Admin,Admin")]
         public async Task<IActionResult> GetAllRiderPayoutAsync([FromQuery] FilterLocationData data)
         {
             var events = await walletRepository.GetAllPayoutAsync();
@@ -87,12 +88,13 @@ namespace Genilog_WebApi.Controllers
             else
             {
                 var userDto = mapper.Map<List<PayoutDataModelDto>>(events);
+                await _hubContext.Clients.All.SendAsync("GetAllPayout", userDto);
                 return Ok(userDto);
             }
         }
 
         [HttpGet("payout-statistic")]
-        [Authorize(Roles = "Station_User,Rider_User,Super_Admin,Admin")]
+        [Authorize(Roles = "Station_User,Rider,Super_Admin,Admin")]
         public async Task<IActionResult> GetAllAvailableGasOrderAsync([FromQuery] FilterAllData data)
         {
             var events = await walletRepository.GetAllPayoutAsync();
@@ -634,7 +636,7 @@ namespace Genilog_WebApi.Controllers
 
         [HttpGet]
         [Route("payout-transfer/{id:guid}")]
-        [Authorize(Roles = "Station_User,Rider_User,Super_Admin,Admin")]
+        [Authorize(Roles = "Rider,Super_Admin,Admin")]
         public async Task<IActionResult> GetPayoutAsync([FromRoute] Guid id)
         {
             var contacts = await walletRepository.GetPayoutAsync(id);
@@ -645,6 +647,7 @@ namespace Genilog_WebApi.Controllers
             else
             {
                 var contactsDto = mapper.Map<PayoutDataModelDto>(contacts);
+                await _hubContext.Clients.All.SendAsync($"GetPayout{id}", contactsDto);
                 return Ok(contactsDto);
             }
         }
@@ -654,8 +657,8 @@ namespace Genilog_WebApi.Controllers
         [Authorize(Roles = "Super_Admin")]
         public async Task<IActionResult> DeletePayoutAsync([FromRoute] Guid id)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
+            
+            
             var contacts = await walletRepository.DeletePayoutAsync(id);
             if (contacts == null)
             {
@@ -663,8 +666,8 @@ namespace Genilog_WebApi.Controllers
             }
             else
             {
-                DocumentReference usrRef = firestoreDb!.Collection("PayoutCollections").Document(contacts.Id.ToString());
-                await usrRef.DeleteAsync();
+                
+               
                 var contactsDto = mapper.Map<PayoutDataModelDto>(contacts);
                 return Ok(contactsDto);
             }
@@ -674,9 +677,6 @@ namespace Genilog_WebApi.Controllers
         [Authorize(Roles = "Super_Admin,Admin")]
         public async Task<IActionResult> UpdatePayoutAsync([FromRoute] Guid id, AddPayout request)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
-
             var user = new PayoutDataModel()
             {
                 PayOutStatus = true,
@@ -695,20 +695,7 @@ namespace Genilog_WebApi.Controllers
             // convert back to dto
             else
             {
-                var timeStamp = Timestamp.GetCurrentTimestamp();
-                DocumentReference usrRef = firestoreDb!.Collection("PayoutCollections").Document(user.Id.ToString());
-                Dictionary<string, object> user3 = new()
-                {
-                    {"PayOutStatus",user.PayOutStatus!},
-                    {"TransactionReference",user.TransactionReference! },
-                    {"PayOutDateAt",timeStamp},
-                };
-                await usrRef.UpdateAsync(user3);
-
-             
-
                 // Update detials to repository
-            
 
                 var userDto = new ResponseModel()
                 {
@@ -725,8 +712,6 @@ namespace Genilog_WebApi.Controllers
         [Authorize(Roles = "Super_Admin,Admin")]
         public async Task<IActionResult> AddLogisticsPayoutAsync([FromHeader] Guid stationId, [FromBody] AddPayout request)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
             var check = ValidatePayout(request);
 
             if (!check)
@@ -740,7 +725,7 @@ namespace Genilog_WebApi.Controllers
                 DateTime localTime = DateTime.Now;
                 TimeZoneInfo nigeriaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("W. Central Africa Standard Time");
                 DateTime nigeriaTime = TimeZoneInfo.ConvertTimeFromUtc(localTime.ToUniversalTime(), nigeriaTimeZone);
-                var theUser = await logisticsRepository.GetAsync(stationId);
+                var theUser = await ridersRepository.GetAsync(stationId);
                 var contacts = new PayoutDataModel()
                 {
                     UserId = theUser.Id,
@@ -761,28 +746,6 @@ namespace Genilog_WebApi.Controllers
                 };
                 // Pass detials to repository
                 contacts = await walletRepository.AddPayoutAsync(contacts);
-                DocumentReference usrRef = firestoreDb!.Collection("PayoutCollections").Document(contacts.Id.ToString());
-                Dictionary<string, object> user3 = new()
-                {
-                    {"Id",contacts.Id.ToString()},
-                    {"UserId",contacts.UserId.ToString()!},
-                    {"Name",contacts.Name!},
-                    {"Remark",contacts.Remark!},
-                    {"Amount",contacts.Amount!},
-                    {"PayOutStatus",contacts.PayOutStatus!},
-                    {"PaymentTo",contacts.PaymentTo! },
-                    {"TransactionReference",contacts.TransactionReference! },
-                    {"PayOutDateAt",timeStamp},
-                    {"Address",contacts.Address!},
-                    {"Locality",contacts.Locality! },
-                    {"State",contacts.State! },
-                    {"PostCodes",contacts.PostCodes! },
-                    {"Latitude",contacts.Latitude! },
-                    {"Longitude",contacts.Longitude! },
-                    {"DatePublished",date!},
-                    {"Timestamp",timeStamp!}
-                };
-                await usrRef.SetAsync(user3);
                 // convert back to dto
                 var userDto = new ResponseModel()
                 {

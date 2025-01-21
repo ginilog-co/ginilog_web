@@ -5,21 +5,21 @@ using Genilog_WebApi.Model.LogisticsModel;
 
 namespace Genilog_WebApi.Repository.LogisticsRepo
 {
-    public class LogisticsRepository(Genilog_Data_Context mAAP_Context) : ILogisticsRepository
+    public class RidersRepository(Genilog_Data_Context mAAP_Context) : IRidersRepository
     {
         private readonly Genilog_Data_Context mAAP_Context = mAAP_Context;
 
-        public async Task<LogisticsDataModel> AddAsync(LogisticsDataModel dataInfo)
+        public async Task<RidersModelData> AddAsync(RidersModelData dataInfo)
         {
-            // dataInfo.Id = Guid.NewGuid();
+            //dataInfo.Id = Guid.NewGuid();
             await mAAP_Context.AddAsync(dataInfo);
             await mAAP_Context.SaveChangesAsync();
             return dataInfo;
         }
 
-        public async Task<LogisticsDataModel> DeleteAsync(Guid id)
+        public async Task<RidersModelData> DeleteAsync(Guid id)
         {
-            var tickets = await mAAP_Context.LogisticsDataModels!
+            var tickets = await mAAP_Context.RidersModelDatas!
                 .FirstOrDefaultAsync(x => x.Id == id);
             if (tickets == null)
             {
@@ -30,32 +30,32 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
             else
             {
                 // Delete Region
-                mAAP_Context.LogisticsDataModels!.Remove(tickets);
+                mAAP_Context.RidersModelDatas!.Remove(tickets);
                 await mAAP_Context.SaveChangesAsync();
                 return tickets;
             }
         }
 
-        public async Task<IEnumerable<LogisticsDataModel>> GetAllAsync()
+        public async Task<IEnumerable<RidersModelData>> GetAllAsync()
         {
-            return await mAAP_Context.LogisticsDataModels!
-                .Include(x => x.LogisticsReviewModels)
+            return await mAAP_Context.RidersModelDatas!
+                .Include(x => x.RidersReviewModels)
                 .OrderBy(x => x.CreatedAt)
                 .ToListAsync();
         }
 
-        public async Task<LogisticsDataModel> GetAsync(Guid id)
+        public async Task<RidersModelData> GetAsync(Guid id)
         {
 #pragma warning disable CS8603 // Possible null reference return.
-            return await mAAP_Context.LogisticsDataModels!
-                .Include(x => x.LogisticsReviewModels)
+            return await mAAP_Context.RidersModelDatas!
+                .Include(x => x.RidersReviewModels)
                 .FirstOrDefaultAsync(x => x.Id == id);
 #pragma warning restore CS8603 // Possible null reference return.
         }
 
-        public async Task<LogisticsDataModel> UpdateAsync(Guid id, LogisticsDataModel dataInfo)
+        public async Task<RidersModelData> UpdateAsync(Guid id, RidersModelData dataInfo)
         {
-            var dataValue = await mAAP_Context.LogisticsDataModels!.FirstOrDefaultAsync(x => x.Id == id);
+            var dataValue = await mAAP_Context.RidersModelDatas!.FirstOrDefaultAsync(x => x.Id == id);
 
             if (dataValue == null)
             {
@@ -68,20 +68,10 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
                 dataValue.Name = dataInfo.Name;
                 dataValue.CompanyName = dataInfo.CompanyName;
                 dataValue.PhoneNumber = dataInfo.PhoneNumber;
-                dataValue.LogisticsLogo = dataInfo.LogisticsLogo;
+                dataValue.ProfilePicture = dataInfo.ProfilePicture;
                 dataValue.Rating = dataValue.Rating;
-                dataValue.ValueCharge = dataValue.ValueCharge;
-                dataValue.CompanyAddress = dataValue.CompanyAddress;
-                dataValue.CompanyInfo = dataValue.CompanyInfo;
-                dataValue.NoOfTrucks = dataValue.NoOfTrucks;
-                dataValue.NofOfBikes = dataValue.NofOfBikes;
                 dataValue.IsVerified = dataValue.IsVerified;
-                dataValue.IsIndividual = dataValue.IsIndividual;
                 dataValue.Available = dataValue.Available;
-                dataValue.IdCardUpload = dataValue.IdCardUpload;
-                dataValue.IdCardVerification = dataValue.IdCardVerification;
-                dataValue.LicenseUpload = dataValue.LicenseUpload;
-                dataValue.LicenseVerification = dataValue.LicenseVerification;
                 dataValue.Address = dataInfo.Address;
                 dataValue.Locality = dataInfo.Locality;
                 dataValue.State = dataInfo!.State;
@@ -96,8 +86,8 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
             }
         }
 
-        // Logistics Review
-        public async Task<LogisticsReviewModel> AddLogisticsReviewAsync(LogisticsReviewModel dataInfo)
+        // Riders Review
+        public async Task<RidersReviewModel> AddRidersReviewAsync(RidersReviewModel dataInfo)
         {
             dataInfo.Id = Guid.NewGuid();
             await mAAP_Context.AddAsync(dataInfo);
@@ -105,9 +95,9 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
             return dataInfo;
         }
 
-        public async Task<LogisticsReviewModel> DeleteLogisticsReviewAsync(Guid id)
+        public async Task<RidersReviewModel> DeleteRidersReviewAsync(Guid id)
         {
-            var tickets = await mAAP_Context.LogisticsReviewModels!.FirstOrDefaultAsync(x => x.Id == id);
+            var tickets = await mAAP_Context.RidersReviewModels!.FirstOrDefaultAsync(x => x.Id == id);
             if (tickets == null)
             {
 #pragma warning disable CS8603 // Possible null reference return.
@@ -117,19 +107,19 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
             else
             {
                 // Delete Region
-                mAAP_Context.LogisticsReviewModels!.Remove(tickets);
+                mAAP_Context.RidersReviewModels!.Remove(tickets);
                 await mAAP_Context.SaveChangesAsync();
                 return tickets;
             }
         }
 
-        // Chat Logistics
-        public async Task<IEnumerable<LogisticsChatModelData>> GetAllLogisticsChatAsync()
+        // Chat Riders
+        public async Task<IEnumerable<RidersChatModelData>> GetAllRidersChatAsync()
         {
-            return await mAAP_Context.LogisticsChatModelDatas!.OrderBy(x => x.CreatedAt).ToListAsync();
+            return await mAAP_Context.RidersChatModelDatas!.OrderBy(x => x.CreatedAt).ToListAsync();
         }
 
-        public async Task<LogisticsChatModelData> AddLogisticsChatAsync(LogisticsChatModelData dataInfo)
+        public async Task<RidersChatModelData> AddRidersChatAsync(RidersChatModelData dataInfo)
         {
             dataInfo.Id = Guid.NewGuid();
             await mAAP_Context.AddAsync(dataInfo);
@@ -137,9 +127,9 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
             return dataInfo;
         }
 
-        public async Task<LogisticsChatModelData> DeleteLogisticsChatAsync(Guid id)
+        public async Task<RidersChatModelData> DeleteRidersChatAsync(Guid id)
         {
-            var tickets = await mAAP_Context.LogisticsChatModelDatas!.FirstOrDefaultAsync(x => x.Id == id);
+            var tickets = await mAAP_Context.RidersChatModelDatas!.FirstOrDefaultAsync(x => x.Id == id);
             if (tickets == null)
             {
 #pragma warning disable CS8603 // Possible null reference return.
@@ -149,15 +139,15 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
             else
             {
                 // Delete Region
-                mAAP_Context.LogisticsChatModelDatas!.Remove(tickets);
+                mAAP_Context.RidersChatModelDatas!.Remove(tickets);
                 await mAAP_Context.SaveChangesAsync();
                 return tickets;
             }
         }
 
-        public async Task<LogisticsChatModelData> UpdateLogisticsChatAsync(Guid id, LogisticsChatModelData dataInfo)
+        public async Task<RidersChatModelData> UpdateRidersChatAsync(Guid id, RidersChatModelData dataInfo)
         {
-            var dataValue = await mAAP_Context.LogisticsChatModelDatas!.FirstOrDefaultAsync(x => x.Id == id);
+            var dataValue = await mAAP_Context.RidersChatModelDatas!.FirstOrDefaultAsync(x => x.Id == id);
 
             if (dataValue == null)
             {
@@ -173,9 +163,9 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
             }
         }
 
-        public async Task<LogisticsChatModelData> UpdateLogisticsIsReadChatAsync(Guid id, LogisticsChatModelData dataInfo)
+        public async Task<RidersChatModelData> UpdateRidersIsReadChatAsync(Guid id, RidersChatModelData dataInfo)
         {
-            var dataValue = await mAAP_Context.LogisticsChatModelDatas!.FirstOrDefaultAsync(x => x.Id == id);
+            var dataValue = await mAAP_Context.RidersChatModelDatas!.FirstOrDefaultAsync(x => x.Id == id);
 
             if (dataValue == null)
             {

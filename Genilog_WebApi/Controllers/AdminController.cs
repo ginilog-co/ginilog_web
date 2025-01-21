@@ -14,6 +14,8 @@ using Genilog_WebApi.Model.AuthModel;
 using Genilog_WebApi.Model;
 using System.Security.Claims;
 using Genilog_WebApi.EmailSender;
+using Genilog_WebApi.Repository.NotificationRepo;
+using Microsoft.AspNetCore.SignalR;
 
 
 namespace Genilog_WebApi.Controllers
@@ -21,7 +23,8 @@ namespace Genilog_WebApi.Controllers
     [Route("api/[controller]")]
     [ApiController]
     public class AdminController(IHostEnvironment _env, IAdminRepository usersRepository, IMapper mapper, ITokenHandler tokenHandler, IRolesRepository rolesRepository,
-     IUser_RoleRepository user_RoleRepository, IUploadRepository uploadRepository, IGeneralUserRepository generalUserRepository) : ControllerBase
+     IUser_RoleRepository user_RoleRepository, IUploadRepository uploadRepository, IGeneralUserRepository generalUserRepository,
+     IHubContext<AdminHubRepository> _hubContext) : ControllerBase
     {
         private readonly IHostEnvironment _env = _env;
         private readonly IAdminRepository usersRepository = usersRepository;
@@ -31,6 +34,7 @@ namespace Genilog_WebApi.Controllers
         private readonly IUser_RoleRepository user_RoleRepository = user_RoleRepository;
         private readonly IUploadRepository uploadRepository = uploadRepository;
         private readonly IGeneralUserRepository generalUserRepository = generalUserRepository;
+        private readonly IHubContext<AdminHubRepository> _hubContext = _hubContext;
         readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
 
         [HttpPost]
@@ -115,6 +119,7 @@ namespace Genilog_WebApi.Controllers
                 item.AdminType = t.UserType;
                 dto.Add(item);
             }
+            await _hubContext.Clients.All.SendAsync("GetAllAdmin", dto);
             return Ok(dto);
         }
 
@@ -139,6 +144,7 @@ namespace Genilog_WebApi.Controllers
                 var userDto = mapper.Map<AdminModelTableDto>(user);
                 var t = await generalUserRepository.GetAsync(user.Id);
                 userDto.AdminType = t.UserType;
+                await _hubContext.Clients.All.SendAsync($"GetAdmin{userGuid}", userDto);
                 return Ok(userDto);
             }
 
@@ -148,8 +154,8 @@ namespace Genilog_WebApi.Controllers
         [Authorize(Roles = "Super_Admin")]
         public async Task<IActionResult> AddAdminAsync(AddAdminRequest request)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
+            
+            
             // Validate the request
             var check = await ValidateAddUserAsync(request);
 
@@ -171,14 +177,14 @@ namespace Genilog_WebApi.Controllers
                         UserType = request.AdminType,
                         PhoneNo = request.PhoneNo,
                         VerificationToken = CreateRandomToken(),
-                        EmailConfirmed = false,
+                        EmailConfirmed = true,
                         ImagePath = "",
                         CreatedAt = DateTime.UtcNow,
                         LockOutEndEnabled = false,
                         AccessFailedCount = 0,
                         TwoFactorEnabled = false,
                         LockOutEnd = DateTime.UtcNow.AddDays(30),
-                        PhoneNoConfirmed = false,
+                        PhoneNoConfirmed = true,
                         ResetTokenExpires = DateTime.UtcNow.AddMinutes(10),
                         EmailTokenExpires = DateTime.UtcNow.AddMinutes(10),
                         PhoneNoTokenExpires = DateTime.UtcNow.AddMinutes(10),
@@ -222,26 +228,6 @@ namespace Genilog_WebApi.Controllers
                         RoleId = roles.Id,
                     };
                     await user_RoleRepository.AddAsync(user_Roles);
-                    DocumentReference usrRef = firestoreDb!.Collection("AdminManagers").Document(users.Id.ToString());
-                    Dictionary<string, object> user3 = new()
-                {
-                    {"Id",users.Id.ToString() },
-                    {"FirstName",users.FirstName!},
-                    {"LastName",users.SurName!},
-                    {"Email",users.Email! },
-                    {"PhoneNo",users.PhoneNo!},
-                    {"ProfilePicture",users.ImagePath! },
-                    {"Sex",users.Sex! },
-                    {"StaffCode",users.StaffCode!},
-                    {"Address",users.Address!},
-                    {"Branch",users.Branch!},
-                    {"Locality",users.Locality!},
-                    {"State",users.State!},
-                    {"DatePublished",date!},
-                    {"Timestamp",timeStamp!}
-
-                };
-                    await usrRef.SetAsync(user3);
                     // convert back to dto
                     var userDto = new AdminModelTableDto()
                     {
@@ -252,6 +238,11 @@ namespace Genilog_WebApi.Controllers
                         Sex = users.Sex,
                         ImagePath = users.ImagePath,
                         StaffCode = users.StaffCode,
+                        Address = users.Address,
+                        Branch = users.Branch,
+                        Locality = users.Locality,
+                        State = users.State,
+                        AdminType = admin.UserType,
                         PhoneNo = users.PhoneNo,
                         DatePublished = users.DatePublished,
                         CreatedAt = users.CreatedAt
@@ -276,8 +267,6 @@ namespace Genilog_WebApi.Controllers
         [Authorize(Roles = "Super_Admin,Admin")]
         public async Task<IActionResult> UpdateAdminAsync( [FromBody] UpdateAdminRequest request)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!Guid.TryParse(userId, out Guid userGuid))
             {
@@ -298,25 +287,20 @@ namespace Genilog_WebApi.Controllers
                 Branch = !string.IsNullOrWhiteSpace(request.Branch) ? request.Branch : userDto.Branch,
                 Locality = !string.IsNullOrWhiteSpace(request.Locality) ? request.Locality : userDto.Locality,
                 State = !string.IsNullOrWhiteSpace(request.State) ? request.State : userDto.State,
-
-              };
+                ImagePath=!string.IsNullOrWhiteSpace(request.ImagePath) ? request.ImagePath : userDto.ImagePath,
+                
+           };
             // Update detials to repository
             user = await usersRepository.UpdateAsync(userDto.Id, user);
+           var gen = new GeneralUsers()
+            {
+                LastName =  user.SurName,
+                FirstName =  user.FirstName,
+                PhoneNo = user.PhoneNo,
+                ImagePath = user.ImagePath,
+            };
+            await generalUserRepository.UpdateAsync(user.Id, gen);
             // check the null value
-            DocumentReference usrRef = firestoreDb!.Collection("AdminManagers").Document(user.Id.ToString());
-            Dictionary<string, object> user3 = new()
-                {
-                    {"FirstName",user.FirstName!},
-                    {"LastName",user.SurName!},
-                    {"PhoneNo",user.PhoneNo!},
-                    {"StaffCode",user.StaffCode!},
-                    {"Address",user.Address!},
-                    {"Branch",user.Branch!},
-                    {"Locality",user.Locality!},
-                    {"State",user.State!},
-
-                };
-            await usrRef.UpdateAsync(user3);
             var userDto2 = new AdminModelTableDto()
             {
                 Id = user.Id,
@@ -333,8 +317,8 @@ namespace Genilog_WebApi.Controllers
         [Authorize]
         public async Task<IActionResult> UpdateDeviceTokenAsync( [FromBody] AddDeviceToken request)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
+            
+            
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!Guid.TryParse(userId, out Guid userGuid))
             {
@@ -375,17 +359,6 @@ namespace Genilog_WebApi.Controllers
                         UserType = user.UserType,
                     };
                     drviceToken = await generalUserRepository.AddDeviceTokenModelAsync(drviceToken);
-                    DocumentReference usrRef = firestoreDb!.Collection("DeviceToken")
-                        .Document(drviceToken.Id.ToString());
-                    Dictionary<string, object> user3 = new()
-                    {
-                      { "Id", drviceToken.Id.ToString() },
-                      { "DeviceTokenId", drviceToken.DeviceTokenId! },
-                      { "UserId", drviceToken.UserId.ToString() },
-                      { "UserType", drviceToken.UserType! },
-                     };
-                    await usrRef.SetAsync(user3);
-
                     return Ok(drviceToken);
                 }
 
@@ -398,8 +371,6 @@ namespace Genilog_WebApi.Controllers
         [Authorize(Roles = "Super_Admin")]
         public async Task<IActionResult> DeleteUserAsync(Guid id)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
             // Get the region from the database
             var user = await generalUserRepository.DeleteAsync(id);
             // if null NotFound
@@ -411,65 +382,13 @@ namespace Genilog_WebApi.Controllers
             else
             {
                 await usersRepository.DeleteAsync(id);
-                DocumentReference usrRef = firestoreDb!.Collection("AdminManagers").Document(user.Id.ToString());
-                await usrRef.DeleteAsync();
                 return Ok("Deleted Sucessfully");
             }
 
 
         }
 
-        [HttpPut("update-profile-image")]
-        [Authorize(Roles = "Admin,Super_Admin")]
-        public async Task<IActionResult> UploadFile(AddUploadFile path)
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!Guid.TryParse(userId, out Guid userGuid))
-            {
-                return BadRequest("Invalid User ID format.");
-            }
-            var userDto = await usersRepository.GetAsync(userGuid);
-            if (userDto == null)
-            {
-                return BadRequest("Admin Does not Exist");
-            }
-            else
-            {
-                var upload = new UploadFile()
-                {
-                    Image = path.Image,
-                };
-                var img = await uploadRepository.SavePostImageAsync(upload);
-                var user2 = new GeneralUsers()
-                {
-                    ImagePath = img.ImagePath,
-                };
-                var user = new AdminModelTable()
-                {
-                    ImagePath = img.ImagePath,
-                    Address=userDto.Address,
-                    Branch=userDto.Branch,
-                    FirstName=userDto.FirstName,
-                    SurName=userDto.SurName,
-                    Locality=userDto.Locality,
-                    Sex=userDto.Sex,
-                    StaffCode=userDto.StaffCode,
-                    State=userDto.State,
-                    PhoneNo=userDto.PhoneNo,
-                };
-                // Update detials to repository
-                user2 = await generalUserRepository.UploadPicsAsync(userDto.Id, user2);
-                await usersRepository.UpdateAsync(user2.Id, user);
-                var userDto2 = new UploadeFileDto()
-                {
-                    ImagePath = user2.ImagePath,
-
-                };
-
-                return Ok(userDto2);
-            }
-        }
-
+     
         [HttpPost("forgot-password-request-token")]
         public async Task<IActionResult> ForgotPassword(ForgetPasswordRequest request)
         {

@@ -67,8 +67,8 @@ namespace Genilog_WebApi.Controllers
         [HttpPost("feedback")]
         public async Task<IActionResult> AddFeedbackAsync(AddFeedback request)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
+            
+            
             var check = ValidateTicket(request);
 
             if (!check)
@@ -90,20 +90,6 @@ namespace Genilog_WebApi.Controllers
                 };
                 // Pass detials to repository
                 contacts = await contactUsRepository.AddAsync(contacts);
-
-                DocumentReference usrRef = firestoreDb!.Collection("FeedbackCollections").Document(contacts.Id.ToString());
-                Dictionary<string, object> user3 = new()
-                {
-                    {"Id",contacts.Id.ToString()},
-                    {"Uid",contacts.Id.ToString()},
-                    {"Name",contacts.Name!},
-                    {"Email",contacts.Email! },
-                    {"PhoneNo",contacts.PhoneNo!},
-                    {"Feedback",contacts.Feedback! },
-                    {"DatePublished",date!},
-                    {"Timestamp",timeStamp!}
-                };
-                await usrRef.SetAsync(user3);
 
                 // convert back to dto
                 var contactsDto = new FeedbackModelDataDto()

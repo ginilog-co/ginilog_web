@@ -24,10 +24,19 @@ namespace Genilog_WebApi.Model.UsersDataModel
 
     public class UpdateUserRequest
     {
-        public string? Sex { get; set; }
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
+        public string? Email { get; set; }
         public string? PhoneNo { get; set; }
+        public string? ProfilePicture { get; set; }
+        public string? Sex { get; set; }
+        public bool? UserStatus { get; set; }
+        public string? Address { get; set; }
+        public string? PostCodes { get; set; }
+        public string? Locality { get; set; }
+        public string? State { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
 
     }
 }

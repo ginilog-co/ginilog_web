@@ -1,6 +1,6 @@
 ﻿namespace Genilog_WebApi.Model.LogisticsModel
 {
-    public class LogisticsChatModelData
+    public class RidersChatModelData
     {
         public Guid Id { get; set; }
         public Guid SenderId { get; set; }
@@ -11,7 +11,7 @@
         public bool IsRead { get; set; }
         public DateTime? CreatedAt { get; set; }
     }
-    public class LogisticsChatModelDataDto
+    public class RidersChatModelDataDto
     {
         public Guid Id { get; set; }
         public Guid SenderId { get; set; }

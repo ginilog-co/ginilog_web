@@ -7,16 +7,20 @@ namespace Genilog_WebApi.Profiles
     {
         public LogisticsProfile()
         {
-            CreateMap<LogisticsDataModel, LogisticsDataModelDto>()
+            CreateMap<RidersModelData, RidersModelDataDto>()
+                .ReverseMap();
+            CreateMap<CompanyModelData, CompanyModelDataDto>()
                 .ReverseMap();
 
-            CreateMap<LogisticsReviewModel, LogisticsReviewModelDto>()
+            CreateMap<RidersReviewModel, RidersReviewModelDto>()
+               .ReverseMap();
+            CreateMap<CompanyReviewModel, CompanyReviewModelDto>()
                .ReverseMap();
 
             CreateMap<OrderModelData, OrderModelDataDto>()
               .ReverseMap();
 
-            CreateMap<LogisticsChatModelData, LogisticsChatModelDataDto>()
+            CreateMap<RidersChatModelData, RidersChatModelDataDto>()
            .ReverseMap();
 
         }

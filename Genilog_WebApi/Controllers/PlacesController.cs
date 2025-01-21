@@ -14,12 +14,15 @@ using Genilog_WebApi.Model;
 using Genilog_WebApi.Repository.AuthRepo;
 using System.Security.Claims;
 using Genilog_WebApi.Model.LogisticsModel;
+using Genilog_WebApi.Repository.WalletRepo;
+using Microsoft.AspNetCore.SignalR;
 namespace Genilog_WebApi.Controllers
 {
     [Route("[controller]")]
     [ApiController]
     public class PlacesController(IHostEnvironment _env, IMapper mapper, IHotelRepository hotelRepository
-        , IGeneralUserRepository generalUserRepository, IUploadRepository uploadRepository, IPlacesRepository placesRepository) : ControllerBase
+        , IGeneralUserRepository generalUserRepository, IUploadRepository uploadRepository, IPlacesRepository placesRepository
+        , IHubContext<PlacesHubRepository> _hubContext) : ControllerBase
     {
         private readonly IHostEnvironment _env = _env;
         private readonly IMapper mapper = mapper;
@@ -27,6 +30,7 @@ namespace Genilog_WebApi.Controllers
         private readonly IGeneralUserRepository generalUserRepository = generalUserRepository;
         private readonly IUploadRepository uploadRepository = uploadRepository;
         private readonly IPlacesRepository placesRepository = placesRepository;
+        private readonly IHubContext<PlacesHubRepository> _hubContext = _hubContext;
         readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
 
 
@@ -37,6 +41,7 @@ namespace Genilog_WebApi.Controllers
         {
             var contacts = await placesRepository.GetAllAsync();
             var contactsDto = mapper.Map<List<PlacesDataModelDto>>(contacts);
+            await _hubContext.Clients.All.SendAsync("GetAllPlaces", contactsDto);
             return Ok(contactsDto);
         }
 
@@ -54,17 +59,16 @@ namespace Genilog_WebApi.Controllers
             else
             {
                 var contactsDto = mapper.Map<PlacesDataModelDto>(contacts);
+                await _hubContext.Clients.All.SendAsync($"GetPlaces{id}", contactsDto);
                 return Ok(contactsDto);
             }
         }
 
         [HttpDelete]
         [Route("{id:guid}")]
-        [Authorize(Roles = "User,Admin,Super_Admin")]
+        [Authorize(Roles = "Manager,Admin,Super_Admin")]
         public async Task<IActionResult> DeletePlacesAsync(Guid id)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
             // Get the region from the database
             var user = await placesRepository.DeleteAsync(id);
             // if null NotFound
@@ -75,8 +79,6 @@ namespace Genilog_WebApi.Controllers
 
             else
             {
-                DocumentReference usrRef = firestoreDb!.Collection("PlacesCollections").Document(user.Id.ToString());
-                await usrRef.DeleteAsync();
                 var userDto = mapper.Map<PlacesDataModelDto>(user);
                 return Ok(userDto);
             }
@@ -84,11 +86,9 @@ namespace Genilog_WebApi.Controllers
 
         [HttpPut]
         [Route("{id:guid}")]
-        [Authorize(Roles = "User,Admin,Super_Admin")]
+        [Authorize(Roles = "Manager,Admin,Super_Admin")]
         public async Task<IActionResult> UpdatePlacesAsync([FromRoute] Guid id, [FromBody] UpdatePlaces request)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
             var userDto1 = await placesRepository.GetAsync(id);
             if (userDto1 == null)
             {
@@ -127,31 +127,6 @@ namespace Genilog_WebApi.Controllers
                 };
                 // Update detials to repository
                 user = await placesRepository.UpdateAsync(id, user);
-                DocumentReference usrRef = firestoreDb!.Collection("PlacesCollections").Document(user.Id.ToString());
-                Dictionary<string, object> user3 = new()
-                {
-                    {"PlaceName",user.PlaceName!},
-                    {"PlaceEmail",user.PlaceEmail!},
-                    {"CheckInTime",user.CheckInTime!},
-                    {"CheckOutTime",user.CheckOutTime!},
-                    {"PlaceWebsite",user.PlaceWebsite!},
-                    {"PlacePhoneNo",user.PlacePhoneNo!},
-                    {"Location",user.Location!},
-                    {"Locality",user.Locality!},
-                    {"Postcode",user.Postcode!},
-                    {"Latitude",user.Latitude!},
-                    {"Longitude",user.Longitude!},
-                    {"Rating",user.Rating!},
-                    {"BookingAmount",user.BookingAmount!},
-                    {"PlaceAdvertType",user.PlaceAdvertType!},
-                    {"PlaceOverview",user.PlaceOverview!},
-                    {"PlacesAdditionalInfo",user.PlacesAdditionalInfo!},
-                    {"CancelationPolicy",user.CancelationPolicy!},
-                    {"PlacesHighlights",user.PlacesHighlights!},
-                    {"PlaceLogo",user.PlaceLogo!},
-                    {"Available",user.Available!},
-                };
-                await usrRef.UpdateAsync(user3);
                 var contact = await placesRepository.GetAsync(user.Id);
                 var userDto = mapper.Map<PlacesDataModelDto>(contact);
                 return Ok(userDto);
@@ -159,11 +134,9 @@ namespace Genilog_WebApi.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "User,Admin,Super_Admin")]
+        [Authorize(Roles = "Manager,Admin,Super_Admin")]
         public async Task<IActionResult> AddPlacesAsync( [FromBody] AddPlaces request)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
             var check = ValidatePlace(request);
            
 
@@ -268,96 +241,7 @@ namespace Genilog_WebApi.Controllers
                     imageUpdate = await placesRepository.AddPlaceImageAsync(imageUpdate);
                     ticketBonus.Add(imageUpdate);
                 }
-                DocumentReference usrRef = firestoreDb!.Collection("PlacesCollections").Document(contacts.Id.ToString());
-                Dictionary<string, object> monday = new()
-                {
-                  {  "HourStart", contacts.PlacesMonday!.HourStart!},
-                  {  "End", contacts.PlacesMonday!.HourEnd! },
-                  { "IsClosed", contacts.PlacesMonday.IsClosed! },
-                };
-                Dictionary<string, object> tuesday = new()
-                {
-                  {  "HourStart", contacts.PlacesTuesday!.HourStart!},
-                  {  "HourEnd", contacts.PlacesTuesday!.HourEnd! },
-                  { "IsClosed", contacts.PlacesTuesday.IsClosed! },
-                };
-                Dictionary<string, object> wednesday = new()
-                {
-                  {  "HourStart", contacts.PlacesWednesday!.HourStart!},
-                  {  "HourEnd", contacts.PlacesWednesday!.HourEnd! },
-                  { "IsClosed", contacts.PlacesWednesday.IsClosed! },
-                };
-                Dictionary<string, object> thursday = new()
-                {
-                  {  "HourStart", contacts.PlacesThursday!.HourStart!},
-                  {  "HourEnd", contacts.PlacesThursday!.HourEnd! },
-                  { "IsClosed", contacts.PlacesThursday!.IsClosed! },
-                };
-                Dictionary<string, object> friday = new()
-                {
-                  {  "HourStart", contacts.PlacesFriday!.HourStart!},
-                  {  "HourEnd", contacts.PlacesFriday!.HourEnd! },
-                  { "IsClosed", contacts.PlacesFriday.IsClosed! },
-                };
-                Dictionary<string, object> saturday = new()
-                {
-                  {  "HourStart", contacts.PlacesSaturday!.HourStart!},
-                  {  "HourEnd", contacts.PlacesSaturday!.HourEnd! },
-                  { "IsClosed", contacts.PlacesSaturday.IsClosed! },
-                };
-                Dictionary<string, object> sunday = new()
-                {
-                  {  "HourStart", contacts.PlacesSunday!.HourStart!},
-                  {  "HourEnd", contacts.PlacesSunday!.HourEnd!},
-                  { "HourIsClosed", contacts.PlacesSunday.IsClosed! },
-                };
-
-                Dictionary<string, object> daysShedules = new()
-                {
-                  {  "Monday", monday},
-                  {  "Tuesday", tuesday },
-                  { "Wednesday", wednesday },
-                  { "Thursday", thursday},
-                  { "Friday", friday },
-                  { "Saturday", saturday },
-                  { "Sunday", sunday },
-                };
-                Dictionary<string, object> user3 = new()
-                {
-                    {"Id",contacts.Id.ToString()},
-                    {"AdminId",contacts.AdminId.ToString()},
-                    {"PlaceName" ,contacts.PlaceName!},
-                    {"PlaceEmail",contacts.PlaceEmail! },
-                    {"PlaceOverview",contacts.PlaceOverview!},
-                    {"PlacesHighlights",contacts.PlacesHighlights!},
-                    {"PlacesAdditionalInfo",contacts.PlacesAdditionalInfo!},
-                    {"CancelationPolicy",contacts.CancelationPolicy! },
-                    {"PlaceType",contacts.PlaceType!},
-                    {"CheckInTime",contacts.CheckInTime!},
-                    {"CheckOutTime",contacts.CheckOutTime!},
-                    {"PlaceWebsite",contacts.PlaceWebsite!},
-                    {"PlacePhoneNo",contacts.PlacePhoneNo!},
-                    {"Location",contacts.Location!},
-                    {"State",contacts.State!},
-                    {"Country",contacts.Country!},
-                    {"Locality",contacts.Locality!},
-                    {"Postcode",contacts.Postcode!},
-                    {"Latitude",contacts.Latitude!},
-                    {"Longitude",contacts.Longitude!},
-                    {"BookingAmountt",contacts.BookingAmount},
-                    {"Rating",contacts.Rating},
-                    {"IsPayment",contacts.IsPayment},
-                    {"TicketType",contacts.TicketType!},
-                    {"PlaceAdvertType",contacts.PlaceAdvertType!},
-                    {"PlaceLogo",contacts.PlaceLogo!},
-                    {"Available",contacts.Available!},
-                    {"ListPlacesImages",rtnlist!},
-                    {"TimeSchedules",daysShedules },
-                    {"DatePublished",date!},
-                    {"Timestamp",timeStamp!}
-
-                };
-                await usrRef.SetAsync(user3);
+               
                 // convert back to dto
                 var contact = await placesRepository.GetAsync(contacts.Id);
                 var contactsDto = mapper.Map<PlacesDataModelDto>(contact);
@@ -366,12 +250,9 @@ namespace Genilog_WebApi.Controllers
         }
 
         [HttpPut("update-places-time-schedule/{id:guid}")]
-        [Authorize(Roles = "User,Admin,Super_Admin")]
+        [Authorize(Roles = "Manager,Admin,Super_Admin")]
         public async Task<IActionResult> UpdatePlacesTimeScheduleAsync([FromRoute] Guid id, AddTimeSchedule request)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
-
             var contacts = new PlacesDataModel()
             {
                 PlacesMonday = new PlacesMondayModel()
@@ -429,65 +310,6 @@ namespace Genilog_WebApi.Controllers
             // convert back to dto
             else
             {
-                DocumentReference usrRef = firestoreDb!.Collection("PlacesCollections").Document(contacts.Id.ToString());
-                Dictionary<string, object> monday = new()
-                {
-                  {  "HourStart", contacts.PlacesMonday!.HourStart!},
-                  {  "End", contacts.PlacesMonday!.HourEnd! },
-                  { "IsClosed", contacts.PlacesMonday.IsClosed! },
-                };
-                Dictionary<string, object> tuesday = new()
-                {
-                  {  "HourStart", contacts.PlacesTuesday!.HourStart!},
-                  {  "HourEnd", contacts.PlacesTuesday!.HourEnd! },
-                  { "IsClosed", contacts.PlacesTuesday.IsClosed! },
-                };
-                Dictionary<string, object> wednesday = new()
-                {
-                  {  "HourStart", contacts.PlacesWednesday!.HourStart!},
-                  {  "HourEnd", contacts.PlacesWednesday!.HourEnd! },
-                  { "IsClosed", contacts.PlacesWednesday.IsClosed! },
-                };
-                Dictionary<string, object> thursday = new()
-                {
-                  {  "HourStart", contacts.PlacesThursday!.HourStart!},
-                  {  "HourEnd", contacts.PlacesThursday!.HourEnd! },
-                  { "IsClosed", contacts.PlacesThursday!.IsClosed! },
-                };
-                Dictionary<string, object> friday = new()
-                {
-                  {  "HourStart", contacts.PlacesFriday!.HourStart!},
-                  {  "HourEnd", contacts.PlacesFriday!.HourEnd! },
-                  { "IsClosed", contacts.PlacesFriday.IsClosed! },
-                };
-                Dictionary<string, object> saturday = new()
-                {
-                  {  "HourStart", contacts.PlacesSaturday!.HourStart!},
-                  {  "HourEnd", contacts.PlacesSaturday!.HourEnd! },
-                  { "IsClosed", contacts.PlacesSaturday.IsClosed! },
-                };
-                Dictionary<string, object> sunday = new()
-                {
-                  {  "HourStart", contacts.PlacesSunday!.HourStart!},
-                  {  "HourEnd", contacts.PlacesSunday!.HourEnd!},
-                  { "HourIsClosed", contacts.PlacesSunday.IsClosed! },
-                };
-
-                Dictionary<string, object> daysShedules = new()
-                {
-                  {  "Monday", monday},
-                  {  "Tuesday", tuesday },
-                  { "Wednesday", wednesday },
-                  { "Thursday", thursday},
-                  { "Friday", friday },
-                  { "Saturday", saturday },
-                  { "Sunday", sunday },
-                };
-                Dictionary<string, object> user3 = new()
-                {
-                    {"TimeSchedules",daysShedules },
-                };
-                await usrRef.UpdateAsync(user3);
                 var userDto = new ResponseModel()
                 {
                     Message = "Updated Successfully",
@@ -502,9 +324,6 @@ namespace Genilog_WebApi.Controllers
         [Authorize(Roles = "Admin,Super_Admin")]
         public async Task<IActionResult> UpdatePlacesImageAsync([FromRoute] Guid id, [FromForm] AddImageList request)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
-
             // Update detials to repository
 
             List<PlaceImages> ticketBonus = [];
@@ -535,12 +354,7 @@ namespace Genilog_WebApi.Controllers
                     ticketBonus.Add(imageUpdate);
                 }
                 var ticketBonusDtos = mapper.Map<List<PlaceImagesDto>>(ticketBonus);
-                DocumentReference usrRef = firestoreDb!.Collection("PlacesCollections").Document(events.Id.ToString());
-                Dictionary<string, object> user3 = new()
-                {
-                    {"ListPlacesImages",rtnlist!},
-                };
-                await usrRef.UpdateAsync(user3);
+                
                 var userDto = new PlacesDataModelDto()
                 {
                     Id = events.Id,
@@ -553,12 +367,9 @@ namespace Genilog_WebApi.Controllers
 
         [HttpPut]
         [Route("update-places-facilities/{id:guid}")]
-        [Authorize(Roles = "Admin,Super_Admin")]
+        [Authorize(Roles = "Manager,Admin,Super_Admin")]
         public async Task<IActionResult> UpdatePlacesFacilitiesAsync([FromRoute] Guid id, AddPlacesFacilities request)
         {
-
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
 
             var events = await placesRepository.GetAsync(id);
             // check the null value
@@ -575,21 +386,8 @@ namespace Genilog_WebApi.Controllers
                     PlacesDataModelId = events.Id,
                 };
 
-                interested = await placesRepository.AddPlaceFacilitiesAsync(interested);
-                var date = DateTime.Now.ToString("ddd,MMM d,yyyy");
-                var timeStamp = Timestamp.GetCurrentTimestamp();
-                DocumentReference usrRef = firestoreDb!.Collection("PlacesCollections").Document(events.Id.ToString()).Collection("Facilities")
-                    .Document(interested.Id.ToString());
-                Dictionary<string, object> user3 = new()
-                    {
-                      {"Id",interested.Id.ToString()!},
-                      {"Facilities",interested.Facilities!},
-                      {"PlacesDataModelId",interested.PlacesDataModelId.ToString()!},
-                      {"DatePublished",date!},
-                      {"Timestamp",timeStamp!}
-
-                    };
-                await usrRef.SetAsync(user3);
+                await placesRepository.AddPlaceFacilitiesAsync(interested);
+               
                 var userDto = new ResponseModel()
                 {
                     Message = "Update Facilities",
@@ -602,13 +400,9 @@ namespace Genilog_WebApi.Controllers
 
         [HttpPut]
         [Route("update-places-what-to-Expect/{id:guid}")]
-        [Authorize(Roles = "Admin,Super_Admin")]
+        [Authorize(Roles = "Manager,Admin,Super_Admin")]
         public async Task<IActionResult> UpdatePlaceWhatToExpectAsync([FromRoute] Guid id, AddPlaceWhatToExpect request)
         {
-
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
-
             var events = await placesRepository.GetAsync(id);
             // check the null value
             if (events == null)
@@ -626,23 +420,7 @@ namespace Genilog_WebApi.Controllers
                     PlacesDataModelId = events.Id,
                 };
 
-                interested = await placesRepository.AddPlaceWhatToExpectAsync(interested);
-                var date = DateTime.Now.ToString("ddd,MMM d,yyyy");
-                var timeStamp = Timestamp.GetCurrentTimestamp();
-                DocumentReference usrRef = firestoreDb!.Collection("PlacesCollections").Document(events.Id.ToString()).Collection("PlaceWhatToExpect")
-                    .Document(interested.Id.ToString());
-                Dictionary<string, object> user3 = new()
-                    {
-                      {"Id",interested.Id.ToString()!},
-                      {"Titles",interested.Titles !},
-                      {"Description",interested.Description !},
-                      {"SubTitle ",interested.SubTitle !},
-                      {"PlacesDataModelId",interested.PlacesDataModelId.ToString()!},
-                      {"DatePublished",date!},
-                      {"Timestamp",timeStamp!}
-
-                    };
-                await usrRef.SetAsync(user3);
+                await placesRepository.AddPlaceWhatToExpectAsync(interested);
                 var userDto = new ResponseModel()
                 {
                     Message = "Updated Successfully",
@@ -659,9 +437,7 @@ namespace Genilog_WebApi.Controllers
         [Authorize]
         public async Task<IActionResult> UpdatePlaceReviewAsync([FromRoute] Guid id, [FromBody] AddPlacesReview request)
         {
-
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
+            
             var events = await placesRepository.GetAsync(id);
             // check the null value
             if (events == null)
@@ -687,23 +463,7 @@ namespace Genilog_WebApi.Controllers
                     CreatedAt = DateTime.Now,
                 };
 
-                interested = await placesRepository.AddPlaceReviewAsync(interested);
-                var date = DateTime.Now.ToString("ddd,MMM d,yyyy");
-                var timeStamp = Timestamp.GetCurrentTimestamp();
-                DocumentReference usrRef = firestoreDb!.Collection("PlacesCollections").Document(events.Id.ToString()).Collection("Reviews")
-                    .Document(interested.Id.ToString());
-                Dictionary<string, object> user3 = new()
-                    {
-                      {"UserName",interested.UserName!},
-                      {"ProfileImage",interested.ProfileImage!},
-                      {"PlacesDataModelId",interested.PlacesDataModelId.ToString()!},
-                      {"UserId",interested.UserId.ToString()!},
-                      {"ReviewMessage",interested.ReviewMessage!},
-                      {"DatePublished",date!},
-                      {"Timestamp",timeStamp!}
-
-                    };
-                await usrRef.SetAsync(user3);
+                await placesRepository.AddPlaceReviewAsync(interested);
                 var userDto = new ResponseModel()
                 {
                     Message = "Update Facilities",
@@ -791,8 +551,6 @@ namespace Genilog_WebApi.Controllers
         [Authorize]
         public async Task<IActionResult> AddPlacesChatAsync([FromHeader] Guid senderId, [FromHeader] Guid receiverId, [FromBody] AddChatMessage message)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
             var validate = ValidateChat(message);
 
             if (!validate)
@@ -834,58 +592,7 @@ namespace Genilog_WebApi.Controllers
                         CreatedAt = DateTime.Now,
                     };
 
-                    interested = await placesRepository.AddPlacesChatAsync(interested);
-                    var date = DateTime.Now.ToString("ddd,MMM d,yyyy");
-                    var timeStamp = Timestamp.GetCurrentTimestamp();
-                    DocumentReference usrRef = firestoreDb!.Collection("PlacesChatCollection")
-                        .Document(interested.GroupChatId);
-
-                    // Chat
-                    DocumentReference documentReference = firestoreDb!.Collection("PlacesMessageCollections").Document(interested.GroupChatId).
-                        Collection(interested.GroupChatId).Document(DateTime.Now.Millisecond.ToString());
-
-                    Dictionary<string, object> user3 = new()
-                    {
-                         {"Id",interested.Id.ToString()!},
-                         {"SenderId",interested.SenderId.ToString()!},
-                         {"ReceiverId",interested.ReceiverId.ToString()!},
-                         {"Message",interested.Message!},
-                         {"GroupChatId",interested.GroupChatId!},
-                         {"MessageType",interested.MessageType!},
-                         {"IsRead",interested.IsRead!},
-                         {"DatePublished",date},
-                         {"Timestamp",timeStamp}
-
-                    };
-                    await usrRef.SetAsync(user3);
-                    await firestoreDb.RunTransactionAsync(async transaction =>
-                    {
-                        DocumentSnapshot currentSnapshot = await transaction.GetSnapshotAsync(usrRef);
-                        string id = currentSnapshot.GetValue<string>("Id");
-                        string senderId = currentSnapshot.GetValue<string>("SenderId");
-                        string receiverId = currentSnapshot.GetValue<string>("ReceiverId");
-                        string message = currentSnapshot.GetValue<string>("Message");
-                        string groupChatId = currentSnapshot.GetValue<string>("GroupChatId");
-                        string messageType = currentSnapshot.GetValue<string>("MessageType");
-                        string itemImageURL = currentSnapshot.GetValue<string>("ItemImageURL");
-                        bool isRead = currentSnapshot.GetValue<bool>("IsRead");
-                        string datePublished = currentSnapshot.GetValue<string>("DatePublished");
-                        Timestamp timestamp = currentSnapshot.GetValue<Timestamp>("Timestamp");
-                        Dictionary<string, object> transact = new()
-                            {
-                            {"Id",id},
-                            {"SenderId",senderId},
-                            {"ReceiverId",receiverId},
-                            {"Message",message!},
-                            {"GroupChatId",groupChatId},
-                            {"MessageType",messageType},
-                            {"ItemImageURL",itemImageURL!},
-                            {"IsRead",isRead},
-                            {"DatePublished",datePublished},
-                            {"Timestamp",timeStamp}
-                            };
-                        transaction.Set(documentReference, transact);
-                    });
+                   await placesRepository.AddPlacesChatAsync(interested);
                     var userDto = new ResponseModel()
                     {
                         Message = "Success",
@@ -905,7 +612,8 @@ namespace Genilog_WebApi.Controllers
         public async Task<IActionResult> GetAllHotelAsync()
         {
             var contacts = await hotelRepository.GetAllAsync();
-            var contactsDto = mapper.Map<List<HotelDataTableDto>>(contacts);
+            var contactsDto = mapper.Map<List<HotelDataModelDto>>(contacts);
+            await _hubContext.Clients.All.SendAsync("GetAllHotel", contactsDto);
             return Ok(contactsDto);
         }
 
@@ -922,7 +630,8 @@ namespace Genilog_WebApi.Controllers
             else
             {
 
-                var contactsDto = mapper.Map<HotelDataTableDto>(contacts);
+                var contactsDto = mapper.Map<HotelDataModelDto>(contacts);
+                await _hubContext.Clients.All.SendAsync($"GetHotel{id}", contactsDto);
                 return Ok(contactsDto);
             }
         }
@@ -932,8 +641,8 @@ namespace Genilog_WebApi.Controllers
         [Authorize(Roles = "Admin,Super_Admin")]
         public async Task<IActionResult> DeleteHotelAsync(Guid id)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
+            
+            
             // Get the region from the database
             var user = await hotelRepository.DeleteAsync(id);
             // if null NotFound
@@ -944,9 +653,7 @@ namespace Genilog_WebApi.Controllers
 
             else
             {
-                DocumentReference usrRef = firestoreDb!.Collection("HotelCollections").Document(user.Id.ToString());
-                await usrRef.DeleteAsync();
-                var userDto = mapper.Map<HotelDataTableDto>(user);
+                var userDto = mapper.Map<HotelDataModelDto>(user);
                 return Ok(userDto);
             }
         }
@@ -956,8 +663,8 @@ namespace Genilog_WebApi.Controllers
         [Authorize(Roles = "Admin,Super_Admin")]
         public async Task<IActionResult> UpdateHotelAsync([FromRoute] Guid id, [FromBody] UpdateHotel request)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
+            
+            
             var userDto1 = await hotelRepository.GetAsync(id);
             if (userDto1 == null)
             {
@@ -992,30 +699,10 @@ namespace Genilog_WebApi.Controllers
 
                 // Update detials to repository
                 user = await hotelRepository.UpdateAsync(id, user);
-                DocumentReference usrRef = firestoreDb!.Collection("HotelCollections").Document(user.Id.ToString());
-                Dictionary<string, object> user3 = new()
-                {
-                    {"HotelName",user.HotelName!},
-                    {"HotelDescription",user.HotelDescription!},
-                    {"CheckInTime",user.CheckInTime!},
-                    {"CheckOutTime",user.CheckOutTime!},
-                    {"HotelWebsite",user.HotelWebsite!},
-                    {"HotelPhoneNo",user.HotelPhoneNo!},
-                    {"Location",user.Location!},
-                    {"NoOfRooms",user.NoOfRooms!},
-                    {"Locality",user.Locality!},
-                    {"Postcode",user.Postcode!},
-                    {"Latitude",user.Latitude!},
-                    {"Longitude",user.Longitude!},
-                    {"HotelLogo",user.HotelLogo!},
-                    {"Available",user.Available!},
-                    {"Rating",user.Rating!},
-                    {"BookingAmount",user.BookingAmount!},
-                    {"HotelAdvertType",user.HotelAdvertType!},
-                };
-                await usrRef.UpdateAsync(user3);
+             
+                
                 var contacts = await hotelRepository.GetAsync(user.Id);
-                var userDto = mapper.Map<HotelDataTableDto>(contacts);
+                var userDto = mapper.Map<HotelDataModelDto>(contacts);
                 return Ok(userDto);
             }
         }
@@ -1024,8 +711,6 @@ namespace Genilog_WebApi.Controllers
         [Authorize(Roles = "User,Admin,Super_Admin")]
         public async Task<IActionResult> AddHotelAsync([FromBody] AddHotel request)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
             var check = ValidateHotel(request);
 
             if (!check)
@@ -1041,8 +726,6 @@ namespace Genilog_WebApi.Controllers
                 }
                 List<HotelImages> ticketBonus = [];
                 var rtnlist = new List<string>();
-                var date = DateTime.Now.ToString("ddd,MMM d,yyyy");
-                var timeStamp = Timestamp.GetCurrentTimestamp();
                 var contacts = new HotelDataModel()
                 {
                     HotelMonday = new HotelMondayModel()
@@ -1125,94 +808,9 @@ namespace Genilog_WebApi.Controllers
                     imageUpdate = await hotelRepository.AddHotelImageAsync(imageUpdate);
                     ticketBonus.Add(imageUpdate);
                 }
-                DocumentReference usrRef = firestoreDb!.Collection("HotelCollections").Document(contacts.Id.ToString());
-                Dictionary<string, object> monday = new()
-                {
-                  {  "HourStart", contacts.HotelMonday!.HourStart!},
-                  {  "End", contacts.HotelMonday!.HourEnd! },
-                  { "IsClosed", contacts.HotelMonday.IsClosed! },
-                };
-                Dictionary<string, object> tuesday = new()
-                {
-                  {  "HourStart", contacts.HotelTuesday!.HourStart!},
-                  {  "HourEnd", contacts.HotelTuesday!.HourEnd! },
-                  { "IsClosed", contacts.HotelTuesday.IsClosed! },
-                };
-                Dictionary<string, object> wednesday = new()
-                {
-                  {  "HourStart", contacts.HotelWednesday!.HourStart!},
-                  {  "HourEnd", contacts.HotelWednesday!.HourEnd! },
-                  { "IsClosed", contacts.HotelWednesday.IsClosed! },
-                };
-                Dictionary<string, object> thursday = new()
-                {
-                  {  "HourStart", contacts.HotelThursday!.HourStart!},
-                  {  "HourEnd", contacts.HotelThursday!.HourEnd! },
-                  { "IsClosed", contacts.HotelThursday!.IsClosed! },
-                };
-                Dictionary<string, object> friday = new()
-                {
-                  {  "HourStart", contacts.HotelFriday!.HourStart!},
-                  {  "HourEnd", contacts.HotelFriday!.HourEnd! },
-                  { "IsClosed", contacts.HotelFriday.IsClosed! },
-                };
-                Dictionary<string, object> saturday = new()
-                {
-                  {  "HourStart", contacts.HotelSaturday!.HourStart!},
-                  {  "HourEnd", contacts.HotelSaturday!.HourEnd! },
-                  { "IsClosed", contacts.HotelSaturday.IsClosed! },
-                };
-                Dictionary<string, object> sunday = new()
-                {
-                  {  "HourStart", contacts.HotelSunday!.HourStart!},
-                  {  "HourEnd", contacts.HotelSunday!.HourEnd!},
-                  { "HourIsClosed", contacts.HotelSunday.IsClosed! },
-                };
-
-                Dictionary<string, object> daysShedules = new()
-                {
-                  {  "Monday", monday},
-                  {  "Tuesday", tuesday },
-                  { "Wednesday", wednesday },
-                  { "Thursday", thursday},
-                  { "Friday", friday },
-                  { "Saturday", saturday },
-                  { "Sunday", sunday },
-                };
-                Dictionary<string, object> user3 = new()
-                {
-                    {"Id",contacts.Id.ToString()},
-                    {"AdminId",contacts.AdminId.ToString()},
-                    {"HotelName",contacts.HotelName!},
-                    {"HotelEmail",contacts.HotelEmail!},
-                    {"HotelDescription",contacts.HotelDescription!},
-                    {"HotelType",contacts.HotelType!},
-                    {"CheckInTime",contacts.CheckInTime!},
-                    {"CheckOutTime",contacts.CheckOutTime!},
-                    {"HotelWebsite",contacts.HotelWebsite!},
-                    {"HotelPhoneNo",contacts.HotelPhoneNo!},
-                    {"Location",contacts.Location!},
-                    {"State",contacts.State!},
-                    {"Country",contacts.Country!},
-                    {"Locality",contacts.Locality!},
-                    {"Postcode",contacts.Postcode!},
-                    {"Latitude",contacts.Latitude!},
-                    {"Longitude",contacts.Longitude!},
-                    {"BookingAmountt",contacts.BookingAmount},
-                    {"Rating",contacts.Rating},
-                    {"NoOfRooms",contacts.NoOfRooms},
-                    {"HotelAdvertType",contacts.HotelAdvertType!},
-                    {"HotelLogo",contacts.HotelLogo!},
-                    {"Available",contacts.Available!},
-                    {"ListHotelImages",rtnlist!},
-                    {"TimeSchedules",daysShedules },
-                    {"DatePublished",date!},
-                    {"Timestamp",timeStamp!}
-                };
-                await usrRef.SetAsync(user3);
                 // convert back to dto
                 var contact = await hotelRepository.GetAsync(contacts.Id);
-                var contactsDto = mapper.Map<HotelDataTableDto>(contact);
+                var contactsDto = mapper.Map<HotelDataModelDto>(contact);
                 return CreatedAtAction(nameof(GetHotelAsync), new { id = contactsDto.Id }, contactsDto);
             }
         }
@@ -1221,9 +819,6 @@ namespace Genilog_WebApi.Controllers
         [Authorize(Roles = "User,Admin,Super_Admin")]
         public async Task<IActionResult> UpdateHotelTimeScheduleAsync([FromRoute] Guid id, AddTimeSchedule request)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
-
             var contacts = new HotelDataModel()
             {
                 HotelMonday = new HotelMondayModel()
@@ -1281,65 +876,6 @@ namespace Genilog_WebApi.Controllers
             // convert back to dto
             else
             {
-                DocumentReference usrRef = firestoreDb!.Collection("HotelCollections").Document(contacts.Id.ToString());
-                Dictionary<string, object> monday = new()
-                {
-                  {  "HourStart", contacts.HotelMonday!.HourStart!},
-                  {  "End", contacts.HotelMonday!.HourEnd! },
-                  { "IsClosed", contacts.HotelMonday.IsClosed! },
-                };
-                Dictionary<string, object> tuesday = new()
-                {
-                  {  "HourStart", contacts.HotelTuesday!.HourStart!},
-                  {  "HourEnd", contacts.HotelTuesday!.HourEnd! },
-                  { "IsClosed", contacts.HotelTuesday.IsClosed! },
-                };
-                Dictionary<string, object> wednesday = new()
-                {
-                  {  "HourStart", contacts.HotelWednesday!.HourStart!},
-                  {  "HourEnd", contacts.HotelWednesday!.HourEnd! },
-                  { "IsClosed", contacts.HotelWednesday.IsClosed! },
-                };
-                Dictionary<string, object> thursday = new()
-                {
-                  {  "HourStart", contacts.HotelThursday!.HourStart!},
-                  {  "HourEnd", contacts.HotelThursday!.HourEnd! },
-                  { "IsClosed", contacts.HotelThursday!.IsClosed! },
-                };
-                Dictionary<string, object> friday = new()
-                {
-                  {  "HourStart", contacts.HotelFriday!.HourStart!},
-                  {  "HourEnd", contacts.HotelFriday!.HourEnd! },
-                  { "IsClosed", contacts.HotelFriday.IsClosed! },
-                };
-                Dictionary<string, object> saturday = new()
-                {
-                  {  "HourStart", contacts.HotelSaturday!.HourStart!},
-                  {  "HourEnd", contacts.HotelSaturday!.HourEnd! },
-                  { "IsClosed", contacts.HotelSaturday.IsClosed! },
-                };
-                Dictionary<string, object> sunday = new()
-                {
-                  {  "HourStart", contacts.HotelSunday!.HourStart!},
-                  {  "HourEnd", contacts.HotelSunday!.HourEnd!},
-                  { "HourIsClosed", contacts.HotelSunday.IsClosed! },
-                };
-
-                Dictionary<string, object> daysShedules = new()
-                {
-                  {  "Monday", monday},
-                  {  "Tuesday", tuesday },
-                  { "Wednesday", wednesday },
-                  { "Thursday", thursday},
-                  { "Friday", friday },
-                  { "Saturday", saturday },
-                  { "Sunday", sunday },
-                };
-                Dictionary<string, object> user3 = new()
-                {
-                    {"TimeSchedules",daysShedules },
-                };
-                await usrRef.UpdateAsync(user3);
                 var userDto = new ResponseModel()
                 {
                     Message = "Updated Successfully",
@@ -1356,9 +892,6 @@ namespace Genilog_WebApi.Controllers
         [Authorize(Roles = "Admin,Super_Admin")]
         public async Task<IActionResult> UpdateHotelImageAsync([FromRoute] Guid id, [FromForm] AddImageList request)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
-
             // Update detials to repository
 
             List<HotelImages> ticketBonus = [];
@@ -1389,13 +922,8 @@ namespace Genilog_WebApi.Controllers
                     ticketBonus.Add(imageUpdate);
                 }
                 var ticketBonusDtos = mapper.Map<List<HotelImagesDto>>(ticketBonus);
-                DocumentReference usrRef = firestoreDb!.Collection("HotelCollections").Document(events.Id.ToString());
-                Dictionary<string, object> user3 = new()
-                {
-                    {"ListHotelImages",rtnlist!},
-                };
-                await usrRef.UpdateAsync(user3);
-                var userDto = new HotelDataTableDto()
+                
+                var userDto = new HotelDataModelDto()
                 {
                     Id = events.Id,
                     HotelImages = ticketBonusDtos,
@@ -1412,9 +940,6 @@ namespace Genilog_WebApi.Controllers
         public async Task<IActionResult> UpdateHotelFacilitiesAsync([FromRoute] Guid id, AddHotelFacilities request)
         {
 
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
-
             var events = await hotelRepository.GetAsync(id);
             // check the null value
             if (events == null)
@@ -1430,21 +955,7 @@ namespace Genilog_WebApi.Controllers
                     HotelDataTableId = events.Id,
                 };
 
-                interested = await hotelRepository.AddHotelFacilitiesAsync(interested);
-                var date = DateTime.Now.ToString("ddd,MMM d,yyyy");
-                var timeStamp = Timestamp.GetCurrentTimestamp();
-                DocumentReference usrRef = firestoreDb!.Collection("HotelCollections").Document(events.Id.ToString()).Collection("Facilities")
-                    .Document(interested.Id.ToString());
-                Dictionary<string, object> user3 = new()
-                    {
-                      {"Id",interested.Id.ToString()!},
-                      {"Facilities",interested.Facilities!},
-                      {"HotelDataTableId",interested.HotelDataTableId.ToString()!},
-                      {"DatePublished",date!},
-                      {"Timestamp",timeStamp!}
-
-                    };
-                await usrRef.SetAsync(user3);
+               await hotelRepository.AddHotelFacilitiesAsync(interested);
                 var userDto = new ResponseModel()
                 {
                     Message = "Update Facilities",
@@ -1460,9 +971,6 @@ namespace Genilog_WebApi.Controllers
         [Authorize(Roles = "User,Admin,Super_Admin")]
         public async Task<IActionResult> UpdateHotelReviewAsync([FromRoute] Guid id, [FromBody] AddHotelReview request)
         {
-
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
             var events = await hotelRepository.GetAsync(id);
             // check the null value
             if (events == null)
@@ -1489,22 +997,6 @@ namespace Genilog_WebApi.Controllers
                 };
 
                 interested = await hotelRepository.AddHotelReviewAsync(interested);
-                var date = DateTime.Now.ToString("ddd,MMM d,yyyy");
-                var timeStamp = Timestamp.GetCurrentTimestamp();
-                DocumentReference usrRef = firestoreDb!.Collection("HotelCollections").Document(events.Id.ToString()).Collection("Reviews")
-                    .Document(interested.Id.ToString());
-                Dictionary<string, object> user3 = new()
-                    {
-                      {"UserName",interested.UserName!},
-                      {"ProfileImage",interested.ProfileImage!},
-                      {"HotelDataTableId",interested.HotelDataTableId.ToString()!},
-                      {"UserId",interested.UserId.ToString()!},
-                      {"ReviewMessage",interested.ReviewMessage!},
-                      {"DatePublished",date!},
-                      {"Timestamp",timeStamp!}
-
-                    };
-                await usrRef.SetAsync(user3);
                 var userDto = new ResponseModel()
                 {
                     Message = "Update Facilities",
@@ -1591,8 +1083,6 @@ namespace Genilog_WebApi.Controllers
         [Authorize]
         public async Task<IActionResult> AddHotelChatAsync([FromHeader] Guid senderId, [FromHeader] Guid receiverId, [FromBody] AddChatMessage message)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
             var validate = ValidateChat(message);
 
             if (!validate)
@@ -1634,56 +1124,8 @@ namespace Genilog_WebApi.Controllers
                         CreatedAt = DateTime.Now,
                     };
 
-                    interested = await hotelRepository.AddHotelChatAsync(interested);
-                    var date = DateTime.Now.ToString("ddd,MMM d,yyyy");
-                    var timeStamp = Timestamp.GetCurrentTimestamp();
-                    DocumentReference usrRef = firestoreDb!.Collection("HotelChatCollection")
-                        .Document(interested.GroupChatId);
-
-                    // Chat
-                    DocumentReference documentReference = firestoreDb!.Collection("HotelMessageCollections").Document(interested.GroupChatId).
-                        Collection(interested.GroupChatId).Document(DateTime.Now.Millisecond.ToString());
-
-                    Dictionary<string, object> user3 = new()
-                    {
-                         {"Id",interested.Id.ToString()!},
-                         {"SenderId",interested.SenderId.ToString()!},
-                         {"ReceiverId",interested.ReceiverId.ToString()!},
-                         {"Message",interested.Message!},
-                         {"GroupChatId",interested.GroupChatId!},
-                         {"MessageType",interested.MessageType!},
-                         {"IsRead",interested.IsRead!},
-                         {"DatePublished",date},
-                         {"Timestamp",timeStamp}
-
-                    };
-                    await usrRef.SetAsync(user3);
-                    await firestoreDb.RunTransactionAsync(async transaction =>
-                    {
-                        DocumentSnapshot currentSnapshot = await transaction.GetSnapshotAsync(usrRef);
-                        string id = currentSnapshot.GetValue<string>("Id");
-                        string senderId = currentSnapshot.GetValue<string>("SenderId");
-                        string receiverId = currentSnapshot.GetValue<string>("ReceiverId");
-                        string message = currentSnapshot.GetValue<string>("Message");
-                        string groupChatId = currentSnapshot.GetValue<string>("GroupChatId");
-                        string messageType = currentSnapshot.GetValue<string>("MessageType");
-                        bool isRead = currentSnapshot.GetValue<bool>("IsRead");
-                        string datePublished = currentSnapshot.GetValue<string>("DatePublished");
-                        Timestamp timestamp = currentSnapshot.GetValue<Timestamp>("Timestamp");
-                        Dictionary<string, object> transact = new()
-                            {
-                            {"Id",id},
-                            {"SenderId",senderId},
-                            {"ReceiverId",receiverId},
-                            {"Message",message!},
-                            {"GroupChatId",groupChatId},
-                            {"MessageType",messageType},
-                            {"IsRead",isRead},
-                            {"DatePublished",datePublished},
-                            {"Timestamp",timeStamp}
-                            };
-                        transaction.Set(documentReference, transact);
-                    });
+                    await hotelRepository.AddHotelChatAsync(interested);
+                   
                     var userDto = new ResponseModel()
                     {
                         Message = "Success",

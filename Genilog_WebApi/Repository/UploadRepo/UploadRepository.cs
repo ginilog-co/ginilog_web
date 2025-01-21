@@ -1,11 +1,13 @@
 ﻿using Firebase.Storage;
 using Genilog_WebApi.Key;
 using Genilog_WebApi.Model.UploadModels;
+using static Google.Rpc.Help.Types;
 
 namespace Genilog_WebApi.Repository.UploadRepo
 {
-    public class UploadRepository() : IUploadRepository
+    public class UploadRepository(IWebHostEnvironment _environment) : IUploadRepository
     {
+        private readonly IWebHostEnvironment _environment=_environment;
 
         public async Task<ImageListUpload> SaveListImageAsync(ImageListUpload files)
         {
@@ -91,6 +93,36 @@ namespace Genilog_WebApi.Repository.UploadRepo
             }
             postRequest.ImagePath = link;
 
+            return postRequest;
+        }
+        public async Task<UploadFile> SaveServerImageAsync(UploadFile postRequest)
+        {
+
+            if (postRequest.Image == null || postRequest.Image!.Length == 0)
+#pragma warning disable CS8603 // Possible null reference return.
+                return null;
+#pragma warning restore CS8603 // Possible null reference return.
+
+            // Generate a unique filename
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(postRequest.Image!.FileName);
+
+            // Set the directory to save images
+            var uploadPath = _environment.WebRootPath != null
+         ? Path.Combine(_environment.WebRootPath, "uploads")
+         : Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            Directory.CreateDirectory(uploadPath); // Ensure the directory exists
+
+            var filePath = Path.Combine(uploadPath, fileName);
+
+            // Save the file to the server
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await postRequest.Image!.CopyToAsync(stream);
+            }
+
+            // Create the URL for accessing the uploaded image
+            var imageUrl = $"{fileName}";
+            postRequest.ImagePath = imageUrl;
             return postRequest;
         }
     }

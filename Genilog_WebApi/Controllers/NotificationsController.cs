@@ -11,6 +11,7 @@ using Genilog_WebApi.Model.AuthModel;
 using Genilog_WebApi.Model;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
+using Google.Cloud.Firestore.V1;
 
 namespace Genilog_WebApi.Controllers
 {
@@ -22,7 +23,7 @@ namespace Genilog_WebApi.Controllers
         private readonly IHostEnvironment _env = _env;
         private readonly IGeneralUserRepository generalUserRepository = generalUserRepository;
         private readonly INotificationRepository notificationRepository = notificationRepository;
-        readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\bmg-project-edf2f-firebase-adminsdk-gqzbj-f6515ebae6.json");
+      //  readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\bmg-project-edf2f-firebase-adminsdk-gqzbj-f6515ebae6.json");
         private readonly IHubContext<NotificationHub> _hubContext= _hubContext;
         [HttpGet]
         [Authorize]
@@ -56,8 +57,8 @@ namespace Genilog_WebApi.Controllers
         [Authorize]
         public async Task<IActionResult> UpdateNotificationAsync([FromRoute] Guid id, [FromBody] AddNotification request)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
+            
+            
          var userDto1 = await notificationRepository.GetAsync(id);
 
             // check the null value
@@ -86,16 +87,6 @@ namespace Genilog_WebApi.Controllers
             // convert back to dto
             else
             {
-                var timeStamp = Timestamp.GetCurrentTimestamp();
-                DocumentReference usrRef = firestoreDb!.Collection("NotificationsCollections").Document(user.Id.ToString());
-                Dictionary<string, object> user3 = new()
-                {
-                    {"Title",user.Title!},
-                    {"Body",user.Body!},
-                    {"DeviceToken",user.DeviceToken!},
-                    {"UpdatedAt",timeStamp},
-                };
-                await usrRef.UpdateAsync(user3);
                 var userDto = new NotificationModelDto()
                 {
                     Id = user.Id,
@@ -115,8 +106,8 @@ namespace Genilog_WebApi.Controllers
         [Authorize]
         public async Task<IActionResult> AddNotificationAsync( AddNotification request)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
+            
+            
             var check = ValidateNotification(request);
 
             if (!check)
@@ -176,6 +167,46 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
+        [HttpPost("send-notification")]
+        [Authorize]
+        public async Task<IActionResult> SendNotificationHubAsync(AddNotification request)
+        {
+            
+            
+            var check = ValidateNotification(request);
+
+            if (!check)
+            {
+                return BadRequest(ModelState);
+            }
+            else
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!Guid.TryParse(userId, out Guid userGuid))
+                {
+                    return BadRequest("Invalid User ID format.");
+                }
+                await _hubContext.Clients.User(userGuid.ToString()).SendAsync("ReceiveMessage", request.Title, request.Body);
+                var contacts = new NotificationModel()
+                {
+                    UserId = userGuid,
+                    Title = request.Title,
+                    Body = request.Body,
+                    DeviceToken = "",
+                    UpdatedAt = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow,
+                    ImageUrl = "",
+                    NotificationType = request.NotificationType,
+                };
+                // Pass detials to repository
+                contacts = await notificationRepository.AddAsync(contacts);
+               
+                return Ok("Notification Sends");
+               
+
+            }
+        }
+
         #region private methods
         private bool ValidateNotification(AddNotification request)
         {
@@ -195,8 +226,8 @@ namespace Genilog_WebApi.Controllers
 
         private async Task<string> SendNotification(string deviceToken, string title,string body, string imageUrl,string notificationType, Guid userId)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
+            
+            
             var message = new Message()
             {
                 Notification = new Notification
@@ -214,8 +245,6 @@ namespace Genilog_WebApi.Controllers
 
             var messaging = FirebaseMessaging.DefaultInstance;
             var result = await messaging.SendAsync(message);
-            var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
-            var timeStamp = Timestamp.GetCurrentTimestamp();
             var contacts = new NotificationModel()
             {
                 UserId = userId,
@@ -228,36 +257,17 @@ namespace Genilog_WebApi.Controllers
                 NotificationType = notificationType,
             };
             // Pass detials to repository
-            contacts = await notificationRepository.AddAsync(contacts);
-            DocumentReference usrRef = firestoreDb!.Collection("NotificationsCollections").Document(contacts.Id.ToString());
-
-            Dictionary<string, object> user3 = new()
-                {
-                    {"Id",contacts.Id.ToString()},
-                    {"UserId",contacts.UserId.ToString()},
-                    {"Title", contacts.Title!},
-                    {"Body", contacts.Body!},
-                    {"DeviceToken", contacts.DeviceToken!},
-                    {"ImageUrl",contacts.ImageUrl!},
-                    {"NotificationType",contacts.NotificationType!},
-                    {"UpdatedAt",timeStamp},
-                    {"DatePublished",date!},
-                    {"Timestamp",timeStamp!}
-                };
-            await usrRef.SetAsync(user3);
+            await notificationRepository.AddAsync(contacts);
+         
             return result;
         }
 
-
         private async Task<string> SendNotificationHub( string user, string message, string notificationType, Guid userId)
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
-            var firestoreDb = FirestoreDb.Create(Cls_Keys.ProjectId);
+            
+            
 
             await _hubContext.Clients.All.SendAsync("ReceiveMessage", user, message);
-           
-            var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
-            var timeStamp = Timestamp.GetCurrentTimestamp();
             var contacts = new NotificationModel()
             {
                 UserId = userId,
@@ -270,23 +280,7 @@ namespace Genilog_WebApi.Controllers
                 NotificationType = notificationType,
             };
             // Pass detials to repository
-            contacts = await notificationRepository.AddAsync(contacts);
-            DocumentReference usrRef = firestoreDb!.Collection("NotificationsCollections").Document(contacts.Id.ToString());
-
-            Dictionary<string, object> user3 = new()
-                {
-                    {"Id",contacts.Id.ToString()},
-                    {"UserId",contacts.UserId.ToString()},
-                    {"Title", contacts.Title!},
-                    {"Body", contacts.Body!},
-                    {"DeviceToken", contacts.DeviceToken!},
-                    {"ImageUrl",contacts.ImageUrl!},
-                    {"NotificationType",contacts.NotificationType!},
-                    {"UpdatedAt",timeStamp},
-                    {"DatePublished",date!},
-                    {"Timestamp",timeStamp!}
-                };
-            await usrRef.SetAsync(user3);
+            await notificationRepository.AddAsync(contacts);
             return "Successfully";
         }
 

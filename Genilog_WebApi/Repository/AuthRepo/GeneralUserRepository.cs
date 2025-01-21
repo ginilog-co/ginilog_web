@@ -120,6 +120,8 @@ namespace Genilog_WebApi.Repository.AuthRepo
             {
                 existinguser.LastName = user.LastName;
                 existinguser.FirstName = user.FirstName;
+                existinguser.ImagePath = user.ImagePath;
+                existinguser.PhoneNo = user.PhoneNo;
                 await bmg_context.SaveChangesAsync();
                 return existinguser;
             }
@@ -310,45 +312,6 @@ namespace Genilog_WebApi.Repository.AuthRepo
             await bmg_context.SaveChangesAsync();
             return user;
         }
-
-        public async Task<GeneralUsers> UploadPicsAsync(Guid id, GeneralUsers imagePath)
-        {
-
-            var existinguser = await bmg_context.GeneralUsers!.FirstOrDefaultAsync(x => x.Id == id);
-
-            if (existinguser == null)
-            {
-#pragma warning disable CS8603 // Possible null reference return.
-                return null;
-#pragma warning restore CS8603 // Possible null reference return.
-            }
-            else
-            {
-                existinguser.ImagePath = imagePath.ImagePath;
-                await bmg_context.SaveChangesAsync();
-                return existinguser;
-            }
-        }
-
-
-#pragma warning disable CS8613 // Nullability of reference types in return type doesn't match implicitly implemented member.
-        public async Task<GeneralUsers?> UpdatePhoneAsync(Guid id, string user)
-#pragma warning restore CS8613 // Nullability of reference types in return type doesn't match implicitly implemented member.
-        {
-            var existinguser = await bmg_context.GeneralUsers!.FirstOrDefaultAsync(x => x.Id == id);
-
-            if (existinguser == null)
-            {
-                return null;
-            }
-            else
-            {
-                existinguser.PhoneNo = user;
-                await bmg_context.SaveChangesAsync();
-                return existinguser;
-            }
-        }
-
 
         // Device Token
         public async Task<IEnumerable<DeviceTokenModel>> GetAllDeviceTokenAsync()

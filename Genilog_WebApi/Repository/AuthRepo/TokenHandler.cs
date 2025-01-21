@@ -21,7 +21,7 @@ namespace Genilog_WebApi.Repository.AuthRepo
             // create claims
             var claims = new List<Claim>
             {
-                 new(JwtRegisteredClaimNames.Sub, sub.Id.ToString()),
+                new(JwtRegisteredClaimNames.Sub, sub.Id.ToString()),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new(ClaimTypes.GivenName, sub.LastName!),
                 new(ClaimTypes.Surname, sub.FirstName!),

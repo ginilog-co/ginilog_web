@@ -21,10 +21,8 @@ namespace Genilog_WebApi.Repository.AuthRepo
         Task<GeneralUsers> RequestNewEmailTokenAsync(string email);
         Task<GeneralUsers> RequestNewPhoneNoTokenAsync(string phoneNo);
         Task<GeneralUsers> PasswordResetAsync(string token, string password);
-        Task<GeneralUsers> UploadPicsAsync(Guid id, GeneralUsers imagePath);
         Task<GeneralUsers> TwoFactorEnabledAsync(Guid id);
         Task<GeneralUsers> CheckUserAsync(Guid id);
-        Task<GeneralUsers> UpdatePhoneAsync(Guid id, string phone);
 
         // Device Token
         Task<IEnumerable<DeviceTokenModel>> GetAllDeviceTokenAsync();

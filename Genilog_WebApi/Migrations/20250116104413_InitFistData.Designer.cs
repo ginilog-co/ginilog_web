@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Genilog_WebApi.Migrations
 {
     [DbContext(typeof(Genilog_Data_Context))]
-    [Migration("20241224001726_InitUpdateNotification")]
-    partial class InitUpdateNotification
+    [Migration("20250116104413_InitFistData")]
+    partial class InitFistData
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -245,39 +245,7 @@ namespace Genilog_WebApi.Migrations
                     b.ToTable("FeedbackModelDatas");
                 });
 
-            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.LogisticsChatModelData", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("GroupChatId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Message")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MessageType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("ReceiverId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("SenderId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("LogisticsChatModelDatas");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.LogisticsDataModel", b =>
+            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.CompanyModelData", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -289,9 +257,6 @@ namespace Genilog_WebApi.Migrations
                     b.Property<string>("AccountNumber")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Address")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("Available")
                         .HasColumnType("bit");
 
@@ -301,7 +266,13 @@ namespace Genilog_WebApi.Migrations
                     b.Property<string>("CompanyAddress")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("CompanyEmail")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("CompanyInfo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CompanyLogo")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CompanyName")
@@ -313,41 +284,14 @@ namespace Genilog_WebApi.Migrations
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Email")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("IdCardUpload")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IdCardVerification")
-                        .HasColumnType("bit");
-
-                    b.Property<bool?>("IsIndividual")
-                        .HasColumnType("bit");
-
-                    b.Property<bool?>("IsVerified")
-                        .HasColumnType("bit");
-
                     b.Property<double>("Latitude")
                         .HasColumnType("float");
-
-                    b.Property<string>("LicenseUpload")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("LicenseVerification")
-                        .HasColumnType("bit");
 
                     b.Property<string>("Locality")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("LogisticsLogo")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<double>("Longitude")
                         .HasColumnType("float");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("NoOfTrucks")
                         .HasColumnType("int");
@@ -372,20 +316,20 @@ namespace Genilog_WebApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("LogisticsDataModels");
+                    b.ToTable("CompanyModelDatas");
                 });
 
-            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.LogisticsReviewModel", b =>
+            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.CompanyReviewModel", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("CompanyModelDataId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<Guid>("LogisticsDataModelId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ProfileImage")
                         .HasColumnType("nvarchar(max)");
@@ -404,9 +348,9 @@ namespace Genilog_WebApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LogisticsDataModelId");
+                    b.HasIndex("CompanyModelDataId");
 
-                    b.ToTable("LogisticsReviewModels");
+                    b.ToTable("CompanyReviewModels");
                 });
 
             modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.OrderModelData", b =>
@@ -553,6 +497,140 @@ namespace Genilog_WebApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("OrderModelDatas");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.RidersChatModelData", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GroupChatId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MessageType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("ReceiverId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("SenderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RidersChatModelDatas");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.RidersModelData", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AccountName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccountNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Address")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Available")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("BankName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CompanyName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("bit");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Locality")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PostCodes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProfilePicture")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("int");
+
+                    b.Property<string>("State")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RidersModelDatas");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.RidersReviewModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ProfileImage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("RatingNum")
+                        .HasColumnType("float");
+
+                    b.Property<string>("ReviewMessage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("RidersModelDataId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RidersModelDataId");
+
+                    b.ToTable("RidersReviewModels");
                 });
 
             modelBuilder.Entity("Genilog_WebApi.Model.Notification_Model.NotificationModel", b =>
@@ -1548,15 +1626,26 @@ namespace Genilog_WebApi.Migrations
                     b.Navigation("Roles");
                 });
 
-            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.LogisticsReviewModel", b =>
+            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.CompanyReviewModel", b =>
                 {
-                    b.HasOne("Genilog_WebApi.Model.LogisticsModel.LogisticsDataModel", "LogisticsDataModels")
-                        .WithMany("LogisticsReviewModels")
-                        .HasForeignKey("LogisticsDataModelId")
+                    b.HasOne("Genilog_WebApi.Model.LogisticsModel.CompanyModelData", "CompanyModelDatas")
+                        .WithMany("CompanyReviewModels")
+                        .HasForeignKey("CompanyModelDataId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("LogisticsDataModels");
+                    b.Navigation("CompanyModelDatas");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.RidersReviewModel", b =>
+                {
+                    b.HasOne("Genilog_WebApi.Model.LogisticsModel.RidersModelData", "RidersModelDatas")
+                        .WithMany("RidersReviewModels")
+                        .HasForeignKey("RidersModelDataId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RidersModelDatas");
                 });
 
             modelBuilder.Entity("Genilog_WebApi.Model.PlacesModel.HotelFacilities", b =>
@@ -1811,9 +1900,14 @@ namespace Genilog_WebApi.Migrations
                     b.Navigation("User_Roles");
                 });
 
-            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.LogisticsDataModel", b =>
+            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.CompanyModelData", b =>
                 {
-                    b.Navigation("LogisticsReviewModels");
+                    b.Navigation("CompanyReviewModels");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.RidersModelData", b =>
+                {
+                    b.Navigation("RidersReviewModels");
                 });
 
             modelBuilder.Entity("Genilog_WebApi.Model.PlacesModel.HotelDataModel", b =>

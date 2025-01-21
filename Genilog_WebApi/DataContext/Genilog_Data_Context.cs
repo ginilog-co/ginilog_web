@@ -26,13 +26,17 @@ namespace Genilog_WebApi.DataContext
              .WithMany(y => y.DeliveryAddresses)
              .HasForeignKey(x => x.UsersDataModelTableId);
 
-           
-            // Logistics
 
-            modelBuilder.Entity<LogisticsReviewModel>()
-                .HasOne(x => x.LogisticsDataModels)
-                .WithMany(y => y.LogisticsReviewModels)
-                .HasForeignKey(x => x.LogisticsDataModelId);
+            // Company
+            modelBuilder.Entity<CompanyReviewModel>()
+                .HasOne(x => x.CompanyModelDatas)
+                .WithMany(y => y.CompanyReviewModels)
+                .HasForeignKey(x => x.CompanyModelDataId);
+
+            modelBuilder.Entity<RidersReviewModel>()
+                .HasOne(x => x.RidersModelDatas)
+                .WithMany(y => y.RidersReviewModels)
+                .HasForeignKey(x => x.RidersModelDataId);
 
             //Places Model
             modelBuilder.Entity<PlacesDataModel>()
@@ -155,11 +159,13 @@ namespace Genilog_WebApi.DataContext
         public DbSet<FeedbackModelData>? FeedbackModelDatas { get; set; }
         public DbSet<NotificationModel>? NotificationModels { get; set; }
 
-        // Logistics
-        public DbSet<LogisticsDataModel>? LogisticsDataModels { get; set; }
-        public DbSet<LogisticsReviewModel>? LogisticsReviewModels { get; set; }
+        // Company
+        public DbSet<CompanyModelData>? CompanyModelDatas { get; set; }
+        public DbSet<CompanyReviewModel>? CompanyReviewModels { get; set; }
+        public DbSet<RidersModelData>? RidersModelDatas { get; set; }
+        public DbSet<RidersReviewModel>? RidersReviewModels { get; set; }
         public DbSet<OrderModelData>? OrderModelDatas { get; set; }
-        public DbSet<LogisticsChatModelData>? LogisticsChatModelDatas { get; set; }
+        public DbSet<RidersChatModelData>? RidersChatModelDatas { get; set; }
 
         // Hotels Data
         public DbSet<HotelDataModel>? HotelDataModels { get; set; }

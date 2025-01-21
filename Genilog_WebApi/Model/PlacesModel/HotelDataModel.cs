@@ -72,7 +72,7 @@ namespace Genilog_WebApi.Model.PlacesModel
 
     // Hotel Data DTO
 
-    public class HotelDataTableDto
+    public class HotelDataModelDto
     {
         public Guid Id { get; set; }
         public Guid AdminId { get; set; }
