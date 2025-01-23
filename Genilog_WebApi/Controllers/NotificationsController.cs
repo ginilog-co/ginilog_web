@@ -199,7 +199,7 @@ namespace Genilog_WebApi.Controllers
                     NotificationType = request.NotificationType,
                 };
                 // Pass detials to repository
-                contacts = await notificationRepository.AddAsync(contacts);
+                await notificationRepository.AddAsync(contacts);
                
                 return Ok("Notification Sends");
                

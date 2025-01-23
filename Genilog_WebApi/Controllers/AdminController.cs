@@ -311,7 +311,32 @@ namespace Genilog_WebApi.Controllers
             };
             return Ok(userDto2);
         }
-       
+
+
+
+        [HttpDelete]
+        [Route("{id:guid}")]
+        [Authorize(Roles = "Super_Admin")]
+        public async Task<IActionResult> DeleteUserAsync(Guid id)
+        {
+            // Get the region from the database
+            var user = await generalUserRepository.DeleteAsync(id);
+            // if null NotFound
+            if (user == null)
+            {
+                return BadRequest("User Does not Exist");
+            }
+
+            else
+            {
+                await usersRepository.DeleteAsync(id);
+                return Ok("Deleted Sucessfully");
+            }
+
+
+        }
+
+
         [HttpPut]
         [Route("update-device-token")]
         [Authorize]
@@ -363,28 +388,6 @@ namespace Genilog_WebApi.Controllers
                 }
 
             }
-
-        }
-
-        [HttpDelete]
-        [Route("{id:guid}")]
-        [Authorize(Roles = "Super_Admin")]
-        public async Task<IActionResult> DeleteUserAsync(Guid id)
-        {
-            // Get the region from the database
-            var user = await generalUserRepository.DeleteAsync(id);
-            // if null NotFound
-            if (user == null)
-            {
-                return BadRequest("User Does not Exist");
-            }
-
-            else
-            {
-                await usersRepository.DeleteAsync(id);
-                return Ok("Deleted Sucessfully");
-            }
-
 
         }
 

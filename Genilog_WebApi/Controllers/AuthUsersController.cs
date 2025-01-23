@@ -592,7 +592,7 @@ namespace Genilog_WebApi.Controllers
 
        
         [HttpPut]
-        [Route("update")]
+        [Route("update-user")]
         [Authorize(Roles = "User")]
         public async Task<IActionResult> UpdateUserAsync([FromBody] UpdateUserRequest request)
         {
