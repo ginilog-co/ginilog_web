@@ -6,6 +6,10 @@
         public string? Locality { get; set; }
         public string? AnyItem { get; set; }
     }
+    public class FilterData
+    {
+        public string? AnyItem { get; set; }
+    }
 
     public class FilterAllData
     {

@@ -22,6 +22,8 @@ namespace Genilog_WebApi.Profiles
 
             CreateMap<RidersChatModelData, RidersChatModelDataDto>()
            .ReverseMap();
+            CreateMap<PackageImageList, PackageImageListDto>()
+            .ReverseMap();
 
         }
     }

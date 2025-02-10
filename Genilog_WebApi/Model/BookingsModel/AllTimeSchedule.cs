@@ -1,128 +1,7 @@
-﻿
-namespace Genilog_WebApi.Model.PlacesModel
+﻿namespace Genilog_WebApi.Model.BookingsModel
 {
     public class AllTimeSchedule
     {
-    }
-    public class PlacesMondayModel
-    {
-        public Guid Id { get; set; }
-        public string? HourStart { get; set; }
-        public string? HourEnd { get; set; }
-        public bool? IsClosed { get; set; }
-        public PlacesDataModel? PlacesDataModels { get; set; }
-        public Guid PlacesDataModelId { get; set; }
-    }
-    public class PlacesTuesdayModel
-    {
-        public Guid Id { get; set; }
-        public string? HourStart { get; set; }
-        public string? HourEnd { get; set; }
-        public bool? IsClosed { get; set; }
-        public PlacesDataModel? PlacesDataModels { get; set; }
-        public Guid PlacesDataModelId { get; set; }
-    }
-    public class PlacesWednesdayModel
-    {
-        public Guid Id { get; set; }
-        public string? HourStart { get; set; }
-        public string? HourEnd { get; set; }
-        public bool? IsClosed { get; set; }
-        public PlacesDataModel? PlacesDataModels { get; set; }
-        public Guid PlacesDataModelId { get; set; }
-    }
-    public class PlacesThursdayModel
-    {
-        public Guid Id { get; set; }
-        public string? HourStart { get; set; }
-        public string? HourEnd { get; set; }
-        public bool? IsClosed { get; set; }
-        public PlacesDataModel? PlacesDataModels { get; set; }
-        public Guid PlacesDataModelId { get; set; }
-    }
-    public class PlacesFridayModel
-    {
-        public Guid Id { get; set; }
-        public string? HourStart { get; set; }
-        public string? HourEnd { get; set; }
-        public bool? IsClosed { get; set; }
-        public PlacesDataModel? PlacesDataModels { get; set; }
-        public Guid PlacesDataModelId { get; set; }
-    }
-    public class PlacesSaturdayModel
-    {
-        public Guid Id { get; set; }
-        public string? HourStart { get; set; }
-        public string? HourEnd { get; set; }
-        public bool? IsClosed { get; set; }
-        public PlacesDataModel? PlacesDataModels { get; set; }
-        public Guid PlacesDataModelId { get; set; }
-    }
-    public class PlacesSundayModel
-    {
-        public Guid Id { get; set; }
-        public string? HourStart { get; set; }
-        public string? HourEnd { get; set; }
-        public bool? IsClosed { get; set; }
-        public PlacesDataModel? PlacesDataModels { get; set; }
-        public Guid PlacesDataModelId { get; set; }
-    }
-    // dtos
-    public class PlacesMondayModelDto
-    {
-        public Guid Id { get; set; }
-        public string? HourStart { get; set; }
-        public string? HourEnd { get; set; }
-        public bool? IsClosed { get; set; }
-        public Guid PlacesDataModelId { get; set; }
-    }
-    public class PlacesTuesdayModelDto
-    {
-        public Guid Id { get; set; }
-        public string? HourStart { get; set; }
-        public string? HourEnd { get; set; }
-        public bool? IsClosed { get; set; }
-        public Guid PlacesDataModelId { get; set; }
-    }
-    public class PlacesWednesdayModelDto
-    {
-        public Guid Id { get; set; }
-        public string? HourStart { get; set; }
-        public string? HourEnd { get; set; }
-        public bool? IsClosed { get; set; }
-        public Guid PlacesDataModelId { get; set; }
-    }
-    public class PlacesThursdayModelDto
-    {
-        public Guid Id { get; set; }
-        public string? HourStart { get; set; }
-        public string? HourEnd { get; set; }
-        public bool? IsClosed { get; set; }
-        public Guid PlacesDataModelId { get; set; }
-    }
-    public class PlacesFridayModelDto
-    {
-        public Guid Id { get; set; }
-        public string? HourStart { get; set; }
-        public string? HourEnd { get; set; }
-        public bool? IsClosed { get; set; }
-        public Guid PlacesDataModelId { get; set; }
-    }
-    public class PlacesSaturdayModelDto
-    {
-        public Guid Id { get; set; }
-        public string? HourStart { get; set; }
-        public string? HourEnd { get; set; }
-        public bool? IsClosed { get; set; }
-        public Guid PlacesDataModelId { get; set; }
-    }
-    public class PlacesSundayModelDto
-    {
-        public Guid Id { get; set; }
-        public string? HourStart { get; set; }
-        public string? HourEnd { get; set; }
-        public bool? IsClosed { get; set; }
-        public Guid PlacesDataModelId { get; set; }
     }
 
     // Hotel Time Schedule
@@ -220,7 +99,7 @@ namespace Genilog_WebApi.Model.PlacesModel
         public string? HourStart { get; set; }
         public string? HourEnd { get; set; }
         public bool? IsClosed { get; set; }
-        public Guid PlacesDataModelId { get; set; }
+        public Guid AirlineDataModelId { get; set; }
     }
     public class HotelFridayModelDto
     {
@@ -262,6 +141,6 @@ namespace Genilog_WebApi.Model.PlacesModel
     {
         public string? Start { get; set; }
         public string? End { get; set; }
-        public bool IsClosed { get; set; }
+        public bool? IsClosed { get; set; }
     }
 }

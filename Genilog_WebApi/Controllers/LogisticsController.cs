@@ -1,22 +1,22 @@
 ﻿using AutoMapper;
-using Genilog_WebApi.Key;
-using Genilog_WebApi.Model.LogisticsModel;
+using FirebaseAdmin.Messaging;
+using Genilog_WebApi.EmailSender;
 using Genilog_WebApi.Model;
+using Genilog_WebApi.Model.AuthModel;
+using Genilog_WebApi.Model.LogisticsModel;
+using Genilog_WebApi.Model.Notification_Model;
 using Genilog_WebApi.Repository.AuthRepo;
+using Genilog_WebApi.Repository.LogisticsRepo;
+using Genilog_WebApi.Repository.NotificationRepo;
 using Genilog_WebApi.Repository.UploadRepo;
+using Genilog_WebApi.Repository.UserRepo;
 using Google.Cloud.Firestore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using System.Net.Mail;
-using System.Net;
-using Genilog_WebApi.Model.AuthModel;
-using Genilog_WebApi.Repository.LogisticsRepo;
-using Genilog_WebApi.Repository.UserRepo;
-using Genilog_WebApi.EmailSender;
-using Genilog_WebApi.Repository.PlacesRepo;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Logging;
+using System.Net;
+using System.Net.Mail;
+using System.Security.Claims;
 
 namespace Genilog_WebApi.Controllers
 {
@@ -25,7 +25,8 @@ namespace Genilog_WebApi.Controllers
     public class LogisticsController(IHostEnvironment _env, IMapper mapper, ITokenHandler tokenHandler
         , IGeneralUserRepository generalUserRepository, IUploadRepository uploadRepository, IRolesRepository rolesRepository, IUser_RoleRepository user_RoleRepository, 
         IRidersRepository ridersRepository, ICompanyRepository companyRepository
-         , IHubContext<LogisticsHubRepository> _hubContext) : ControllerBase
+         , INotificationRepository notificationRepository, IHubContext<LogisticsHubRepository> _hubContext, IHubContext<NotificationHub> _notificationHubContext,
+        IUserRepository newUsersRepository) : ControllerBase
     {
         private readonly IHostEnvironment _env = _env;
         private readonly IMapper mapper = mapper;
@@ -36,7 +37,10 @@ namespace Genilog_WebApi.Controllers
         private readonly IUploadRepository uploadRepository = uploadRepository;
         private readonly ICompanyRepository companyRepository = companyRepository;
         private readonly IRidersRepository ridersRepository = ridersRepository;
+        readonly INotificationRepository notificationRepository = notificationRepository;
         private readonly IHubContext<LogisticsHubRepository> _hubContext = _hubContext;
+        private readonly IHubContext<NotificationHub> _notificationHubContext = _notificationHubContext;
+        private readonly IUserRepository newUsersRepository = newUsersRepository;
         //  readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
 
 
@@ -278,7 +282,6 @@ namespace Genilog_WebApi.Controllers
             else
             {
                 var userDto = mapper.Map<List<CompanyModelDataDto>>(events);
-                await _hubContext.Clients.All.SendAsync("GetAllCompany", userDto);
                 return Ok(userDto);
             }
 
@@ -299,7 +302,6 @@ namespace Genilog_WebApi.Controllers
             else
             {
                 var contactsDto = mapper.Map<CompanyModelDataDto>(contacts);
-                await _hubContext.Clients.All.SendAsync($"GetCompany{id}", contactsDto);
                 return Ok(contactsDto);
             }
         }
@@ -374,6 +376,7 @@ namespace Genilog_WebApi.Controllers
                 await generalUserRepository.UpdateAsync(user.Id, gen);
                 var contact = await companyRepository.GetAsync(user.Id);
                 var userDto = mapper.Map<CompanyModelDataDto>(contact);
+                await _hubContext.Clients.All.SendAsync("GetCompany", userDto);
                 return Ok(userDto);
             }
         }
@@ -484,6 +487,8 @@ namespace Genilog_WebApi.Controllers
                     Available = contacts.Available,
                     CreatedAt = contacts.CreatedAt,
                 };
+                await _hubContext.Clients.All.SendAsync("GetCompany", contactsDto);
+                await _notificationHubContext.Clients.Group(contacts.Id.ToString()).SendAsync("NOTIFICATION", contactsDto);
                 return CreatedAtAction(nameof(GetCompanyAsync), new { id = contactsDto.Id }, contactsDto);
             }
         }
@@ -522,14 +527,12 @@ namespace Genilog_WebApi.Controllers
                 var contacts = await ridersRepository.GetAllAsync();
                 var contactsDto = mapper.Map<List<RidersModelDataDto>>(contacts);
                 contactsDto = contactsDto.Where(x => x.CompanyId == user.Id).ToList();
-                await _hubContext.Clients.All.SendAsync("GetAllRider", contactsDto);
                 return Ok(contactsDto);
             }
             else
             {
                 var contacts = await ridersRepository.GetAllAsync();
                 var contactsDto = mapper.Map<List<RidersModelDataDto>>(contacts);
-                await _hubContext.Clients.All.SendAsync("GetAllRider", contactsDto);
                 return Ok(contactsDto);
             }
           
@@ -549,7 +552,6 @@ namespace Genilog_WebApi.Controllers
             else
             {
                 var contactsDto = mapper.Map<RidersModelDataDto>(contacts);
-                await _hubContext.Clients.All.SendAsync($"GetRider{id}", contactsDto);
                 return Ok(contactsDto);
             }
         }
@@ -576,7 +578,7 @@ namespace Genilog_WebApi.Controllers
 
         [HttpPut]
         [Route("rider/{id:guid}")]
-        [Authorize(Roles = "User,Admin,Super_Admin")]
+        [Authorize(Roles = "Manager,Admin,Super_Admin")]
         public async Task<IActionResult> UpdateRidersAsync([FromRoute] Guid id, [FromBody] UpdateRiders request)
         {
             
@@ -622,6 +624,7 @@ namespace Genilog_WebApi.Controllers
                 await generalUserRepository.UpdateAsync(user.Id, gen);
                 var contact = await ridersRepository.GetAsync(user.Id);
                 var userDto = mapper.Map<RidersModelDataDto>(contact);
+                await _hubContext.Clients.All.SendAsync("GetRider", userDto);
                 return Ok(userDto);
             }
         }
@@ -706,6 +709,7 @@ namespace Genilog_WebApi.Controllers
                 // convert back to dto
                 var contact = await ridersRepository.GetAsync(contacts.Id);
                 var contactsDto = mapper.Map<RidersModelDataDto>(contact);
+                await _hubContext.Clients.All.SendAsync("GetRider", contactsDto);
                 return CreatedAtAction(nameof(GetRidersAsync), new { id = contactsDto.Id }, contactsDto);
             }
         }
@@ -752,136 +756,314 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
-
-        // Riders Chat Message
-        [HttpGet("all-riders-chat-messages")]
+        // Orders
+        [HttpGet("package-orders")]
         [Authorize]
-        public async Task<IActionResult> GetAllRidersChatAsync()
+        public async Task<IActionResult> GetAllPackageOrderAsync()
         {
-            List<RidersChatModelDataDto> data = [];
-            var events = await ridersRepository.GetAllRidersChatAsync();
-            events = [.. events.OrderByDescending(x => x.CreatedAt)];
-            var userDto = mapper.Map<List<RidersChatModelDataDto>>(events);
-            for (var i = 0; i < userDto.Count; i++)
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userId, out Guid userGuid))
             {
-                var sender = await generalUserRepository.GetAsync(userDto[i].SenderId);
-                var receiver = await ridersRepository.GetAsync(userDto[i].ReceiverId);
-                userDto[i].SenderProfileImage = sender.ImagePath;
-                userDto[i].SenderUserName = $"{sender.FirstName} {sender.LastName}";
-                userDto[i].ReceiverProfileImage = receiver.ProfilePicture;
-                userDto[i].ReceiverUserName = $"{receiver.CompanyName}";
-                data.Add(userDto[i]);
+                return BadRequest("Invalid User ID format.");
             }
-            var lid = data.OrderByDescending(x => x.CreatedAt).ToList();
-            var userDto2 = mapper.Map<List< RidersChatModelDataDto>>(lid);
-            return Ok(userDto2);
+            var user = await generalUserRepository.GetAsync(userGuid);
+
+            if (user.UserType=="Super_Admin"|| user.UserType=="Admin") 
+            {
+                var events = await companyRepository.GetAllOrderAsync();
+                events = [.. events.OrderByDescending(x => x.CreatedAt)];
+                var userDto = mapper.Map<List<OrderModelDataDto>>(events);
+                return Ok(userDto);
+            }
+           else
+            {
+                var events = await companyRepository.GetAllOrderAsync();
+                events = [.. events.OrderByDescending(x => x.CreatedAt)];
+                events = events.Where(x => x.UserId == user.Id || x.CompanyId == user.Id || x.RiderId == user.Id).ToList();
+                var userDto = mapper.Map<List<OrderModelDataDto>>(events);
+                return Ok(userDto);
+            }
+           
         }
 
-        [HttpGet("riders-chat-messages")]
+        [HttpGet]
+        [Route("package-orders/{id:guid}")]
+        [ActionName("GetPackageOrderAsync")]
         [Authorize]
-        public async Task<IActionResult> GetRidersChatAsync([FromHeader] Guid senderId, [FromHeader] Guid receiverId)
+        public async Task<IActionResult> GetPackageOrderAsync(Guid id)
         {
-            var sender = await generalUserRepository.GetAsync(senderId);
-            var receiver = await ridersRepository.GetAsync(receiverId);
-            if (sender == null)
+            var contacts = await companyRepository.GetOrderAsync(id);
+            if (contacts == null)
             {
-                var error = new ResponseModel()
-                {
-                    Message = "User Does not Exist",
-                    Status = true,
-                };
-                return BadRequest(error);
-            }
-            else if (receiver == null)
-            {
-                var error = new ResponseModel()
-                {
-                    Message = "User Does not Exist",
-                    Status = true,
-                };
-                return BadRequest(error);
+                return BadRequest("Id Does not Exist");
             }
             else
             {
-                List<RidersChatModelDataDto> data = [];
-
-                var groupChatId = $"{sender.Id}-{receiver.Id}";
-                var events = await ridersRepository.GetAllRidersChatAsync();
-                var valid = events.Where(x => x.GroupChatId == groupChatId);
-                events = [.. valid.OrderByDescending(x => x.CreatedAt)];
-                var userDto = mapper.Map<List< RidersChatModelDataDto>>(events);
-                for (var i = 0; i < userDto.Count; i++)
-                {
-                    userDto[i].SenderProfileImage = sender.ImagePath;
-                    userDto[i].SenderUserName = $"{sender.FirstName} {sender.LastName}";
-                    userDto[i].ReceiverProfileImage = receiver.ProfilePicture;
-                    userDto[i].ReceiverUserName = $"{receiver.CompanyName}";
-                    data.Add(userDto[i]);
-                }
-                var lid = data.OrderByDescending(x => x.CreatedAt).ToList();
-                var userDto2 = mapper.Map<List< RidersChatModelDataDto>>(lid);
-                return Ok(userDto2);
+                var contactsDto = mapper.Map<OrderModelDataDto>(contacts);
+                return Ok(contactsDto);
             }
         }
 
-        [HttpPost]
-        [Route("riders-chat-messages")]
-        [Authorize]
-        public async Task<IActionResult> AddRidersChatAsync([FromHeader] Guid senderId, [FromHeader] Guid receiverId, [FromBody] AddChatMessage message)
+        [HttpDelete]
+        [Route("package-orders/{id:guid}")]
+        [Authorize(Roles = "Super_Admin")]
+        public async Task<IActionResult> DeletePackageOrderAsync(Guid id)
         {
-            var validate = ValidateChat(message);
-
-            if (!validate)
+            // Get the region from the database
+            var user = await companyRepository.DeleteOrderAsync(id);
+            // if null NotFound
+            if (user == null)
             {
-                return BadRequest("Product Already Saved");
+                return BadRequest("gasStation Does not Exist");
+            }
+
+            else
+            {
+                var userDto = mapper.Map<OrderModelDataDto>(user);
+                return Ok(userDto);
+            }
+        }
+
+        [HttpPost("package-orders")]
+        [Authorize(Roles = "User,Admin,Super_Admin")]
+        public async Task<IActionResult> AddOrderAsync([FromHeader] Guid companyId, [FromBody] AddOrder request)
+        {
+            var check = ValidateOrder(request);
+
+            if (!check)
+            {
+                return BadRequest(ModelState);
             }
             else
             {
-                var sender = await generalUserRepository.GetAsync(senderId);
-                var receiver = await generalUserRepository.GetAsync(receiverId);
-                if (sender == null)
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!Guid.TryParse(userId, out Guid userGuid))
                 {
-                    var error = new ResponseModel()
-                    {
-                        Message = "User Does not Exist",
-                        Status = true,
-                    };
-                    return BadRequest(error);
+                    return BadRequest("Invalid User ID format.");
                 }
-                else if (receiver == null)
+                var user = await newUsersRepository.GetAsync(userGuid);
+                var company = await companyRepository.GetAsync(companyId);
+               
+                DateTime localTime = DateTime.Now;
+                TimeZoneInfo nigeriaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("W. Central Africa Standard Time");
+                DateTime nigeriaTime = TimeZoneInfo.ConvertTimeFromUtc(localTime.ToUniversalTime(), nigeriaTimeZone);
+                var contacts = new OrderModelData()
                 {
-                    var error = new ResponseModel()
-                    {
-                        Message = "User Does not Exist",
-                        Status = true,
-                    };
-                    return BadRequest(error);
+                    UserId = user.Id,
+                    TrackingNum = $"{CreateRandomTokenSix()}-{CreateRandomTokenFour()}-{CreateRandomTokenThree()}",
+                    OrderStatus = "Open",
+                    ItemCost=request.ItemCost,
+                    ItemDescription=request.ItemDescription,
+                    ItemModelNumber=request.ItemModelNumber,
+                    ItemName=request.ItemName,
+                    ItemQuantity=request.ItemQuantity,
+                    ConfirmationImage="",
+                    Comment="",
+                    QRCode="",
+                    PackageType=request.PackageType,
+                    ExpectedDeliveryTime="",
+                    CurrentLatitude= request.SenderLatitude,
+                    CurrentLongitude= request.SenderLongitude,
+                    CurrentLocation= request.SenderAddress,
+                    // Company
+                    CompanyId = company.Id,
+                    CompanyAddress=company.CompanyAddress,
+                    CompanyEmail=company.CompanyEmail,
+                    CompanyName=company.CompanyName,
+                    CompanyPhoneNo=company.PhoneNumber,
+                    // Sender
+                    SenderName = $"{user.FirstName} {user.LastName}",
+                    SenderPhoneNo = user.PhoneNo,
+                    SenderEmail = user.Email,
+                    SenderAddress = request.SenderAddress,
+                    SenderLocality = request.SenderState,
+                    SenderState = request.SenderState,
+                    SenderPostalCode = request.SenderPostalCode,
+                    SenderLatitude = request.SenderLatitude,
+                    SenderLongitude = request.SenderLongitude,
+                    // Receiver
+                    RecieverAddress= request.RecieverAddress,
+                    RecieverEmail= request.RecieverEmail,
+                    RecieverLocality= request.RecieverLocality,
+                    RecieverName= request.RecieverName,
+                    RecieverState= request.RecieverState,
+                    RecieverPhoneNo= request.RecieverPhoneNo,
+                    RecieverPostalCode= request.RecieverPostalCode,
+                    RecieverLatitude= request.RecieverLatitude,
+                    RecieverLongitude= request.RecieverLongitude,
+                    ShippingCost=0.001,
+                    TrnxReference = "",
+                    PaymentStatus = false,
+                    PaymentChannel = "",
+                    RiderId = Guid.Empty,
+                    RiderName = "",
+                    UpdatedAt = nigeriaTime,
+                    CreatedAt = nigeriaTime,
+                   
+                };
+                // Pass detials to repository
+                contacts = await companyRepository.AddOrderAsync(contacts);
+                var datra = await companyRepository.GetOrderAsync(contacts.Id);
+                var contactsDto = mapper.Map<OrderModelDataDto>(datra);
+                // await _hubContext.Clients.All.SendAsync("ReceiveMessage", user.RiderName, $"The Rider has the Order {user.OrderNum} on {user.OrderStatus} Status");
+                // var contactsDto = mapper.Map<GasOrderModelDataDto>(order);
+                // await _gasStationHubContext.Clients.Group(user.Id.ToString()).SendAsync("ORDER", contactsDto);
+                return Ok(contactsDto);
+            }
+        }
+
+
+        [HttpPut]
+        [Route("package-orders/{id:guid}")]
+        [Authorize(Roles = "Rider_User,User,Admin,Super_Admin")]
+        public async Task<IActionResult> UpdateGasOrderAsync([FromRoute] Guid id, [FromBody] UpdateOrder request)
+        {
+
+            DateTime localTime = DateTime.Now;
+            TimeZoneInfo nigeriaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("W. Central Africa Standard Time");
+            DateTime nigeriaTime = TimeZoneInfo.ConvertTimeFromUtc(localTime.ToUniversalTime(), nigeriaTimeZone);
+
+           var userDto1 = await companyRepository.GetOrderAsync(id);
+
+            // check the null value
+            if (userDto1 == null)
+            {
+                return BadRequest("User Does not Exist");
+            }
+            // convert back to dto
+            else
+            {
+
+                var user = new OrderModelData()
+                {
+                    OrderStatus = !string.IsNullOrWhiteSpace(request.OrderStatus) ? request.OrderStatus : userDto1.OrderStatus,
+                    ExpectedDeliveryTime= !string.IsNullOrWhiteSpace(request.ExpectedDeliveryTime) ? request.ExpectedDeliveryTime : userDto1.ExpectedDeliveryTime,
+                    ConfirmationImage = !string.IsNullOrWhiteSpace(request.ConfirmationImage) ? request.ConfirmationImage : userDto1.ConfirmationImage,
+                    ShippingCost = (double)(request.ShippingCost ?? userDto1.ShippingCost),
+                    TrnxReference = !string.IsNullOrWhiteSpace(request.TrnxReference) ? request.TrnxReference : userDto1.TrnxReference,
+                    PaymentChannel = !string.IsNullOrWhiteSpace(request.PaymentChannel) ? request.PaymentChannel : userDto1.PaymentChannel,
+                    PaymentStatus = (bool)(request.PaymentStatus ?? userDto1.PaymentStatus),
+                    Comment = !string.IsNullOrWhiteSpace(request.Comment) ? request.Comment : userDto1.Comment,
+                    CurrentLatitude = (double)(request.CurrentLatitude ?? userDto1.CurrentLatitude),
+                    CurrentLongitude = (double)(request.CurrentLongitude ?? userDto1.CurrentLongitude),
+                    CurrentLocation = !string.IsNullOrWhiteSpace(request.CurrentLocation) ? request.CurrentLocation : userDto1.CurrentLocation,
+                    UpdatedAt = nigeriaTime,
+                };
+
+                // Update detials to repository
+                user = await companyRepository.UpdateOrderAsync(id, user);
+                var datra = await companyRepository.GetOrderAsync(user.Id);
+                var contactsDto = mapper.Map<OrderModelDataDto>(datra);
+                // await _hubContext.Clients.All.SendAsync("ReceiveMessage", user.RiderName, $"The Rider has the Order {user.OrderNum} on {user.OrderStatus} Status");
+                // var contactsDto = mapper.Map<GasOrderModelDataDto>(order);
+                // await _gasStationHubContext.Clients.Group(user.Id.ToString()).SendAsync("ORDER", contactsDto);
+                return Ok(contactsDto);
+            }
+        }
+
+        [HttpPut]
+        [Route("package-orders-rider/{id:guid}")]
+        [Authorize(Roles = "Manager,Admin,Super_Admin")]
+        public async Task<IActionResult> UpdateRiderAsync([FromRoute] Guid id, [FromHeader] Guid riderId)
+        {
+            DateTime localTime = DateTime.Now;
+            TimeZoneInfo nigeriaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("W. Central Africa Standard Time");
+            DateTime nigeriaTime = TimeZoneInfo.ConvertTimeFromUtc(localTime.ToUniversalTime(), nigeriaTimeZone);
+
+            var rider = await ridersRepository.GetAsync(riderId);
+            if (rider == null)
+            {
+                return BadRequest("Rider Does not Exist");
+            }
+            else
+            {
+                var user = new OrderModelData()
+                {
+                    RiderId = rider.Id,
+                    RiderName = $"{rider.Name}",
+                };
+
+                // Update detials to repository
+                user = await companyRepository.AssignRiderAsync(id, user);
+                // check the null value
+                if (user == null)
+                {
+                    return BadRequest("User Does not Exist");
                 }
+                // convert back to dto
                 else
                 {
-                    var interested = new  RidersChatModelData()
+                    var user2 = new OrderModelData()
                     {
-                        SenderId = sender.Id,
-                        ReceiverId = receiver.Id,
-                        Message = message.Message,
-                        GroupChatId = $"{sender.Id}-{receiver.Id}",
-                        MessageType = message.MessageType,
-                        IsRead = false,
-                        CreatedAt = DateTime.Now,
+                        OrderStatus = "Open",
+                        ExpectedDeliveryTime = user.ExpectedDeliveryTime,
+                        ConfirmationImage = user.ConfirmationImage,
+                        ShippingCost = user.ShippingCost,
+                        TrnxReference = user.TrnxReference,
+                        PaymentChannel = user.PaymentChannel,
+                        PaymentStatus = user.PaymentStatus,
+                        Comment = user.Comment,
+                        CurrentLatitude = user.CurrentLatitude,
+                        CurrentLongitude = user.CurrentLongitude,
+                        CurrentLocation = user.CurrentLocation,
+                        UpdatedAt = nigeriaTime,
                     };
 
-                    interested = await ridersRepository.AddRidersChatAsync(interested);
-                    var date = DateTime.Now.ToString("ddd,MMM d,yyyy");
-                    var timeStamp = Timestamp.GetCurrentTimestamp();
-                    var userDto = new ResponseModel()
-                    {
-                        Message = "Success",
-                        Status = true,
-                    };
+                    // Update detials to repository
+                    user2 = await companyRepository.UpdateOrderAsync(id, user2);
+                    var datra = await companyRepository.GetOrderAsync(user2.Id);
+                    var contactsDto = mapper.Map<OrderModelDataDto>(datra);
+                    // await _hubContext.Clients.All.SendAsync("ReceiveMessage", user.RiderName, $"The Rider has the Order {user.OrderNum} on {user.OrderStatus} Status");
+                    // var contactsDto = mapper.Map<GasOrderModelDataDto>(order);
+                    // await _gasStationHubContext.Clients.Group(user.Id.ToString()).SendAsync("ORDER", contactsDto);
+                    return Ok(contactsDto);
 
-                    return Ok(userDto);
                 }
             }
+        }
+
+
+        [HttpPut]
+        [Route("package-orders-image/{id:guid}")]
+        [Authorize(Roles = "Rider_User,Admin,Super_Admin")]
+        public async Task<IActionResult> UpdatePurchaseImageAsync([FromRoute] Guid id, UpdatesPurchaseImages request)
+        {
+            List<PackageImageList> ticketBonus = [];
+            var rtnlist = new List<string>();
+            DateTime localTime = DateTime.Now;
+            TimeZoneInfo nigeriaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("W. Central Africa Standard Time");
+            DateTime nigeriaTime = TimeZoneInfo.ConvertTimeFromUtc(localTime.ToUniversalTime(), nigeriaTimeZone);
+            // Update detials to repository
+            var user = await companyRepository.GetOrderAsync(id);
+
+            // check the null value
+            if (user == null)
+            {
+                return BadRequest("Order Does not Exist");
+            }
+            // convert back to dto
+            else
+            {
+                for (var i = 0; i < request.ImageURL!.Count; i++)
+                {
+                    rtnlist.Add(request.ImageURL[i]);
+                    var languageUpdate = new PackageImageList()
+                    {
+                        OrderModelDataId = user.Id,
+                        ImageUrlFile = rtnlist[i],
+                    };
+                    languageUpdate = await companyRepository.AddPackageImagesAsync(languageUpdate);
+                    ticketBonus.Add(languageUpdate);
+                }
+
+                var datra = await companyRepository.GetOrderAsync(user.Id);
+                var contactsDto = mapper.Map<OrderModelDataDto>(datra);
+                // await _hubContext.Clients.All.SendAsync("ReceiveMessage", user.RiderName, $"The Rider has the Order {user.OrderNum} on {user.OrderStatus} Status");
+                // var contactsDto = mapper.Map<GasOrderModelDataDto>(order);
+                // await _gasStationHubContext.Clients.Group(user.Id.ToString()).SendAsync("ORDER", contactsDto);
+                return Ok(contactsDto);
+            }
+
         }
 
 
@@ -901,7 +1083,6 @@ namespace Genilog_WebApi.Controllers
             }
             return strrandom;
         }
-
         private static void SendEmailAvailableCode(string emailId, string activationcode, string username)
         {
 
@@ -932,7 +1113,6 @@ namespace Genilog_WebApi.Controllers
             };
             smtp.Send(message);
         }
-
         private static void SendChangePasswordCodeEmail(string emailId, string activationcode, string username)
         {
             //var varifyUrl = scheme + "://" + host + ":" + port + "/JobSeeker/ActivateAccount/" + activationcode;
@@ -962,7 +1142,6 @@ namespace Genilog_WebApi.Controllers
             };
             smtp.Send(message);
         }
-
         private bool ValidateCompany(AddCompany request)
         {
             if (request == null)
@@ -993,8 +1172,6 @@ namespace Genilog_WebApi.Controllers
             return true;
 
         }
-
-     
         private bool ValidateChat(AddChatMessage request)
         {
             if (request == null)
@@ -1009,6 +1186,102 @@ namespace Genilog_WebApi.Controllers
             }
             return true;
 
+        }
+
+        private bool ValidateOrder(AddOrder request)
+        {
+            if (request == null)
+            {
+                ModelState.AddModelError(nameof(request), $"Add  Data Is Required");
+                return false;
+            }
+
+            if (ModelState.ErrorCount > 0)
+            {
+                return false;
+            }
+            return true;
+
+        }
+        private static string CreateRandomTokenSix()
+        {
+            char[] charArr = "ABCDEFGHIJKLMNOPQLSTUVWXYZ0123456789".ToCharArray();
+            string strrandom = string.Empty;
+            Random objran = new();
+            for (int i = 0; i < 6; i++)
+            {
+                //It will not allow Repetation of Characters
+                int pos = objran.Next(1, charArr.Length);
+                if (!strrandom.Contains(charArr.GetValue(pos)!.ToString()!)) strrandom += charArr.GetValue(pos);
+                else i--;
+            }
+            return strrandom;
+        }
+        private static string CreateRandomTokenFour()
+        {
+            char[] charArr = "ABCDEFGHIJKLMNOPQLSTUVWXYZ0123456789".ToCharArray();
+            string strrandom = string.Empty;
+            Random objran = new();
+            for (int i = 0; i < 4; i++)
+            {
+                //It will not allow Repetation of Characters
+                int pos = objran.Next(1, charArr.Length);
+                if (!strrandom.Contains(charArr.GetValue(pos)!.ToString()!)) strrandom += charArr.GetValue(pos);
+                else i--;
+            }
+            return strrandom;
+        }
+        private static string CreateRandomTokenThree()
+        {
+            char[] charArr = "ABCDEFGHIJKLMNOPQLSTUVWXYZ0123456789".ToCharArray();
+            string strrandom = string.Empty;
+            Random objran = new();
+            for (int i = 0; i < 3; i++)
+            {
+                //It will not allow Repetation of Characters
+                int pos = objran.Next(1, charArr.Length);
+                if (!strrandom.Contains(charArr.GetValue(pos)!.ToString()!)) strrandom += charArr.GetValue(pos);
+                else i--;
+            }
+            return strrandom;
+        }
+        private async Task<string> SendNotification(Guid userId,Guid managerId,Guid riderId, string deviceToken, string names, double gasInputkg, string gasStation, string gasStationImage)
+        {
+
+
+            var message = new Message()
+            {
+                Notification = new Notification
+                {
+                    Title = "Customer Order Request",
+                    Body = $"{names} Has Open an Order of {gasInputkg}kg from {gasStation}",
+                    ImageUrl = $"{gasStationImage}"
+                },
+                Data = new Dictionary<string, string>()
+                {
+                    ["CustomData"] = "Hello, how are you doing?"
+                },
+                Token = deviceToken
+            };
+
+            var messaging = FirebaseMessaging.DefaultInstance;
+            var result = await messaging.SendAsync(message);
+            var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
+
+            var contacts = new NotificationModel()
+            {
+                UserId = userId,
+                Title = message.Notification.Title,
+                Body = message.Notification.Body,
+                DeviceToken = message.Token,
+                UpdatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+                ImageUrl = message.Notification.ImageUrl,
+                NotificationType = "Orders",
+            };
+            // Pass detials to repository
+            contacts = await notificationRepository.AddAsync(contacts);
+            return result;
         }
 
         #endregion

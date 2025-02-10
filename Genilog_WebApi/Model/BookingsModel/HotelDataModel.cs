@@ -1,18 +1,17 @@
-﻿
-namespace Genilog_WebApi.Model.PlacesModel
+﻿namespace Genilog_WebApi.Model.BookingsModel
 {
     public class HotelDataModel
     {
         public Guid Id { get; set; }
         public Guid AdminId { get; set; }
         public string? HotelName { get; set; }
-        public string?  HotelLogo   { get; set; }
+        public string? HotelLogo { get; set; }
         public string? HotelEmail { get; set; }
         public string? HotelDescription { get; set; }
         public string? HotelType { get; set; }
         public string? CheckInTime { get; set; }
-        public string? CheckOutTime {  get; set; }
-        public string? HotelWebsite {  get; set; }
+        public string? CheckOutTime { get; set; }
+        public string? HotelWebsite { get; set; }
         public string? HotelPhoneNo { get; set; }
         public string? Location { get; set; }
         public string? State { get; set; }
@@ -78,7 +77,7 @@ namespace Genilog_WebApi.Model.PlacesModel
         public Guid AdminId { get; set; }
         public string? HotelName { get; set; }
         public string? HotelLogo { get; set; }
-        public string? HotelEmail { get; set;}
+        public string? HotelEmail { get; set; }
         public string? HotelDescription { get; set; }
         public string? HotelType { get; set; }
         public string? CheckInTime { get; set; }
@@ -140,6 +139,7 @@ namespace Genilog_WebApi.Model.PlacesModel
         public string? HotelName { get; set; }
         public string? HotelLogo { get; set; }
         public string? HotelEmail { get; set; }
+        public string? HotelAdvertType { get; set; }
         public string? HotelDescription { get; set; }
         public string? HotelType { get; set; }
         public string? CheckInTime { get; set; }
@@ -149,13 +149,14 @@ namespace Genilog_WebApi.Model.PlacesModel
         public string? Location { get; set; }
         public string? State { get; set; }
         public string? Country { get; set; }
-        public double BookingAmount { get; set; }
-        public int NoOfRooms { get; set; }
+        public double? BookingAmount { get; set; }
+        public int? NoOfRooms { get; set; }
         public string? Locality { get; set; }
         public string? Postcode { get; set; }
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
-        public List<string>? HotelImages { get; set;}
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
+        public List<string>? HotelImages { get; set; }
+        public bool? Available { get; set; }
         public AddTimeSchedule? TimeSchedule { get; set; }
     }
 
@@ -181,7 +182,10 @@ namespace Genilog_WebApi.Model.PlacesModel
         public bool? Available { get; set; }
 
     }
-
+    public class AddHotelImages
+    {
+        public List<string>? HotelImages { get; set; }
+    }
     public class AddHotelFacilities
     {
         public string? Facilities { get; set; }

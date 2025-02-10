@@ -13,7 +13,7 @@ namespace Genilog_WebApi.Model.UsersDataModel
         [EmailAddress(ErrorMessage = "Invalid email address")]
         public string? Email { get; set; }
         [Required(AllowEmptyStrings = false, ErrorMessage = "PhoneNo required")]
-        [StringLength(11, ErrorMessage = "Must be 11 digit", MinimumLength = 11)]
+       // [StringLength(11, ErrorMessage = "Must be 10 digit", MinimumLength = 10)]
         [RegularExpression("^[0-9]+$", ErrorMessage = "Invalid Phone Number")]
         public string? PhoneNo { get; set; }
         [Required(AllowEmptyStrings = false, ErrorMessage = "Password is required")]

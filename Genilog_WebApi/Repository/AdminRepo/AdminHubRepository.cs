@@ -5,14 +5,9 @@ namespace Genilog_WebApi.Repository.AdminRepo
 {
     public class AdminHubRepository : Hub
     {
-        public async Task GetAllAdmin(List<AdminModelTableDto>  admin) 
+        public async Task GetAdmin(object admin)
         {
-            await Clients.All.SendAsync("GetAllAdmin", admin);
-        }
-
-        public async Task GetAdmin(Guid id, AdminModelTableDto admin)
-        {
-            await Clients.All.SendAsync($"GetAdmin{id}", admin);
+            await Clients.All.SendAsync("GetAdmin", admin);
         }
     }
 }

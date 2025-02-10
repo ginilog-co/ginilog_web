@@ -1,19 +1,19 @@
-﻿using Genilog_WebApi.Model.PlacesModel;
+﻿using Genilog_WebApi.Model.BookingsModel;
 using Genilog_WebApi.Model.UsersDataModel;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Genilog_WebApi.Repository.PlacesRepo
 {
-    public class PlacesHubRepository : Hub
+    public class BookingsHubRepository : Hub
     {
-        public async Task GetAllPlacesAsync(List<PlacesDataModelDto> admin)
+        public async Task GetAllAirlinesAsync(List<AirlineDataModelDto> admin)
         {
-            await Clients.All.SendAsync("GetAllPlaces", admin);
+            await Clients.All.SendAsync("GetAllAirlines", admin);
         }
 
-        public async Task GetPlaceAsync(Guid id, PlacesDataModelDto admin)
+        public async Task GetPlaceAsync(Guid id, AirlineDataModelDto admin)
         {
-            await Clients.All.SendAsync($"GetPlaces{id}", admin);
+            await Clients.All.SendAsync($"GetAirlines{id}", admin);
         }
         public async Task GetAllHotelAsync(List<HotelDataModelDto> admin)
         {

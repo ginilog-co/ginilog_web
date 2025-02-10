@@ -10,7 +10,8 @@
         public bool? EmailVerified { get; set; }
         public bool? PhoneVerified { get; set; }
         public string? FullName { get; set; }
-        public string? ProfileImage { get; set; }
+        public string? ProfileImage { get; set; }  
+        public string? IdAuthPassword { get; set; }
         public DateTime RefreshTokenExpiryTime { get; set; }
 
     }

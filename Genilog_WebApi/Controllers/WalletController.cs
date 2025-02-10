@@ -2,6 +2,7 @@
 using Genilog_WebApi.Model;
 using Genilog_WebApi.Model.WalletModel;
 using Genilog_WebApi.Repository.LogisticsRepo;
+using Genilog_WebApi.Repository.NotificationRepo;
 using Genilog_WebApi.Repository.WalletRepo;
 using Google.Cloud.Firestore;
 using Microsoft.AspNetCore.Authorization;
@@ -13,13 +14,14 @@ namespace Genilog_WebApi.Controllers
     [Route("api/[controller]")]
     [ApiController]
     public class WalletController(IHostEnvironment _env, IMapper mapper, IRidersRepository ridersRepository,
-        IWalletRepository walletRepository, IHubContext<WalletHubRepository> _hubContext) : ControllerBase
+        IWalletRepository walletRepository, IHubContext<WalletHubRepository> _hubContext, IHubContext<NotificationHub> _notificationHubContext) : ControllerBase
     {
         private readonly IHostEnvironment _env = _env;
         private readonly IMapper mapper = mapper;
         private readonly IRidersRepository ridersRepository = ridersRepository;
         private readonly IWalletRepository walletRepository = walletRepository;
         private readonly IHubContext<WalletHubRepository> _hubContext = _hubContext;
+        private readonly IHubContext<NotificationHub> _notificationHubContext = _notificationHubContext;
         readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2json");
 
 

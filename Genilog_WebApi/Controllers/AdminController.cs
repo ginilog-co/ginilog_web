@@ -24,7 +24,7 @@ namespace Genilog_WebApi.Controllers
     [ApiController]
     public class AdminController(IHostEnvironment _env, IAdminRepository usersRepository, IMapper mapper, ITokenHandler tokenHandler, IRolesRepository rolesRepository,
      IUser_RoleRepository user_RoleRepository, IUploadRepository uploadRepository, IGeneralUserRepository generalUserRepository,
-     IHubContext<AdminHubRepository> _hubContext) : ControllerBase
+     IHubContext<AdminHubRepository> _hubContext, IHubContext<NotificationHub> _notificationHubContext) : ControllerBase
     {
         private readonly IHostEnvironment _env = _env;
         private readonly IAdminRepository usersRepository = usersRepository;
@@ -35,6 +35,7 @@ namespace Genilog_WebApi.Controllers
         private readonly IUploadRepository uploadRepository = uploadRepository;
         private readonly IGeneralUserRepository generalUserRepository = generalUserRepository;
         private readonly IHubContext<AdminHubRepository> _hubContext = _hubContext;
+        private readonly IHubContext<NotificationHub> _notificationHubContext = _notificationHubContext;
         readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
 
         [HttpPost]
@@ -119,7 +120,6 @@ namespace Genilog_WebApi.Controllers
                 item.AdminType = t.UserType;
                 dto.Add(item);
             }
-            await _hubContext.Clients.All.SendAsync("GetAllAdmin", dto);
             return Ok(dto);
         }
 
@@ -144,7 +144,7 @@ namespace Genilog_WebApi.Controllers
                 var userDto = mapper.Map<AdminModelTableDto>(user);
                 var t = await generalUserRepository.GetAsync(user.Id);
                 userDto.AdminType = t.UserType;
-                await _hubContext.Clients.All.SendAsync($"GetAdmin{userGuid}", userDto);
+               
                 return Ok(userDto);
             }
 
@@ -154,8 +154,6 @@ namespace Genilog_WebApi.Controllers
         [Authorize(Roles = "Super_Admin")]
         public async Task<IActionResult> AddAdminAsync(AddAdminRequest request)
         {
-            
-            
             // Validate the request
             var check = await ValidateAddUserAsync(request);
 
@@ -245,9 +243,10 @@ namespace Genilog_WebApi.Controllers
                         AdminType = admin.UserType,
                         PhoneNo = users.PhoneNo,
                         DatePublished = users.DatePublished,
-                        CreatedAt = users.CreatedAt
-
+                        CreatedAt = users.CreatedAt,
                     };
+                    await _hubContext.Clients.All.SendAsync("GetAdmin", userDto);
+                    await _notificationHubContext.Clients.Group(users.Id.ToString()).SendAsync("NOTIFICATION", userDto);
                     return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.Id }, userDto);
                 }
                 else
@@ -299,16 +298,27 @@ namespace Genilog_WebApi.Controllers
                 PhoneNo = user.PhoneNo,
                 ImagePath = user.ImagePath,
             };
-            await generalUserRepository.UpdateAsync(user.Id, gen);
+          var t=  await generalUserRepository.UpdateAsync(user.Id, gen);
             // check the null value
             var userDto2 = new AdminModelTableDto()
             {
                 Id = user.Id,
                 SurName = user.SurName,
                 FirstName = user.FirstName,
-                PhoneNo = user.PhoneNo,
+                Email = user.Email,
+                Sex = user.Sex,
+                ImagePath = user.ImagePath,
                 StaffCode = user.StaffCode,
+                Address = user.Address,
+                Branch = user.Branch,
+                Locality = user.Locality,
+                State = user.State,
+                AdminType = t.UserType,
+                PhoneNo = user.PhoneNo,
+                DatePublished = user.DatePublished,
+                CreatedAt = user.CreatedAt,
             };
+            await _hubContext.Clients.All.SendAsync("GetAdmin", userDto);
             return Ok(userDto2);
         }
 

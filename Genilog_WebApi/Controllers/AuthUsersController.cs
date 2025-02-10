@@ -12,13 +12,17 @@ using Genilog_WebApi.EmailSender;
 using Genilog_WebApi.Repository.UserRepo;
 using System.Security.Claims;
 using Microsoft.AspNetCore.SignalR;
+using Google.Apis.Auth;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text.Json;
+using Genilog_WebApi.Repository.NotificationRepo;
 
 namespace Genilog_WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class AuthUsersController(IHostEnvironment _env, IGeneralUserRepository userRepository, ITokenHandler tokenHandler, IMapper mapper, IRolesRepository rolesRepository, IUser_RoleRepository user_RoleRepository, IUserRepository newUsersRepository,
-        IUploadRepository uploadRepository, IHubContext<UserHubRepository> _hubContext) : ControllerBase
+        IUploadRepository uploadRepository, IHubContext<UserHubRepository> _hubContext, IHubContext<NotificationHub> _notificationHubContext) : ControllerBase
     {
         private readonly IHostEnvironment _env = _env;
         private readonly IGeneralUserRepository userRepository = userRepository;
@@ -29,9 +33,10 @@ namespace Genilog_WebApi.Controllers
         private readonly IUserRepository newUsersRepository = newUsersRepository;
         private readonly IUploadRepository uploadRepository = uploadRepository;
         private readonly IHubContext<UserHubRepository> _hubContext = _hubContext;
+        private readonly IHubContext<NotificationHub> _notificationHubContext = _notificationHubContext;
         // readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
 
-
+        private const string googleClientId = "650523296976-86526ebsjn0266ogajsl6fllfl08jn5h.apps.googleusercontent.com";
         [HttpPut]
         [Route("update-device-token")]
         [Authorize]
@@ -134,8 +139,9 @@ namespace Genilog_WebApi.Controllers
                         PhoneVerified = user.PhoneNoConfirmed,
                         FullName = $"{userD.FirstName} {userD.LastName}",
                         ProfileImage = userD.ProfilePicture,
+                        IdAuthPassword = ""
                     };
-                   var request = await newUsersRepository.GetAsync(user.Id);
+                   var request  =await newUsersRepository.GetAsync(user.Id);
                     var users = new UsersDataModelTable()
                     {
                         FirstName = request.FirstName,
@@ -171,146 +177,332 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
-        [HttpPost]
-        [Route("authenticate-login")]
-        public async Task<IActionResult> LoginAsync(LoginExternalRequset requset)
+        [HttpPost("apple")]
+        public async Task<IActionResult> AppleAuth([FromBody] LoginExternalRequset requvest)
         {
-            var userExist = await userRepository.UserExistAsync(requset.Email!);
-            if (userExist)
+            try
             {
-                var user = await userRepository.AuthenticateAsync(requset.Email!, requset.ExternalId!);
-                var userD = await newUsersRepository.GetAsync(user.Id);
-                //generate jwt token
-                var token = tokenHandler.CreateTokenAsync(user);
-                var refreshToken = tokenHandler.RefreshTokenAsync(user.Email!);
-             
-                var userDto = new LoginDto()
+                // Decode the token
+                var handler = new JwtSecurityTokenHandler();
+                var tokenD = handler.ReadJwtToken(requvest.IdToken);
+
+                // Fetch Apple's public keys
+                var applePublicKeysUrl = "https://appleid.apple.com/auth/keys";
+                using var client = new HttpClient();
+                var keysResponse = client.GetStringAsync(applePublicKeysUrl).Result;
+                var keys = JsonDocument.Parse(keysResponse).RootElement.GetProperty("keys");
+
+                // Extract claims from the token
+                var userId = tokenD.Claims.FirstOrDefault(c => c.Type == "sub")?.Value; // Unique user ID
+                var email = tokenD.Claims.FirstOrDefault(c => c.Type == "email")?.Value; // User email
+                var emailVerified = tokenD.Claims.FirstOrDefault(c => c.Type == "email_verified")?.Value == "true"; // Email verification status
+                var givenName = tokenD.Claims.FirstOrDefault(c => c.Type == "given_name")?.Value; // User's given name
+                var familyName = tokenD.Claims.FirstOrDefault(c => c.Type == "family_name")?.Value; // User's family name
+
+                // Apple tokens do not include profile pictures directly
+
+                var userExist = await userRepository.UserExistAsync(email!);
+                if (userExist)
                 {
-                    Token = await token,
-                    RefreshToken = await refreshToken,
-                    RefreshTokenExpiryTime = user.RefreshTokenExpiryTime,
-                    UserId = user.Id,
-                    Email = user.Email,
-                    UserType = user.UserType,
-                    EmailVerified = user.EmailConfirmed,
-                    PhoneVerified = user.PhoneNoConfirmed,
-                    FullName = $"{userD.FirstName} {userD.LastName}",
-                    ProfileImage = userD.ProfilePicture,
-                };
-                var request = await newUsersRepository.GetAsync(user.Id);
-                var users = new UsersDataModelTable()
+                    var user = await userRepository.AuthenticateAsync(email!, userId!);
+                    var userD = await newUsersRepository.GetAsync(user.Id);
+                    //generate jwt token
+                    var token = tokenHandler.CreateTokenAsync(user);
+                    var refreshToken = tokenHandler.RefreshTokenAsync(user.Email!);
+
+                    var userDto = new LoginDto()
+                    {
+                        Token = await token,
+                        RefreshToken = await refreshToken,
+                        RefreshTokenExpiryTime = user.RefreshTokenExpiryTime,
+                        UserId = user.Id,
+                        Email = user.Email,
+                        UserType = user.UserType,
+                        EmailVerified = user.EmailConfirmed,
+                        PhoneVerified = user.PhoneNoConfirmed,
+                        FullName = $"{userD.FirstName} {userD.LastName}",
+                        ProfileImage = userD.ProfilePicture,
+                        IdAuthPassword = userId!
+                    };
+                    var request = await newUsersRepository.GetAsync(user.Id);
+                    var users = new UsersDataModelTable()
+                    {
+                        FirstName = request.FirstName,
+                        LastName = request.LastName,
+                        Email = request.Email,
+                        PhoneNo = request.PhoneNo,
+                        Sex = request.Sex,
+                        UserStatus = request.UserStatus,
+                        ProfilePicture = request.ProfilePicture,
+                        ReferralCode = request.ReferralCode,
+                        CreatedAt = request.CreatedAt,
+                        Address = request.Address,
+                        Locality = request.Locality,
+                        State = request.State,
+                        PostCodes = request.PostCodes,
+                        Latitude = request.Latitude,
+                        Longitude = request.Longitude,
+                        LastLoginAt = DateTime.UtcNow,
+                        LastSeenAt = request.LastSeenAt,
+                    };
+                    await newUsersRepository.UpdateAsync(user.Id, users);
+                    return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.UserId }, userDto);
+                }
+                else
                 {
-                    FirstName = request.FirstName,
-                    LastName = request.LastName,
-                    Email = request.Email,
-                    PhoneNo = request.PhoneNo,
-                    Sex = request.Sex,
-                    UserStatus = request.UserStatus,
-                    ProfilePicture = request.ProfilePicture,
-                    ReferralCode = request.ReferralCode,
-                    CreatedAt = request.CreatedAt,
-                    Address = request.Address,
-                    Locality = request.Locality,
-                    State = request.State,
-                    PostCodes = request.PostCodes,
-                    Latitude = request.Latitude,
-                    Longitude = request.Longitude,
-                    LastLoginAt = DateTime.UtcNow,
-                    LastSeenAt = request.LastSeenAt,
-                };
-                await newUsersRepository.UpdateAsync(user.Id, users);
-                return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.UserId }, userDto);
+                    var generalUsers = new GeneralUsers()
+                    {
+                        FirstName = givenName,
+                        LastName = familyName,
+                        Email = email,
+                        UserType = "User",
+                        VerificationToken = CreateRandomToken(),
+                        EmailConfirmed = true,
+                        PhoneNo = "",
+                        ImagePath = "",
+                        CreatedAt = DateTime.UtcNow,
+                        LockOutEndEnabled = false,
+                        AccessFailedCount = 0,
+                        TwoFactorEnabled = false,
+                        LockOutEnd = DateTime.UtcNow.AddDays(30),
+                        PhoneNoConfirmed = false,
+                        ResetTokenExpires = DateTime.UtcNow.AddMinutes(10),
+                        EmailTokenExpires = DateTime.UtcNow.AddMinutes(10),
+                        PhoneNoTokenExpires = DateTime.UtcNow.AddMinutes(10),
+                        RefreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(10),
+                        VerifiedAt = DateTime.UtcNow,
+                        PhoneVerificationToken = CreateRandomToken(),
+                        PhoneVerifiedAt = DateTime.UtcNow.AddMinutes(10),
+                        PasswordResetToken = "",
+                        RefreshToken = "",
+                    };
+                    generalUsers = await userRepository.AddAsync(generalUsers, userId!);
+                    var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
+                    var timeStamp = Timestamp.GetCurrentTimestamp();
+
+                    var users = new UsersDataModelTable()
+                    {
+                        Id = generalUsers.Id,
+                        FirstName = generalUsers.FirstName,
+                        LastName = generalUsers.LastName,
+                        Email = generalUsers.Email,
+                        PhoneNo = generalUsers.PhoneNo,
+                        Sex = "",
+                        UserStatus = false,
+                        ProfilePicture = generalUsers.ImagePath,
+                        ReferralCode = CreateRandomToken11(),
+                        CreatedAt = DateTime.UtcNow,
+                        LastLoginAt = DateTime.UtcNow,
+                        LastSeenAt = DateTime.UtcNow,
+                        Address = "",
+                        Locality = "",
+                        State = "",
+                        PostCodes = "",
+                        Latitude = 1.11,
+                        Longitude = 1.11,
+                    };
+                    // Pass detials to repository
+                    users = await newUsersRepository.AddAsync(users);
+                    var roles = new Roles()
+                    {
+                        Name = "User"
+                    };
+                    roles = await rolesRepository.AddAsync(roles);
+                    var user_Roles = new User_Role()
+                    {
+                        GeneralUsersId = users.Id,
+                        RoleId = roles.Id,
+                    };
+                    await user_RoleRepository.AddAsync(user_Roles);
+
+                    //Now Login Here
+                    var loginUser = await userRepository.AuthenticateAsync(generalUsers.Email!, userId!);
+                    var userD = await newUsersRepository.GetAsync(loginUser.Id);
+                    //generate jwt token
+                    var token = tokenHandler.CreateTokenAsync(loginUser);
+                    var refreshToken = tokenHandler.RefreshTokenAsync(loginUser.Email!);
+
+                    var userDto = new LoginDto()
+                    {
+                        Token = await token,
+                        RefreshToken = await refreshToken,
+                        RefreshTokenExpiryTime = loginUser.RefreshTokenExpiryTime,
+                        UserId = loginUser.Id,
+                        Email = loginUser.Email,
+                        UserType = loginUser.UserType,
+                        EmailVerified = loginUser.EmailConfirmed,
+                        PhoneVerified = loginUser.PhoneNoConfirmed,
+                        FullName = $"{userD.FirstName} {userD.LastName}",
+                        ProfileImage = userD.ProfilePicture,
+                        IdAuthPassword = userId!
+                    };
+                    await _notificationHubContext.Clients.Group(loginUser.Id.ToString()).SendAsync("NOTIFICATION", userDto);
+                    return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.UserId }, userDto);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                var generalUsers = new GeneralUsers()
-                {
-                    FirstName = requset.FirstName,
-                    LastName = requset.LastName,
-                    Email = requset.Email,
-                    UserType = "User",
-                    VerificationToken = CreateRandomToken(),
-                    EmailConfirmed = true,
-                    PhoneNo = requset.PhoneNo,
-                    ImagePath = requset.ProfilePicture,
-                    CreatedAt = DateTime.UtcNow,
-                    LockOutEndEnabled = false,
-                    AccessFailedCount = 0,
-                    TwoFactorEnabled = false,
-                    LockOutEnd = DateTime.UtcNow.AddDays(30),
-                    PhoneNoConfirmed = false,
-                    ResetTokenExpires = DateTime.UtcNow.AddMinutes(10),
-                    EmailTokenExpires = DateTime.UtcNow.AddMinutes(10),
-                    PhoneNoTokenExpires = DateTime.UtcNow.AddMinutes(10),
-                    RefreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(10),
-                    VerifiedAt = DateTime.UtcNow,
-                    PhoneVerificationToken = CreateRandomToken(),
-                    PhoneVerifiedAt = DateTime.UtcNow.AddMinutes(10),
-                    PasswordResetToken = "",
-                    RefreshToken = "",
-                };
-                generalUsers = await userRepository.AddAsync(generalUsers, requset.ExternalId!);
-                var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
-                var timeStamp = Timestamp.GetCurrentTimestamp();
-
-                var users = new UsersDataModelTable()
-                {
-                    Id = generalUsers.Id,
-                    FirstName = requset.FirstName,
-                    LastName = requset.LastName,
-                    Email = requset.Email,
-                    PhoneNo = generalUsers.PhoneNo,
-                    Sex = "",
-                    UserStatus = false,
-                    ProfilePicture = generalUsers.ImagePath,
-                    ReferralCode = CreateRandomToken11(),
-                    CreatedAt = DateTime.UtcNow,
-                    LastLoginAt = DateTime.UtcNow,
-                    LastSeenAt = DateTime.UtcNow,
-                    Address = "",
-                    Locality = "",
-                    State = "",
-                    PostCodes = "",
-                    Latitude = 1.11,
-                    Longitude = 1.11,
-                };
-                // Pass detials to repository
-                users = await newUsersRepository.AddAsync(users);
-                var roles = new Roles()
-                {
-                    Name = "User"
-                };
-                roles = await rolesRepository.AddAsync(roles);
-                var user_Roles = new User_Role()
-                {
-                    GeneralUsersId = users.Id,
-                    RoleId = roles.Id,
-                };
-                await user_RoleRepository.AddAsync(user_Roles);
-
-                //Now Login Here
-                var loginUser = await userRepository.AuthenticateAsync(requset.Email!, requset.ExternalId!);
-                var userD = await newUsersRepository.GetAsync(loginUser.Id);
-                //generate jwt token
-                var token = tokenHandler.CreateTokenAsync(loginUser);
-                var refreshToken = tokenHandler.RefreshTokenAsync(loginUser.Email!);
-             
-                var userDto = new LoginDto()
-                {
-                    Token = await token,
-                    RefreshToken = await refreshToken,
-                    RefreshTokenExpiryTime = loginUser.RefreshTokenExpiryTime,
-                    UserId = loginUser.Id,
-                    Email = loginUser.Email,
-                    UserType = loginUser.UserType,
-                    EmailVerified = loginUser.EmailConfirmed,
-                    PhoneVerified = loginUser.PhoneNoConfirmed,
-                    FullName = $"{userD.FirstName} {userD.LastName}",
-                    ProfileImage = userD.ProfilePicture,
-                };
-                return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.UserId }, userDto);
+                return Unauthorized(new { Error = "Invalid Apple token", Details = ex.Message });
             }
-           
+        }
+
+
+
+        [HttpPost("google")]
+        public async Task<IActionResult> GoogleAuth([FromBody] LoginExternalRequset requvest)
+        {
+            try
+            {
+                // Verify Google ID token
+                var payload = await GoogleJsonWebSignature.ValidateAsync(requvest.IdToken, new GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = [googleClientId]
+                });
+
+                // Token is valid, create or fetch the user in your database
+                var userExist = await userRepository.UserExistAsync(payload.Email!);
+                if (userExist)
+                {
+                    var user = await userRepository.AuthenticateAsync(payload.Email!, payload.Subject!);
+                    var userD = await newUsersRepository.GetAsync(user.Id);
+                    //generate jwt token
+                    var token = tokenHandler.CreateTokenAsync(user);
+                    var refreshToken = tokenHandler.RefreshTokenAsync(user.Email!);
+
+                    var userDto = new LoginDto()
+                    {
+                        Token = await token,
+                        RefreshToken = await refreshToken,
+                        RefreshTokenExpiryTime = user.RefreshTokenExpiryTime,
+                        UserId = user.Id,
+                        Email = user.Email,
+                        UserType = user.UserType,
+                        EmailVerified = user.EmailConfirmed,
+                        PhoneVerified = user.PhoneNoConfirmed,
+                        FullName = $"{userD.FirstName} {userD.LastName}",
+                        ProfileImage = userD.ProfilePicture,
+                        IdAuthPassword = payload.Subject
+                    };
+                    var request = await newUsersRepository.GetAsync(user.Id);
+                    var users = new UsersDataModelTable()
+                    {
+                        FirstName = request.FirstName,
+                        LastName = request.LastName,
+                        Email = request.Email,
+                        PhoneNo = request.PhoneNo,
+                        Sex = request.Sex,
+                        UserStatus = request.UserStatus,
+                        ProfilePicture = request.ProfilePicture,
+                        ReferralCode = request.ReferralCode,
+                        CreatedAt = request.CreatedAt,
+                        Address = request.Address,
+                        Locality = request.Locality,
+                        State = request.State,
+                        PostCodes = request.PostCodes,
+                        Latitude = request.Latitude,
+                        Longitude = request.Longitude,
+                        LastLoginAt = DateTime.UtcNow,
+                        LastSeenAt = request.LastSeenAt,
+                    };
+                    await newUsersRepository.UpdateAsync(user.Id, users);
+                    return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.UserId }, userDto);
+                }
+                else
+                {
+                    var generalUsers = new GeneralUsers()
+                    {
+                        FirstName = payload.GivenName,
+                        LastName = payload.FamilyName,
+                        Email = payload.Email,
+                        UserType = "User",
+                        VerificationToken = CreateRandomToken(),
+                        EmailConfirmed = true,
+                        PhoneNo = "",
+                        ImagePath = payload.Picture,
+                        CreatedAt = DateTime.UtcNow,
+                        LockOutEndEnabled = false,
+                        AccessFailedCount = 0,
+                        TwoFactorEnabled = false,
+                        LockOutEnd = DateTime.UtcNow.AddDays(30),
+                        PhoneNoConfirmed = false,
+                        ResetTokenExpires = DateTime.UtcNow.AddMinutes(10),
+                        EmailTokenExpires = DateTime.UtcNow.AddMinutes(10),
+                        PhoneNoTokenExpires = DateTime.UtcNow.AddMinutes(10),
+                        RefreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(10),
+                        VerifiedAt = DateTime.UtcNow,
+                        PhoneVerificationToken = CreateRandomToken(),
+                        PhoneVerifiedAt = DateTime.UtcNow.AddMinutes(10),
+                        PasswordResetToken = "",
+                        RefreshToken = "",
+                    };
+                    generalUsers = await userRepository.AddAsync(generalUsers, payload.Subject);
+                    var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
+                    var timeStamp = Timestamp.GetCurrentTimestamp();
+
+                    var users = new UsersDataModelTable()
+                    {
+                        Id = generalUsers.Id,
+                        FirstName = generalUsers.FirstName,
+                        LastName = generalUsers.LastName,
+                        Email = generalUsers.Email,
+                        PhoneNo = generalUsers.PhoneNo,
+                        Sex = "",
+                        UserStatus = false,
+                        ProfilePicture = generalUsers.ImagePath,
+                        ReferralCode = CreateRandomToken11(),
+                        CreatedAt = DateTime.UtcNow,
+                        LastLoginAt = DateTime.UtcNow,
+                        LastSeenAt = DateTime.UtcNow,
+                        Address = "",
+                        Locality = "",
+                        State = "",
+                        PostCodes = "",
+                        Latitude = 1.11,
+                        Longitude = 1.11,
+                    };
+                    // Pass detials to repository
+                    users = await newUsersRepository.AddAsync(users);
+                    var roles = new Roles()
+                    {
+                        Name = "User"
+                    };
+                    roles = await rolesRepository.AddAsync(roles);
+                    var user_Roles = new User_Role()
+                    {
+                        GeneralUsersId = users.Id,
+                        RoleId = roles.Id,
+                    };
+                    await user_RoleRepository.AddAsync(user_Roles);
+
+                    //Now Login Here
+                    var loginUser = await userRepository.AuthenticateAsync(generalUsers.Email!, payload.Subject);
+                    var userD = await newUsersRepository.GetAsync(loginUser.Id);
+                    //generate jwt token
+                    var token = tokenHandler.CreateTokenAsync(loginUser);
+                    var refreshToken = tokenHandler.RefreshTokenAsync(loginUser.Email!);
+
+                    var userDto = new LoginDto()
+                    {
+                        Token = await token,
+                        RefreshToken = await refreshToken,
+                        RefreshTokenExpiryTime = loginUser.RefreshTokenExpiryTime,
+                        UserId = loginUser.Id,
+                        Email = loginUser.Email,
+                        UserType = loginUser.UserType,
+                        EmailVerified = loginUser.EmailConfirmed,
+                        PhoneVerified = loginUser.PhoneNoConfirmed,
+                        FullName = $"{userD.FirstName} {userD.LastName}",
+                        ProfileImage = userD.ProfilePicture,
+                        IdAuthPassword = payload.Subject
+                    };
+                    await _notificationHubContext.Clients.Group(loginUser.Id.ToString()).SendAsync("NOTIFICATION", userDto);
+                    return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.UserId }, userDto);
+                }
+            }
+            catch (Exception ex)
+            {
+                return Unauthorized(new { Error = "Invalid Google token", Details = ex.Message });
+            }
         }
 
 
@@ -413,7 +605,6 @@ namespace Genilog_WebApi.Controllers
                     item.DeviceTokenModels = token.Where(x => x.UserId == item.Id).ToList();
                     users.Add(item);
                 }
-                await _hubContext.Clients.All.SendAsync("GetAllUser", users);
                 return Ok(users);
             }
 
@@ -445,7 +636,6 @@ namespace Genilog_WebApi.Controllers
                 var token = await userRepository.GetAllDeviceTokenAsync();
                 var userDto = mapper.Map<UsersDataModelTableDto>(user);
                 userDto.DeviceTokenModels = token.Where(x => x.UserId == user.Id).ToList();
-                await _hubContext.Clients.All.SendAsync($"GetUser{userGuid}", userDto);
                 return Ok(userDto);
             }
         } 
@@ -513,9 +703,6 @@ namespace Genilog_WebApi.Controllers
                     RefreshToken = "",
                 };
                 generalUsers = await userRepository.AddAsync(generalUsers, request.Password!);
-                var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
-                var timeStamp = Timestamp.GetCurrentTimestamp();
-
                 var users = new UsersDataModelTable()
                 {
                     Id = generalUsers.Id,
@@ -553,9 +740,9 @@ namespace Genilog_WebApi.Controllers
                 EmailTemplates.SendEmailVerificationCode(users.Email!, generalUsers.VerificationToken!, users.FirstName!);
                 // convert back to dto
                 var user = await newUsersRepository.GetAsync(users.Id);
-                var token = await userRepository.GetAllDeviceTokenAsync();
                 var userDto = mapper.Map<UsersDataModelTableDto>(user);
-                userDto.DeviceTokenModels = token.Where(x => x.UserId == user.Id).ToList();
+                await _hubContext.Clients.All.SendAsync("GetUser", userDto);
+                await _notificationHubContext.Clients.Group(users.Id.ToString()).SendAsync("NOTIFICATION", userDto);
                 return Ok(userDto);
             }
         }
@@ -648,6 +835,7 @@ namespace Genilog_WebApi.Controllers
                 var token = await userRepository.GetAllDeviceTokenAsync();
                 var userDto = mapper.Map<UsersDataModelTableDto>(userDto12);
                 userDto.DeviceTokenModels = token.Where(x => x.UserId == user.Id).ToList();
+                await _hubContext.Clients.All.SendAsync("GetUser", userDto);
                 return Ok(userDto);
 
             }
@@ -724,12 +912,10 @@ namespace Genilog_WebApi.Controllers
                 };
                 await newUsersRepository.AddDeliveryAddressAsync(address);
                
-                var userDto = new ResponseModel()
-                {
-                    Message = "Updated Successfully",
-                    Status = true,
-                };
-
+              
+                var userDto12 = await newUsersRepository.GetAsync(userDto1.Id);
+                var userDto = mapper.Map<UsersDataModelTableDto>(userDto12);
+                await _hubContext.Clients.All.SendAsync("GetUser", userDto);
                 return Ok(userDto);
             }
 
@@ -766,12 +952,9 @@ namespace Genilog_WebApi.Controllers
             await newUsersRepository.UpdateDeliveryAddressAsync(id, user);
 
             // check the null value
-            var userDto = new ResponseModel()
-            {
-                Message = "Updated Successfully",
-                Status = true,
-            };
-
+            var userDto12 = await newUsersRepository.GetAsync(userDto1.Id);
+            var userDto = mapper.Map<UsersDataModelTableDto>(userDto12);
+            await _hubContext.Clients.All.SendAsync("GetUser", userDto);
             return Ok(userDto);
 
         }

@@ -1,11 +1,11 @@
 ﻿using AutoMapper;
-using Genilog_WebApi.Model.PlacesModel;
+using Genilog_WebApi.Model.BookingsModel;
 
 namespace Genilog_WebApi.Profiles
 {
-    public class PlacesProfile : Profile
+    public class BookingsProfile : Profile
     {
-        public PlacesProfile()
+        public BookingsProfile()
         {
             CreateMap<HotelDataModel, HotelDataModelDto>()
                 .ReverseMap();
@@ -36,36 +36,20 @@ namespace Genilog_WebApi.Profiles
             CreateMap<HotelSundayModel, HotelSundayModelDto>()
                 .ReverseMap();
 
-            CreateMap<PlacesDataModel, PlacesDataModelDto>()
+            CreateMap<AirlineDataModel, AirlineDataModelDto>()
               .ReverseMap();
-            CreateMap<PlaceImages, PlaceImagesDto>()
+            CreateMap<AirlineImages, AirlineImagesDto>()
              .ReverseMap();
-            CreateMap<PlaceFacilities, PlaceFacilitiesDto>()
+            CreateMap<AirCraftList, AirCraftListDto>()
              .ReverseMap();
-            CreateMap<PlaceWhatToExpect, PlaceWhatToExpectDto>()
+            CreateMap<AirlinePayment, AirlinePaymentDto>()
              .ReverseMap();
-            CreateMap<PlaceReviewModel, PlaceReviewModelDto>()
+            CreateMap<AirlineReviewModel, AirlineReviewModelDto>()
              .ReverseMap();
-            CreateMap<PlacesMondayModel, PlacesMondayModelDto>()
+            CreateMap<AirLineServiceLocation, AirLineServiceLocationDto>()
            .ReverseMap();
-
-            CreateMap<PlacesTuesdayModel, PlacesTuesdayModelDto>()
-                .ReverseMap();
-
-            CreateMap<PlacesWednesdayModel, PlacesWednesdayModelDto>()
-                .ReverseMap();
-
-            CreateMap<PlacesThursdayModel, PlacesThursdayModelDto>()
-                .ReverseMap();
-
-            CreateMap<PlacesFridayModel, PlacesFridayModelDto>()
-                .ReverseMap();
-
-            CreateMap<PlacesSaturdayModel, PlacesSaturdayModelDto>()
-                .ReverseMap();
-
-            CreateMap<PlacesSundayModel, PlacesSundayModelDto>()
-                .ReverseMap();
+            CreateMap<FlightTicketBookModel, FlightTicketBookModelDto>()
+           .ReverseMap();
 
         }
     }

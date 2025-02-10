@@ -1,5 +1,5 @@
 ﻿using Genilog_WebApi.DataContext;
-using Genilog_WebApi.Model.PlacesModel;
+using Genilog_WebApi.Model.BookingsModel;
 using Microsoft.EntityFrameworkCore;
 
 namespace Genilog_WebApi.Repository.PlacesRepo
@@ -84,7 +84,15 @@ namespace Genilog_WebApi.Repository.PlacesRepo
 
         public async Task<HotelDataModel> UpdateAsync(Guid id, HotelDataModel dataInfo)
         {
-            var dataValue = await mAAP_Context.HotelDataModels!.FirstOrDefaultAsync(x => x.Id == id);
+            var dataValue = await mAAP_Context.HotelDataModels!
+                 .Include(x => x.HotelMonday)
+                .Include(x => x.HotelTuesday)
+                .Include(x => x.HotelWednesday)
+                .Include(x => x.HotelThursday)
+                .Include(x => x.HotelFriday)
+                .Include(x => x.HotelSaturday)
+                .Include(x => x.HotelSunday)
+                .FirstOrDefaultAsync(x => x.Id == id);
 
             if (dataValue == null)
             {
@@ -111,24 +119,6 @@ namespace Genilog_WebApi.Repository.PlacesRepo
                 dataValue.HotelAdvertType = dataInfo.HotelAdvertType;
                 dataValue.Available = dataInfo.Available;
                 dataValue.HotelLogo = dataInfo.HotelLogo;
-                await mAAP_Context.SaveChangesAsync();
-                return dataValue;
-            }
-        }
-
-  
-        public async Task<HotelDataModel> UpdateTimeSheduleAsync(Guid id, HotelDataModel dataInfo)
-        {
-            var dataValue = await mAAP_Context.HotelDataModels!.FirstOrDefaultAsync(x => x.Id == id);
-
-            if (dataValue == null)
-            {
-#pragma warning disable CS8603 // Possible null reference return.
-                return null;
-#pragma warning restore CS8603 // Possible null reference return.
-            }
-            else
-            {
                 // Monday
                 dataValue.HotelMonday!.HourStart = dataInfo.HotelMonday!.HourStart;
                 dataValue.HotelMonday!.HourEnd = dataInfo.HotelMonday!.HourEnd;
@@ -161,7 +151,6 @@ namespace Genilog_WebApi.Repository.PlacesRepo
                 return dataValue;
             }
         }
-
         public async Task<HotelImages> AddHotelImageAsync(HotelImages dataInfo)
         {
             dataInfo.Id = Guid.NewGuid();

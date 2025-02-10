@@ -5,23 +5,26 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
 {
     public class LogisticsHubRepository : Hub
     {
-        public async Task GetAllCompanyAsync(List<CompanyModelDataDto> admin)
+
+        public async Task GetCompanyAsync(object admin)
         {
-            await Clients.All.SendAsync("GetAllCompany", admin);
+            await Clients.All.SendAsync("GetCompany", admin);
         }
 
-        public async Task GetCompanyAsync(Guid id, CompanyModelDataDto admin)
+        public async Task GetRiderAsync(object admin)
         {
-            await Clients.All.SendAsync($"GetCompany{id}", admin);
-        }
-        public async Task GetAllRiderAsync(List<RidersModelDataDto> admin)
-        {
-            await Clients.All.SendAsync("GetAllRider", admin);
+            await Clients.All.SendAsync("GetRider", admin);
         }
 
-        public async Task GetRiderAsync(Guid id, RidersModelDataDto admin)
+        public async Task JoinOrderTracking(string orderId)
         {
-            await Clients.All.SendAsync($"GetRider{id}", admin);
+            await Groups.AddToGroupAsync(Context.ConnectionId, orderId);
+            Console.WriteLine($"Connection {Context.ConnectionId} joined order {orderId}");
+        }
+
+        public async Task SendOrder(string orderId, object newOrder)
+        {
+            await Clients.Group(orderId).SendAsync("ORDER", newOrder);
         }
     }
 }

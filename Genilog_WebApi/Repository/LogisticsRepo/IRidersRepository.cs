@@ -21,11 +21,6 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
         Task<RidersChatModelData> UpdateRidersChatAsync(Guid id, RidersChatModelData region);
         Task<RidersChatModelData> UpdateRidersIsReadChatAsync(Guid id, RidersChatModelData region);
 
-        // Gas Order
-        Task<IEnumerable<OrderModelData>> GetAllOrderAsync();
-        Task<OrderModelData> GetOrderAsync(Guid id);
-        Task<OrderModelData> AddOrderAsync(OrderModelData region);
-        Task<OrderModelData> DeleteOrderAsync(Guid id);
-        Task<OrderModelData> UpdateOrderAsync(Guid id, OrderModelData region);
+      
     }
 }

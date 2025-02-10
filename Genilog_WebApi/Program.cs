@@ -3,6 +3,7 @@ using FirebaseAdmin;
 using Genilog_WebApi.DataContext;
 using Genilog_WebApi.Repository.AdminRepo;
 using Genilog_WebApi.Repository.AuthRepo;
+using Genilog_WebApi.Repository.BookingsRepo;
 using Genilog_WebApi.Repository.InfoRepo;
 using Genilog_WebApi.Repository.LogisticsRepo;
 using Genilog_WebApi.Repository.NotificationRepo;
@@ -98,7 +99,7 @@ builder.Services.AddScoped<IRidersRepository, RidersRepository>();
 builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
 
 builder.Services.AddScoped<IHotelRepository, HotelRepository>();
-builder.Services.AddScoped<IPlacesRepository, PlacesRepository>();
+builder.Services.AddScoped<IAirlineRepository, AirlineRepository>();
 builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 
 
@@ -144,6 +145,6 @@ app.MapHub<AdminHubRepository>("/adminHub").RequireCors(MyAllowSpecificOrigins);
 app.MapHub<UserHubRepository>("/userHub").RequireCors(MyAllowSpecificOrigins);
 app.MapHub<LogisticsHubRepository>("/logisticsHub").RequireCors(MyAllowSpecificOrigins);
 app.MapHub<NotificationHub>("/notificationHub").RequireCors(MyAllowSpecificOrigins);
-app.MapHub<PlacesHubRepository>("/placesHub").RequireCors(MyAllowSpecificOrigins);
+app.MapHub<BookingsHubRepository>("/placesHub").RequireCors(MyAllowSpecificOrigins);
 app.MapHub<WalletHubRepository>("/walletHub").RequireCors(MyAllowSpecificOrigins);
 app.Run();

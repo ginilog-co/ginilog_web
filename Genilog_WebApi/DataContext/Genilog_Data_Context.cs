@@ -1,10 +1,10 @@
 ﻿
 using Genilog_WebApi.Model.AdminsModel;
 using Genilog_WebApi.Model.AuthModel;
+using Genilog_WebApi.Model.BookingsModel;
 using Genilog_WebApi.Model.InfoModel;
 using Genilog_WebApi.Model.LogisticsModel;
 using Genilog_WebApi.Model.Notification_Model;
-using Genilog_WebApi.Model.PlacesModel;
 using Genilog_WebApi.Model.UsersDataModel;
 using Genilog_WebApi.Model.WalletModel;
 using Microsoft.EntityFrameworkCore;
@@ -37,62 +37,37 @@ namespace Genilog_WebApi.DataContext
                 .HasOne(x => x.RidersModelDatas)
                 .WithMany(y => y.RidersReviewModels)
                 .HasForeignKey(x => x.RidersModelDataId);
+            modelBuilder.Entity<PackageImageList>()
+              .HasOne(x => x.OrderModelDatas)
+              .WithMany(y => y.PackageImageLists)
+              .HasForeignKey(x => x.OrderModelDataId);
 
-            //Places Model
-            modelBuilder.Entity<PlacesDataModel>()
-               .HasOne(a => a.PlacesMonday)
-               .WithOne(b => b.PlacesDataModels)
-               .HasForeignKey<PlacesMondayModel>(b => b.PlacesDataModelId);
+            //Airline Model
+           
+          
+            modelBuilder.Entity<AirlineImages>()
+                .HasOne(x => x.AirlineDataModels)
+                .WithMany(y => y.AirlineImages)
+                .HasForeignKey(x => x.AirlineDataModelId);
+            modelBuilder.Entity<AirLineServiceLocation>()
+                .HasOne(x => x.AirlineDataModels)
+                .WithMany(y => y.AirLineServiceLocations)
+                .HasForeignKey(x => x.AirlineDataModelId);
 
-            modelBuilder.Entity<PlacesDataModel>()
-                .HasOne(a => a.PlacesTuesday)
-                .WithOne(b => b.PlacesDataModels)
-                .HasForeignKey<PlacesTuesdayModel>(b => b.PlacesDataModelId);
+            modelBuilder.Entity<AirCraftList>()
+                .HasOne(x => x.AirlineDataModels)
+                .WithMany(y => y.AirCraftList)
+                .HasForeignKey(x => x.AirlineDataModelId);
 
-            modelBuilder.Entity<PlacesDataModel>()
-                .HasOne(a => a.PlacesWednesday)
-                .WithOne(b => b.PlacesDataModels)
-                .HasForeignKey<PlacesWednesdayModel>(b => b.PlacesDataModelId);
+            modelBuilder.Entity<AirlinePayment>()
+                .HasOne(x => x.AirlineDataModels)
+                .WithMany(y => y.AirlinePayments)
+                .HasForeignKey(x => x.AirlineDataModelId);
 
-            modelBuilder.Entity<PlacesDataModel>()
-                .HasOne(a => a.PlacesThursday)
-                .WithOne(b => b.PlacesDataModels)
-                .HasForeignKey<PlacesThursdayModel>(b => b.PlacesDataModelId);
-
-            modelBuilder.Entity<PlacesDataModel>()
-                .HasOne(a => a.PlacesFriday)
-                .WithOne(b => b.PlacesDataModels)
-                .HasForeignKey<PlacesFridayModel>(b => b.PlacesDataModelId);
-
-            modelBuilder.Entity<PlacesDataModel>()
-                .HasOne(a => a.PlacesSaturday)
-                .WithOne(b => b.PlacesDataModels)
-                .HasForeignKey<PlacesSaturdayModel>(b => b.PlacesDataModelId);
-
-            modelBuilder.Entity<PlacesDataModel>()
-                .HasOne(a => a.PlacesSunday)
-                .WithOne(b => b.PlacesDataModels)
-                .HasForeignKey<PlacesSundayModel>(b => b.PlacesDataModelId);
-
-            modelBuilder.Entity<PlaceImages>()
-                .HasOne(x => x.PlacesDataModels)
-                .WithMany(y => y.PlaceImages)
-                .HasForeignKey(x => x.PlacesDataModelId);
-
-            modelBuilder.Entity<PlaceFacilities>()
-                .HasOne(x => x.PlacesDataModels)
-                .WithMany(y => y.PlaceFacilities)
-                .HasForeignKey(x => x.PlacesDataModelId);
-
-            modelBuilder.Entity<PlaceWhatToExpect>()
-                .HasOne(x => x.PlacesDataModels)
-                .WithMany(y => y.PlaceWhatToExpects)
-                .HasForeignKey(x => x.PlacesDataModelId);
-
-            modelBuilder.Entity<PlaceReviewModel>()
-                .HasOne(x => x.PlacesDataModels)
-                .WithMany(y => y.PlaceReviewModels)
-                .HasForeignKey(x => x.PlacesDataModelId);
+            modelBuilder.Entity<AirlineReviewModel>()
+                .HasOne(x => x.AirlineDataModels)
+                .WithMany(y => y.AirlineReviewModels)
+                .HasForeignKey(x => x.AirlineDataModelId);
 
 
             // Hotel Data
@@ -165,6 +140,7 @@ namespace Genilog_WebApi.DataContext
         public DbSet<RidersModelData>? RidersModelDatas { get; set; }
         public DbSet<RidersReviewModel>? RidersReviewModels { get; set; }
         public DbSet<OrderModelData>? OrderModelDatas { get; set; }
+        public DbSet<PackageImageList>? PackageImageLists { get; set; }
         public DbSet<RidersChatModelData>? RidersChatModelDatas { get; set; }
 
         // Hotels Data
@@ -181,20 +157,15 @@ namespace Genilog_WebApi.DataContext
         public DbSet<HotelSundayModel>? HotelSunday { get; set; }
         public DbSet<HotelChatModel>? HotelChatModels { get; set; }
 
-        // Places Data
-        public DbSet<PlacesDataModel>? PlacesDataModels { get; set; }
-        public DbSet<PlaceImages>? PlaceImages { get; set; }
-        public DbSet<PlaceFacilities>? PlaceFacilities { get; set; }
-        public DbSet<PlaceWhatToExpect>? PlaceWhatToExpects { get; set; }
-        public DbSet<PlaceReviewModel>? PlaceReviewModels { get; set; }
-        public DbSet<PlacesMondayModel>? PlaceMonday { get; set; }
-        public DbSet<PlacesTuesdayModel>? PlaceTuesday { get; set; }
-        public DbSet<PlacesWednesdayModel>? PlaceWednesday { get; set; }
-        public DbSet<PlacesThursdayModel>? PlaceThursday { get; set; }
-        public DbSet<PlacesFridayModel>? PlaceFriday { get; set; }
-        public DbSet<PlacesSaturdayModel>? PlaceSaturday { get; set; }
-        public DbSet<PlacesSundayModel>? PlaceSunday { get; set; }
-        public DbSet<PlacesChatModel>? PlacesChatModels { get; set; }
+        // AirLine Data
+        public DbSet<AirlineDataModel>? AirlineDataModels { get; set; }
+        public DbSet<AirlineImages>? AirlineImages { get; set; }
+        public DbSet<AirCraftList>? AirCraftList { get; set; }
+        public DbSet<AirlinePayment>? AirlinePayments { get; set; }
+        public DbSet<AirlineReviewModel>? AirlineReviewModels { get; set; }
+        public DbSet<AirLineServiceLocation>? AirLineServiceLocations { get; set; }
+        public DbSet<AirlineChatModel>? AirlineChatModels { get; set; }
+        public DbSet<FlightTicketBookModel>? FlightTicketBookModels { get; set; }
 
         // Wallet System
         public DbSet<PayoutDataModel>? PayoutDataModels { get; set; }

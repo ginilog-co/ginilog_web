@@ -8,19 +8,21 @@ using Google.Cloud.Firestore;
 using System.Net.Mail;
 using System.Net;
 using Genilog_WebApi.EmailSender;
+using Genilog_WebApi.Repository.NotificationRepo;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Genilog_WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class InfoController(IFeedbackRepository contactUsRepository,
-        IMapper mapper, IHostEnvironment _env) : ControllerBase
+        IMapper mapper, IHostEnvironment _env, IHubContext<NotificationHub> _notificationHubContext) : ControllerBase
     {
         private readonly IFeedbackRepository contactUsRepository = contactUsRepository;
         private readonly IMapper mapper = mapper;
         private readonly IHostEnvironment _env = _env;
         readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
-
+        private readonly IHubContext<NotificationHub> _notificationHubContext = _notificationHubContext;
         [HttpGet("feedback")]
         [Authorize(Roles = "Super_Admin,Admin")]
         public async Task<IActionResult> GetAllRiderPayoutAsync([FromQuery] SearchFeedback search)

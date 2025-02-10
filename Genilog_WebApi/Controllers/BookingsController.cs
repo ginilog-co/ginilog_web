@@ -1,76 +1,103 @@
 ﻿using AutoMapper;
-using Genilog_WebApi.Key;
-using Genilog_WebApi.Model.UploadModels;
-using Genilog_WebApi.Repository.UploadRepo;
-using Genilog_WebApi.Repository.UserRepo;
-using Google.Cloud.Firestore;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using System.Net.Mail;
-using System.Net;
-using Genilog_WebApi.Repository.PlacesRepo;
-using Genilog_WebApi.Model.PlacesModel;
+using Genilog_WebApi.Model.BookingsModel;
+using Genilog_WebApi.Model.LogisticsModel;
 using Genilog_WebApi.Model;
 using Genilog_WebApi.Repository.AuthRepo;
-using System.Security.Claims;
-using Genilog_WebApi.Model.LogisticsModel;
-using Genilog_WebApi.Repository.WalletRepo;
+using Genilog_WebApi.Repository.BookingsRepo;
+using Genilog_WebApi.Repository.NotificationRepo;
+using Genilog_WebApi.Repository.PlacesRepo;
+using Genilog_WebApi.Repository.UploadRepo;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using System.Net.Mail;
+using System.Net;
+using System.Security.Claims;
+
 namespace Genilog_WebApi.Controllers
 {
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     [ApiController]
-    public class PlacesController(IHostEnvironment _env, IMapper mapper, IHotelRepository hotelRepository
-        , IGeneralUserRepository generalUserRepository, IUploadRepository uploadRepository, IPlacesRepository placesRepository
-        , IHubContext<PlacesHubRepository> _hubContext) : ControllerBase
+    public class BookingsController(IHostEnvironment _env, IMapper mapper, IHotelRepository hotelRepository
+        , IGeneralUserRepository generalUserRepository, IUploadRepository uploadRepository, IAirlineRepository airlineRepository
+        , IHubContext<BookingsHubRepository> _hubContext, IHubContext<NotificationHub> _notificationHubContext) : ControllerBase
     {
         private readonly IHostEnvironment _env = _env;
         private readonly IMapper mapper = mapper;
         private readonly IHotelRepository hotelRepository = hotelRepository;
         private readonly IGeneralUserRepository generalUserRepository = generalUserRepository;
         private readonly IUploadRepository uploadRepository = uploadRepository;
-        private readonly IPlacesRepository placesRepository = placesRepository;
-        private readonly IHubContext<PlacesHubRepository> _hubContext = _hubContext;
+        private readonly IAirlineRepository airlineRepository = airlineRepository;
+        private readonly IHubContext<BookingsHubRepository> _hubContext = _hubContext;
+        private readonly IHubContext<NotificationHub> _notificationHubContext = _notificationHubContext;
         readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
 
 
         // This Is PLACES SECTION
         [HttpGet]
-       [Authorize]
-        public async Task<IActionResult> GetAllPlacesAsync()
+        [Route("airline")]
+        [Authorize]
+        public async Task<IActionResult> GetAllAirlinesAsync([FromQuery] FilterLocationData data)
         {
-            var contacts = await placesRepository.GetAllAsync();
-            var contactsDto = mapper.Map<List<PlacesDataModelDto>>(contacts);
-            await _hubContext.Clients.All.SendAsync("GetAllPlaces", contactsDto);
-            return Ok(contactsDto);
+            var events = await airlineRepository.GetAllAsync();
+            events = [.. events.OrderByDescending(x => x.CreatedAt)];
+            var allPosts = events.AsQueryable();
+
+            if (!string.IsNullOrEmpty(data.State) && !string.IsNullOrEmpty(data.Locality))
+            {
+                allPosts = allPosts.Where(x => x.State!.Contains(data.State) && x.Locality!.Contains(data.Locality));
+                var userDto = mapper.Map<List<AirlineDataModelDto>>(allPosts);
+
+                return Ok(userDto);
+            }
+            else if (!string.IsNullOrEmpty(data.State))
+            {
+                allPosts = allPosts.Where(x => x.State!.Contains(data.State));
+                var userDto = mapper.Map<List<AirlineDataModelDto>>(allPosts);
+
+                return Ok(userDto);
+            }
+            else if (!string.IsNullOrEmpty(data.Locality))
+            {
+                allPosts = allPosts.Where(x => x.Locality!.Contains(data.Locality));
+                var userDto = mapper.Map<List<AirlineDataModelDto>>(allPosts);
+
+                return Ok(userDto);
+            }
+            else
+            {
+                var userDto = mapper.Map<List<AirlineDataModelDto>>(events);
+                return Ok(userDto);
+            }
+
+
         }
 
         [HttpGet]
-        [Route("{id:guid}")]
-        [ActionName("GetPlacesAsync")]
+        [Route("airline/{id:guid}")]
+        [ActionName("GetAirlinesAsync")]
         [Authorize]
-        public async Task<IActionResult> GetPlacesAsync(Guid id)
+        public async Task<IActionResult> GetAirlinesAsync(Guid id)
         {
-            var contacts = await placesRepository.GetAsync(id);
+            var contacts = await airlineRepository.GetAsync(id);
             if (contacts == null)
             {
                 return BadRequest("Id Does not Exist");
             }
             else
             {
-                var contactsDto = mapper.Map<PlacesDataModelDto>(contacts);
-                await _hubContext.Clients.All.SendAsync($"GetPlaces{id}", contactsDto);
+                var contactsDto = mapper.Map<AirlineDataModelDto>(contacts);
                 return Ok(contactsDto);
             }
         }
 
         [HttpDelete]
-        [Route("{id:guid}")]
+        [Route("airline/{id:guid}")]
         [Authorize(Roles = "Manager,Admin,Super_Admin")]
         public async Task<IActionResult> DeletePlacesAsync(Guid id)
         {
             // Get the region from the database
-            var user = await placesRepository.DeleteAsync(id);
+            var user = await airlineRepository.DeleteAsync(id);
             // if null NotFound
             if (user == null)
             {
@@ -79,66 +106,55 @@ namespace Genilog_WebApi.Controllers
 
             else
             {
-                var userDto = mapper.Map<PlacesDataModelDto>(user);
+                var userDto = mapper.Map<AirlineDataModelDto>(user);
                 return Ok(userDto);
             }
         }
 
         [HttpPut]
-        [Route("{id:guid}")]
+        [Route("airline/{id:guid}")]
         [Authorize(Roles = "Manager,Admin,Super_Admin")]
-        public async Task<IActionResult> UpdatePlacesAsync([FromRoute] Guid id, [FromBody] UpdatePlaces request)
+        public async Task<IActionResult> UpdateAirlinesAsync([FromRoute] Guid id, [FromBody] UpdateAirlines request)
         {
-            var userDto1 = await placesRepository.GetAsync(id);
+            var userDto1 = await airlineRepository.GetAsync(id);
             if (userDto1 == null)
             {
                 return BadRequest("Id Does not Exist");
             }
-           
+
             // convert back to dto
             else
             {
-                var user = new PlacesDataModel()
+                var user = new AirlineDataModel()
                 {
-                    PlaceName = !string.IsNullOrWhiteSpace(request.PlaceName) ? request.PlaceName : userDto1.PlaceName,
-                    PlaceEmail = !string.IsNullOrWhiteSpace(request.PlaceEmail) ? request.PlaceEmail : userDto1.PlaceEmail,
-                    CheckInTime = !string.IsNullOrWhiteSpace(request.CheckInTime) ? request.CheckInTime : userDto1.CheckInTime,
-                    CheckOutTime = !string.IsNullOrWhiteSpace(request.CheckOutTime) ? request.CheckOutTime : userDto1.CheckOutTime,
-                    PlaceWebsite = !string.IsNullOrWhiteSpace(request.PlaceWebsite) ? request.PlaceWebsite : userDto1.PlaceWebsite,
-                    PlacePhoneNo = !string.IsNullOrWhiteSpace(request.PlacePhoneNo) ? request.PlacePhoneNo : userDto1.PlacePhoneNo,
-                    Location = !string.IsNullOrWhiteSpace(request.Location) ? request.Location : userDto1.Location,
+                    AirlineName = !string.IsNullOrWhiteSpace(request.AirlineName) ? request.AirlineName : userDto1.AirlineName,
+                    AirlineLogo = !string.IsNullOrWhiteSpace(request.AirlineLogo) ? request.AirlineLogo : userDto1.AirlineLogo,
+                    AirlineEmail = !string.IsNullOrWhiteSpace(request.AirlineEmail) ? request.AirlineEmail : userDto1.AirlineEmail,
+                    AirlineWebsite = !string.IsNullOrWhiteSpace(request.AirlineWebsite) ? request.AirlineWebsite : userDto1.AirlineWebsite,
                     Locality = !string.IsNullOrWhiteSpace(request.Locality) ? request.Locality : userDto1.Locality,
-                    Postcode = !string.IsNullOrWhiteSpace(request.Postcode) ? request.Postcode : userDto1.Postcode,
-                    Latitude = (double)(request.Latitude ?? userDto1.Latitude),
-                    Longitude = (double)(request.Longitude ?? userDto1.Longitude),
                     Rating = userDto1.Rating,
                     BookingAmount = (double)(request.BookingAmount ?? userDto1.BookingAmount),
-                    PlaceAdvertType = !string.IsNullOrWhiteSpace(request.PlaceAdvertType) ? request.PlaceAdvertType : userDto1.PlaceAdvertType,
-                    PlaceOverview = !string.IsNullOrWhiteSpace(request.PlaceOverview) ? request.PlaceOverview : userDto1.PlaceOverview,
-                    PlacesAdditionalInfo = !string.IsNullOrWhiteSpace(request.PlacesAdditionalInfo) ? request.PlacesAdditionalInfo : userDto1.PlacesAdditionalInfo,
-                    CancelationPolicy = !string.IsNullOrWhiteSpace(request.CancelationPolicy) ? request.CancelationPolicy : userDto1.CancelationPolicy,
-                    PlacesHighlights = !string.IsNullOrWhiteSpace(request.PlacesHighlights) ? request.PlacesHighlights : userDto1.PlacesHighlights,
+                    AirlineInfo = !string.IsNullOrWhiteSpace(request.AirlineInfo) ? request.AirlineInfo : userDto1.AirlineInfo,
+                    AirlineType = !string.IsNullOrWhiteSpace(request.AirlineType) ? request.AirlineType : userDto1.AirlineType,
+                    AirlinePhoneNo = !string.IsNullOrWhiteSpace(request.AirlinePhoneNo) ? request.AirlinePhoneNo : userDto1.AirlinePhoneNo,
                     State = !string.IsNullOrWhiteSpace(request.State) ? request.State : userDto1.State,
                     Country = !string.IsNullOrWhiteSpace(request.Country) ? request.Country : userDto1.Country,
-                    IsPayment = (bool)(request.IsPayment ?? userDto1.IsPayment),
                     Available = (bool)(request.Available ?? userDto1.Available),
-                    TicketType = !string.IsNullOrWhiteSpace(request.TicketType) ? request.TicketType : userDto1.TicketType,
-                    PlaceType = !string.IsNullOrWhiteSpace(request.PlaceType) ? request.PlaceType : userDto1.PlaceType,
                 };
                 // Update detials to repository
-                user = await placesRepository.UpdateAsync(id, user);
-                var contact = await placesRepository.GetAsync(user.Id);
-                var userDto = mapper.Map<PlacesDataModelDto>(contact);
+                user = await airlineRepository.UpdateAsync(id, user);
+                var contact = await airlineRepository.GetAsync(user.Id);
+                var userDto = mapper.Map<AirlineDataModelDto>(contact);
                 return Ok(userDto);
             }
         }
 
-        [HttpPost]
+        [HttpPost("airline")]
         [Authorize(Roles = "Manager,Admin,Super_Admin")]
-        public async Task<IActionResult> AddPlacesAsync( [FromBody] AddPlaces request)
+        public async Task<IActionResult> AddAirlinesAsync([FromBody] AddAirlines request)
         {
             var check = ValidatePlace(request);
-           
+
 
             if (!check)
             {
@@ -151,184 +167,60 @@ namespace Genilog_WebApi.Controllers
                 {
                     return BadRequest("Invalid User ID format.");
                 }
-                var date = DateTime.Now.ToString("ddd,MMM d,yyyy");
-                var timeStamp = Timestamp.GetCurrentTimestamp();
-                List<PlaceImages> ticketBonus = [];
+               
+                List<AirlineImages> ticketBonus = [];
                 var rtnlist = new List<string>();
-                var contacts = new PlacesDataModel()
+                var contacts = new AirlineDataModel()
                 {
-                    PlacesMonday = new PlacesMondayModel()
-                    {
-                        HourStart = request.TimeSchedule!.Monday!.Start,
-                        HourEnd = request.TimeSchedule!.Monday!.End,
-                        IsClosed = request.TimeSchedule!.Monday!.IsClosed,
-                    },
-                    PlacesTuesday = new PlacesTuesdayModel()
-                    {
-                        HourStart = request.TimeSchedule!.Tuesday!.Start,
-                        HourEnd = request.TimeSchedule!.Tuesday!.End,
-                        IsClosed = request.TimeSchedule!.Tuesday!.IsClosed,
-                    },
-                    PlacesWednesday = new PlacesWednesdayModel()
-                    {
-                        HourStart = request.TimeSchedule!.Wednesday!.Start,
-                        HourEnd = request.TimeSchedule!.Wednesday!.End,
-                        IsClosed = request.TimeSchedule!.Wednesday!.IsClosed,
-                    },
-                    PlacesThursday = new PlacesThursdayModel()
-                    {
-                        HourStart = request.TimeSchedule!.Thursday!.Start,
-                        HourEnd = request.TimeSchedule!.Thursday!.End,
-                        IsClosed = request.TimeSchedule!.Thursday!.IsClosed,
-                    },
-                    PlacesFriday = new PlacesFridayModel()
-                    {
-                        HourStart = request.TimeSchedule!.Friday!.Start,
-                        HourEnd = request.TimeSchedule!.Friday!.End,
-                        IsClosed = request.TimeSchedule!.Friday!.IsClosed,
-                    },
-                    PlacesSaturday = new PlacesSaturdayModel()
-                    {
-                        HourStart = request.TimeSchedule!.Saturday!.Start,
-                        HourEnd = request.TimeSchedule!.Saturday!.End,
-                        IsClosed = request.TimeSchedule!.Saturday!.IsClosed,
-                    },
-                    PlacesSunday = new PlacesSundayModel()
-                    {
-                        HourStart = request.TimeSchedule!.Sunday!.Start,
-                        HourEnd = request.TimeSchedule!.Sunday!.End,
-                        IsClosed = request.TimeSchedule!.Sunday!.IsClosed,
-                    },
                     AdminId = userGuid,
-                    PlaceName = request.PlaceName,
-                    PlaceEmail = request.PlaceEmail,
-                    PlaceOverview = request.PlaceOverview,
-                    PlacesHighlights = request.PlacesHighlights,
-                    PlacesAdditionalInfo = request.PlacesAdditionalInfo,
-                    CancelationPolicy = request.CancelationPolicy,
-                    PlaceType = request.PlaceType,
-                    CheckInTime = request.CheckInTime,
-                    CheckOutTime = request.CheckOutTime,
-                    PlaceWebsite = request.PlaceWebsite,
-                    PlacePhoneNo = request.PlacePhoneNo,
-                    Location = request.Location,
+                    AirlineName = request.AirlineName,
+                    AirlineEmail = request.AirlineEmail,
+                    AirlineInfo = request.AirlineInfo,
+                    AirlineType = request.AirlineType,
+                    AirlinePhoneNo = request.AirlinePhoneNo,
                     State = request.State,
                     Country = request.Country,
                     Locality = request.Locality,
-                    Postcode = request.Postcode,
-                    Latitude = request.Latitude,
-                    Longitude = request.Longitude,
                     BookingAmount = request.BookingAmount,
                     Rating = 0,
-                    IsPayment = request.IsPayment,
-                    TicketType = request.TicketType,
-                    PlaceAdvertType = "",
-                    Available=true,
-                    PlaceLogo =request.PlaceLogo,
+                    Available = true,
+                    AirlineLogo = request.AirlineLogo,
+                    AirlineWebsite = request.AirlineWebsite,
                     CreatedAt = DateTime.Now,
 
                 };
                 // Pass detials to repository
-                contacts = await placesRepository.AddAsync(contacts);
-                for (var i = 0; i < request.PlacesImages!.Count; i++)
+                contacts = await airlineRepository.AddAsync(contacts);
+                for (var i = 0; i < request.AirlineImages!.Count; i++)
                 {
-                    rtnlist.Add(request.PlacesImages[i]);
-                    var imageUpdate = new PlaceImages()
+                    rtnlist.Add(request.AirlineImages[i]);
+                    var imageUpdate = new AirlineImages()
                     {
-                        PlacesDataModelId = contacts.Id,
+                        AirlineDataModelId = contacts.Id,
                         ImagePath = rtnlist[i],
                     };
-                    imageUpdate = await placesRepository.AddPlaceImageAsync(imageUpdate);
+                    imageUpdate = await airlineRepository.AddAirlineImageAsync(imageUpdate);
                     ticketBonus.Add(imageUpdate);
                 }
-               
+
                 // convert back to dto
-                var contact = await placesRepository.GetAsync(contacts.Id);
-                var contactsDto = mapper.Map<PlacesDataModelDto>(contact);
-                return CreatedAtAction(nameof(GetPlacesAsync), new { id = contactsDto.Id }, contactsDto);
+                var contact = await airlineRepository.GetAsync(contacts.Id);
+                var contactsDto = mapper.Map<AirlineDataModelDto>(contact);
+                return CreatedAtAction(nameof(GetAirlinesAsync), new { id = contactsDto.Id }, contactsDto);
             }
         }
 
-        [HttpPut("update-places-time-schedule/{id:guid}")]
-        [Authorize(Roles = "Manager,Admin,Super_Admin")]
-        public async Task<IActionResult> UpdatePlacesTimeScheduleAsync([FromRoute] Guid id, AddTimeSchedule request)
-        {
-            var contacts = new PlacesDataModel()
-            {
-                PlacesMonday = new PlacesMondayModel()
-                {
-                    HourStart = request.Monday!.Start,
-                    HourEnd = request.Monday!.End,
-                    IsClosed = request.Monday!.IsClosed,
-                },
-                PlacesTuesday = new PlacesTuesdayModel()
-                {
-                    HourStart = request.Tuesday!.Start,
-                    HourEnd = request.Tuesday!.End,
-                    IsClosed = request.Tuesday!.IsClosed,
-                },
-                PlacesWednesday = new PlacesWednesdayModel()
-                {
-                    HourStart = request.Wednesday!.Start,
-                    HourEnd = request.Wednesday!.End,
-                    IsClosed = request.Wednesday!.IsClosed,
-                },
-                PlacesThursday = new PlacesThursdayModel()
-                {
-                    HourStart = request.Thursday!.Start,
-                    HourEnd = request.Thursday!.End,
-                    IsClosed = request.Thursday!.IsClosed,
-                },
-                PlacesFriday = new PlacesFridayModel()
-                {
-                    HourStart = request.Friday!.Start,
-                    HourEnd = request.Friday!.End,
-                    IsClosed = request.Friday!.IsClosed,
-                },
-                PlacesSaturday = new PlacesSaturdayModel()
-                {
-                    HourStart = request.Saturday!.Start,
-                    HourEnd = request.Saturday!.End,
-                    IsClosed = request.Saturday!.IsClosed,
-                },
-                PlacesSunday = new PlacesSundayModel()
-                {
-                    HourStart = request.Sunday!.Start,
-                    HourEnd = request.Sunday!.End,
-                    IsClosed = request.Sunday!.IsClosed,
-                },
-            };
-
-            // Update detials to repository
-            contacts = await placesRepository.UpdateTimeSheduleAsync(id, contacts);
-
-            // check the null value
-            if (contacts == null)
-            {
-                return BadRequest("Brand Does not Exist");
-            }
-            // convert back to dto
-            else
-            {
-                var userDto = new ResponseModel()
-                {
-                    Message = "Updated Successfully",
-                    Status = true
-                };
-                return Ok(userDto);
-            }
-        }
 
         [HttpPut]
-        [Route("update-places-images/{id:guid}")]
+        [Route("add-airline-images/{id:guid}")]
         [Authorize(Roles = "Admin,Super_Admin")]
-        public async Task<IActionResult> UpdatePlacesImageAsync([FromRoute] Guid id, [FromForm] AddImageList request)
+        public async Task<IActionResult> UpdateAirlinesImageAsync([FromRoute] Guid id, [FromBody] AddAirlinesImages request)
         {
             // Update detials to repository
 
-            List<PlaceImages> ticketBonus = [];
+            List<AirlineImages> ticketBonus = [];
             var rtnlist = new List<string>();
-            var events = await placesRepository.GetAsync(id);
+            var events = await airlineRepository.GetAsync(id);
             // check the null value
             if (events == null)
             {
@@ -337,28 +229,24 @@ namespace Genilog_WebApi.Controllers
             // convert back to dto
             else
             {
-                var upload = new ImageListUpload()
+
+                for (var i = 0; i < request.AirlineImages!.Count; i++)
                 {
-                    Image = request.Image,
-                };
-                var img = await uploadRepository.SaveListImageAsync(upload);
-                for (var i = 0; i < img.ImagePath!.Count; i++)
-                {
-                    rtnlist.Add(img.ImagePath[i]);
-                    var imageUpdate = new PlaceImages()
+                    rtnlist.Add(request.AirlineImages[i]);
+                    var imageUpdate = new AirlineImages()
                     {
-                        PlacesDataModelId = events.Id,
+                        AirlineDataModelId = events.Id,
                         ImagePath = rtnlist[i],
                     };
-                    imageUpdate = await placesRepository.AddPlaceImageAsync(imageUpdate);
+                    imageUpdate = await airlineRepository.AddAirlineImageAsync(imageUpdate);
                     ticketBonus.Add(imageUpdate);
                 }
-                var ticketBonusDtos = mapper.Map<List<PlaceImagesDto>>(ticketBonus);
-                
-                var userDto = new PlacesDataModelDto()
+                var ticketBonusDtos = mapper.Map<List<AirlineImagesDto>>(ticketBonus);
+
+                var userDto = new AirlineDataModelDto()
                 {
                     Id = events.Id,
-                    PlaceImages = ticketBonusDtos,
+                    AirlineImages = ticketBonusDtos,
 
                 };
                 return Ok(userDto);
@@ -366,12 +254,12 @@ namespace Genilog_WebApi.Controllers
         }
 
         [HttpPut]
-        [Route("update-places-facilities/{id:guid}")]
+        [Route("add-aircraft/{id:guid}")]
         [Authorize(Roles = "Manager,Admin,Super_Admin")]
-        public async Task<IActionResult> UpdatePlacesFacilitiesAsync([FromRoute] Guid id, AddPlacesFacilities request)
+        public async Task<IActionResult> UpdateAirlineAircraftAsync([FromRoute] Guid id, AddAirCraft request)
         {
 
-            var events = await placesRepository.GetAsync(id);
+            var events = await airlineRepository.GetAsync(id);
             // check the null value
             if (events == null)
             {
@@ -380,14 +268,16 @@ namespace Genilog_WebApi.Controllers
             // convert back to dto
             else
             {
-                var interested = new PlaceFacilities()
+                var interested = new AirCraftList()
                 {
-                    Facilities = request.Facilities,
-                    PlacesDataModelId = events.Id,
+                    Model = request.Model,
+                    Manufacturer = request.Manufacturer,
+                    Capacity = request.Capacity,
+                    AirlineDataModelId = events.Id,
                 };
 
-                await placesRepository.AddPlaceFacilitiesAsync(interested);
-               
+                await airlineRepository.AddAirCraftListAsync(interested);
+
                 var userDto = new ResponseModel()
                 {
                     Message = "Update Facilities",
@@ -399,11 +289,11 @@ namespace Genilog_WebApi.Controllers
         }
 
         [HttpPut]
-        [Route("update-places-what-to-Expect/{id:guid}")]
+        [Route("add-airline-payment/{id:guid}")]
         [Authorize(Roles = "Manager,Admin,Super_Admin")]
-        public async Task<IActionResult> UpdatePlaceWhatToExpectAsync([FromRoute] Guid id, AddPlaceWhatToExpect request)
+        public async Task<IActionResult> UpdateAirlinePaymentAsync([FromRoute] Guid id, AddAirlinePayment request)
         {
-            var events = await placesRepository.GetAsync(id);
+            var events = await airlineRepository.GetAsync(id);
             // check the null value
             if (events == null)
             {
@@ -412,15 +302,48 @@ namespace Genilog_WebApi.Controllers
             // convert back to dto
             else
             {
-                var interested = new PlaceWhatToExpect()
+                var interested = new AirlinePayment()
                 {
                     Titles = request.Titles,
-                    Description = request.Description,
-                    SubTitle = request.SubTitle,
-                    PlacesDataModelId = events.Id,
+                    Amount = request.Amount,
+                    AirlineDataModelId = events.Id,
                 };
 
-                await placesRepository.AddPlaceWhatToExpectAsync(interested);
+                await airlineRepository.AddAirlinePaymentAsync(interested);
+                var userDto = new ResponseModel()
+                {
+                    Message = "Updated Successfully",
+                    Status = true,
+                };
+
+                return Ok(userDto);
+            }
+        }
+
+        [HttpPut]
+        [Route("add-airline-service-location/{id:guid}")]
+        [Authorize(Roles = "Manager,Admin,Super_Admin")]
+        public async Task<IActionResult> UpdateAirlineServiceLocationAsync([FromRoute] Guid id, AddAirlinesServiceLocation request)
+        {
+            var events = await airlineRepository.GetAsync(id);
+            // check the null value
+            if (events == null)
+            {
+                return BadRequest("Places Does not Exist");
+            }
+            // convert back to dto
+            else
+            {
+                var interested = new AirLineServiceLocation()
+                {
+                    Name = request.Name,
+                    City = request.City,
+                    Code = request.Code,
+                    Country = request.Country,
+                    AirlineDataModelId = events.Id,
+                };
+
+                await airlineRepository.AddAirLineServiceLocationAsync(interested);
                 var userDto = new ResponseModel()
                 {
                     Message = "Updated Successfully",
@@ -432,13 +355,14 @@ namespace Genilog_WebApi.Controllers
         }
 
 
+
         [HttpPut]
-        [Route("update-places-review/{id:guid}")]
+        [Route("add-airline-review/{id:guid}")]
         [Authorize]
-        public async Task<IActionResult> UpdatePlaceReviewAsync([FromRoute] Guid id, [FromBody] AddPlacesReview request)
+        public async Task<IActionResult> UpdateAirlineReviewAsync([FromRoute] Guid id, [FromBody] AddAirlinesReview request)
         {
-            
-            var events = await placesRepository.GetAsync(id);
+
+            var events = await airlineRepository.GetAsync(id);
             // check the null value
             if (events == null)
             {
@@ -453,17 +377,17 @@ namespace Genilog_WebApi.Controllers
                     return BadRequest("Invalid User ID format.");
                 }
                 var user = await generalUserRepository.GetAsync(userGuid);
-                var interested = new PlaceReviewModel()
+                var interested = new AirlineReviewModel()
                 {
                     UserName = $"{user.FirstName} {user.LastName}",
                     ProfileImage = user.ImagePath,
-                    PlacesDataModelId = events.Id,
+                    AirlineDataModelId = events.Id,
                     UserId = user.Id,
                     ReviewMessage = request.ReviewMessage,
                     CreatedAt = DateTime.Now,
                 };
 
-                await placesRepository.AddPlaceReviewAsync(interested);
+                await airlineRepository.AddAirlineReviewAsync(interested);
                 var userDto = new ResponseModel()
                 {
                     Message = "Update Facilities",
@@ -478,33 +402,33 @@ namespace Genilog_WebApi.Controllers
         // Places Chat Message
         [HttpGet("all-places-chat-messages")]
         [Authorize]
-        public async Task<IActionResult> GetAllPlacesChatAsync()
+        public async Task<IActionResult> GetAllAirlineChatAsync()
         {
-            List<PlacesChatModelDto> data = [];
-            var events = await placesRepository.GetAllPlacesChatAsync();
+            List<AirlineChatModelDto> data = [];
+            var events = await airlineRepository.GetAllAirlineChatAsync();
             events = [.. events.OrderByDescending(x => x.CreatedAt)];
-            var userDto = mapper.Map<List<PlacesChatModelDto>>(events);
+            var userDto = mapper.Map<List<AirlineChatModelDto>>(events);
             for (var i = 0; i < userDto.Count; i++)
             {
                 var sender = await generalUserRepository.GetAsync(userDto[i].SenderId);
-                var receiver = await placesRepository.GetAsync(userDto[i].ReceiverId);
+                var receiver = await airlineRepository.GetAsync(userDto[i].ReceiverId);
                 userDto[i].SenderProfileImage = sender.ImagePath;
                 userDto[i].SenderUserName = $"{sender.FirstName} {sender.LastName}";
-                userDto[i].ReceiverProfileImage = receiver.PlaceLogo;
-                userDto[i].ReceiverUserName = $"{receiver.PlaceName}";
+                userDto[i].ReceiverProfileImage = receiver.AirlineLogo;
+                userDto[i].ReceiverUserName = $"{receiver.AirlineName}";
                 data.Add(userDto[i]);
             }
             var lid = data.OrderByDescending(x => x.CreatedAt).ToList();
-            var userDto2 = mapper.Map<List<PlacesChatModelDto>>(lid);
+            var userDto2 = mapper.Map<List<AirlineChatModelDto>>(lid);
             return Ok(userDto2);
         }
 
         [HttpGet("places-chat-messages")]
         [Authorize]
-        public async Task<IActionResult> GetPlacesChatAsync([FromHeader] Guid senderId, [FromHeader] Guid receiverId)
+        public async Task<IActionResult> GetAirlineChatAsync([FromHeader] Guid senderId, [FromHeader] Guid receiverId)
         {
             var sender = await generalUserRepository.GetAsync(senderId);
-            var receiver = await placesRepository.GetAsync(receiverId);
+            var receiver = await airlineRepository.GetAsync(receiverId);
             if (sender == null)
             {
                 var error = new ResponseModel()
@@ -525,23 +449,23 @@ namespace Genilog_WebApi.Controllers
             }
             else
             {
-                List<PlacesChatModelDto> data = [];
+                List<AirlineChatModelDto> data = [];
 
                 var groupChatId = $"{sender.Id}-{receiver.Id}";
-                var events = await placesRepository.GetAllPlacesChatAsync();
+                var events = await airlineRepository.GetAllAirlineChatAsync();
                 var valid = events.Where(x => x.GroupChatId == groupChatId);
                 events = [.. valid.OrderByDescending(x => x.CreatedAt)];
-                var userDto = mapper.Map<List<PlacesChatModelDto>>(events);
+                var userDto = mapper.Map<List<AirlineChatModelDto>>(events);
                 for (var i = 0; i < userDto.Count; i++)
                 {
                     userDto[i].SenderProfileImage = sender.ImagePath;
                     userDto[i].SenderUserName = $"{sender.FirstName} {sender.LastName}";
-                    userDto[i].ReceiverProfileImage = receiver.PlaceLogo;
-                    userDto[i].ReceiverUserName = $"{receiver.PlaceName}";
+                    userDto[i].ReceiverProfileImage = receiver.AirlineLogo;
+                    userDto[i].ReceiverUserName = $"{receiver.AirlineName}";
                     data.Add(userDto[i]);
                 }
                 var lid = data.OrderByDescending(x => x.CreatedAt).ToList();
-                var userDto2 = mapper.Map<List<PlacesChatModelDto>>(lid);
+                var userDto2 = mapper.Map<List<AirlineChatModelDto>>(lid);
                 return Ok(userDto2);
             }
         }
@@ -549,7 +473,7 @@ namespace Genilog_WebApi.Controllers
         [HttpPost]
         [Route("places-chat-messages")]
         [Authorize]
-        public async Task<IActionResult> AddPlacesChatAsync([FromHeader] Guid senderId, [FromHeader] Guid receiverId, [FromBody] AddChatMessage message)
+        public async Task<IActionResult> AddAirlineChatAsync([FromHeader] Guid senderId, [FromHeader] Guid receiverId, [FromBody] AddChatMessage message)
         {
             var validate = ValidateChat(message);
 
@@ -581,7 +505,7 @@ namespace Genilog_WebApi.Controllers
                 }
                 else
                 {
-                    var interested = new PlacesChatModel()
+                    var interested = new AirlineChatModel()
                     {
                         SenderId = sender.Id,
                         ReceiverId = receiver.Id,
@@ -592,7 +516,7 @@ namespace Genilog_WebApi.Controllers
                         CreatedAt = DateTime.Now,
                     };
 
-                   await placesRepository.AddPlacesChatAsync(interested);
+                    await airlineRepository.AddAirlineChatAsync(interested);
                     var userDto = new ResponseModel()
                     {
                         Message = "Success",
@@ -604,17 +528,181 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
+        // Airline Ticket
+        [HttpGet]
+        [Route("airline-flight-ticket")]
+        [Authorize]
+        public async Task<IActionResult> GetAllAirlinesFlightTicketAsync([FromQuery] FilterLocationData data)
+        {
+            var events = await airlineRepository.GetAllAirlineFlightTicketAsync();
+            events = [.. events.OrderByDescending(x => x.CreatedAt)];
+            var allPosts = events.AsQueryable();
+
+           if (!string.IsNullOrEmpty(data.AnyItem))
+            {
+                allPosts = allPosts.Where(x => x.AirlineName!.Contains(data.AnyItem)||x.AirlineId.ToString()==data.AnyItem);
+                var userDto = mapper.Map<List<FlightTicketBookModelDto>>(allPosts);
+
+                return Ok(userDto);
+           }
+            
+            else
+            {
+                var userDto = mapper.Map<List<FlightTicketBookModelDto>>(events);
+                return Ok(userDto);
+            }
+
+
+        }
+
+        [HttpDelete]
+        [Route("airline-flight-ticket/{id:guid}")]
+        [Authorize(Roles = "Manager,Admin,Super_Admin")]
+        public async Task<IActionResult> DeleteAirlinesFlightTicketsAsync(Guid id)
+        {
+            // Get the region from the database
+            var user = await airlineRepository.DeleteAirlineFlightTicketAsync(id);
+            // if null NotFound
+            if (user == null)
+            {
+                return BadRequest("Hotel Does not Exist");
+            }
+
+            else
+            {
+                var userDto = mapper.Map<FlightTicketBookModelDto>(user);
+                return Ok(userDto);
+            }
+        }
+
+        [HttpPut]
+        [Route("airline-flight-ticket/{id:guid}")]
+        [Authorize(Roles = "User,Manager,Admin,Super_Admin")]
+        public async Task<IActionResult> UpdateAirlinesFlightTicketAsync([FromRoute] Guid id, [FromBody] AddFlightTicket request)
+        {
+            var userDto1 = await airlineRepository.GetAirlineFlightTicketAsync(id);
+            if (userDto1 == null)
+            {
+                return BadRequest("Id Does not Exist");
+            }
+
+            // convert back to dto
+            else
+            {
+                var user = new FlightTicketBookModel()
+                {
+                   TicketType = !string.IsNullOrWhiteSpace(request.TicketType) ? request.TicketType : userDto1.TicketType,
+                    AvailabeTimeInterval = !string.IsNullOrWhiteSpace(request.AvailabeTimeInterval) ? request.AvailabeTimeInterval : userDto1.AvailabeTimeInterval,
+                    DapatureTime = !string.IsNullOrWhiteSpace(request.DapatureTime) ? request.DapatureTime : userDto1.DapatureTime,
+                    TicketPrice = (request.TicketPrice ?? userDto1.TicketPrice),
+                    FlightSpeed = !string.IsNullOrWhiteSpace(request.FlightSpeed) ? request.FlightSpeed : userDto1.FlightSpeed,
+                    Dapature = !string.IsNullOrWhiteSpace(request.Dapature) ? request.Dapature : userDto1.Dapature,
+                    Destination = !string.IsNullOrWhiteSpace(request.Destination) ? request.Destination : userDto1.Destination,
+                    OperatedBy = !string.IsNullOrWhiteSpace(request.OperatedBy) ? request.OperatedBy : userDto1.OperatedBy,
+                    Available = (request.Available ?? userDto1.Available),
+                    IsReturn = (request.IsReturn ?? userDto1.IsReturn),
+                    BigLuggageKg = (request.BigLuggageKg ?? userDto1.BigLuggageKg),
+                    SmallLuggageKg = (request.SmallLuggageKg ?? userDto1.SmallLuggageKg),
+                    Stops= (request.Stops ?? userDto1.Stops),
+                    StopPlaces= (request.StopPlaces ?? userDto1.StopPlaces),
+                    
+                };
+                // Update detials to repository
+                user = await airlineRepository.UpdateAirlineFlightTicketAsync(id, user);
+                var contact = await airlineRepository.GetAirlineFlightTicketAsync(user.Id);
+                var userDto = mapper.Map<FlightTicketBookModelDto>(contact);
+                return Ok(userDto);
+            }
+        }
+
+        [HttpPost("airline-flight-ticket")]
+        [Authorize(Roles = "Manager,Admin,Super_Admin")]
+        public async Task<IActionResult> AddFlightTickeAsync([FromBody] AddFlightTicket request)
+        {
+            var check = ValidateFlightTicket(request);
+
+
+            if (!check)
+            {
+                return BadRequest(ModelState);
+            }
+            else
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!Guid.TryParse(userId, out Guid userGuid))
+                {
+                    return BadRequest("Invalid User ID format.");
+                }
+                var flight = await airlineRepository.GetAsync(request.AirlineId);
+                var contacts = new FlightTicketBookModel()
+                {
+                    AdminId = userGuid,
+                    AirlineId=flight.Id,
+                    AirlineName = flight.AirlineName,
+                    OperatedBy=request.OperatedBy,
+                    SmallLuggageKg= request.SmallLuggageKg,
+                   Dapature = request.Dapature,
+                    DapatureTime = request.DapatureTime,
+                    Destination = request.Destination,
+                    AvailabeTimeInterval = request.AvailabeTimeInterval,
+                    TicketNum = CreateRandomTokenSix(),
+                    FlightSpeed = request.FlightSpeed,
+                    TicketPrice = request.TicketPrice,
+                  TicketType = request.TicketType,
+                    Available = true,
+                    BigLuggageKg = request.BigLuggageKg,
+                   IsReturn = request.IsReturn,
+                   StopPlaces = request.StopPlaces,
+                   Stops = request.Stops,
+                    CreatedAt = DateTime.Now,
+
+                };
+                // Pass detials to repository
+                contacts = await airlineRepository.AddAirlineFlightTicketAsync(contacts);
+              
+                // convert back to dto
+                var contact = await airlineRepository.GetAirlineFlightTicketAsync(contacts.Id);
+                var contactsDto = mapper.Map<FlightTicketBookModelDto>(contact);
+                return CreatedAtAction(nameof(GetAirlinesAsync), new { id = contactsDto.Id }, contactsDto);
+            }
+        }
 
 
         // This Is HOTEL SECTION
         [HttpGet]
         [Route("hotel")]
-        public async Task<IActionResult> GetAllHotelAsync()
+        public async Task<IActionResult> GetAllHotelAsync([FromQuery] FilterLocationData data)
         {
-            var contacts = await hotelRepository.GetAllAsync();
-            var contactsDto = mapper.Map<List<HotelDataModelDto>>(contacts);
-            await _hubContext.Clients.All.SendAsync("GetAllHotel", contactsDto);
-            return Ok(contactsDto);
+            var events = await hotelRepository.GetAllAsync();
+            events = [.. events.OrderByDescending(x => x.CreatedAt)];
+            var allPosts = events.AsQueryable();
+
+            if (!string.IsNullOrEmpty(data.State) && !string.IsNullOrEmpty(data.Locality))
+            {
+                allPosts = allPosts.Where(x => x.State!.Contains(data.State) && x.Locality!.Contains(data.Locality));
+                var userDto = mapper.Map<List<HotelDataModelDto>>(allPosts);
+
+                return Ok(userDto);
+            }
+            else if (!string.IsNullOrEmpty(data.State))
+            {
+                allPosts = allPosts.Where(x => x.State!.Contains(data.State));
+                var userDto = mapper.Map<List<HotelDataModelDto>>(allPosts);
+
+                return Ok(userDto);
+            }
+            else if (!string.IsNullOrEmpty(data.Locality))
+            {
+                allPosts = allPosts.Where(x => x.Locality!.Contains(data.Locality));
+                var userDto = mapper.Map<List<HotelDataModelDto>>(allPosts);
+
+                return Ok(userDto);
+            }
+            else
+            {
+                var userDto = mapper.Map<List<HotelDataModelDto>>(events);
+                return Ok(userDto);
+            }
         }
 
         [HttpGet]
@@ -631,7 +719,6 @@ namespace Genilog_WebApi.Controllers
             {
 
                 var contactsDto = mapper.Map<HotelDataModelDto>(contacts);
-                await _hubContext.Clients.All.SendAsync($"GetHotel{id}", contactsDto);
                 return Ok(contactsDto);
             }
         }
@@ -641,8 +728,8 @@ namespace Genilog_WebApi.Controllers
         [Authorize(Roles = "Admin,Super_Admin")]
         public async Task<IActionResult> DeleteHotelAsync(Guid id)
         {
-            
-            
+
+
             // Get the region from the database
             var user = await hotelRepository.DeleteAsync(id);
             // if null NotFound
@@ -661,16 +748,16 @@ namespace Genilog_WebApi.Controllers
         [HttpPut]
         [Route("hotel/{id:guid}")]
         [Authorize(Roles = "Admin,Super_Admin")]
-        public async Task<IActionResult> UpdateHotelAsync([FromRoute] Guid id, [FromBody] UpdateHotel request)
+        public async Task<IActionResult> UpdateHotelAsync([FromRoute] Guid id, [FromBody] AddHotel request)
         {
-            
-            
+
+
             var userDto1 = await hotelRepository.GetAsync(id);
             if (userDto1 == null)
             {
                 return BadRequest("Id Does not Exist");
             }
-           
+
             // convert back to dto
             else
             {
@@ -690,17 +777,73 @@ namespace Genilog_WebApi.Controllers
                     Postcode = !string.IsNullOrWhiteSpace(request.Postcode) ? request.Postcode : userDto1.Postcode,
                     Latitude = (double)(request.Latitude ?? userDto1.Latitude),
                     Longitude = (double)(request.Longitude ?? userDto1.Longitude),
-                    Rating =userDto1.Rating,
+                    Rating = userDto1.Rating,
                     BookingAmount = (double)(request.BookingAmount ?? userDto1.BookingAmount),
                     HotelAdvertType = !string.IsNullOrWhiteSpace(request.HotelAdvertType) ? request.HotelAdvertType : userDto1.HotelAdvertType,
                     HotelEmail = !string.IsNullOrWhiteSpace(request.HotelEmail) ? request.HotelEmail : userDto1.HotelEmail,
                     Available = (bool)(request.Available ?? userDto1.Available),
+                    HotelMonday = new HotelMondayModel()
+                    {
+                        HourStart = !string.IsNullOrWhiteSpace(request.TimeSchedule?.Monday!.Start) ?
+                        request.TimeSchedule?.Monday!.Start : userDto1.HotelMonday!.HourStart,
+                        HourEnd = !string.IsNullOrWhiteSpace(request.TimeSchedule?.Monday!.End) ?
+                        request.TimeSchedule?.Monday!.End : userDto1.HotelMonday!.HourEnd,
+                        IsClosed = (request.TimeSchedule?.Monday?.IsClosed ?? userDto1.HotelMonday!.IsClosed),
+                    },
+                    HotelTuesday = new HotelTuesdayModel()
+                    {
+                        HourStart = !string.IsNullOrWhiteSpace(request.TimeSchedule?.Tuesday!.Start) ?
+                        request.TimeSchedule?.Tuesday!.Start : userDto1.HotelTuesday!.HourStart,
+                        HourEnd = !string.IsNullOrWhiteSpace(request.TimeSchedule?.Tuesday!.End) ?
+                        request.TimeSchedule?.Tuesday!.End : userDto1.HotelTuesday!.HourEnd,
+                        IsClosed = (request.TimeSchedule?.Tuesday?.IsClosed ?? userDto1.HotelTuesday!.IsClosed),
+                    },
+                    HotelWednesday = new HotelWednesdayModel()
+                    {
+                        HourStart = !string.IsNullOrWhiteSpace(request.TimeSchedule?.Wednesday!.Start) ?
+                        request.TimeSchedule?.Wednesday!.Start : userDto1.HotelWednesday!.HourStart,
+                        HourEnd = !string.IsNullOrWhiteSpace(request.TimeSchedule?.Monday!.End) ?
+                        request.TimeSchedule?.Wednesday!.End : userDto1.HotelWednesday!.HourEnd,
+                        IsClosed = (request.TimeSchedule?.Wednesday?.IsClosed ?? userDto1.HotelWednesday!.IsClosed),
+                    },
+                    HotelThursday = new HotelThursdayModel()
+                    {
+                        HourStart = !string.IsNullOrWhiteSpace(request.TimeSchedule?.Thursday!.Start) ?
+                        request.TimeSchedule?.Thursday!.Start : userDto1.HotelMonday!.HourStart,
+                        HourEnd = !string.IsNullOrWhiteSpace(request.TimeSchedule?.Thursday!.End) ?
+                        request.TimeSchedule?.Thursday!.End : userDto1.HotelThursday!.HourEnd,
+                        IsClosed = (request.TimeSchedule?.Thursday?.IsClosed ?? userDto1.HotelThursday!.IsClosed),
+                    },
+                    HotelFriday = new HotelFridayModel()
+                    {
+                        HourStart = !string.IsNullOrWhiteSpace(request.TimeSchedule?.Friday!.Start) ?
+                        request.TimeSchedule?.Friday!.Start : userDto1.HotelFriday!.HourStart,
+                        HourEnd = !string.IsNullOrWhiteSpace(request.TimeSchedule?.Friday!.End) ?
+                        request.TimeSchedule?.Friday!.End : userDto1.HotelFriday!.HourEnd,
+                        IsClosed = (request.TimeSchedule?.Friday?.IsClosed ?? userDto1.HotelFriday!.IsClosed),
+                    },
+                    HotelSaturday = new HotelSaturdayModel()
+                    {
+                        HourStart = !string.IsNullOrWhiteSpace(request.TimeSchedule?.Saturday!.Start) ?
+                        request.TimeSchedule?.Saturday!.Start : userDto1.HotelSaturday!.HourStart,
+                        HourEnd = !string.IsNullOrWhiteSpace(request.TimeSchedule?.Saturday!.End) ?
+                        request.TimeSchedule?.Saturday!.End : userDto1.HotelSaturday!.HourEnd,
+                        IsClosed = (request.TimeSchedule?.Saturday?.IsClosed ?? userDto1.HotelSaturday!.IsClosed),
+                    },
+                    HotelSunday = new HotelSundayModel()
+                    {
+                        HourStart = !string.IsNullOrWhiteSpace(request.TimeSchedule?.Sunday!.Start) ?
+                        request.TimeSchedule?.Sunday!.Start : userDto1.HotelSunday!.HourStart,
+                        HourEnd = !string.IsNullOrWhiteSpace(request.TimeSchedule?.Sunday!.End) ?
+                        request.TimeSchedule?.Sunday!.End : userDto1.HotelSunday!.HourEnd,
+                        IsClosed = (request.TimeSchedule?.Sunday?.IsClosed ?? userDto1.HotelSunday!.IsClosed),
+                    },
                 };
 
                 // Update detials to repository
                 user = await hotelRepository.UpdateAsync(id, user);
-             
-                
+
+
                 var contacts = await hotelRepository.GetAsync(user.Id);
                 var userDto = mapper.Map<HotelDataModelDto>(contacts);
                 return Ok(userDto);
@@ -783,15 +926,15 @@ namespace Genilog_WebApi.Controllers
                     State = request.State,
                     Country = request.Country,
                     Locality = request.Locality,
-                   Postcode = request.Postcode,
-                    Latitude = request.Latitude,
-                    Longitude = request.Longitude,
-                    BookingAmount = request.BookingAmount,
+                    Postcode = request.Postcode,
+                    Latitude = (double)request.Latitude!,
+                    Longitude = (double)request.Longitude!,
+                    BookingAmount = (double)request.BookingAmount!,
                     Rating = 0,
-                    NoOfRooms = request.NoOfRooms,
+                    NoOfRooms = (int)request.NoOfRooms!,
                     HotelAdvertType = "",
-                    HotelLogo=request.HotelLogo,
-                    Available=true,
+                    HotelLogo = request.HotelLogo,
+                    Available = true,
                     CreatedAt = DateTime.Now,
 
                 };
@@ -815,82 +958,11 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
-        [HttpPut("update-hotel-time-schedule/{id:guid}")]
-        [Authorize(Roles = "User,Admin,Super_Admin")]
-        public async Task<IActionResult> UpdateHotelTimeScheduleAsync([FromRoute] Guid id, AddTimeSchedule request)
-        {
-            var contacts = new HotelDataModel()
-            {
-                HotelMonday = new HotelMondayModel()
-                {
-                    HourStart = request.Monday!.Start,
-                    HourEnd = request.Monday!.End,
-                    IsClosed = request.Monday!.IsClosed,
-                },
-                HotelTuesday = new HotelTuesdayModel()
-                {
-                    HourStart = request.Tuesday!.Start,
-                    HourEnd = request.Tuesday!.End,
-                    IsClosed = request.Tuesday!.IsClosed,
-                },
-                HotelWednesday = new HotelWednesdayModel()
-                {
-                    HourStart = request.Wednesday!.Start,
-                    HourEnd = request.Wednesday!.End,
-                    IsClosed = request.Wednesday!.IsClosed,
-                },
-                HotelThursday = new HotelThursdayModel()
-                {
-                    HourStart = request.Thursday!.Start,
-                    HourEnd = request.Thursday!.End,
-                    IsClosed = request.Thursday!.IsClosed,
-                },
-                HotelFriday = new HotelFridayModel()
-                {
-                    HourStart = request.Friday!.Start,
-                    HourEnd = request.Friday!.End,
-                    IsClosed = request.Friday!.IsClosed,
-                },
-                HotelSaturday = new HotelSaturdayModel()
-                {
-                    HourStart = request.Saturday!.Start,
-                    HourEnd = request.Saturday!.End,
-                    IsClosed = request.Saturday!.IsClosed,
-                },
-                HotelSunday = new HotelSundayModel()
-                {
-                    HourStart = request.Sunday!.Start,
-                    HourEnd = request.Sunday!.End,
-                    IsClosed = request.Sunday!.IsClosed,
-                },
-            };
-
-            // Update detials to repository
-            contacts = await hotelRepository.UpdateTimeSheduleAsync(id, contacts);
-
-            // check the null value
-            if (contacts == null)
-            {
-                return BadRequest("Brand Does not Exist");
-            }
-            // convert back to dto
-            else
-            {
-                var userDto = new ResponseModel()
-                {
-                    Message = "Updated Successfully",
-                    Status = true
-                };
-                return Ok(userDto);
-            }
-        }
-
-
 
         [HttpPut]
         [Route("update-hotel-images/{id:guid}")]
         [Authorize(Roles = "Admin,Super_Admin")]
-        public async Task<IActionResult> UpdateHotelImageAsync([FromRoute] Guid id, [FromForm] AddImageList request)
+        public async Task<IActionResult> UpdateHotelImageAsync([FromRoute] Guid id, [FromBody] AddHotelImages request)
         {
             // Update detials to repository
 
@@ -905,14 +977,10 @@ namespace Genilog_WebApi.Controllers
             // convert back to dto
             else
             {
-                var upload = new ImageListUpload()
+
+                for (var i = 0; i < request.HotelImages!.Count; i++)
                 {
-                    Image = request.Image,
-                };
-                var img = await uploadRepository.SaveListImageAsync(upload);
-                for (var i = 0; i < img.ImagePath!.Count; i++)
-                {
-                    rtnlist.Add(img.ImagePath[i]);
+                    rtnlist.Add(request.HotelImages[i]);
                     var imageUpdate = new HotelImages()
                     {
                         HotelDataTableId = events.Id,
@@ -922,7 +990,7 @@ namespace Genilog_WebApi.Controllers
                     ticketBonus.Add(imageUpdate);
                 }
                 var ticketBonusDtos = mapper.Map<List<HotelImagesDto>>(ticketBonus);
-                
+
                 var userDto = new HotelDataModelDto()
                 {
                     Id = events.Id,
@@ -933,7 +1001,7 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
-       
+
         [HttpPut]
         [Route("update-hotel-facilities/{id:guid}")]
         [Authorize(Roles = "User,Admin,Super_Admin")]
@@ -955,7 +1023,7 @@ namespace Genilog_WebApi.Controllers
                     HotelDataTableId = events.Id,
                 };
 
-               await hotelRepository.AddHotelFacilitiesAsync(interested);
+                await hotelRepository.AddHotelFacilitiesAsync(interested);
                 var userDto = new ResponseModel()
                 {
                     Message = "Update Facilities",
@@ -1019,11 +1087,11 @@ namespace Genilog_WebApi.Controllers
             for (var i = 0; i < userDto.Count; i++)
             {
                 var sender = await generalUserRepository.GetAsync(userDto[i].SenderId);
-                var receiver = await placesRepository.GetAsync(userDto[i].ReceiverId);
+                var receiver = await airlineRepository.GetAsync(userDto[i].ReceiverId);
                 userDto[i].SenderProfileImage = sender.ImagePath;
                 userDto[i].SenderUserName = $"{sender.FirstName} {sender.LastName}";
-                userDto[i].ReceiverProfileImage = receiver.PlaceLogo;
-                userDto[i].ReceiverUserName = $"{receiver.PlaceName}";
+                userDto[i].ReceiverProfileImage = receiver.AirlineLogo;
+                userDto[i].ReceiverUserName = $"{receiver.AirlineName}";
                 data.Add(userDto[i]);
             }
             var lid = data.OrderByDescending(x => x.CreatedAt).ToList();
@@ -1036,7 +1104,7 @@ namespace Genilog_WebApi.Controllers
         public async Task<IActionResult> GetHotelChatAsync([FromHeader] Guid senderId, [FromHeader] Guid receiverId)
         {
             var sender = await generalUserRepository.GetAsync(senderId);
-            var receiver = await placesRepository.GetAsync(receiverId);
+            var receiver = await airlineRepository.GetAsync(receiverId);
             if (sender == null)
             {
                 var error = new ResponseModel()
@@ -1068,8 +1136,8 @@ namespace Genilog_WebApi.Controllers
                 {
                     userDto[i].SenderProfileImage = sender.ImagePath;
                     userDto[i].SenderUserName = $"{sender.FirstName} {sender.LastName}";
-                    userDto[i].ReceiverProfileImage = receiver.PlaceLogo;
-                    userDto[i].ReceiverUserName = $"{receiver.PlaceName}";
+                    userDto[i].ReceiverProfileImage = receiver.AirlineLogo;
+                    userDto[i].ReceiverUserName = $"{receiver.AirlineName}";
                     data.Add(userDto[i]);
                 }
                 var lid = data.OrderByDescending(x => x.CreatedAt).ToList();
@@ -1125,7 +1193,7 @@ namespace Genilog_WebApi.Controllers
                     };
 
                     await hotelRepository.AddHotelChatAsync(interested);
-                   
+
                     var userDto = new ResponseModel()
                     {
                         Message = "Success",
@@ -1217,7 +1285,7 @@ namespace Genilog_WebApi.Controllers
             smtp.Send(message);
         }
 
-        private bool ValidatePlace(AddPlaces request)
+        private bool ValidatePlace(AddAirlines request)
         {
             if (request == null)
             {
@@ -1263,6 +1331,37 @@ namespace Genilog_WebApi.Controllers
             }
             return true;
 
+        }
+
+
+        private bool ValidateFlightTicket(AddFlightTicket request)
+        {
+            if (request == null)
+            {
+                ModelState.AddModelError(nameof(request), $"Add  Data Is Required");
+                return false;
+            }
+
+            if (ModelState.ErrorCount > 0)
+            {
+                return false;
+            }
+            return true;
+
+        }
+        private static string CreateRandomTokenSix()
+        {
+            char[] charArr = "ABCDEFGHIJKLMNOPQLSTUVWXYZ0123456789".ToCharArray();
+            string strrandom = string.Empty;
+            Random objran = new();
+            for (int i = 0; i < 6; i++)
+            {
+                //It will not allow Repetation of Characters
+                int pos = objran.Next(1, charArr.Length);
+                if (!strrandom.Contains(charArr.GetValue(pos)!.ToString()!)) strrandom += charArr.GetValue(pos);
+                else i--;
+            }
+            return strrandom;
         }
 
         #endregion

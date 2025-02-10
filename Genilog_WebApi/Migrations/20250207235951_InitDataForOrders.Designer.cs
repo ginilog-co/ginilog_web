@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Genilog_WebApi.Migrations
 {
     [DbContext(typeof(Genilog_Data_Context))]
-    [Migration("20250116104413_InitFistData")]
-    partial class InitFistData
+    [Migration("20250207235951_InitDataForOrders")]
+    partial class InitDataForOrders
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -368,6 +368,9 @@ namespace Genilog_WebApi.Migrations
                     b.Property<string>("CompanyEmail")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("CompanyName")
                         .HasColumnType("nvarchar(max)");
 
@@ -383,6 +386,9 @@ namespace Genilog_WebApi.Migrations
                     b.Property<double>("CurrentLatitude")
                         .HasColumnType("float");
 
+                    b.Property<string>("CurrentLocation")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<double>("CurrentLongitude")
                         .HasColumnType("float");
 
@@ -395,9 +401,6 @@ namespace Genilog_WebApi.Migrations
                     b.Property<string>("ItemDescription")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ItemImage")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("ItemModelNumber")
                         .HasColumnType("nvarchar(max)");
 
@@ -406,9 +409,6 @@ namespace Genilog_WebApi.Migrations
 
                     b.Property<int>("ItemQuantity")
                         .HasColumnType("int");
-
-                    b.Property<Guid>("LogisticsId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("OrderStatus")
                         .HasColumnType("nvarchar(max)");
@@ -450,6 +450,12 @@ namespace Genilog_WebApi.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RecieverState")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("RiderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("RiderName")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SenderAddress")
@@ -497,6 +503,25 @@ namespace Genilog_WebApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("OrderModelDatas");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.PackageImageList", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ImageUrlFile")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("OrderModelDataId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderModelDataId");
+
+                    b.ToTable("PackageImageLists");
                 });
 
             modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.RidersChatModelData", b =>
@@ -1637,6 +1662,17 @@ namespace Genilog_WebApi.Migrations
                     b.Navigation("CompanyModelDatas");
                 });
 
+            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.PackageImageList", b =>
+                {
+                    b.HasOne("Genilog_WebApi.Model.LogisticsModel.OrderModelData", "OrderModelDatas")
+                        .WithMany("PackageImageLists")
+                        .HasForeignKey("OrderModelDataId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OrderModelDatas");
+                });
+
             modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.RidersReviewModel", b =>
                 {
                     b.HasOne("Genilog_WebApi.Model.LogisticsModel.RidersModelData", "RidersModelDatas")
@@ -1903,6 +1939,11 @@ namespace Genilog_WebApi.Migrations
             modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.CompanyModelData", b =>
                 {
                     b.Navigation("CompanyReviewModels");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.OrderModelData", b =>
+                {
+                    b.Navigation("PackageImageLists");
                 });
 
             modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.RidersModelData", b =>

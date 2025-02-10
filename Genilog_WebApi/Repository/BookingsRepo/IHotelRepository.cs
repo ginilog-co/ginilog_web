@@ -1,4 +1,4 @@
-﻿using Genilog_WebApi.Model.PlacesModel;
+﻿using Genilog_WebApi.Model.BookingsModel;
 namespace Genilog_WebApi.Repository.PlacesRepo
 {
     public interface IHotelRepository
@@ -8,7 +8,6 @@ namespace Genilog_WebApi.Repository.PlacesRepo
         Task<HotelDataModel> AddAsync(HotelDataModel region);
         Task<HotelDataModel> DeleteAsync(Guid id);
         Task<HotelDataModel> UpdateAsync(Guid id, HotelDataModel region);
-        Task<HotelDataModel> UpdateTimeSheduleAsync(Guid id, HotelDataModel region);
 
         Task<HotelImages> AddHotelImageAsync(HotelImages region);
         Task<HotelImages> DeleteHotelImageAsync(Guid id);

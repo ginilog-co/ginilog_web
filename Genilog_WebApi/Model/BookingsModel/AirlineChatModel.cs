@@ -1,6 +1,6 @@
-﻿namespace Genilog_WebApi.Model.PlacesModel
+﻿namespace Genilog_WebApi.Model.BookingsModel
 {
-    public class PlacesChatModel
+    public class AirlineChatModel
     {
         public Guid Id { get; set; }
         public Guid SenderId { get; set; }
@@ -11,7 +11,7 @@
         public bool IsRead { get; set; }
         public DateTime? CreatedAt { get; set; }
     }
-    public class PlacesChatModelDto
+    public class AirlineChatModelDto
     {
         public Guid Id { get; set; }
         public Guid SenderId { get; set; }
