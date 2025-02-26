@@ -1,125 +1,183 @@
-import 'package:flutter/material.dart';
+// ignore_for_file: use_build_context_synchronously
 
-void main() {
-  runApp(const MyApp());
+import 'package:ginilog_customer_app/core/components/helpers/notification_service.dart';
+import 'package:ginilog_customer_app/core/components/state/connectivity_state.dart';
+import 'package:ginilog_customer_app/core/components/utils/colors.dart';
+import 'package:ginilog_customer_app/core/components/utils/constants.dart';
+import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
+import 'package:geolocator/geolocator.dart';
+
+import 'core/components/helpers/globals.dart';
+import 'core/components/routes/routers.dart';
+import 'core/components/utils/package_export.dart';
+import 'core/components/routes/routers.dart' as router;
+
+import 'package:geolocator/geolocator.dart' as positions;
+
+//Store this globally
+
+//final _pushMessagingNotification = getIt<PushNotificationService>();
+
+Future myBackgroundMessageHandler(String message) async {
+  debugPrint("onBackgroundMessage: $message");
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // await Upgrader.clearSavedSettings(); // REMOVE this for release builds
+  SystemChrome.setPreferredOrientations(
+    [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown],
+  );
 
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
+  getIt.registerLazySingleton<AppGlobals>(() => AppGlobals());
+  await setupLocator();
+  NotificationService().initializeNotifications();
+  // await _pushMessagingNotification.initialize();
+
+  await globals.init();
+  if (globals.userId.toString().isNotEmpty) {
+    await globals.login();
   }
+
+  final navigatorKey = GlobalKey<NavigatorState>();
+  String? route = await initialRoute();
+
+  runApp(ProviderScope(
+      child: MyApp(
+    route: route,
+    navigatorKey: navigatorKey,
+  )));
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class MyApp extends ConsumerStatefulWidget {
+  const MyApp({
+    super.key,
+    this.route,
+    required this.navigatorKey,
+  });
+  final String? route;
+  final GlobalKey<NavigatorState> navigatorKey;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  ConsumerState<MyApp> createState() => _MyAppState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
+class _MyAppState extends ConsumerState<MyApp> {
+  String? route;
+  positions.Position? _currentPosition;
+  String? _currentAddress;
+  String? _city;
+  String? _state;
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentPosition();
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      route = widget.route;
+    });
+  }
+
+  Future<bool> _handleLocationPermission() async {
+    bool serviceEnabled;
+    positions.LocationPermission permission;
+
+    serviceEnabled = await positions.Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              'Location services are disabled. Please enable the services')));
+      return false;
+    }
+    permission = await positions.Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Location permissions are denied')));
+        return false;
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              'Location permissions are permanently denied, we cannot request permissions.')));
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> _getCurrentPosition() async {
+    final hasPermission = await _handleLocationPermission();
+
+    if (!hasPermission) return;
+    // ignore: deprecated_member_use
+    await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high)
+        .then((positions.Position position) {
+      setState(() => _currentPosition = position);
+      _getAddressFromLatLng(_currentPosition!);
+    }).catchError((e) {
+      debugPrint(e);
+    });
+  }
+
+  Future<void> _getAddressFromLatLng(positions.Position position) async {
+    await placemarkFromCoordinates(
+            _currentPosition!.latitude, _currentPosition!.longitude)
+        .then((List<Placemark> placemarks) async {
+      Placemark place = placemarks[0];
+      setState(() {
+        _currentAddress =
+            '${place.street}, ${place.subLocality}, ${place.subAdministrativeArea}, ${place.postalCode}';
+        _city = "${place.subAdministrativeArea}";
+        _state = "${place.administrativeArea}";
+      });
+      await globals.init();
+      printData("Location", _currentAddress!);
+      printData("Latitude", _currentPosition!.latitude);
+      printData("Longitude", _currentPosition!.longitude);
+      printData("City", _city);
+      printData("State", _state);
+    }).catchError((e) {
+      debugPrint(e);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+    ref.watch(connectivityStatusProviders);
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark.copyWith(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark),
+      child: LayoutBuilder(builder: (context, constraints) {
+        return OrientationBuilder(builder: (context, orientation) {
+          SizeConfig().init(context, constraints, orientation);
+          return UpgradeAlert(
+            showReleaseNotes: false,
+            dialogStyle: UpgradeDialogStyle.cupertino,
+            upgrader: Upgrader(),
+            child: MaterialApp(
+              debugShowCheckedModeBanner: false,
+              title: 'Ginilog',
+              theme: ThemeData(
+                  colorScheme:
+                      ColorScheme.fromSeed(seedColor: AppColors.primary),
+                  useMaterial3: true,
+                  fontFamily: "Open Serif"),
+              onGenerateRoute: router.generateRoute,
+              initialRoute: route,
+              navigatorKey: widget.navigatorKey,
+              builder: (BuildContext context, Widget? child) {
+                return Stack(
+                  children: [
+                    child!,
+                  ],
+                );
+              },
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+          );
+        });
+      }),
     );
   }
 }
