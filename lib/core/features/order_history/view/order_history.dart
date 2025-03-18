@@ -17,16 +17,14 @@ class OrderHistoryScreenView
   Widget build(BuildContext context) {
     var pending = controller.allOrders.where((element) {
       return (element.orderStatus == OrderClassState.open ||
-          element.orderStatus == OrderClassState.accepted);
+          element.orderStatus == OrderClassState.booked);
     }).toList();
     var ongoingOrder = controller.allOrders.where((element) {
       return (element.orderStatus == OrderClassState.picked ||
-          element.orderStatus == OrderClassState.ongoing ||
-          element.orderStatus == OrderClassState.delivered);
+          element.orderStatus == OrderClassState.inTransit);
     }).toList();
     var completedOrder = controller.allOrders.where((element) {
-      return (element.orderStatus == OrderClassState.completed ||
-          element.orderStatus == OrderClassState.closed);
+      return (element.orderStatus == OrderClassState.delivered);
     }).toList();
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -68,6 +66,7 @@ class OrderHistoryScreenView
             ),
           )),
       body: TabBarView(
+        physics: NeverScrollableScrollPhysics(),
         controller: controller.tabController,
         children: [
           AllOrderListTab(

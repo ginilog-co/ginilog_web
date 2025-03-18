@@ -1,16 +1,13 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:ginilog_customer_app/core/components/helpers/endpoints.dart';
 import 'package:ginilog_customer_app/core/components/state/connectivity_state.dart';
 import 'package:ginilog_customer_app/core/components/utils/constants.dart';
-import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
 import 'package:ginilog_customer_app/core/features/account/model/user_response_model.dart';
 import 'package:ginilog_customer_app/core/features/account/states/account_provider.dart';
-import 'package:ginilog_customer_app/core/features/bookings/services/booking_services.dart';
 import 'package:ginilog_customer_app/core/features/bookings/view/accommodation/book_reservation.dart';
-import 'package:ginilog_customer_app/core/features/home/widget/package_info_page.dart.dart';
+import 'package:ginilog_customer_app/core/features/bookings/widget/booking_payment.dart';
 
 class BookReservationScreen extends ConsumerStatefulWidget {
   const BookReservationScreen(
@@ -51,7 +48,8 @@ class BookReservationScreenController
   bool isDataSelected = false;
   late AccountNotifier accountProviders;
   late RegisterResponseModel globals;
-
+  int selected = 0;
+  String paymentMethodUse = "";
   @override
   void initState() {
     super.initState();
@@ -223,7 +221,26 @@ class BookReservationScreenController
           DateTime date2 = lastDate;
           Duration difference = date2.difference(date1);
           int daysBetween = difference.inDays;
-          handleFlutterWavePayment(daysBetween);
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            builder: (context) => BookingPaymentBottomSheet(
+                amount: widget.bookingPrice.toDouble(),
+                reservationId: widget.reservationId,
+                customerName:
+                    "${fistNameTec.text.trim()} ${lastNameTEC.text.trim()}",
+                customerEmail: email.text.trim(),
+                customerPhoneNumber:
+                    "$selectedCountryCode${phoneNo.text.trim()}",
+                numberOfGuests: int.parse(numberOfGuest.text.trim()),
+                comment: comment.text.isEmpty ? "" : comment.text.trim(),
+                reservationStartDate: reservationStartDate.text.trim(),
+                reservationEndDate: reservationEndDate.text.trim(),
+                noOfDays: daysBetween),
+          );
         }
       } else {
         setState(() {
@@ -244,75 +261,5 @@ class BookReservationScreenController
   @override
   Widget build(BuildContext context) {
     return BookReservationScreenView(this);
-  }
-
-  String generateTransactionReference() {
-    return DateTime.now().millisecondsSinceEpoch.toString();
-  }
-
-  Future<void> handleFlutterWavePayment(int days) async {
-    final Customer customer = Customer(
-      name: "${globals.firstName} ${globals.lastName}",
-      phoneNumber: '+234${globals.phoneNo}',
-      email: globals.email ?? "guest@example.com",
-    );
-    int fatNum = days == 0 ? 1 : days;
-    printData("Days", fatNum);
-    final Flutterwave flutterwave = Flutterwave(
-      context: context,
-      publicKey: Endpoints.flutterWaveTestKey,
-      currency: "NGN",
-      txRef: generateTransactionReference(),
-      amount: (widget.bookingPrice * fatNum).toString(),
-      redirectUrl: 'https://www.bringmygas.com/',
-      customer: customer,
-      paymentOptions: "Bank transfer",
-      customization: Customization(title: "Gas Payment"),
-      isTestMode: false,
-    );
-
-    final ChargeResponse response = await flutterwave.charge();
-    printData("Payment Response", response);
-    if (response.status == "successful") {
-      setState(() {
-        isLoading = true;
-      });
-      await BookingsService().bookAccomodationReservation(
-          reservationId: widget.reservationId,
-          customerName: "${fistNameTec.text.trim()} ${lastNameTEC.text.trim()}",
-          customerPhoneNumber: "$selectedCountryCode${phoneNo.text.trim()}",
-          customerEmail: email.text.trim(),
-          trnxReference: response.txRef!,
-          paymentStatus: true,
-          numberOfGuests: int.parse(numberOfGuest.text.trim()),
-          comment: comment.text.isEmpty ? "" : comment.text.trim(),
-          paymentChannel: "Flutterwave",
-          reservationStartDate: reservationStartDate.text.trim(),
-          reservationEndDate: reservationEndDate.text.trim(),
-          noOfDays: days);
-
-      // await sendNotifications(
-      //     "You have successfully placed an order of ${widget}Kg gas.");
-      setState(() {
-        isLoading = false;
-      });
-      navigateToRoute(
-          context,
-          PaymentConfirmationPage(
-              totalAmount: widget.bookingPrice.toString(),
-              cardNumber: "card Number"));
-      setState(() {
-        isLoading = false;
-      });
-    } else {
-      setState(() {
-        isLoading = false;
-      });
-      showCustomSnackbar(context,
-          title: "Payment Error",
-          content: "The payment could not be process",
-          type: SnackbarType.error,
-          isTopPosition: false);
-    }
   }
 }

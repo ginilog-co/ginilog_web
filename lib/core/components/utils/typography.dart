@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'colors.dart';
 
 class AppTypography {
-  static const String fontFamily = 'Montserrat';
+  static const String fontFamily = 'Mulish';
 
   static TextStyle h1({Color? color = AppColors.black}) => TextStyle(
       fontFamily: fontFamily,
@@ -113,7 +113,7 @@ class AppTypography {
       TextStyle(
         color: color,
         background: background,
-        fontFamily: 'Montserrat',
+        fontFamily: 'Mulish',
         leadingDistribution: leadingDistribution,
         backgroundColor: backgroundColor,
         debugLabel: debugLabel,

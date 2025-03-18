@@ -63,7 +63,7 @@ class ForgotPasswordCodeController extends State<ForgotPasswordCodeScreen> {
         isLoading = true;
       });
 
-      final res = await AuthService.forgotPassword(
+      final res = await AuthService().forgotPassword(
           token: codeController.text.trim(),
           password: newPasswordController.text.trim(),
           cxt: context);
@@ -126,8 +126,8 @@ class ForgotPasswordCodeController extends State<ForgotPasswordCodeScreen> {
         globals.stopWatchTimer!.onStartTimer();
       });
 
-      final res = await AuthService.reSendPasswordCode(
-          email: widget.email, cxt: context);
+      final res = await AuthService()
+          .reSendPasswordCode(email: widget.email, cxt: context);
       printData("result", res.statusCode);
       showSnack();
       setState(() {

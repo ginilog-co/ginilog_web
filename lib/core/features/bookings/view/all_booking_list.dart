@@ -62,13 +62,15 @@ class _BookingsListTabState extends ConsumerState<BookingsListTab> {
         backgroundColor: AppColors.white,
         body: SingleChildScrollView(
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               accommodations.isEmpty
                   ? SizedBox.shrink()
                   : Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: SerachInput(
-                        hintText: "Accomodation Names and States locations",
+                        hintText: "Accomodation Names or locations",
                         labelText: "",
                         readOnly: false,
                         prefixIcon: Icons.search,

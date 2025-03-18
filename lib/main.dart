@@ -2,7 +2,7 @@
 
 import 'package:ginilog_customer_app/core/components/helpers/notification_service.dart';
 import 'package:ginilog_customer_app/core/components/state/connectivity_state.dart';
-import 'package:ginilog_customer_app/core/components/utils/colors.dart';
+import 'package:ginilog_customer_app/core/components/state/theme_state.dart';
 import 'package:ginilog_customer_app/core/components/utils/constants.dart';
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:geolocator/geolocator.dart';
@@ -75,6 +75,10 @@ class _MyAppState extends ConsumerState<MyApp> {
     setState(() {
       route = widget.route;
     });
+    // Load theme on app startup
+    Future.delayed(Duration.zero, () {
+      ref.read(themeNotifierProvider.notifier).loadTheme();
+    });
   }
 
   Future<bool> _handleLocationPermission() async {
@@ -144,6 +148,7 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    final themeMode = ref.watch(themeNotifierProvider);
     ref.watch(connectivityStatusProviders);
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(
@@ -159,11 +164,9 @@ class _MyAppState extends ConsumerState<MyApp> {
             child: MaterialApp(
               debugShowCheckedModeBanner: false,
               title: 'Ginilog',
-              theme: ThemeData(
-                  colorScheme:
-                      ColorScheme.fromSeed(seedColor: AppColors.primary),
-                  useMaterial3: true,
-                  fontFamily: "Open Serif"),
+              themeMode: themeMode,
+              theme: ThemeData.light(), // Light theme
+              darkTheme: ThemeData.dark(), // Dark theme
               onGenerateRoute: router.generateRoute,
               initialRoute: route,
               navigatorKey: widget.navigatorKey,

@@ -44,7 +44,6 @@ dependencies:
   flutter_cache_manager: ^3.4.1
   flutter_image_compress: ^2.4.0
   flutter_local_notifications: ^18.0.1
-  flutter_paystack_max: ^1.0.5
   flutter_polyline_points: ^2.1.0
   flutter_riverpod: ^2.6.1
   flutter_spinkit: ^5.2.1
@@ -76,6 +75,7 @@ dependencies:
   stop_watch_timer: ^3.2.1
   upgrader: ^11.3.1
   url_launcher: ^6.3.1
+  webview_flutter: ^4.10.0
 dependency_overrides:
   intl: ^0.19.0
   get_it: ^8.0.3
@@ -109,26 +109,22 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   fonts:
-    - family: Montserrat
+    - family: Mulish
       fonts:
-        - asset: assets/fonts/Montserrat-Black.ttf
-        - asset: assets/fonts/Montserrat-BlackItalic.ttf
-        - asset: assets/fonts/Montserrat-Bold.ttf
-        - asset: assets/fonts/Montserrat-BoldItalic.ttf
-        - asset: assets/fonts/Montserrat-ExtraBold.ttf
-        - asset: assets/fonts/Montserrat-ExtraBoldItalic.ttf
-        - asset: assets/fonts/Montserrat-ExtraLight.ttf
-        - asset: assets/fonts/Montserrat-ExtraLightItalic.ttf
-        - asset: assets/fonts/Montserrat-Italic.ttf
-        - asset: assets/fonts/Montserrat-Light.ttf
-        - asset: assets/fonts/Montserrat-LightItalic.ttf
-        - asset: assets/fonts/Montserrat-Medium.ttf
-        - asset: assets/fonts/Montserrat-MediumItalic.ttf
-        - asset: assets/fonts/Montserrat-Regular.ttf
-        - asset: assets/fonts/Montserrat-SemiBold.ttf
-        - asset: assets/fonts/Montserrat-SemiBoldItalic.ttf
-        - asset: assets/fonts/Montserrat-Thin.ttf
-        - asset: assets/fonts/Montserrat-ThinItalic.ttf
+        - asset: assets/fonts/Mulish-Black.ttf
+        - asset: assets/fonts/Mulish-BlackItalic.ttf
+        - asset: assets/fonts/Mulish-Bold.ttf
+        - asset: assets/fonts/Mulish-BoldItalic.ttf
+        - asset: assets/fonts/Mulish-ExtraBold.ttf
+        - asset: assets/fonts/Mulish-ExtraBoldItalic.ttf
+        - asset: assets/fonts/Mulish-ExtraLight.ttf
+        - asset: assets/fonts/Mulish-ExtraLightItalic.ttf
+        - asset: assets/fonts/Mulish-Italic.ttf
+        - asset: assets/fonts/Mulish-Light.ttf
+        - asset: assets/fonts/Mulish-LightItalic.ttf
+        - asset: assets/fonts/Mulish-SemiBold.ttf
+        - asset: assets/fonts/Mulish-SemiBoldItalic.ttf
+        - asset: assets/fonts/Mulish-Regular.ttf
           style: normal
     - family: Inter
       fonts:

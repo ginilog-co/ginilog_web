@@ -137,7 +137,7 @@ class PlaceOrderScreenView
                             GooglePlacesAutoCompleteTextFormField(
                               style: TextStyle(
                                 color: AppColors.black,
-                                fontFamily: "Montserrat",
+                                fontFamily: "Mulish",
                                 fontSize: fontSized(context, 85),
                               ),
                               textEditingController: controller.originAddress,
@@ -148,7 +148,7 @@ class PlaceOrderScreenView
                                 labelText: 'Origin',
                                 labelStyle: TextStyle(
                                   color: AppColors.black,
-                                  fontFamily: "Montserrat",
+                                  fontFamily: "Mulish",
                                   fontSize: fontSized(context, 85),
                                 ),
                                 border: OutlineInputBorder(),
@@ -220,7 +220,7 @@ class PlaceOrderScreenView
                             GooglePlacesAutoCompleteTextFormField(
                               style: TextStyle(
                                 color: AppColors.black,
-                                fontFamily: "Montserrat",
+                                fontFamily: "Mulish",
                                 fontSize: fontSized(context, 85),
                               ),
                               textEditingController:
@@ -232,7 +232,7 @@ class PlaceOrderScreenView
                                 labelText: 'Reciever Address',
                                 labelStyle: TextStyle(
                                   color: AppColors.black,
-                                  fontFamily: "Montserrat",
+                                  fontFamily: "Mulish",
                                   fontSize: fontSized(context, 85),
                                 ),
                                 border: OutlineInputBorder(),
@@ -423,7 +423,8 @@ class PlaceOrderScreenView
                                   fontFamily: "Inter"),
                             ),
                             addVerticalSpacing(context, 0.05),
-                            widget.shippingType == "charter"
+                            widget.shippingType.toLowerCase() ==
+                                    "charter".toLowerCase()
                                 ? SizedBox.shrink()
                                 : GlobalTextField(
                                     fieldName: 'Package Type',
@@ -439,7 +440,8 @@ class PlaceOrderScreenView
                                     onTap: controller.showBottomSheet,
                                   ),
                             GlobalTextField(
-                              fieldName: widget.shippingType == "charter"
+                              fieldName: widget.shippingType.toLowerCase() ==
+                                      "charter".toString()
                                   ? "List other items here"
                                   : 'Package Description',
                               keyBoardType: TextInputType.multiline,
@@ -536,7 +538,8 @@ class PlaceOrderScreenView
                               },
                             ),
                             addVerticalSpacing(context, 5),
-                            controller.widget.shippingType == "Inter state"
+                            controller.widget.shippingType.toLowerCase() ==
+                                    "Inter state".toLowerCase()
                                 ? Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     crossAxisAlignment:
@@ -593,7 +596,9 @@ class PlaceOrderScreenView
                                       );
                                     }).toList(),
                                   )
-                                : controller.widget.shippingType == "Same State"
+                                : controller.widget.shippingType
+                                            .toLowerCase() ==
+                                        "Same State".toLowerCase()
                                     ? SingleChildScrollView(
                                         scrollDirection: Axis.horizontal,
                                         child: Row(
@@ -665,10 +670,12 @@ class PlaceOrderScreenView
                                     () {}, AppColors.grey, controller.isLoading)
                                 : appButton("Submit", getScreenWidth(context),
                                     () {
-                                    widget.shippingType == "Same State"
+                                    widget.shippingType.toLowerCase() ==
+                                            "Same State".toLowerCase()
                                         ? controller.userRegister()
-                                        : controller.widget.shippingType ==
-                                                "Inter state"
+                                        : controller.widget.shippingType
+                                                    .toLowerCase() ==
+                                                "Inter state".toLowerCase()
                                             ? controller.interState()
                                             : controller.otherOnes();
                                   }, AppColors.primary, controller.isLoading),

@@ -1,6 +1,9 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'dart:convert';
+
 import 'package:ginilog_customer_app/core/components/utils/constants.dart';
+import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
 import 'package:ginilog_customer_app/core/features/account/services/account_services.dart';
 
 import '../../../components/utils/package_export.dart';
@@ -62,15 +65,22 @@ class AccountNotifier extends StateNotifier<AccountState> {
         userId: userId,
         imageFile: imageFile,
       );
-      if (response) {
-        if (!mounted) return;
-        state = AccountSuccess(userData: userData!);
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("User Updated Successfully")));
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        var dataModel =
+            RegisterResponseModel.fromJson(jsonDecode(response.body));
+        state = AccountSuccess(userData: dataModel);
+        showCustomSnackbar(context,
+            title: "User Success",
+            content: "User Created Successfully",
+            type: SnackbarType.success,
+            isTopPosition: false);
       } else {
-        state = AccountFailure("User Not Found");
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text("User Not Found")));
+        state = AccountFailure(response.body);
+        showCustomSnackbar(context,
+            title: "User Update Error",
+            content: response.body,
+            type: SnackbarType.error,
+            isTopPosition: false);
       }
     } on Exception catch (e) {
       state = AccountFailure(e.toString());
@@ -92,15 +102,22 @@ class AccountNotifier extends StateNotifier<AccountState> {
         firstName: firstName,
         lastName: lastName,
       );
-      if (response) {
-        if (!mounted) return;
-        state = AccountSuccess(userData: userData!);
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("User Updated Successfully")));
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        var dataModel =
+            RegisterResponseModel.fromJson(jsonDecode(response.body));
+        state = AccountSuccess(userData: dataModel);
+        showCustomSnackbar(context,
+            title: "User Success",
+            content: "User Created Successfully",
+            type: SnackbarType.success,
+            isTopPosition: false);
       } else {
-        state = AccountFailure("User Not Found");
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text("User Not Found")));
+        state = AccountFailure(response.body);
+        showCustomSnackbar(context,
+            title: "User Update Error",
+            content: response.body,
+            type: SnackbarType.error,
+            isTopPosition: false);
       }
     } on Exception catch (e) {
       state = AccountFailure(e.toString());
@@ -120,15 +137,22 @@ class AccountNotifier extends StateNotifier<AccountState> {
         userId: userId,
         phoneNo: phoneNo,
       );
-      if (response) {
-        if (!mounted) return;
-        state = AccountSuccess(userData: userData!);
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("User Updated Successfully")));
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        var dataModel =
+            RegisterResponseModel.fromJson(jsonDecode(response.body));
+        state = AccountSuccess(userData: dataModel);
+        showCustomSnackbar(context,
+            title: "User Success",
+            content: "User Created Successfully",
+            type: SnackbarType.success,
+            isTopPosition: false);
       } else {
-        state = AccountFailure("User Not Found");
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text("User Not Found")));
+        state = AccountFailure(response.body);
+        showCustomSnackbar(context,
+            title: "User Update Error",
+            content: response.body,
+            type: SnackbarType.error,
+            isTopPosition: false);
       }
     } on Exception catch (e) {
       state = AccountFailure(e.toString());
@@ -163,15 +187,22 @@ class AccountNotifier extends StateNotifier<AccountState> {
           longitude: longitude,
           phoneNo: phoneNo,
           userName: userName);
-      if (response) {
-        if (!mounted) return;
-        state = AccountSuccess(userData: userData!);
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("User Updated Successfully")));
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        var dataModel =
+            RegisterResponseModel.fromJson(jsonDecode(response.body));
+        state = AccountSuccess(userData: dataModel);
+        showCustomSnackbar(context,
+            title: "User Success",
+            content: "User Created Successfully",
+            type: SnackbarType.success,
+            isTopPosition: false);
       } else {
-        state = AccountFailure("User Not Found");
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text("User Not Found")));
+        state = AccountFailure(response.body);
+        showCustomSnackbar(context,
+            title: "User Update Error",
+            content: response.body,
+            type: SnackbarType.error,
+            isTopPosition: false);
       }
     } on Exception catch (e) {
       state = AccountFailure(e.toString());
@@ -204,15 +235,22 @@ class AccountNotifier extends StateNotifier<AccountState> {
           longitude: longitude,
           phoneNo: phoneNo,
           userName: userName);
-      if (response) {
-        if (!mounted) return;
-        state = AccountSuccess(userData: userData!);
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("User Updated Successfully")));
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        var dataModel =
+            RegisterResponseModel.fromJson(jsonDecode(response.body));
+        state = AccountSuccess(userData: dataModel);
+        showCustomSnackbar(context,
+            title: "User Success",
+            content: "User Created Successfully",
+            type: SnackbarType.success,
+            isTopPosition: false);
       } else {
-        state = AccountFailure("User Not Found");
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text("User Not Found")));
+        state = AccountFailure(response.body);
+        showCustomSnackbar(context,
+            title: "User Update Error",
+            content: response.body,
+            type: SnackbarType.error,
+            isTopPosition: false);
       }
     } on Exception catch (e) {
       state = AccountFailure(e.toString());
@@ -229,17 +267,22 @@ class AccountNotifier extends StateNotifier<AccountState> {
       var response = await services.deleteDeliveryAddress(
         addressId: addressId,
       );
-      if (response) {
-        if (!mounted) {
-          state = AccountSuccess(userData: userData!);
-          ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Deleted Successfully")));
-          return;
-        }
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        var dataModel =
+            RegisterResponseModel.fromJson(jsonDecode(response.body));
+        state = AccountSuccess(userData: dataModel);
+        showCustomSnackbar(context,
+            title: "User Success",
+            content: "User Created Successfully",
+            type: SnackbarType.success,
+            isTopPosition: false);
       } else {
-        state = AccountFailure("Address Not Found");
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text("Address Not Found")));
+        state = AccountFailure(response.body);
+        showCustomSnackbar(context,
+            title: "User Update Error",
+            content: response.body,
+            type: SnackbarType.error,
+            isTopPosition: false);
       }
     } on Exception catch (e) {
       state = AccountFailure(e.toString());

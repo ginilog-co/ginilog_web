@@ -61,7 +61,7 @@ class RegisterScreenView
                             fontSize: fontSized(context, 65),
                             color: AppColors.black,
                             fontWeight: FontWeight.w400,
-                            fontFamily: "Montserrat"),
+                            fontFamily: "Mulish"),
                       ),
                     ],
                   ),
@@ -200,7 +200,7 @@ class RegisterScreenView
                           TextSpan(
                             style: TextStyle(
                                 fontWeight: FontWeight.w500,
-                                fontFamily: "Montserrat",
+                                fontFamily: "Mulish",
                                 color: AppColors.black,
                                 fontSize: fontSized(context, 65)),
                             text: "I Agree to the ",
@@ -209,33 +209,33 @@ class RegisterScreenView
                                 text: "Terms & Conditions",
                                 style: TextStyle(
                                     fontWeight: FontWeight.w500,
-                                    fontFamily: "Montserrat",
+                                    fontFamily: "Mulish",
                                     color: AppColors.primary,
                                     fontSize: fontSized(context, 65)),
                                 recognizer: TapGestureRecognizer()
                                   ..onTap = () {
                                     controller.urlString(
-                                        "https://bringmygas.com/Home/TermsOfService");
+                                        "https://ginilog.com/Home/TermsOfService");
                                   },
                               ),
                               TextSpan(
                                 text: " & ",
                                 style: TextStyle(
                                     fontWeight: FontWeight.w500,
-                                    fontFamily: "Montserrat",
+                                    fontFamily: "Mulish",
                                     fontSize: fontSized(context, 65)),
                               ),
                               TextSpan(
                                 text: "Privacy Policy",
                                 style: TextStyle(
                                     fontWeight: FontWeight.w500,
-                                    fontFamily: "Montserrat",
+                                    fontFamily: "Mulish",
                                     color: AppColors.primary,
                                     fontSize: fontSized(context, 65)),
                                 recognizer: TapGestureRecognizer()
                                   ..onTap = () {
                                     controller.urlString(
-                                        "https://bringmygas.com/Home/Privacy");
+                                        "https://ginilog.com/Home/Privacy");
                                   },
                               ),
                             ],

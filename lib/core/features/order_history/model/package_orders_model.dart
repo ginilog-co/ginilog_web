@@ -4,16 +4,7 @@
 
 import 'dart:convert';
 
-enum OrderClassState {
-  open,
-  accepted,
-  rejected,
-  picked,
-  ongoing,
-  completed,
-  delivered,
-  closed
-}
+enum OrderClassState { open, picked, booked, inTransit, delivered, cancelled }
 
 List<PackageOrderResponseModel> packageOrderResponseModelFromJson(String str) =>
     List<PackageOrderResponseModel>.from(
@@ -273,20 +264,16 @@ class PackageOrderResponseModel {
     switch (state) {
       case 'Open':
         return OrderClassState.open;
-      case 'Accepted':
-        return OrderClassState.accepted;
-      case 'Rejected':
-        return OrderClassState.rejected;
       case 'Picked':
         return OrderClassState.picked;
-      case 'Ongoing':
-        return OrderClassState.ongoing;
-      case 'Completed':
-        return OrderClassState.completed;
+      case 'Booked':
+        return OrderClassState.booked;
+      case 'InTransit':
+        return OrderClassState.inTransit;
       case 'Delivered':
         return OrderClassState.delivered;
-      case 'Closed':
-        return OrderClassState.closed;
+      case 'Cancelled':
+        return OrderClassState.cancelled;
       default:
         throw Exception(
             'Unknown order state: $state'); // Or return a default value
@@ -339,20 +326,16 @@ class OrderDeliveryFlow {
     switch (state) {
       case 'Open':
         return OrderClassState.open;
-      case 'Accepted':
-        return OrderClassState.accepted;
-      case 'Rejected':
-        return OrderClassState.rejected;
       case 'Picked':
         return OrderClassState.picked;
-      case 'Ongoing':
-        return OrderClassState.ongoing;
-      case 'Completed':
-        return OrderClassState.completed;
+      case 'Booked':
+        return OrderClassState.booked;
+      case 'InTransit':
+        return OrderClassState.inTransit;
       case 'Delivered':
         return OrderClassState.delivered;
-      case 'Closed':
-        return OrderClassState.closed;
+      case 'Cancelled':
+        return OrderClassState.cancelled;
       default:
         throw Exception(
             'Unknown order state: $state'); // Or return a default value

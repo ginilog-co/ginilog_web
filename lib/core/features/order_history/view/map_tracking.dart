@@ -1,71 +1,33 @@
 // ignore_for_file: library_private_types_in_public_api, deprecated_member_use
 
-import 'dart:async';
-import 'dart:math';
-
+import 'package:ginilog_customer_app/core/components/utils/app_buttons.dart';
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
+import 'package:ginilog_customer_app/core/components/utils/constants.dart';
+import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
+import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
-import 'package:ginilog_customer_app/core/features/order_history/states/order_state.dart';
+import 'package:ginilog_customer_app/core/features/order_history/model/package_orders_model.dart';
 
 class OrderLiveTrackingPage extends ConsumerStatefulWidget {
-  const OrderLiveTrackingPage(
-      {super.key,
-      required this.orderId,
-      required this.sourceLatitude,
-      required this.sourceLongitude,
-      required this.destinationLatitude,
-      required this.destinationLongitude});
+  const OrderLiveTrackingPage({super.key, required this.order});
 
-  final String orderId;
-  final double sourceLatitude;
-  final double sourceLongitude;
-  final double destinationLatitude;
-  final double destinationLongitude;
+  final PackageOrderResponseModel order;
 
   @override
   _LoginPageState createState() => _LoginPageState();
 }
 
 class _LoginPageState extends ConsumerState<OrderLiveTrackingPage> {
-  late PackageOrderNotifier orderProviders;
-  final Completer<GoogleMapController> mapController =
-      Completer(); //controller for Google map
-  BitmapDescriptor currentIcon = BitmapDescriptor.defaultMarker;
-  BitmapDescriptor destinationIcon = BitmapDescriptor.defaultMarker;
-  BitmapDescriptor sourceIcon = BitmapDescriptor.defaultMarker;
+  PackageOrderResponseModel order = PackageOrderResponseModel();
+
+  late GoogleMapController mapController;
 
   @override
   void initState() {
-    orderProviders = ref.read(packageOrderProvider.notifier);
+    order = widget.order;
     super.initState();
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) async => await initializeMap());
-    BitmapDescriptor.asset(
-            ImageConfiguration.empty, "assets/images/delivery_guy.png",
-            height: 40, width: 40)
-        .then(
-      (icon) {
-        currentIcon = icon;
-      },
-    );
-    BitmapDescriptor.asset(
-            ImageConfiguration.empty, "assets/images/home-delivery.png",
-            height: 30, width: 30)
-        .then(
-      (icon) {
-        destinationIcon = icon;
-      },
-    );
-    BitmapDescriptor.asset(
-            ImageConfiguration.empty, "assets/images/package_station.png",
-            height: 30, width: 30)
-        .then(
-      (icon) {
-        sourceIcon = icon;
-      },
-    );
   }
 
   @override
@@ -73,267 +35,19 @@ class _LoginPageState extends ConsumerState<OrderLiveTrackingPage> {
     super.dispose();
   }
 
-  // Calculate the bearing between two LatLng points
-  double calculateBearing(LatLng start, LatLng end) {
-    double startLat = start.latitude * (pi / 180);
-    double startLng = start.longitude * (pi / 180);
-    double endLat = end.latitude * (pi / 180);
-    double endLng = end.longitude * (pi / 180);
-
-    double dLon = endLng - startLng;
-    double x = sin(dLon) * cos(endLat);
-    double y =
-        cos(startLat) * sin(endLat) - sin(startLat) * cos(endLat) * cos(dLon);
-
-    double bearing = atan2(x, y) * (180 / pi); // Convert to degrees
-    return (bearing + 360) % 360; // Normalize to 0–360
+  List<OrderDeliveryFlow> orderDeliveryFlows(List<OrderDeliveryFlow> flows) {
+    if (flows.isEmpty) return [];
+    // Sorting by `dateTime` (earliest first, latest last)
+    flows.sort(
+        (a, b) => a.updatedAt!.toLocal().compareTo(b.updatedAt!.toLocal()));
+    return flows;
   }
-
-  Map<PolylineId, Polyline> polylines = {};
-  Future<void> initializeMap() async {
-    final coordinates = await fetchPolylinePoints();
-    generatePolyLineFromPoints(coordinates);
-  }
-
-  Future<List<LatLng>> fetchPolylinePoints() async {
-    final polylinePoints = PolylinePoints();
-    final result = await polylinePoints.getRouteBetweenCoordinates(
-      googleApiKey: "AIzaSyCuU7j9XnHs31-I6NE7cz_SxOw3lzScFuo",
-      request: PolylineRequest(
-        mode: TravelMode.driving,
-        origin: PointLatLng(widget.sourceLatitude, widget.sourceLongitude),
-        destination: PointLatLng(
-            widget.destinationLatitude, widget.destinationLongitude),
-      ),
-    );
-    if (result.points.isNotEmpty) {
-      return result.points
-          .map((point) => LatLng(point.latitude, point.longitude))
-          .toList();
-    } else {
-      debugPrint(result.errorMessage);
-      return [];
-    }
-  }
-
-  Future<void> generatePolyLineFromPoints(
-      List<LatLng> polylineCoordinates) async {
-    const id = PolylineId('polyline');
-
-    final polyline = Polyline(
-      polylineId: id,
-      color: AppColors.red,
-      points: polylineCoordinates,
-      width: 8,
-    );
-
-    setState(() => polylines[id] = polyline);
-  }
-
-  transition(LatLng result) async {
-    GoogleMapController googleMapController = await mapController.future;
-    googleMapController.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(
-          zoom: 13.5,
-          target: result,
-        ),
-      ),
-    );
-    setState(() {});
-  }
-
-  // final String _mapStyle = '''
-  // [
-  //   {
-  //     "featureType": "administrative",
-  //     "elementType": "all",
-  //     "stylers": [
-  //       { "visibility": "on" }
-  //     ]
-  //   },
-  //   {
-  //     "featureType": "landscape",
-  //     "elementType": "all",
-  //     "stylers": [
-  //       { "visibility": "on" }
-  //     ]
-  //   },
-  //   {
-  //     "featureType": "poi",
-  //     "elementType": "all",
-  //     "stylers": [
-  //       { "visibility": "on" }
-  //     ]
-  //   },
-  //   {
-  //     "featureType": "road",
-  //     "elementType": "all",
-  //     "stylers": [
-  //       { "visibility": "on" }
-  //     ]
-  //   },
-  //   {
-  //     "featureType": "transit",
-  //     "elementType": "all",
-  //     "stylers": [
-  //       { "visibility": "on" }
-  //     ]
-  //   },
-  //   {
-  //     "featureType": "water",
-  //     "elementType": "all",
-  //     "stylers": [
-  //       { "visibility": "off" }
-  //     ]
-  //   }
-  // ]
-  // ''';
-
-  // Widget buildItem(BuildContext context, DocumentSnapshot? documentSnapshot) {
-  //   if (documentSnapshot == null) {
-  //     return const Center(
-  //       child: CircularProgressIndicator(
-  //         valueColor: AlwaysStoppedAnimation(Colors.cyan),
-  //       ),
-  //     );
-  //   }
-  //   OrderTrackModel userChat = OrderTrackModel.fromDocument(documentSnapshot);
-
-  //   final googlePlex = LatLng(userChat.sourceLatitude!.toDouble(),
-  //       userChat.sourceLongitude!.toDouble());
-  //   printData("Data", googlePlex);
-  //   final current = LatLng(userChat.currentLatitude!.toDouble(),
-  //       userChat.currentLongitude!.toDouble());
-  //   final destination = LatLng(userChat.destinationLatitude!.toDouble(),
-  //       userChat.destinationLongitude!.toDouble());
-
-  //   // Add the initial marker to the map
-
-  //   return GoogleMap(
-  //     // style: _mapStyle,
-  //     compassEnabled: false,
-  //     trafficEnabled: false, // Enable real-time traffic
-  //     mapType: MapType.normal, // Normal map type
-  //     gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
-  //       Factory<OneSequenceGestureRecognizer>(
-  //         () => EagerGestureRecognizer(),
-  //       )
-  //     },
-  //     circles: {
-  //       Circle(
-  //         circleId: const CircleId('circle1'),
-  //         center: googlePlex, // Center of the circle
-  //         radius: 500, // Radius in meters
-  //         fillColor:
-  //             Colors.blue.withOpacity(0.5), // Fill color with transparency
-  //         strokeColor: Colors.blue, // Stroke color
-  //         strokeWidth: 2, // Stroke width in pixels
-  //       ),
-  //       Circle(
-  //         circleId: const CircleId('circle2'),
-  //         center: current, // Center of another circle
-  //         radius: 300,
-  //         fillColor: Colors.green.withOpacity(0.5),
-  //         strokeColor: Colors.green,
-  //         strokeWidth: 2,
-  //       ),
-  //       Circle(
-  //         circleId: const CircleId('circle2'),
-  //         center: destination, // Center of another circle
-  //         radius: 300,
-  //         fillColor: Colors.red.withOpacity(0.5),
-  //         strokeColor: Colors.red,
-  //         strokeWidth: 2,
-  //       ),
-  //     },
-  //     onCameraMove: (position) {
-  //       position = CameraPosition(
-  //         target: current, // Initial position
-  //         zoom: 14.0,
-  //       );
-  //     },
-  //     heatmaps: {
-  //       Heatmap(
-  //         heatmapId: const HeatmapId("example_heatmap"),
-  //         data: <WeightedLatLng>[
-  //           WeightedLatLng(
-  //             googlePlex, // Point 1
-  //             weight: 2.0, // Weight for the point
-  //           ),
-  //           WeightedLatLng(
-  //             current, // Point 2
-  //             weight: 3.0,
-  //           ),
-  //           WeightedLatLng(
-  //             destination, // Point 3
-  //             weight: 1.0,
-  //           ),
-  //         ],
-  //         gradient: const HeatmapGradient(
-  //           <HeatmapGradientColor>[
-  //             HeatmapGradientColor(Colors.green, 0.2),
-  //             HeatmapGradientColor(Colors.red, 1.0)
-  //           ], // Gradient colors
-  //           colorMapSize: 256, // Transition points
-  //         ),
-  //         radius: const HeatmapRadius.fromPixels(
-  //             40), // Radius of each point in pixels
-  //         opacity: 0.6, // Opacity of the heatmap
-  //       ),
-  //     },
-  //     initialCameraPosition: CameraPosition(
-  //       target: current,
-  //       zoom: 13,
-  //     ),
-  //     markers: {
-  //       Marker(
-  //         markerId: const MarkerId('currentLocation'),
-  //         icon: currentIcon,
-  //         infoWindow: const InfoWindow(
-  //           title: "Bike Location",
-  //         ),
-  //         position: current,
-  //         rotation: userChat.orderStatus == "Picked"
-  //             ? _calculateBearing(current, googlePlex) + 100
-  //             : _calculateBearing(current, destination) + 100,
-  //         anchor: const Offset(0.4, 0.5), // Center the icon
-  //       ),
-  //       //_deliveryGuyMarker,
-  //       Marker(
-  //         markerId: const MarkerId('sourceLocation'),
-  //         infoWindow: const InfoWindow(
-  //           title: "Logistics Company Location",
-  //         ),
-  //         icon: sourceIcon,
-  //         position: googlePlex,
-  //       ),
-  //       Marker(
-  //         markerId: const MarkerId('destinationLocation'),
-  //         icon: destinationIcon,
-  //         infoWindow: const InfoWindow(
-  //           title: "Home Location",
-  //         ),
-  //         position: destination,
-  //       )
-  //     },
-  //     polylines: Set<Polyline>.of(polylines.values),
-  //     onMapCreated: (controller) {
-  //       controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-  //         target: current,
-  //         zoom: 13,
-  //       )));
-  //       setState(() {
-  //         mapController.complete(controller);
-  //       });
-  //     },
-  //   );
-  // }
 
   @override
   Widget build(BuildContext context) {
     final key = GlobalKey<ScaffoldMessengerState>();
-
+    final current = LatLng(
+        order.currentLatitude!.toDouble(), order.currentLongitude!.toDouble());
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: PreferredSize(
@@ -348,7 +62,173 @@ class _LoginPageState extends ConsumerState<OrderLiveTrackingPage> {
             ),
           )),
       key: key,
-      body: Column(),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 10,
+        children: [
+          Expanded(
+              flex: 2,
+              child: GoogleMap(
+                initialCameraPosition: CameraPosition(
+                  target: current,
+                  zoom: 14.0,
+                ),
+                buildingsEnabled: false,
+                myLocationButtonEnabled: false,
+                compassEnabled: false,
+                markers: {
+                  Marker(
+                    markerId: const MarkerId("currentLocation"),
+                    position: current,
+                    infoWindow: InfoWindow(
+                        title: "Current Location",
+                        snippet: order.currentLocation!),
+                    icon: BitmapDescriptor.defaultMarkerWithHue(
+                        BitmapDescriptor.hueRed),
+                  ),
+                },
+                onMapCreated: (controller) {
+                  mapController = controller;
+                },
+              )),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0, right: 10),
+            child: const AppText(
+                isBody: false,
+                text: "Tracking Number",
+                textAlign: TextAlign.start,
+                fontSize: 75,
+                color: AppColors.black,
+                fontStyle: FontStyle.normal,
+                fontWeight: FontWeight.w700),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0, right: 10),
+            child: Row(
+              spacing: 5,
+              children: [
+                SvgPicture.asset(
+                  'assets/svgs/track_num_icon.svg',
+                  width: 20,
+                ),
+                AppText(
+                    isBody: true,
+                    text: "TN: ${order.trackingNum}",
+                    textAlign: TextAlign.start,
+                    fontSize: 60,
+                    color: AppColors.green,
+                    fontStyle: FontStyle.normal,
+                    fontWeight: FontWeight.bold),
+              ],
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: ListView.builder(
+              padding: EdgeInsets.only(left: 10, right: 10),
+              itemCount: orderDeliveryFlows(order.orderDeliveryFlows!).length,
+              itemBuilder: (context, index) {
+                final status =
+                    orderDeliveryFlows(order.orderDeliveryFlows!)[index];
+                DateTime dt2 =
+                    DateTime.parse(status.updatedAt!.toLocal().toString());
+                String date =
+                    DateFormat("E, MMM d hh:mm a").format(dt2.toLocal());
+                return buildTrackFlow(
+                  status: status.orderStatus!,
+                  currentStatus: order.orderStatus!.name.firstCap,
+                  statusDate: date,
+                  location: status.currentLocation!,
+                  isLast: index ==
+                      order.orderDeliveryFlows!.length -
+                          1, // Check if it's the last item
+                );
+              },
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child:
+                  appButton("Go Back", getScreenWidth(context) / 2, () async {
+                navigateBack(context);
+              }, AppColors.primary, false),
+            ),
+          ),
+          addVerticalSpacing(context, 5)
+        ],
+      ),
+    );
+  }
+
+  Widget buildTrackFlow({
+    required OrderClassState status,
+    required String currentStatus,
+    required String statusDate,
+    required String location,
+    required bool isLast,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 10,
+      children: [
+        Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              status.name.firstCap == currentStatus
+                  ? Icons.check_box_outline_blank
+                  : Icons.check_box_outlined,
+              color: status.name.firstCap == currentStatus
+                  ? AppColors.grey
+                  : AppColors.green,
+              size: 30,
+            ),
+            !isLast
+                ? CustomPaint(
+                    size: const Size(1, 48),
+                    painter: DashedLineVerticalPainter())
+                : SizedBox.shrink(),
+          ],
+        ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppText(
+                  isBody: false,
+                  text: "Package Status: ${status.name.firstCap}",
+                  textAlign: TextAlign.start,
+                  fontSize: 80,
+                  color: status.name.firstCap == currentStatus
+                      ? AppColors.grey
+                      : AppColors.green,
+                  fontStyle: FontStyle.normal,
+                  fontWeight: FontWeight.bold),
+              AppText(
+                  isBody: true,
+                  text: statusDate,
+                  textAlign: TextAlign.start,
+                  fontSize: 65,
+                  color: AppColors.black,
+                  fontStyle: FontStyle.normal,
+                  fontWeight: FontWeight.bold),
+              AppText(
+                  isBody: true,
+                  text: location,
+                  textAlign: TextAlign.start,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  fontSize: 65,
+                  color: AppColors.black,
+                  fontStyle: FontStyle.normal,
+                  fontWeight: FontWeight.bold),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

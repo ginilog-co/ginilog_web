@@ -61,7 +61,7 @@ class AccountService {
     }
   }
 
-  Future<bool> updateProfilePics({
+  Future<http.Response> updateProfilePics({
     required String imageFile,
     required String userId,
   }) async {
@@ -84,10 +84,10 @@ class AccountService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         printData("Response", response.body);
         getUserData();
-        return true;
+        return response;
       } else {
         printData("Error", response.body);
-        return false;
+        return response;
       }
     } catch (e) {
       printData('Error', e.toString());
@@ -95,7 +95,7 @@ class AccountService {
     }
   }
 
-  Future<bool> updateNames({
+  Future<http.Response> updateNames({
     required String userId,
     required String firstName,
     required String lastName,
@@ -119,10 +119,10 @@ class AccountService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         printData("Response", response.body);
         getUserData();
-        return true;
+        return response;
       } else {
         printData("Error", response.body);
-        return false;
+        return response;
       }
     } catch (e) {
       printData('Error', e.toString());
@@ -130,7 +130,7 @@ class AccountService {
     }
   }
 
-  Future<bool> updatePhoneNo({
+  Future<http.Response> updatePhoneNo({
     required String userId,
     required String phoneNo,
   }) async {
@@ -152,10 +152,10 @@ class AccountService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         printData("Response", response.body);
         getUserData();
-        return true;
+        return response;
       } else {
         printData("Error", response.body);
-        return false;
+        return response;
       }
     } catch (e) {
       printData('Error', e.toString());
@@ -163,7 +163,7 @@ class AccountService {
     }
   }
 
-  Future<bool> updateOnlineStatus({
+  Future<http.Response> updateOnlineStatus({
     required bool availability,
   }) async {
     try {
@@ -184,10 +184,10 @@ class AccountService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         printData("Online Status Update", response.body);
         getUserData();
-        return true;
+        return response;
       } else {
         printData("Error", response.body);
-        return false;
+        return response;
       }
     } catch (e) {
       printData('Error', e.toString());
@@ -195,7 +195,7 @@ class AccountService {
     }
   }
 
-  Future<bool> addNewAddress({
+  Future<http.Response> addNewAddress({
     required String userId,
     required String address,
     required String addressPostCodes,
@@ -240,10 +240,10 @@ class AccountService {
         await globals.init();
         printData("Response", response.body);
         getUserData();
-        return true;
+        return response;
       } else {
         printData("Error", response.body);
-        return false;
+        return response;
       }
     } catch (e) {
       printData('Error', e.toString());
@@ -251,7 +251,7 @@ class AccountService {
     }
   }
 
-  Future<bool> updateAddress({
+  Future<http.Response> updateAddress({
     required String addressId,
     required String address,
     required String addressPostCodes,
@@ -293,11 +293,11 @@ class AccountService {
         await globals.init();
         printData("Response", response.body);
         getUserData();
-        return true;
+        return response;
       } else {
         printData("Error", response.body);
         printData("Error", response.statusCode);
-        return false;
+        return response;
       }
     } catch (e) {
       printData('Error', e.toString());
@@ -305,7 +305,7 @@ class AccountService {
     }
   }
 
-  Future<bool> deleteDeliveryAddress({
+  Future<http.Response> deleteDeliveryAddress({
     required String addressId,
   }) async {
     try {
@@ -320,17 +320,17 @@ class AccountService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         printData("Response", response.body);
         getUserData();
-        return true;
+        return response;
       } else {
         printData("Error", response.body);
-        return false;
+        return response;
       }
     } catch (e) {
       rethrow;
     }
   }
 
-  Future<bool> sendFeedBack({
+  Future<http.Response> sendFeedBack({
     required String feedback,
     required String phoneNo,
   }) async {
@@ -355,10 +355,10 @@ class AccountService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         printData("Response", response.body);
         getUserData();
-        return true;
+        return response;
       } else {
         printData("Error", response.body);
-        return false;
+        return response;
       }
     } catch (e) {
       printData('Error', e.toString());

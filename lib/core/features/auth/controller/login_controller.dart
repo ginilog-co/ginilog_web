@@ -107,7 +107,7 @@ class LoginScreensController extends ConsumerState<LoginScreens> {
           await globals.init();
           await AuthService().updateDeviceToken();
 
-          if (res) {
+          if (res.statusCode == 200 || res.statusCode == 201) {
             if (globals.isEmailVerified == false) {
               setState(() {
                 isLoading = false;
@@ -138,7 +138,7 @@ class LoginScreensController extends ConsumerState<LoginScreens> {
             });
             showCustomSnackbar(context,
                 title: "Invalid User",
-                content: "Incorrect Email or Password",
+                content: res.body,
                 type: SnackbarType.error,
                 isTopPosition: false);
           }
@@ -174,7 +174,7 @@ class LoginScreensController extends ConsumerState<LoginScreens> {
     if (connectivityStatusProvider == ConnectivityStatus.isConnected) {
       if (isChecked == true) {
         final res = await AuthService().signInWithGoogle();
-        if (res) {
+        if (res.statusCode == 200 || res.statusCode == 201) {
           await globals.init();
           await AuthService().updateDeviceToken();
           navigateAndReplaceRoute(
@@ -185,7 +185,7 @@ class LoginScreensController extends ConsumerState<LoginScreens> {
         } else {
           showCustomSnackbar(context,
               title: "Authentication",
-              content: "Authentication Error",
+              content: res.body,
               type: SnackbarType.error,
               isTopPosition: false);
         }
@@ -214,7 +214,7 @@ class LoginScreensController extends ConsumerState<LoginScreens> {
     if (connectivityStatusProvider == ConnectivityStatus.isConnected) {
       if (isChecked == true) {
         final res = await AuthService().signInWithApple();
-        if (res) {
+        if (res.statusCode == 200 || res.statusCode == 201) {
           await globals.init();
           await AuthService().updateDeviceToken();
           navigateAndReplaceRoute(
@@ -225,7 +225,7 @@ class LoginScreensController extends ConsumerState<LoginScreens> {
         } else {
           showCustomSnackbar(context,
               title: "Authentication",
-              content: "Authentication Error",
+              content: res.body,
               type: SnackbarType.error,
               isTopPosition: false);
         }

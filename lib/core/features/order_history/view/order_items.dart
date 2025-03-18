@@ -4,8 +4,6 @@ import 'package:ginilog_customer_app/core/components/utils/colors.dart';
 import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
-import 'package:ginilog_customer_app/core/features/home/model/riders_response_model.dart';
-import 'package:ginilog_customer_app/core/features/home/states/home_state.dart';
 import 'package:ginilog_customer_app/core/features/order_history/model/package_orders_model.dart';
 import 'package:ginilog_customer_app/core/features/order_history/view/order_details.dart';
 import 'package:ginilog_customer_app/core/features/order_history/view/package_information.dart';
@@ -23,17 +21,10 @@ class ActiveOrderItem extends ConsumerStatefulWidget {
 class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
   @override
   Widget build(BuildContext context) {
-    final station = ref.read(homeProvider.notifier);
-    station.getAllRiderData();
-    RidersResponseModel? rider = RidersResponseModel();
     final data3 = widget.order;
-    if (data3.riderId.toString().isNotEmpty) {
-      rider = station.fetchRiderById(data3.riderId.toString());
-    }
-    DateTime dt2 = DateTime.parse(data3.createdAt.toString());
-    String date = DateFormat("E, MMM d hh:mm a").format(dt2);
-    // DateTime dt3 = data3.updatedAt!;
-    // String time = DateFormat("hh:mm a").format(dt3);
+    // DateTime dt2 = DateTime.parse(data3.createdAt!.toLocal().toString());
+    // String date = DateFormat("E, MMM d hh:mm a").format(dt2.toLocal());
+
     return Padding(
       padding: const EdgeInsets.only(left: 5.0, right: 5.0, top: 5.0),
       child: GestureDetector(
@@ -109,7 +100,7 @@ class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
                                           color: Colors.black,
                                           fontWeight: FontWeight.bold,
                                           fontSize: fontSized(context, 75),
-                                          fontFamily: "Montserrat",
+                                          fontFamily: "Mulish",
                                         ),
                                       ),
                                     ],
@@ -143,7 +134,7 @@ class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
                                           color: Colors.black,
                                           fontWeight: FontWeight.bold,
                                           fontSize: fontSized(context, 75),
-                                          fontFamily: "Montserrat",
+                                          fontFamily: "Mulish",
                                         ),
                                       ),
                                     ],
@@ -172,13 +163,11 @@ class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
                                   text: data3.orderStatus ==
                                               OrderClassState.open ||
                                           data3.orderStatus ==
-                                              OrderClassState.accepted ||
+                                              OrderClassState.booked ||
                                           data3.orderStatus ==
                                               OrderClassState.picked ||
                                           data3.orderStatus ==
-                                              OrderClassState.ongoing ||
-                                          data3.orderStatus ==
-                                              OrderClassState.delivered
+                                              OrderClassState.inTransit
                                       ? "Track"
                                       : "View",
                                   textAlign: TextAlign.center,

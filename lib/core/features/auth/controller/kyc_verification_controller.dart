@@ -1,9 +1,9 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/foundation.dart';
+import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
 
 import '../../../components/helpers/globals.dart';
-import '../../../components/utils/helper_functions.dart';
 import '../../../components/utils/package_export.dart';
 import '../services/auth_service.dart';
 import '../view/kyc_verification_view.dart';
@@ -103,7 +103,7 @@ class KYCVerificationScreenController
       setState(() {
         isLoading = true;
       });
-      bool isValid = await AuthService().updateProfileInfo(
+      var response = await AuthService().updateProfileInfo(
         userId: globals.userId.toString(),
         phoneNo: phoneNo.text.trim(),
         address: locationAddress.text.trim(),
@@ -113,7 +113,7 @@ class KYCVerificationScreenController
         state: stateLocation.text.trim(),
         nextOfKin: nextOfKin.text.trim(),
       );
-      if (isValid) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         setState(() {
           isLoading = false;
         });
@@ -128,8 +128,11 @@ class KYCVerificationScreenController
         setState(() {
           isLoading = false;
         });
-        showInfoAlertWithAction(
-            context, "Error", "An Error Occurred, Please Try Again", () {});
+        showCustomSnackbar(context,
+            title: "Error Code",
+            content: "Error: ${response.body}",
+            type: SnackbarType.error,
+            isTopPosition: false);
       }
     }
     setState(() {

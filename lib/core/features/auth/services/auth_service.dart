@@ -21,7 +21,7 @@ class AuthService {
     scopes: ['email', 'profile'],
   );
 
-  Future<bool> signInWithGoogle() async {
+  Future<http.Response> signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser != null) {
@@ -54,23 +54,23 @@ class AuthService {
           setToLocalStorage(
               name: "profilePicture", data: loginResponseModel.profileImage);
           await globals.init();
-          return true;
+          return response;
         } else {
           printData("Authenticate", 'Failed to authenticate');
-          return false;
+          return response;
         }
       } else {
-        printData("Authenticate", 'Failed to authenticate$googleUser');
-        return false;
+        printData("Authenticate", 'Failed to authenticate');
+        return Future.error(handleHttpError("Failed to authenticate"));
       }
     } catch (error) {
       printData("Authenticate", 'Error signing in with Google: $error');
-      return false;
+      return Future.error(handleHttpError(error));
     }
   }
 
 //Apple SignIn
-  Future<bool> signInWithApple() async {
+  Future<http.Response> signInWithApple() async {
     try {
       final credential = await SignInWithApple.getAppleIDCredential(
         scopes: [
@@ -104,19 +104,19 @@ class AuthService {
         setToLocalStorage(
             name: "profilePicture", data: loginResponseModel.profileImage);
         await globals.init();
-        return true;
+        return response;
       } else {
         printData("Authenticate", 'Failed to authenticate');
-        return false;
+        return response;
       }
     } catch (error) {
       printData("Authenticate", 'Error signing in with Google: $error');
-      return false;
+      return Future.error(handleHttpError(error));
     }
   }
 
 // Normal SignIn
-  static Future<bool> register(
+  Future<http.Response> register(
       {RegisterModel? registerModel, required BuildContext? cxt}) async {
     try {
       var stingUrl = Uri.parse(Endpoints.baseUrl + Endpoints.usersUrl);
@@ -139,10 +139,10 @@ class AuthService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         printData("successRegister", response.body);
 
-        return true;
+        return response;
       } else {
         printData("Error", response.body);
-        return false;
+        return response;
       }
     } catch (e) {
       printData('Error', e.toString());
@@ -150,7 +150,7 @@ class AuthService {
     }
   }
 
-  static Future<bool> login(
+  Future<http.Response> login(
       {required String email,
       required String password,
       required BuildContext? cxt}) async {
@@ -185,7 +185,7 @@ class AuthService {
         printData("Login Success", loginResponseModel);
 
         globals.init();
-        return true;
+        return response;
       } else if (response.body == "User Email Not Yet Verify") {
         ScaffoldMessenger.of(cxt!).showSnackBar(
             const SnackBar(content: Text("New code sent to your email")));
@@ -196,11 +196,11 @@ class AuthService {
               fromLogin: false,
               password: password,
             ));
-        return false;
+        return response;
       } else {
         printData("Error", response.body);
 
-        return false;
+        return response;
       }
     } catch (e) {
       printData('Error', e.toString());
@@ -208,7 +208,7 @@ class AuthService {
     }
   }
 
-  Future<bool> userLogin(
+  Future<http.Response> userLogin(
       {required String email,
       required String password,
       required BuildContext? cxt}) async {
@@ -245,10 +245,10 @@ class AuthService {
         setBoolToLocalStorage(
             name: "isEmailVerified", data: loginResponseModel.emailVerified);
         await globals.init();
-        return true;
+        return response;
       } else {
         printData("errors", response.body);
-        return false;
+        return response;
       }
     } catch (e) {
       printData('Error', e.toString());
@@ -256,7 +256,7 @@ class AuthService {
     }
   }
 
-  static verifyEmail(
+  Future<http.Response> verifyEmail(
       {required String password, pin, required BuildContext? cxt}) async {
     try {
       Map<String, String> headers = {
@@ -300,7 +300,7 @@ class AuthService {
     }
   }
 
-  static sendVerificationCode(
+  Future<http.Response> sendVerificationCode(
       {required String email, required BuildContext? cxt}) async {
     var url = Uri.parse(
         "${Endpoints.baseUrl}${Endpoints.resendEmailVerificationTokenUrl}");
@@ -330,7 +330,7 @@ class AuthService {
     }
   }
 
-  static reSendPasswordCode(
+  Future<http.Response> reSendPasswordCode(
       {required String email, required BuildContext? cxt}) async {
     var url = Uri.parse("${Endpoints.baseUrl}${Endpoints.forgetPasswordUrl}");
     Map<String, String> headers = {
@@ -359,7 +359,7 @@ class AuthService {
     }
   }
 
-  static forgotPassword(
+  Future<http.Response> forgotPassword(
       {required String token,
       required String password,
       required BuildContext? cxt}) async {
@@ -389,7 +389,7 @@ class AuthService {
   }
 
 //KYC User Verifications
-  Future<bool> updateProfileInfo({
+  Future<http.Response> updateProfileInfo({
     required String userId,
     required String sex,
     required String address,
@@ -424,11 +424,11 @@ class AuthService {
         printData("Response", response.body);
         setToLocalStorage(name: "InfoCompleted", data: "Completed");
         await globals.init();
-        return true;
+        return response;
       } else {
         printData("Error", response.body);
         printData("Error3", globals.userId);
-        return false;
+        return response;
       }
     } catch (e) {
       printData('Error', e.toString());
@@ -436,7 +436,7 @@ class AuthService {
     }
   }
 
-  Future<bool> updateDeviceToken() async {
+  Future<http.Response> updateDeviceToken() async {
     try {
       var stingUrl = Uri.parse(
           "${Endpoints.baseUrl}${Endpoints.usersUrl}/update-device-token/${globals.userId}");
@@ -455,10 +455,10 @@ class AuthService {
           await http.put(stingUrl, body: msg, headers: headers);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
+        return response;
       } else {
         printData("Error", response.body);
-        return false;
+        return response;
       }
     } catch (e) {
       printData('Error', e.toString());
@@ -466,7 +466,7 @@ class AuthService {
     }
   }
 
-  Future<bool> deleteUser() async {
+  Future<http.Response> deleteUser() async {
     try {
       var stingUrl = Uri.parse(
           "${Endpoints.baseUrl}${Endpoints.usersUrl}/${globals.userId}");
@@ -479,10 +479,10 @@ class AuthService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         printData("Deleted Account", response.body);
-        return true;
+        return response;
       } else {
         printData("Delete Error", response.body);
-        return false;
+        return response;
       }
     } catch (e) {
       printData('Error', e.toString());
@@ -490,7 +490,7 @@ class AuthService {
     }
   }
 
-  Future<bool> updateUserStatus(bool availability) async {
+  Future<http.Response> updateUserStatus(bool availability) async {
     try {
       var stingUrl = Uri.parse(
           "${Endpoints.baseUrl}${Endpoints.usersUrl}/update-user-status/${globals.userId}");
@@ -509,10 +509,10 @@ class AuthService {
           await http.put(stingUrl, body: msg, headers: headers);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
+        return response;
       } else {
         printData("Error", response.body);
-        return false;
+        return response;
       }
     } catch (e) {
       printData('Error', e.toString());

@@ -455,7 +455,7 @@ class DateWidget extends StatelessWidget {
       focusNode: focusNode,
       style: TextStyle(
         color: AppColors.black,
-        fontFamily: "Montserrat",
+        fontFamily: "Mulish",
         fontSize: fontSized(context, 85),
       ),
       autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -838,7 +838,7 @@ class _GlobalTextFieldState extends State<GlobalTextField> {
       ],
       style: TextStyle(
         color: AppColors.black,
-        fontFamily: "Montserrat",
+        fontFamily: "Mulish",
         fontSize: fontSized(context, 85),
       ),
       decoration: InputDecoration(

@@ -31,10 +31,12 @@ class _CountryPageState extends ConsumerState<CompanySelectPage> {
     final accountProviderd = ref.read(homeProvider.notifier);
     accountProviderd.getAllLogisticsData();
     selectedLogistics = accountProviderd.allLogisticss
-        .where((item) => item.deliveryTypes!.contains(widget.isSelectionType))
+        .where((item) => item.deliveryTypes!.any((cat) =>
+            cat.toLowerCase().contains(widget.isSelectionType.toLowerCase())))
         .toList();
     filteredLogistics = accountProviderd.allLogisticss
-        .where((item) => item.deliveryTypes!.contains(widget.isSelectionType))
+        .where((item) => item.deliveryTypes!.any((cat) =>
+            cat.toLowerCase().contains(widget.isSelectionType.toLowerCase())))
         .toList();
   }
 

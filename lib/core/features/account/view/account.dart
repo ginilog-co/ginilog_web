@@ -1,15 +1,19 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 // ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
 
+import 'package:ginilog_customer_app/core/components/helpers/globals.dart';
 import 'package:ginilog_customer_app/core/components/utils/app_buttons.dart';
 import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
 import 'package:ginilog_customer_app/core/components/widgets/list_tile_widget.dart';
+import 'package:ginilog_customer_app/core/features/account/controller/statement_reports_page.dart';
 import 'package:ginilog_customer_app/core/features/account/view/feed_back.dart';
 import 'package:ginilog_customer_app/core/features/account/view/personal_detail.dart';
 import 'package:ginilog_customer_app/core/features/auth/controller/login_controller.dart';
+import 'package:ginilog_customer_app/core/features/bookings/state/booking_state.dart';
 import 'package:ginilog_customer_app/core/features/home/view/notification_page.dart';
+import 'package:ginilog_customer_app/core/features/order_history/states/order_state.dart';
 
 import '../../../components/utils/colors.dart';
 import '../../../components/utils/package_export.dart';
@@ -32,9 +36,14 @@ class _LoginPageState extends ConsumerState<AccountPage> {
   @override
   void initState() {
     super.initState();
+    globals.updateHomeLoaded();
     provider = ref.read(accountProvider.notifier);
     provider.getAccount();
     provider.userData;
+    final orderProvider = ref.read(packageOrderProvider.notifier);
+    final booking = ref.read(bookingProvider.notifier);
+    orderProvider.getAllPackageOrderData();
+    booking.getAllCustomerBookData();
   }
 
   @override
@@ -78,47 +87,50 @@ class _LoginPageState extends ConsumerState<AccountPage> {
             child: ListView(
               children: [
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(
-                    spacing: 10,
-                    children: [
-                      CircleAvatar(
-                          backgroundColor: Colors.white,
-                          radius: 37,
-                          backgroundImage: user!.profilePicture
-                                  .toString()
-                                  .isEmpty
-                              ? const NetworkImage(
-                                  "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Microsoft_Account.svg/512px-Microsoft_Account.svg.png?20170218203212")
-                              // ignore: unnecessary_null_comparison
-                              : user.profilePicture == null
-                                  ? const NetworkImage(
-                                      "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Microsoft_Account.svg/512px-Microsoft_Account.svg.png?20170218203212")
-                                  : NetworkImage(
-                                      user.profilePicture.toString())),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AppText(
-                              isBody: true,
-                              text: "${user.firstName} ${user.lastName}",
-                              textAlign: TextAlign.start,
-                              fontSize: 73,
-                              color: AppColors.black,
-                              fontStyle: FontStyle.normal,
-                              fontWeight: FontWeight.bold),
-                          addVerticalSpacing(context, 1),
-                          AppText(
-                              isBody: true,
-                              text: user.email.toString(),
-                              textAlign: TextAlign.start,
-                              fontSize: 74,
-                              color: AppColors.black,
-                              fontStyle: FontStyle.normal,
-                              fontWeight: FontWeight.w400),
-                        ],
-                      )
-                    ],
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                    child: Row(
+                      spacing: 10,
+                      children: [
+                        CircleAvatar(
+                            backgroundColor: Colors.white,
+                            radius: 37,
+                            backgroundImage: user!.profilePicture
+                                    .toString()
+                                    .isEmpty
+                                ? const NetworkImage(
+                                    "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Microsoft_Account.svg/512px-Microsoft_Account.svg.png?20170218203212")
+                                // ignore: unnecessary_null_comparison
+                                : user.profilePicture == null
+                                    ? const NetworkImage(
+                                        "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Microsoft_Account.svg/512px-Microsoft_Account.svg.png?20170218203212")
+                                    : NetworkImage(
+                                        user.profilePicture.toString())),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AppText(
+                                isBody: true,
+                                text: "${user.firstName} ${user.lastName}",
+                                textAlign: TextAlign.start,
+                                fontSize: 73,
+                                color: AppColors.black,
+                                fontStyle: FontStyle.normal,
+                                fontWeight: FontWeight.bold),
+                            addVerticalSpacing(context, 1),
+                            AppText(
+                                isBody: true,
+                                text: user.email.toString(),
+                                textAlign: TextAlign.start,
+                                fontSize: 74,
+                                color: AppColors.black,
+                                fontStyle: FontStyle.normal,
+                                fontWeight: FontWeight.w400),
+                          ],
+                        )
+                      ],
+                    ),
                   ),
                   addVerticalSpacing(context, 4),
                   Card(
@@ -144,7 +156,7 @@ class _LoginPageState extends ConsumerState<AccountPage> {
                       imageUrl:
                           "assets/images/reports.png", // Replace with actual image
                       onTap: () {
-                        // navigateToRoute(context, const AccountDetailsPage());
+                        navigateToRoute(context, const StatementReportScreen());
                       },
                     ),
                   ),
@@ -178,12 +190,12 @@ class _LoginPageState extends ConsumerState<AccountPage> {
                     color: AppColors.white,
                     shape: RoundedRectangleBorder(),
                     child: CustomListTile(
-                      title: "Bookings",
-                      subtitle: "All Bookings Here",
+                      title: "Contact Us",
+                      subtitle: "Send us a message or call us",
                       imageUrl:
-                          "assets/images/bookings_icon.png", // Replace with actual image
+                          "assets/images/contact_us.png", // Replace with actual image
                       onTap: () {
-                        //  navigateToRoute(context, const NotificationPage());
+                        navigateToRoute(context, const FeedbackPage());
                       },
                     ),
                   ),
@@ -195,9 +207,7 @@ class _LoginPageState extends ConsumerState<AccountPage> {
                       subtitle: "know more about us, terms and conditions",
                       imageUrl:
                           "assets/images/about_us.png", // Replace with actual image
-                      onTap: () {
-                        navigateToRoute(context, const FeedbackPage());
-                      },
+                      onTap: () {},
                     ),
                   ),
                   Card(
@@ -209,7 +219,7 @@ class _LoginPageState extends ConsumerState<AccountPage> {
                       imageUrl:
                           "assets/images/about_us.png", // Replace with actual image
                       onTap: () {
-                        urlString("https://bringmygas.com/Home/TermsOfService");
+                        urlString("https://ginilog.com/Home/TermsOfService");
                       },
                     ),
                   ),
@@ -222,7 +232,7 @@ class _LoginPageState extends ConsumerState<AccountPage> {
                       imageUrl:
                           "assets/images/about_us.png", // Replace with actual image
                       onTap: () {
-                        urlString("https://bringmygas.com/Home/Privacy");
+                        urlString("https://ginilog.com/Home/Privacy");
                       },
                     ),
                   ),

@@ -34,7 +34,6 @@ export 'package:flutter_polyline_points/flutter_polyline_points.dart';
 export 'package:google_maps_flutter/google_maps_flutter.dart';
 export 'package:custom_rating_bar/custom_rating_bar.dart';
 export 'package:flutterwave_standard_smart/flutterwave.dart';
-export 'package:paystack_for_flutter/paystack_for_flutter.dart';
 export 'package:google_sign_in/google_sign_in.dart';
 export 'package:carousel_slider/carousel_slider.dart';
 export 'package:dotted_border/dotted_border.dart';

@@ -1,10 +1,9 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:ginilog_customer_app/core/components/extension/all_extension.dart';
-import 'package:ginilog_customer_app/core/features/bookings/model/airline_response_model.dart';
-import 'package:ginilog_customer_app/core/features/bookings/model/flight_ticket_response_model.dart';
+import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
 import 'package:ginilog_customer_app/core/features/bookings/model/accomodation_reservations_response_model.dart';
 import 'package:ginilog_customer_app/core/features/bookings/model/accomodation_response_model.dart';
+import 'package:ginilog_customer_app/core/features/bookings/model/customer_book_response_model.dart';
 import 'package:ginilog_customer_app/core/features/bookings/services/booking_services.dart';
 import '../../../components/utils/package_export.dart';
 
@@ -31,60 +30,15 @@ class BookingFailure extends Bookings {
 
 class BookingNotifier extends StateNotifier<Bookings> {
   final BookingsService booking;
-  List<AirlineResponseModel> allAirline = [];
-
-  AirlineResponseModel airLineModel = AirlineResponseModel();
 
   // Accomodations
   List<AccomodationResponseModel> allAccomodations = [];
   AccomodationResponseModel accomodationModel = AccomodationResponseModel();
-  // FLIGHT TICKET
-  List<FlightTicketResponseModel> allFlightTickets = [];
-  FlightTicketResponseModel flightTicketModel = FlightTicketResponseModel();
 
 // ACCOMODATION RESERVATIONS
   List<AccomodationReservationResponseModel> allAccomodationReservations = [];
+  List<CustomerBookResponseModel> allCustomerBooks = [];
   BookingNotifier({required this.booking}) : super(BookingInitial());
-
-//Airline
-  getAirlineData({required String airlineId}) async {
-    try {
-      if (!mounted) {
-        state = BookingLoading();
-        return;
-      }
-      AirlineResponseModel response2 =
-          await booking.getAirlineData(airlineId: airlineId);
-      airLineModel = response2;
-      state = BookingSuccess(message: "${response2.id} Booking Loaded");
-    } on Exception catch (e) {
-      state = BookingFailure(error: e.toString());
-    }
-  }
-
-  getAllAirlineData() async {
-    try {
-      if (!mounted) {
-        state = BookingLoading();
-        return;
-      }
-      List<AirlineResponseModel> response2 = await booking.getAllAirlineData();
-      allAirline = response2;
-      state = BookingSuccess(message: "All Bookings Loaded");
-    } on Exception catch (e) {
-      state = BookingFailure(error: e.toString());
-    }
-  }
-
-  AirlineResponseModel? fetchAirlineById(String airlineId) {
-    AirlineResponseModel? airline = AirlineResponseModel();
-    for (var airline2 in allAirline) {
-      if (airline2.id == airlineId) {
-        airline = airline2;
-      }
-    }
-    return airline;
-  }
 
 // Accomodation
   getAccomodationData({required String id}) async {
@@ -127,48 +81,58 @@ class BookingNotifier extends StateNotifier<Bookings> {
     return accomodation;
   }
 
-// FLIGHT TICKET
-  getFlightTicketData({required String id}) async {
-    try {
-      if (!mounted) {
-        state = BookingLoading();
-        return;
-      }
-      FlightTicketResponseModel response2 =
-          await booking.getFlightTicketData(flightTicketId: id);
-      flightTicketModel = response2;
-      state = BookingSuccess(message: "${response2.id} Notification Loaded");
-    } on Exception catch (e) {
-      state = BookingFailure(error: e.toString());
-    }
-  }
-
-  getAllFlightTicketData() async {
-    try {
-      if (!mounted) {
-        state = BookingLoading();
-        return;
-      }
-      List<FlightTicketResponseModel> response2 =
-          await booking.getAllFlightTicketData();
-      allFlightTickets = response2;
-      state = BookingSuccess(message: "All Accomodations Loaded");
-    } on Exception catch (e) {
-      state = BookingFailure(error: e.toString());
-    }
-  }
-
-  FlightTicketResponseModel? fetchFlightTicketById(String flightTicketId) {
-    FlightTicketResponseModel? flightTicket = FlightTicketResponseModel();
-    for (var flightTicket2 in allFlightTickets) {
-      if (flightTicket2.id == flightTicketId) {
-        flightTicket = flightTicket2;
-      }
-    }
-    return flightTicket;
-  }
-
 // ACCOMODATION RESERVATIONS
+  createBooking(
+      {required String reservationId,
+      required String customerName,
+      required String customerPhoneNumber,
+      required String customerEmail,
+      required String trnxReference,
+      required bool paymentStatus,
+      required int numberOfGuests,
+      required String comment,
+      required String paymentChannel,
+      required String reservationStartDate,
+      required String reservationEndDate,
+      required int noOfDays,
+      required BuildContext context}) async {
+    try {
+      if (!mounted) {
+        state = BookingLoading();
+        return;
+      }
+      var response = await booking.bookAccomodationReservation(
+          reservationId: reservationId,
+          customerName: customerName,
+          customerPhoneNumber: customerPhoneNumber,
+          customerEmail: customerEmail,
+          trnxReference: trnxReference,
+          paymentStatus: paymentStatus,
+          numberOfGuests: numberOfGuests,
+          comment: comment,
+          paymentChannel: paymentChannel,
+          reservationStartDate: reservationStartDate,
+          reservationEndDate: reservationEndDate,
+          noOfDays: noOfDays);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        state = BookingSuccess(message: "Booking Successfully");
+        showCustomSnackbar(context,
+            title: "Booking Addition",
+            content: "Booking Added Successfully",
+            type: SnackbarType.success,
+            isTopPosition: false);
+      } else {
+        state = BookingFailure(error: response.body);
+        showCustomSnackbar(context,
+            title: "Booking Addition",
+            content: response.body,
+            type: SnackbarType.error,
+            isTopPosition: false);
+      }
+    } on Exception catch (e) {
+      state = BookingFailure(error: e.toString());
+    }
+  }
 
   getAllAccomodationReservationData() async {
     try {
@@ -184,6 +148,21 @@ class BookingNotifier extends StateNotifier<Bookings> {
       state = BookingFailure(error: e.toString());
     }
   }
+
+  getAllCustomerBookData() async {
+    try {
+      if (!mounted) {
+        state = BookingLoading();
+        return;
+      }
+      List<CustomerBookResponseModel> response2 =
+          await booking.getAllCustomerBookData();
+      allCustomerBooks = response2;
+      state = BookingSuccess(message: "All Accomodations Loaded");
+    } on Exception catch (e) {
+      state = BookingFailure(error: e.toString());
+    }
+  }
 }
 
 final streamRepositoryProvider =
@@ -191,28 +170,4 @@ final streamRepositoryProvider =
 final bookingProvider = StateNotifierProvider<BookingNotifier, Bookings>((ref) {
   final BookingsService booking = BookingsService();
   return BookingNotifier(booking: booking);
-});
-
-// New One Stream
-class NewBookingsService {
-  late Stream<List<AirlineResponseModel>> _stream;
-  airlineInit() async {
-    var bookingsService = BookingsService();
-    _stream = bookingsService.getAllStreamAirlineData();
-    final result = _stream;
-    return result;
-  }
-
-  Stream<List<AirlineResponseModel>> get stream {
-    return _stream;
-  }
-}
-
-final streamRepo = Provider<NewBookingsService>((ref) => NewBookingsService());
-final getListAirline =
-    StreamProvider.autoDispose<List<AirlineResponseModel>>((ref) {
-  final streamServices = ref.watch(streamRepo);
-  ref.refreshIn(const Duration(seconds: 1));
-  streamServices.airlineInit();
-  return streamServices.stream;
 });

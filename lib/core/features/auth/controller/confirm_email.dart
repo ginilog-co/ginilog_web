@@ -51,8 +51,8 @@ class ConfirmEmailAddressController extends State<ConfirmEmailAddressScreen> {
         globals.stopWatchTimer!.onStartTimer();
       });
 
-      final res = await AuthService.sendVerificationCode(
-          email: widget.email, cxt: context);
+      final res = await AuthService()
+          .sendVerificationCode(email: widget.email, cxt: context);
       printData("result", res.statusCode);
       showSnack();
       setState(() {
@@ -85,7 +85,7 @@ class ConfirmEmailAddressController extends State<ConfirmEmailAddressScreen> {
       isLoading = true;
     });
 
-    final res = await AuthService.verifyEmail(
+    final res = await AuthService().verifyEmail(
         password: widget.password,
         pin: pinPutController.text.trim(),
         cxt: context);

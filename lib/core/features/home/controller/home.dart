@@ -65,9 +65,7 @@ class HomeScreenController extends ConsumerState<HomeScreen> {
     orderProvider.getAllPackageOrderData();
     allOrders = orderProvider.allPackageOrders;
     final bookingsProvider = ref.read(bookingProvider.notifier);
-    bookingsProvider.getAllAirlineData();
     bookingsProvider.getAllAccomodationData();
-    bookingsProvider.getAllFlightTicketData();
     bookingsProvider.getAllAccomodationReservationData();
     _getCurrentPosition();
 

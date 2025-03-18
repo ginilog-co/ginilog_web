@@ -37,7 +37,7 @@ class DropdownFor extends StatelessWidget {
       child: DropdownButtonFormField2<String>(
         style: TextStyle(
           color: AppColors.black,
-          fontFamily: "Montserrat",
+          fontFamily: "Mulish",
           fontSize: fontSized(context, 85),
         ),
         validator: (value) => value == null ? 'Choose an item' : null,
@@ -78,7 +78,7 @@ class DropdownFor extends StatelessWidget {
               value,
               style: TextStyle(
                 color: AppColors.black,
-                fontFamily: "Montserrat",
+                fontFamily: "Mulish",
                 fontSize: fontSized(context, 85),
               ),
             ),

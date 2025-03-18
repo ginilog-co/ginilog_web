@@ -7,8 +7,9 @@ import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/components/widgets/arrow_line_widget.dart';
 import 'package:ginilog_customer_app/core/features/bookings/view/accommodation/list_accomodation_reservations.dart';
 import 'package:ginilog_customer_app/core/features/home/controller/home.dart';
-import 'package:ginilog_customer_app/core/features/home/controller/place_order.dart';
 import 'package:ginilog_customer_app/core/features/home/widget/order_page_widget.dart';
+import 'package:ginilog_customer_app/core/features/home/widget/send_parcel_bottomsheet.dart';
+import 'package:ginilog_customer_app/core/features/home_screen.dart';
 import '../../../components/architecture/mvc.dart';
 
 class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
@@ -30,27 +31,36 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    spacing: 5,
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: AppColors.grey5,
-                        radius: 25,
-                        backgroundImage: controller.profilePicture!.isEmpty ||
-                                controller.profilePicture == null
-                            ? AssetImage("assets/images/profile_icon.png")
-                            : NetworkImage(
-                                controller.profilePicture.toString()),
-                      ),
-                      AppText(
-                          isBody: false,
-                          text: controller.allNames,
-                          textAlign: TextAlign.start,
-                          fontSize: 80,
-                          color: AppColors.black,
-                          fontStyle: FontStyle.normal,
-                          fontWeight: FontWeight.bold),
-                    ],
+                  GestureDetector(
+                    onTap: () {
+                      navigateToRoute(
+                          context,
+                          HomeScreenPage(
+                            imdex: 3,
+                          ));
+                    },
+                    child: Row(
+                      spacing: 5,
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: AppColors.grey5,
+                          radius: 25,
+                          backgroundImage: controller.profilePicture!.isEmpty ||
+                                  controller.profilePicture == null
+                              ? AssetImage("assets/images/profile_icon.png")
+                              : NetworkImage(
+                                  controller.profilePicture.toString()),
+                        ),
+                        AppText(
+                            isBody: false,
+                            text: controller.allNames,
+                            textAlign: TextAlign.start,
+                            fontSize: 80,
+                            color: AppColors.black,
+                            fontStyle: FontStyle.normal,
+                            fontWeight: FontWeight.bold),
+                      ],
+                    ),
                   ),
 
                   addVerticalSpacing(context, 5),
@@ -82,7 +92,7 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                                   image: DecorationImage(
                                     fit: BoxFit.fill,
                                     image: NetworkImage(
-                                      "https://ginilog-001-site1.ltempurl.com/uploads/aefa1658-9a0d-455a-ab46-5ebef28f6fd8.png",
+                                      "https://api-data.ginilog.com/uploads/89f72fb5-c511-46e9-a745-255957197616.png",
                                     ),
                                   ),
                                 ),
@@ -112,7 +122,7 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                   ),
                   addVerticalSpacing(context, 5),
                   Row(
-                    spacing: 10,
+                    spacing: 20,
                     children: [
                       Expanded(
                         child: CustomPaint(
@@ -122,7 +132,7 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                       ),
                       const AppText(
                           isBody: true,
-                          text: "Send A Package",
+                          text: "Our Services",
                           textAlign: TextAlign.start,
                           fontSize: 100,
                           color: AppColors.black,
@@ -143,131 +153,81 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                       spacing: 10,
                       children: [
                         SizedBox(
-                          width: 150,
-                          height: 150,
+                          width: getScreenWidth(context) / 2,
+                          height: 250,
                           child: GestureDetector(
                             onTap: () {
-                              //   globals.updateHomeLoaded();
-                              navigateToRoute(
-                                  context,
-                                  PlaceOrderScreen(
-                                    shippingType: "Same State",
-                                    userPhone: controller.userPhone.toString(),
-                                  ));
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (context) => SendParcelTypeBottomSheet(
+                                  phoneNumber: controller.userPhone.toString(),
+                                ),
+                              );
                             },
-                            child: _buildOrderContainer(
-                              context,
-                              "Same State",
-                              "assets/images/rider_icon.png",
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: getScreenWidth(context) / 2,
+                                  height: 200,
+                                  decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(10),
+                                          topRight: Radius.circular(10)),
+                                      image: DecorationImage(
+                                          fit: BoxFit.fill,
+                                          image: AssetImage(
+                                              "assets/images/place_order_items.png"))),
+                                ),
+                                addVerticalSpacing(context, 2),
+                                const AppText(
+                                    isBody: true,
+                                    text: "Send A Parcel",
+                                    textAlign: TextAlign.start,
+                                    fontSize: 70,
+                                    color: AppColors.black,
+                                    fontStyle: FontStyle.normal,
+                                    fontWeight: FontWeight.w400),
+                              ],
                             ),
                           ),
                         ),
                         SizedBox(
-                          width: 150,
-                          height: 150,
+                          width: getScreenWidth(context) / 2,
+                          height: 250,
                           child: GestureDetector(
                             onTap: () {
                               navigateToRoute(
-                                  context,
-                                  PlaceOrderScreen(
-                                    shippingType: "Inter state",
-                                    userPhone: controller.userPhone.toString(),
-                                  ));
+                                  context, AccomodationReservationList());
                             },
-                            child: _buildOrderContainer(context, "Inter State",
-                                "assets/images/truck_icon.png"),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: getScreenWidth(context) / 2,
+                                  height: 200,
+                                  decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(10),
+                                          topRight: Radius.circular(10)),
+                                      image: DecorationImage(
+                                          fit: BoxFit.fill,
+                                          image: AssetImage(
+                                              "assets/images/book_hotel.png"))),
+                                ),
+                                addVerticalSpacing(context, 2),
+                                const AppText(
+                                    isBody: true,
+                                    text: "Accommodation Bookings",
+                                    textAlign: TextAlign.start,
+                                    fontSize: 70,
+                                    color: AppColors.black,
+                                    fontStyle: FontStyle.normal,
+                                    fontWeight: FontWeight.w400),
+                              ],
+                            ),
                           ),
                         ),
-                        SizedBox(
-                          width: 150,
-                          height: 150,
-                          child: GestureDetector(
-                            onTap: () {
-                              navigateToRoute(
-                                  context,
-                                  PlaceOrderScreen(
-                                    shippingType: "charter",
-                                    userPhone: controller.userPhone.toString(),
-                                  ));
-                            },
-                            child: _buildOrderContainer(
-                                context,
-                                "Charter Truck",
-                                "assets/images/chatter_icon.png"),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 150,
-                          height: 150,
-                          child: GestureDetector(
-                            onTap: () {
-                              navigateToRoute(
-                                  context,
-                                  PlaceOrderScreen(
-                                    shippingType: "International",
-                                    userPhone: controller.userPhone.toString(),
-                                  ));
-                            },
-                            child: _buildOrderContainer(
-                                context,
-                                "International",
-                                "assets/images/flight_icon.png"),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  addVerticalSpacing(context, 5),
-                  Row(
-                    spacing: 20,
-                    children: [
-                      Expanded(
-                        child: CustomPaint(
-                          size: Size(100, 10), // Adjust width here
-                          painter: ArrowPainter(isArrowAtStart: false),
-                        ),
-                      ),
-                      const AppText(
-                          isBody: true,
-                          text: "Bookings",
-                          textAlign: TextAlign.start,
-                          fontSize: 100,
-                          color: AppColors.black,
-                          fontStyle: FontStyle.normal,
-                          fontWeight: FontWeight.w500),
-                      Expanded(
-                        child: CustomPaint(
-                          size: Size(100, 10), // Adjust width here
-                          painter: ArrowPainter(isArrowAtStart: true),
-                        ),
-                      ),
-                    ],
-                  ),
-                  addVerticalSpacing(context, 5),
-                  GestureDetector(
-                    onTap: () {
-                      navigateToRoute(context, AccomodationReservationList());
-                    },
-                    child: Column(
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          height: 200,
-                          decoration: BoxDecoration(
-                              image: DecorationImage(
-                                  fit: BoxFit.fill,
-                                  image: AssetImage(
-                                      "assets/images/book_hotel.png"))),
-                        ),
-                        addVerticalSpacing(context, 2),
-                        const AppText(
-                            isBody: true,
-                            text: "Accommodation Bookings",
-                            textAlign: TextAlign.start,
-                            fontSize: 80,
-                            color: AppColors.black,
-                            fontStyle: FontStyle.normal,
-                            fontWeight: FontWeight.w400),
                       ],
                     ),
                   ),
@@ -296,8 +256,7 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
     );
   }
 
-  Widget _buildOrderContainer(
-      BuildContext context, String title, String image) {
+  Widget buildOrderContainer(BuildContext context, String title, String image) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,

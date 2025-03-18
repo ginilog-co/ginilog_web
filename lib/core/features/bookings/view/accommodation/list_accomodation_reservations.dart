@@ -97,7 +97,7 @@ class _AccomodationReservationListState
                   : Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: SerachInput(
-                        hintText: "Accomodation Names and States locations",
+                        hintText: "Accomodation Names or locations",
                         labelText: "",
                         readOnly: false,
                         prefixIcon: Icons.search,

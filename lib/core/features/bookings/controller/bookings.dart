@@ -18,8 +18,8 @@ class BookingsScreenController extends ConsumerState<BookingsScreen>
   List<AccomodationResponseModel> allAccomodations = [];
   @override
   void initState() {
-    globals.updateHomeLoaded();
     super.initState();
+    globals.updateHomeLoaded();
     // User Data
     final accountProviderd = ref.read(accountProvider.notifier);
     accountProviderd.getAccount();

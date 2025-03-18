@@ -27,10 +27,9 @@ class _OrderPageWidgetState extends ConsumerState<OrderPageWidget> {
       List<PackageOrderResponseModel> data) {
     var pending = data.where((element) {
       return (element.orderStatus == OrderClassState.open ||
-          element.orderStatus == OrderClassState.accepted ||
+          element.orderStatus == OrderClassState.booked ||
           element.orderStatus == OrderClassState.picked ||
-          element.orderStatus == OrderClassState.ongoing ||
-          element.orderStatus == OrderClassState.delivered);
+          element.orderStatus == OrderClassState.inTransit);
     }).toList();
     return pending;
   }

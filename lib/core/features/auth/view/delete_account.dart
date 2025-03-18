@@ -8,6 +8,7 @@ import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
+import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
 import 'package:ginilog_customer_app/core/components/widgets/input.dart';
 import 'package:ginilog_customer_app/core/features/auth/controller/login_controller.dart';
 import 'package:ginilog_customer_app/core/features/auth/services/auth_service.dart';
@@ -181,16 +182,19 @@ class _LoginPageState extends ConsumerState<DeleteAccountPage> {
                                   CupertinoDialogAction(
                                       child: const Text("Proceed"),
                                       onPressed: () async {
-                                        bool isValid =
+                                        var response =
                                             await AuthService().deleteUser();
-                                        if (isValid) {
+                                        if (response.statusCode == 200 ||
+                                            response.statusCode == 201) {
                                           setState(() {
                                             isLoading = false;
                                           });
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(const SnackBar(
-                                                  content: Text(
-                                                      'Account deleted successfully')));
+                                          showCustomSnackbar(context,
+                                              title: "Account Deletion",
+                                              content:
+                                                  "Account Deleted Successfully",
+                                              type: SnackbarType.success,
+                                              isTopPosition: false);
 
                                           navigateAndRemoveUntilRoute(
                                               context, const LoginScreens());
@@ -198,10 +202,12 @@ class _LoginPageState extends ConsumerState<DeleteAccountPage> {
                                           setState(() {
                                             isLoading = false;
                                           });
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(const SnackBar(
-                                                  content: Text(
-                                                      'An error occurred, please try again later')));
+                                          showCustomSnackbar(context,
+                                              title: "Error Code",
+                                              content:
+                                                  "Error: ${response.body}",
+                                              type: SnackbarType.error,
+                                              isTopPosition: false);
                                         }
                                       }),
                                   CupertinoDialogAction(

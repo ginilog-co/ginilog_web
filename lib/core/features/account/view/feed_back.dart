@@ -2,11 +2,11 @@
 
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
+import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
 import 'package:ginilog_customer_app/core/components/widgets/input.dart';
 import 'package:ginilog_customer_app/core/features/account/services/account_services.dart';
 
 import '../../../components/utils/colors.dart';
-import '../../../components/utils/helper_functions.dart';
 import '../../../components/utils/package_export.dart';
 import '../../../components/widgets/app_text.dart';
 import '../states/account_provider.dart';
@@ -79,7 +79,8 @@ class _FeedbackPageState extends ConsumerState<FeedbackPage> {
                 ),
                 Image.asset(
                   'assets/images/logo_path.png',
-                  height: 250,
+                  height: 150,
+                  color: AppColors.primary,
                 ),
                 Padding(
                   padding: EdgeInsets.only(
@@ -89,7 +90,7 @@ class _FeedbackPageState extends ConsumerState<FeedbackPage> {
                       text:
                           "If you are having trouble placing and completing orders, or you have any question or queries, please feel free to email us",
                       textAlign: TextAlign.start,
-                      fontSize: 23,
+                      fontSize: 73,
                       color: AppColors.black,
                       fontStyle: FontStyle.normal,
                       fontWeight: FontWeight.bold),
@@ -99,7 +100,7 @@ class _FeedbackPageState extends ConsumerState<FeedbackPage> {
                       left: width / 20, right: width / 20, top: 10),
                   child: GestureDetector(
                     onTap: () async {
-                      Uri phoneNo = Uri.parse('mailto:info@bringmygas.com');
+                      Uri phoneNo = Uri.parse('mailto:info@ginilog.com');
                       if (await launchUrl(phoneNo)) {
                         //dialer opened
                       } else {
@@ -108,9 +109,9 @@ class _FeedbackPageState extends ConsumerState<FeedbackPage> {
                     },
                     child: const AppText(
                         isBody: true,
-                        text: "info@bringmygas.com",
+                        text: "info@ginilog.com",
                         textAlign: TextAlign.start,
-                        fontSize: 13,
+                        fontSize: 73,
                         color: AppColors.primary,
                         fontStyle: FontStyle.normal,
                         fontWeight: FontWeight.bold),
@@ -132,7 +133,7 @@ class _FeedbackPageState extends ConsumerState<FeedbackPage> {
                         isBody: true,
                         text: "0816 651 6944",
                         textAlign: TextAlign.start,
-                        fontSize: 13,
+                        fontSize: 73,
                         color: AppColors.primary,
                         fontStyle: FontStyle.normal,
                         fontWeight: FontWeight.bold),
@@ -145,7 +146,7 @@ class _FeedbackPageState extends ConsumerState<FeedbackPage> {
                       isBody: true,
                       text: "a member of our team will attend to you",
                       textAlign: TextAlign.start,
-                      fontSize: 23,
+                      fontSize: 73,
                       color: AppColors.black,
                       fontStyle: FontStyle.normal,
                       fontWeight: FontWeight.bold),
@@ -162,7 +163,7 @@ class _FeedbackPageState extends ConsumerState<FeedbackPage> {
                             isBody: false,
                             text: "Leave a message with us",
                             textAlign: TextAlign.start,
-                            fontSize: 13,
+                            fontSize: 73,
                             color: AppColors.black,
                             fontStyle: FontStyle.normal,
                             fontWeight: FontWeight.bold),
@@ -189,7 +190,6 @@ class _FeedbackPageState extends ConsumerState<FeedbackPage> {
                           onChanged: (String? value) {},
                         ),
                       ),
-                      addVerticalSpacing(context, 20),
                       _isProcessing
                           ? const CircularProgressIndicator()
                           : Padding(
@@ -202,27 +202,29 @@ class _FeedbackPageState extends ConsumerState<FeedbackPage> {
                                   if (_formkey.currentState!.validate()) {
                                     setState(() {});
                                     debugPrint("Email: ${_feedback.text}");
-                                    bool isValid = await AccountService()
+                                    var response = await AccountService()
                                         .sendFeedBack(
                                             feedback: _feedback.text.trim(),
                                             phoneNo: user!.phoneNo.toString());
                                     setState(() {
                                       _isProcessing = false;
                                     });
-                                    if (isValid) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(const SnackBar(
-                                              duration: Duration(seconds: 10),
-                                              content: Text(
-                                                  "Contact Us Sent Successfully")));
+                                    if (response.statusCode == 200 ||
+                                        response.statusCode == 201) {
+                                      showCustomSnackbar(context,
+                                          title: "Success",
+                                          content:
+                                              "Feed back sent Successfully",
+                                          type: SnackbarType.error,
+                                          isTopPosition: false);
 
                                       Navigator.pop(context);
                                     } else {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(const SnackBar(
-                                              duration: Duration(seconds: 10),
-                                              content:
-                                                  Text("Error Try again")));
+                                      showCustomSnackbar(context,
+                                          title: "Error Code",
+                                          content: "Error: ${response.body}",
+                                          type: SnackbarType.error,
+                                          isTopPosition: false);
                                     }
                                   }
                                 },
@@ -242,7 +244,7 @@ class _FeedbackPageState extends ConsumerState<FeedbackPage> {
                                           isBody: true,
                                           text: "Send",
                                           textAlign: TextAlign.start,
-                                          fontSize: 23,
+                                          fontSize: 73,
                                           color: AppColors.white,
                                           fontStyle: FontStyle.normal,
                                           fontWeight: FontWeight.w600),

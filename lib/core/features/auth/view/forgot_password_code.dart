@@ -67,7 +67,7 @@ class ForgotPasswordCodeScreenView extends StatelessView<
                             fontSize: fontSized(context, 80),
                             color: AppColors.black,
                             fontWeight: FontWeight.w500,
-                            fontFamily: "Montserrat"),
+                            fontFamily: "Mulish"),
                       ),
                       GlobalTextField(
                         fieldName: 'OTP Code',

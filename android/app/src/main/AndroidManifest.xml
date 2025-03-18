@@ -42,6 +42,7 @@
     android:label="Ginilog"
     android:name="${applicationName}" 
     android:icon="@mipmap/ic_launcher" 
+     android:roundIcon="@mipmap/ic_launcher_round"
     android:usesCleartextTraffic="true" 
     tools:targetApi="m" 
     android:networkSecurityConfig="@xml/network_security_config">

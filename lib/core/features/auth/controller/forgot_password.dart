@@ -41,8 +41,8 @@ class ForgotPasswordController extends State<ForgotPasswordScreen> {
         isLoading = true;
       });
 
-      final res = await AuthService.reSendPasswordCode(
-          email: emailController.text.trim(), cxt: context);
+      final res = await AuthService()
+          .reSendPasswordCode(email: emailController.text.trim(), cxt: context);
       if (res.statusCode == 200 || res.statusCode == 201) {
         setState(() {
           isLoading = false;
@@ -58,7 +58,7 @@ class ForgotPasswordController extends State<ForgotPasswordScreen> {
         });
         showCustomSnackbar(context,
             title: "User Does Not Exist",
-            content: "Incorrect Email",
+            content: res.body,
             type: SnackbarType.error,
             isTopPosition: false);
       }

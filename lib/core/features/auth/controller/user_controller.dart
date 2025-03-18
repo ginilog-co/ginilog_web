@@ -35,7 +35,6 @@ class RegisterScreenController extends ConsumerState<RegisterScreen> {
   final focusConfirmPassword = FocusNode();
   final focusPhoneNo = FocusNode();
 
-
   bool saveButtonPressed = false;
   bool isLoading = false;
   // late Login login;
@@ -185,9 +184,9 @@ class RegisterScreenController extends ConsumerState<RegisterScreen> {
               email: email.text.trim(),
               password: password.text.trim(),
               phoneNo: phoneNo.text.trim());
-          bool isValid = await AuthService.register(
-              registerModel: userRegisterModel, cxt: context);
-          if (isValid) {
+          var response = await AuthService()
+              .register(registerModel: userRegisterModel, cxt: context);
+          if (response.statusCode == 200 || response.statusCode == 201) {
             setState(() {
               isLoading = false;
             });
@@ -204,7 +203,7 @@ class RegisterScreenController extends ConsumerState<RegisterScreen> {
             });
             showCustomSnackbar(context,
                 title: "User Exist",
-                content: "Email Does Not Exist",
+                content: response.body,
                 type: SnackbarType.error,
                 isTopPosition: false);
           }

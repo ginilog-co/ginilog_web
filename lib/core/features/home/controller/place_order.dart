@@ -161,7 +161,10 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
       isOriginNameChanged = "${globals.firstName} ${globals.lastName}";
       originPhoneNoTec.text = globals.phoneNo.toString();
       isOriginPhoneNoChanged = globals.phoneNo.toString();
-      isItemTypeChanged = widget.shippingType == "charter" ? "charter" : "";
+      isItemTypeChanged =
+          widget.shippingType.toLowerCase() == "charter".toLowerCase()
+              ? "charter"
+              : "";
     });
   }
 
@@ -695,11 +698,13 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
           itemModelNumber: itemModelNumber.text.trim(),
           itemQuantity: int.parse(itemQuantity.text.trim()),
           itemWeight: num.parse(itemWeight.text.trim()),
-          packageType: widget.shippingType == "charter"
-              ? "Charter"
-              : itemType.text.trim(),
-          riderType:
-              widget.shippingType == "charter" ? "Pickup" : "Plane Flight",
+          packageType:
+              widget.shippingType.toLowerCase() == "charter".toLowerCase()
+                  ? "Charter"
+                  : itemType.text.trim(),
+          riderType: widget.shippingType.toLowerCase() == "charter".toString()
+              ? "Pickup"
+              : "Plane Flight",
           shippingType: widget.shippingType,
           packageImageLists: imageUrls,
           // Sender

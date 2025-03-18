@@ -10,10 +10,12 @@ class PaymentConfirmationPage extends StatefulWidget {
     super.key,
     required this.totalAmount,
     required this.cardNumber,
+    required this.isPackage,
   });
 
   final String totalAmount;
   final String cardNumber;
+  final bool isPackage;
 
   @override
   // ignore: library_private_types_in_public_api
@@ -43,8 +45,8 @@ class _LoginPageState extends State<PaymentConfirmationPage> {
       onPopInvoked: (bool isPop) {
         navigateAndRemoveUntilRoute(
             context,
-            const HomeScreenPage(
-              imdex: 1,
+            HomeScreenPage(
+              imdex: widget.isPackage == true ? 1 : 0,
             ));
       },
       child: Container(
@@ -121,8 +123,8 @@ class _LoginPageState extends State<PaymentConfirmationPage> {
                             onPressed: () async {
                               navigateAndRemoveUntilRoute(
                                   context,
-                                  const HomeScreenPage(
-                                    imdex: 1,
+                                  HomeScreenPage(
+                                    imdex: widget.isPackage == true ? 1 : 0,
                                   ));
                             },
                             child: const AppText(

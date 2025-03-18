@@ -47,7 +47,7 @@ class AppText extends StatelessWidget {
       fontWeight: fontWeight ?? FontWeight.w400,
       decoration: decoration ?? TextDecoration.none,
       height: linHeight ?? 1.5,
-      fontFamily: isBody == true ? "Montserrat" : "Inter",
+      fontFamily: isBody == true ? "Mulish" : "Inter",
     );
     return Text(text,
         style: style,

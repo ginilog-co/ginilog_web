@@ -108,7 +108,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationPage> {
                             style: TextStyle(
                                 fontSize: fontSized(context, 72),
                                 fontWeight: FontWeight.w500,
-                                fontFamily: "Montserrat",
+                                fontFamily: "Mulish",
                                 color: AppColors.black))),
                 ],
               ),
@@ -332,26 +332,27 @@ class _LoginPageState extends ConsumerState<ViewAccomodationPage> {
               fontStyle: FontStyle.normal,
               fontWeight: FontWeight.bold),
         ),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Wrap(
+            spacing: 5,
+            runSpacing: 5,
             children:
                 List.generate(userChat.accomodationFacilities!.length, (index) {
               return Container(
-                margin: EdgeInsets.symmetric(horizontal: 5),
+                width: getScreenWidth(context) / 3.5,
                 decoration: BoxDecoration(
                   color: AppColors.grey6,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 alignment: Alignment.center,
                 child: Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.only(top: 5.0, bottom: 5),
                   child: AppText(
-                      isBody: false,
+                      isBody: true,
                       text: userChat.accomodationFacilities![index],
                       textAlign: TextAlign.center,
-                      fontSize: 72,
+                      fontSize: 62,
                       color: AppColors.black,
                       fontStyle: FontStyle.normal,
                       fontWeight: FontWeight.w500),

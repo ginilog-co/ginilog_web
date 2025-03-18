@@ -266,7 +266,7 @@ class PackageOrderService {
     }
   }
 
-  Future<bool> updateOrder({required String orderId}) async {
+  Future<http.Response> updateOrder({required String orderId}) async {
     try {
       var stingUrl =
           Uri.parse("${Endpoints.baseUrl}Logistics/package-orders/$orderId");
@@ -286,10 +286,10 @@ class PackageOrderService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         printData("successRegister", response.body);
 
-        return true;
+        return response;
       } else {
         printData("Error", response.body);
-        return false;
+        return response;
       }
     } catch (e) {
       printData('Error', e.toString());

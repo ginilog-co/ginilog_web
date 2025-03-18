@@ -1,20 +1,15 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:ginilog_customer_app/core/components/helpers/endpoints.dart';
-import 'package:ginilog_customer_app/core/components/helpers/globals.dart';
 import 'package:ginilog_customer_app/core/components/utils/app_buttons.dart';
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
-import 'package:ginilog_customer_app/core/components/utils/constants.dart';
 import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/money_formatter.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
-import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
-import 'package:ginilog_customer_app/core/features/home/widget/package_info_page.dart.dart';
 import 'package:ginilog_customer_app/core/features/order_history/model/package_orders_model.dart';
-import 'package:ginilog_customer_app/core/features/order_history/services/package_order_service.dart';
+import 'package:ginilog_customer_app/core/features/order_history/widget/payment_set.dart';
 
 class PackageInformationPage extends ConsumerStatefulWidget {
   final PackageOrderResponseModel order;
@@ -30,78 +25,8 @@ class PackageInformationPage extends ConsumerStatefulWidget {
 class _PackageInformationPageState
     extends ConsumerState<PackageInformationPage> {
   bool isLoading = false;
-  String generateTransactionReference() {
-    return DateTime.now().millisecondsSinceEpoch.toString();
-  }
-
-  Future<void> handleFlutterWavePayment() async {
-    final Customer customer = Customer(
-      name: "${globals.userName}",
-      phoneNumber: '+234${widget.userPhone}',
-      email: globals.userEmail ?? "guest@example.com",
-    );
-
-    final Flutterwave flutterwave = Flutterwave(
-      context: context,
-      publicKey: Endpoints.flutterWaveTestKey,
-      currency: "NGN",
-      txRef: generateTransactionReference(),
-      amount: (widget.order.shippingCost! + widget.order.vatCost!).toString(),
-      redirectUrl: 'https://www.bringmygas.com/',
-      customer: customer,
-      paymentOptions: "Bank transfer",
-      customization: Customization(title: "Gas Payment"),
-      isTestMode: false,
-    );
-
-    final ChargeResponse response = await flutterwave.charge();
-    printData("Payment Response", response);
-    if (response.status == "successful") {
-      setState(() {
-        isLoading = true;
-      });
-      final response2 = await PackageOrderService().makePayment(
-        orderId: widget.order.id.toString(),
-        trnxReference: response.txRef!,
-        paymentStatus: true,
-        paymentChannel: "Flutterwave",
-      );
-      if (response2.statusCode == 200 || response2.statusCode == 201) {
-// await sendNotifications(
-        //     "You have successfully placed an order of ${widget}Kg gas.");
-        setState(() {
-          isLoading = false;
-        });
-        navigateToRoute(
-            context,
-            PaymentConfirmationPage(
-                totalAmount: widget.order.shippingCost.toString(),
-                cardNumber: "card Number"));
-        setState(() {
-          isLoading = false;
-        });
-      } else {
-        setState(() {
-          isLoading = false;
-        });
-        showCustomSnackbar(context,
-            title: "Order Error",
-            content: "Order could not Completed because${response2.body}",
-            type: SnackbarType.error,
-            isTopPosition: false);
-      }
-    } else {
-      setState(() {
-        isLoading = false;
-      });
-      showCustomSnackbar(context,
-          title: "Payment Error",
-          content: "The payment could not be process",
-          type: SnackbarType.error,
-          isTopPosition: false);
-    }
-  }
-
+  int selected = 0;
+  String paymentMethodUse = "";
   @override
   Widget build(BuildContext context) {
     final data3 = widget.order;
@@ -114,7 +39,7 @@ class _PackageInformationPageState
             child: Column(
               children: [
                 GlobalBackButton(
-                  backText: 'Send a package',
+                  backText: 'Package Payment',
                   showBackButton: true,
                   buttonElements: [],
                 ),
@@ -440,22 +365,41 @@ class _PackageInformationPageState
                 ],
               ),
               addVerticalSpacing(context, 10),
+              AppText(
+                  isBody: false,
+                  text: data3.shippingCost == 0
+                      ? "Waiting for the company to update the shipping cost once the pick up the package"
+                      : "",
+                  textAlign: TextAlign.start,
+                  fontSize: 75,
+                  color: AppColors.black,
+                  fontStyle: FontStyle.normal,
+                  fontWeight: FontWeight.w500),
               data3.shippingCost == 0
                   ? Align(
                       alignment: Alignment.bottomRight,
                       child: appButton(
                           "Waiting for the company to update the shipping cost",
-                          getScreenWidth(context) / 2,
-                          () async {},
-                          AppColors.grey2,
-                          false),
+                          getScreenWidth(context) / 2, () async {
+                        //  showPaymentMethodSelection(context);
+                      }, AppColors.grey2, false),
                     )
                   : Align(
                       alignment: Alignment.bottomRight,
                       child:
                           appButton("Make Payment", getScreenWidth(context) / 2,
                               () async {
-                        handleFlutterWavePayment();
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(20)),
+                          ),
+                          builder: (context) => PaymentMethodBottomSheet(
+                            order: widget.order,
+                          ),
+                        );
                       }, AppColors.primary, isLoading),
                     ),
             ],

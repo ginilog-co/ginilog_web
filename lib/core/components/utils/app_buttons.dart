@@ -22,7 +22,7 @@ Widget appButton(String text, double width, VoidCallback onPressed,
                 style: TextStyle(
                     color: textColor,
                     fontSize: fontSize,
-                    fontFamily: "Montserrat",
+                    fontFamily: "Mulish",
                     fontWeight: FontWeight.bold))
             : const SpinKitThreeBounce(
                 color: AppColors.white,
@@ -45,7 +45,7 @@ Widget appButtons(
             style: TextStyle(
                 color: textColor,
                 fontSize: fontSize,
-                fontFamily: "Montserrat",
+                fontFamily: "Mulish",
                 fontWeight: FontWeight.bold))),
   );
 }
@@ -211,7 +211,7 @@ class Button extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       fontSize: fontSized(context, 44),
                       color: textcolor,
-                      fontFamily: 'Montserrat',
+                      fontFamily: 'Mulish',
                     ),
                   )
                 : const SpinKitThreeBounce(
@@ -259,7 +259,7 @@ class ButtonSO extends StatelessWidget {
               fontWeight: FontWeight.w600,
               fontSize: fontSized(context, 18),
               color: textcolor,
-              fontFamily: 'Montserrat',
+              fontFamily: 'Mulish',
             ),
           ),
         ),
