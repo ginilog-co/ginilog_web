@@ -12,7 +12,7 @@ import 'package:http/http.dart' as http;
 
 class HomeService {
   final cache = DefaultCacheManager();
-  // Logistics Companys
+  // Logistics Company
   Future<Map<String, dynamic>?> getPlaceDetails(String placeId) async {
     final String apiKey = "AIzaSyA1WkH5DbnyUVLhPtqo_qj3Bmr0uKPolSw";
     final String url =
@@ -436,7 +436,7 @@ class HomeService {
   }
 
   // Add Rider Review
-  Future<bool> addRiderReview(
+  Future<http.Response> addRiderReview(
       {required String riderId,
       required String orderId,
       required String reviewMessage,
@@ -463,10 +463,10 @@ class HomeService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         printData("successRegister", response.body);
 
-        return true;
+        return response;
       } else {
         printData("Error", response.body);
-        return false;
+        return response;
       }
     } catch (e) {
       printData('Error', e.toString());
@@ -475,7 +475,7 @@ class HomeService {
   }
 
   // Add Logistics Company Review
-  Future<bool> addLogisticsReview(
+  Future<http.Response> addLogisticsReview(
       {required String stationId,
       required String orderId,
       required String reviewMessage,
@@ -502,10 +502,10 @@ class HomeService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         printData("successRegister", response.body);
 
-        return true;
+        return response;
       } else {
         printData("Error", response.body);
-        return false;
+        return response;
       }
     } catch (e) {
       printData('Error', e.toString());

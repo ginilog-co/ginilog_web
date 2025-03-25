@@ -32,11 +32,6 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
   @override
   Widget build(BuildContext context) {
     final data3 = widget.accomodationReservation;
-
-    // DateTime dt2 = DateTime.parse(data3.createdAt.toString());
-    // String date = DateFormat("E, MMM d hh:mm a").format(dt2);
-    // // DateTime dt3 = data3.updatedAt!;
-    // // String time = DateFormat("hh:mm a").format(dt3);
     return Padding(
       padding: const EdgeInsets.only(left: 5.0, right: 5.0, top: 5.0),
       child: GestureDetector(
@@ -48,6 +43,9 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                 bookingPrice: widget.accomodationReservation.roomPrice!,
                 maximumNoOfGuest:
                     widget.accomodationReservation.maximumNoOfGuest!.toInt(),
+                reservationName:
+                    widget.accomodationReservation.accomodationName.toString(),
+                reservationAddress: accomodationData.location.toString(),
               ));
         },
         child: Card(
@@ -78,7 +76,7 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                           isBody: true,
                           text: "Check In: ${accomodationData.checkInTime}",
                           textAlign: TextAlign.start,
-                          fontSize: 75,
+                          fontSize: 35,
                           color: AppColors.black,
                           fontStyle: FontStyle.normal,
                           fontWeight: FontWeight.w500),
@@ -89,7 +87,7 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                               ? "Not Available"
                               : "Available",
                           textAlign: TextAlign.start,
-                          fontSize: 75,
+                          fontSize: 35,
                           color: AppColors.black,
                           fontStyle: FontStyle.normal,
                           fontWeight: FontWeight.w500),
@@ -125,7 +123,7 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                                     isBody: false,
                                     text: "Room: ${data3.roomNumber}",
                                     textAlign: TextAlign.start,
-                                    fontSize: 85,
+                                    fontSize: 35,
                                     color: AppColors.black,
                                     fontStyle: FontStyle.normal,
                                     fontWeight: FontWeight.bold),
@@ -134,7 +132,7 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                                     isBody: false,
                                     text: "${data3.roomType}",
                                     textAlign: TextAlign.start,
-                                    fontSize: 85,
+                                    fontSize: 35,
                                     color: AppColors.green,
                                     fontStyle: FontStyle.normal,
                                     fontWeight: FontWeight.bold),
@@ -156,7 +154,7 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                           text:
                               moneyFormat(context, data3.roomPrice!.toDouble()),
                           textAlign: TextAlign.start,
-                          fontSize: 75,
+                          fontSize: 35,
                           color: AppColors.black,
                           fontStyle: FontStyle.normal,
                           fontWeight: FontWeight.bold),
@@ -173,6 +171,11 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                                 maximumNoOfGuest: widget
                                     .accomodationReservation.maximumNoOfGuest!
                                     .toInt(),
+                                reservationName: widget
+                                    .accomodationReservation.accomodationName
+                                    .toString(),
+                                reservationAddress:
+                                    accomodationData.location.toString(),
                               ));
                         },
                         child: Container(
@@ -193,7 +196,7 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                                 isBody: true,
                                 text: "Book Now",
                                 textAlign: TextAlign.center,
-                                fontSize: 72,
+                                fontSize: 32,
                                 color: AppColors.white,
                                 fontStyle: FontStyle.normal,
                                 fontWeight: FontWeight.w900),

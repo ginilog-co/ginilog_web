@@ -73,19 +73,15 @@ class _AccomodationReservationListState
 
   @override
   Widget build(BuildContext context) {
+    TextScaler textScaler = MediaQuery.of(context).textScaler;
     return Scaffold(
         backgroundColor: AppColors.white,
         appBar: PreferredSize(
             preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(12)),
             child: Padding(
               padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-              child: Column(
-                children: [
-                  const GlobalBackButton(
-                      backText: 'Accommodation Reservation',
-                      showBackButton: true),
-                ],
-              ),
+              child: const GlobalBackButton(
+                  backText: 'Accommodation Reservation', showBackButton: true),
             )),
         body: SingleChildScrollView(
           child: Column(
@@ -97,7 +93,7 @@ class _AccomodationReservationListState
                   : Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: SerachInput(
-                        hintText: "Accomodation Names or locations",
+                        hintText: "Type an accomodation name or location here",
                         labelText: "",
                         readOnly: false,
                         prefixIcon: Icons.search,
@@ -138,7 +134,10 @@ class _AccomodationReservationListState
                             padding: const EdgeInsets.symmetric(horizontal: 5),
                             child: ChoiceChip(
                               showCheckmark: false,
-                              label: Text(locality),
+                              label: Text(
+                                locality,
+                                textScaler: textScaler,
+                              ),
                               selected: isSelected,
                               onSelected: (bool selected) {
                                 if (selected) {
@@ -172,7 +171,7 @@ class _AccomodationReservationListState
                               isBody: false,
                               text: "Nothing to show here",
                               textAlign: TextAlign.start,
-                              fontSize: 78,
+                              fontSize: 38,
                               color: AppColors.black,
                               fontStyle: FontStyle.normal,
                               fontWeight: FontWeight.bold),
@@ -181,7 +180,7 @@ class _AccomodationReservationListState
                               text:
                                   "We don't have any Accomodation Reservations at the moment",
                               textAlign: TextAlign.center,
-                              fontSize: 70,
+                              fontSize: 30,
                               color: AppColors.black,
                               fontStyle: FontStyle.normal,
                               fontWeight: FontWeight.normal),

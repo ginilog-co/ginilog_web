@@ -34,7 +34,7 @@ class StatementReportScreenView extends StatelessView<StatementReportScreen,
                     labelStyle: TextStyle(
                       color: AppColors.black,
                       fontWeight: FontWeight.bold,
-                      fontSize: fontSized(context, 75),
+                      fontSize: fontSized(context, 35),
                       fontFamily: "Mulish",
                     ),
                     isScrollable: false,

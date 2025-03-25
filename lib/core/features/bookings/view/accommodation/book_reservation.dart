@@ -47,7 +47,7 @@ class BookReservationScreenView extends StatelessView<BookReservationScreen,
                       Text(
                         "Complete the form below and book the accomodation",
                         style: TextStyle(
-                            fontSize: fontSized(context, 65),
+                            fontSize: fontSized(context, 35),
                             color: AppColors.black,
                             fontWeight: FontWeight.w400,
                             fontFamily: "Mulish"),

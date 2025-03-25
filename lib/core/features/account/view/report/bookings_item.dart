@@ -16,6 +16,8 @@ class CustomerItemPage extends ConsumerStatefulWidget {
 class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
   @override
   Widget build(BuildContext context) {
+    TextScaler textScaler = MediaQuery.of(context).textScaler;
+
     final data3 = widget.accomodation;
     // DateTime dt2 = DateTime.parse(data3.createdAt!.toLocal().toString());
     // String date = DateFormat("E, MMM d hh:mm a").format(dt2.toLocal());
@@ -63,6 +65,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                               children: [
                                 RichText(
                                   textAlign: TextAlign.start,
+                                  textScaler: textScaler,
                                   text: TextSpan(
                                     style: const TextStyle(color: Colors.black),
                                     children: [
@@ -71,7 +74,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.w400,
-                                          fontSize: fontSized(context, 75),
+                                          fontSize: fontSized(context, 35),
                                           fontFamily: "Inter",
                                         ),
                                       ),
@@ -80,7 +83,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: fontSized(context, 75),
+                                          fontSize: fontSized(context, 35),
                                           fontFamily: "Mulish",
                                         ),
                                       ),
@@ -91,7 +94,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                                     isBody: true,
                                     text: "Room: ${data3.roomNumber}",
                                     textAlign: TextAlign.start,
-                                    fontSize: 75,
+                                    fontSize: 35,
                                     color: AppColors.black,
                                     fontStyle: FontStyle.normal,
                                     fontWeight: FontWeight.bold),
@@ -105,7 +108,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.w400,
-                                          fontSize: fontSized(context, 75),
+                                          fontSize: fontSized(context, 35),
                                           fontFamily: "Inter",
                                         ),
                                       ),
@@ -114,7 +117,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: fontSized(context, 75),
+                                          fontSize: fontSized(context, 35),
                                           fontFamily: "Mulish",
                                         ),
                                       ),
@@ -143,7 +146,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                                   isBody: true,
                                   text: "View",
                                   textAlign: TextAlign.center,
-                                  fontSize: 72,
+                                  fontSize: 32,
                                   color: AppColors.white,
                                   fontStyle: FontStyle.normal,
                                   fontWeight: FontWeight.w900),
@@ -162,7 +165,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                               style: TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.w400,
-                                fontSize: fontSized(context, 55),
+                                fontSize: fontSized(context, 15),
                                 fontFamily: "Inter",
                               ),
                             ),
@@ -171,7 +174,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                               style: TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold,
-                                fontSize: fontSized(context, 65),
+                                fontSize: fontSized(context, 25),
                                 fontFamily: "Mulish",
                               ),
                             ),
@@ -180,7 +183,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                               style: TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.w400,
-                                fontSize: fontSized(context, 75),
+                                fontSize: fontSized(context, 15),
                                 fontFamily: "Inter",
                               ),
                             ),
@@ -189,7 +192,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                               style: TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold,
-                                fontSize: fontSized(context, 65),
+                                fontSize: fontSized(context, 25),
                                 fontFamily: "Mulish",
                               ),
                             ),

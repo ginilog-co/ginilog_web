@@ -1,20 +1,18 @@
 // ignore_for_file: library_private_types_in_public_api
 
+import 'package:ginilog_customer_app/core/components/utils/colors.dart';
+import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
+import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
+import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
-import 'package:ginilog_customer_app/core/features/home/model/company_response_model.dart';
-
-import '../../../components/utils/colors.dart';
-import '../../../components/utils/helper_functions.dart';
-import '../../../components/utils/package_export.dart';
-import '../../../components/widgets/app_text.dart';
+import 'package:ginilog_customer_app/core/features/bookings/model/accomodation_response_model.dart';
 
 class ViewAllReviewPagePage extends ConsumerStatefulWidget {
-  const ViewAllReviewPagePage({
-    super.key,
-    required this.reviews,
-  });
-  final List<CompanyReviewModel> reviews;
+  const ViewAllReviewPagePage(
+      {super.key, required this.reviews, required this.accomodationName});
+  final List<AccomodationReviewModel> reviews;
+  final String accomodationName;
   @override
   _LoginPageState createState() => _LoginPageState();
 }
@@ -38,8 +36,9 @@ class _LoginPageState extends ConsumerState<ViewAllReviewPagePage> {
           preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(16)),
           child: Padding(
             padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-            child: const GlobalBackButton(
-                backText: "Logistics Company Review", showBackButton: true),
+            child: GlobalBackButton(
+                backText: "${widget.accomodationName} Review",
+                showBackButton: true),
           )),
       body: SafeArea(
         child: Padding(
@@ -83,7 +82,7 @@ class _LoginPageState extends ConsumerState<ViewAllReviewPagePage> {
                                       isBody: true,
                                       text: "${widget.reviews[index].userName}",
                                       textAlign: TextAlign.start,
-                                      fontSize: 16,
+                                      fontSize: 76,
                                       color: AppColors.primaryDark,
                                       fontStyle: FontStyle.normal,
                                       fontWeight: FontWeight.bold),
@@ -101,13 +100,13 @@ class _LoginPageState extends ConsumerState<ViewAllReviewPagePage> {
                                     widget.reviews[index].ratingNum!.toDouble(),
                                 size: 15,
                               ),
-                              addVerticalSpacing(context, 40),
+                              addVerticalSpacing(context, 4),
                               AppText(
                                   isBody: true,
                                   text:
                                       "${widget.reviews[index].reviewMessage}",
                                   textAlign: TextAlign.start,
-                                  fontSize: 16,
+                                  fontSize: 76,
                                   color: AppColors.primaryDark,
                                   fontStyle: FontStyle.normal,
                                   fontWeight: FontWeight.bold),
@@ -121,27 +120,29 @@ class _LoginPageState extends ConsumerState<ViewAllReviewPagePage> {
                       )
                     : Center(
                         child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Image.asset(
-                              "assets/images/empty.png",
+                              "assets/images/order_icon.png",
                               width: 200,
-                              height: 200,
+                              height: 100,
                             ),
                             addVerticalSpacing(context, 5),
                             const AppText(
                                 isBody: false,
                                 text: "Nothing to show here",
                                 textAlign: TextAlign.start,
-                                fontSize: 25,
+                                fontSize: 85,
                                 color: AppColors.black,
                                 fontStyle: FontStyle.normal,
                                 fontWeight: FontWeight.bold),
                             const AppText(
                                 isBody: true,
                                 text:
-                                    "There is no reviews of Logistics Company ",
+                                    "There is no reviews of This Accomodation ",
                                 textAlign: TextAlign.center,
-                                fontSize: 25,
+                                fontSize: 75,
                                 color: AppColors.black,
                                 fontStyle: FontStyle.normal,
                                 fontWeight: FontWeight.normal),

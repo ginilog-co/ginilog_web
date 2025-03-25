@@ -67,7 +67,7 @@ class _SendParcelTypeBottomSheetState
                   isBody: true,
                   text: "Choose the Parcel Type",
                   textAlign: TextAlign.start,
-                  fontSize: 70,
+                  fontSize: 30,
                   color: AppColors.black,
                   fontStyle: FontStyle.normal,
                   fontWeight: FontWeight.w800),
@@ -91,11 +91,12 @@ class _SendParcelTypeBottomSheetState
             child: GridView.builder(
               shrinkWrap: true,
               itemCount: sendParcelMethods.length,
-              padding: EdgeInsets.symmetric(vertical: 10),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              padding:
+                  EdgeInsets.symmetric(vertical: getScreenWidth(context) / 200),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2, // Adjust to fit your design
-                crossAxisSpacing: 5,
-                mainAxisSpacing: 5,
+                crossAxisSpacing: getScreenWidth(context) / 100,
+                mainAxisSpacing: getScreenWidth(context) / 100,
                 childAspectRatio: 1.0, // Adjust for better spacing
               ),
               itemBuilder: (context, index) {
@@ -165,7 +166,7 @@ class SendParcelMethodWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+      padding: EdgeInsets.only(left: 4, right: 4),
       decoration: BoxDecoration(
         color: isSelected
             ? AppColors.primary.withValues(alpha: 1.3)
@@ -176,20 +177,20 @@ class SendParcelMethodWidget extends StatelessWidget {
         ),
       ),
       child: Column(
-        spacing: 10,
+        spacing: getScreenWidth(context) / 80,
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Image.asset(
             method.image,
-            height: 80,
-            width: 80,
+            height: getScreenWidth(context) / 10,
+            width: getScreenWidth(context) / 10,
           ),
           AppText(
               isBody: false,
               text: method.sendParcelMethod,
               textAlign: TextAlign.center,
-              fontSize: 75,
+              fontSize: 35,
               color: isSelected ? AppColors.white : AppColors.black,
               fontStyle: FontStyle.normal,
               fontWeight: FontWeight.bold),
@@ -197,7 +198,7 @@ class SendParcelMethodWidget extends StatelessWidget {
               isBody: true,
               text: method.subtitle,
               textAlign: TextAlign.center,
-              fontSize: 75,
+              fontSize: 35,
               color: isSelected ? AppColors.white : AppColors.black,
               fontStyle: FontStyle.normal,
               fontWeight: FontWeight.w400),

@@ -46,13 +46,9 @@ class _FindReservationPageState extends ConsumerState<FindReservationPage> {
             preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(12)),
             child: Padding(
               padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-              child: Column(
-                children: [
-                  GlobalBackButton(
-                      backText: '${widget.accommodationName} Available Rooms',
-                      showBackButton: true),
-                ],
-              ),
+              child: GlobalBackButton(
+                  backText: '${widget.accommodationName} Available Rooms',
+                  showBackButton: true),
             )),
         body: SingleChildScrollView(
           child: Column(
@@ -70,7 +66,7 @@ class _FindReservationPageState extends ConsumerState<FindReservationPage> {
                               isBody: false,
                               text: "Nothing to show here",
                               textAlign: TextAlign.start,
-                              fontSize: 78,
+                              fontSize: 38,
                               color: AppColors.black,
                               fontStyle: FontStyle.normal,
                               fontWeight: FontWeight.bold),
@@ -79,7 +75,7 @@ class _FindReservationPageState extends ConsumerState<FindReservationPage> {
                               text:
                                   "We don't have any Accomodation Reservations at the moment",
                               textAlign: TextAlign.center,
-                              fontSize: 70,
+                              fontSize: 30,
                               color: AppColors.black,
                               fontStyle: FontStyle.normal,
                               fontWeight: FontWeight.normal),

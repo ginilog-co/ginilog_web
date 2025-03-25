@@ -2,20 +2,25 @@
 
 import 'package:ginilog_customer_app/core/components/state/connectivity_state.dart';
 import 'package:ginilog_customer_app/core/components/utils/constants.dart';
+import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
 import 'package:ginilog_customer_app/core/features/account/model/user_response_model.dart';
 import 'package:ginilog_customer_app/core/features/account/states/account_provider.dart';
 import 'package:ginilog_customer_app/core/features/bookings/view/accommodation/book_reservation.dart';
-import 'package:ginilog_customer_app/core/features/bookings/widget/booking_payment.dart';
+import 'package:ginilog_customer_app/core/features/bookings/widget/confirm_payment.dart';
 
 class BookReservationScreen extends ConsumerStatefulWidget {
   const BookReservationScreen(
       {super.key,
       required this.reservationId,
+      required this.reservationName,
+      required this.reservationAddress,
       required this.bookingPrice,
       required this.maximumNoOfGuest});
   final String reservationId;
+  final String reservationName;
+  final String reservationAddress;
   final num bookingPrice;
   final int maximumNoOfGuest;
   @override
@@ -221,26 +226,23 @@ class BookReservationScreenController
           DateTime date2 = lastDate;
           Duration difference = date2.difference(date1);
           int daysBetween = difference.inDays;
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            builder: (context) => BookingPaymentBottomSheet(
-                amount: widget.bookingPrice.toDouble(),
-                reservationId: widget.reservationId,
-                customerName:
-                    "${fistNameTec.text.trim()} ${lastNameTEC.text.trim()}",
-                customerEmail: email.text.trim(),
-                customerPhoneNumber:
-                    "$selectedCountryCode${phoneNo.text.trim()}",
-                numberOfGuests: int.parse(numberOfGuest.text.trim()),
-                comment: comment.text.isEmpty ? "" : comment.text.trim(),
-                reservationStartDate: reservationStartDate.text.trim(),
-                reservationEndDate: reservationEndDate.text.trim(),
-                noOfDays: daysBetween),
-          );
+          navigateToRoute(
+              context,
+              ConfirmAccomodationBookings(
+                  amount: widget.bookingPrice.toDouble(),
+                  reservationId: widget.reservationId,
+                  reservationName: widget.reservationName,
+                  reservationAddress: widget.reservationAddress,
+                  customerName:
+                      "${fistNameTec.text.trim()} ${lastNameTEC.text.trim()}",
+                  customerEmail: email.text.trim(),
+                  customerPhoneNumber:
+                      "$selectedCountryCode${phoneNo.text.trim()}",
+                  numberOfGuests: int.parse(numberOfGuest.text.trim()),
+                  comment: comment.text.isEmpty ? "" : comment.text.trim(),
+                  reservationStartDate: reservationStartDate.text.trim(),
+                  reservationEndDate: reservationEndDate.text.trim(),
+                  noOfDays: daysBetween));
         }
       } else {
         setState(() {

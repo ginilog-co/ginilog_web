@@ -287,6 +287,7 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
   }
 
   void showBottomSheet() {
+    TextScaler textScaler = MediaQuery.of(context).textScaler;
     _searchController.clear(); // Clear search field when opening
     setState(() {
       filteredItems = List.from(allItems);
@@ -338,8 +339,9 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
                               itemBuilder: (context, index) {
                                 return ListTile(
                                   title: Text(filteredItems[index],
+                                      textScaler: textScaler,
                                       style: TextStyle(
-                                          fontSize: fontSized(context, 92),
+                                          fontSize: fontSized(context, 32),
                                           color: AppColors.black,
                                           fontWeight: FontWeight.bold,
                                           fontFamily: "Inter")),

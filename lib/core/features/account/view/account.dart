@@ -8,11 +8,14 @@ import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
 import 'package:ginilog_customer_app/core/components/widgets/list_tile_widget.dart';
 import 'package:ginilog_customer_app/core/features/account/controller/statement_reports_page.dart';
+import 'package:ginilog_customer_app/core/features/account/view/about_us.dart';
 import 'package:ginilog_customer_app/core/features/account/view/feed_back.dart';
 import 'package:ginilog_customer_app/core/features/account/view/personal_detail.dart';
+import 'package:ginilog_customer_app/core/features/account/view/privacy_policy_screen.dart';
+import 'package:ginilog_customer_app/core/features/account/view/terms_of_service.dart';
 import 'package:ginilog_customer_app/core/features/auth/controller/login_controller.dart';
 import 'package:ginilog_customer_app/core/features/bookings/state/booking_state.dart';
-import 'package:ginilog_customer_app/core/features/home/view/notification_page.dart';
+import 'package:ginilog_customer_app/core/features/account/view/notification_page.dart';
 import 'package:ginilog_customer_app/core/features/order_history/states/order_state.dart';
 
 import '../../../components/utils/colors.dart';
@@ -78,10 +81,8 @@ class _LoginPageState extends ConsumerState<AccountPage> {
               preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(12)),
               child: Padding(
                 padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-                child: Column(children: [
-                  const GlobalBackButton(
-                      backText: 'My Profile', showBackButton: false),
-                ]),
+                child: const GlobalBackButton(
+                    backText: 'My Profile', showBackButton: false),
               )),
           body: SafeArea(
             child: ListView(
@@ -114,7 +115,7 @@ class _LoginPageState extends ConsumerState<AccountPage> {
                                 isBody: true,
                                 text: "${user.firstName} ${user.lastName}",
                                 textAlign: TextAlign.start,
-                                fontSize: 73,
+                                fontSize: 33,
                                 color: AppColors.black,
                                 fontStyle: FontStyle.normal,
                                 fontWeight: FontWeight.bold),
@@ -123,7 +124,7 @@ class _LoginPageState extends ConsumerState<AccountPage> {
                                 isBody: true,
                                 text: user.email.toString(),
                                 textAlign: TextAlign.start,
-                                fontSize: 74,
+                                fontSize: 34,
                                 color: AppColors.black,
                                 fontStyle: FontStyle.normal,
                                 fontWeight: FontWeight.w400),
@@ -173,19 +174,19 @@ class _LoginPageState extends ConsumerState<AccountPage> {
                       },
                     ),
                   ),
-                  Card(
-                    color: AppColors.white,
-                    shape: RoundedRectangleBorder(),
-                    child: CustomListTile(
-                      title: "Card & Bank account settings",
-                      subtitle: "change cards, delete card details",
-                      imageUrl:
-                          "assets/images/wallet_icon.png", // Replace with actual image
-                      onTap: () {
-                        //  navigateToRoute(context, const NotificationPage());
-                      },
-                    ),
-                  ),
+                  // Card(
+                  //   color: AppColors.white,
+                  //   shape: RoundedRectangleBorder(),
+                  //   child: CustomListTile(
+                  //     title: "Card & Bank account settings",
+                  //     subtitle: "change cards, delete card details",
+                  //     imageUrl:
+                  //         "assets/images/wallet_icon.png", // Replace with actual image
+                  //     onTap: () {
+                  //       //  navigateToRoute(context, const NotificationPage());
+                  //     },
+                  //   ),
+                  // ),
                   Card(
                     color: AppColors.white,
                     shape: RoundedRectangleBorder(),
@@ -204,10 +205,12 @@ class _LoginPageState extends ConsumerState<AccountPage> {
                     shape: RoundedRectangleBorder(),
                     child: CustomListTile(
                       title: "About Us",
-                      subtitle: "know more about us, terms and conditions",
+                      subtitle: "know more about us,",
                       imageUrl:
                           "assets/images/about_us.png", // Replace with actual image
-                      onTap: () {},
+                      onTap: () {
+                        navigateToRoute(context, AboutUsScreen());
+                      },
                     ),
                   ),
                   Card(
@@ -219,7 +222,7 @@ class _LoginPageState extends ConsumerState<AccountPage> {
                       imageUrl:
                           "assets/images/about_us.png", // Replace with actual image
                       onTap: () {
-                        urlString("https://ginilog.com/Home/TermsOfService");
+                        navigateToRoute(context, const TermsOfServiceScreen());
                       },
                     ),
                   ),
@@ -232,7 +235,7 @@ class _LoginPageState extends ConsumerState<AccountPage> {
                       imageUrl:
                           "assets/images/about_us.png", // Replace with actual image
                       onTap: () {
-                        urlString("https://ginilog.com/Home/Privacy");
+                        navigateToRoute(context, const PrivacyPolicyScreen());
                       },
                     ),
                   ),
@@ -291,7 +294,7 @@ class _LoginPageState extends ConsumerState<AccountPage> {
                                                   fontWeight: FontWeight.bold,
                                                   fontFamily: "Inter",
                                                   fontSize:
-                                                      fontSized(context, 75))),
+                                                      fontSized(context, 35))),
                                           addVerticalSpacing(context, 10),
                                           appButton("Log Out",
                                               getScreenWidth(context), () {

@@ -19,6 +19,7 @@ class PlaceOrderScreenView
 
   @override
   Widget build(BuildContext context) {
+    TextScaler textScaler = MediaQuery.of(context).textScaler;
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: PreferredSize(
@@ -128,8 +129,9 @@ class PlaceOrderScreenView
                           children: [
                             Text(
                               "Origin Details",
+                              textScaler: textScaler,
                               style: TextStyle(
-                                  fontSize: fontSized(context, 92),
+                                  fontSize: fontSized(context, 42),
                                   color: AppColors.black,
                                   fontWeight: FontWeight.bold,
                                   fontFamily: "Inter"),
@@ -138,7 +140,7 @@ class PlaceOrderScreenView
                               style: TextStyle(
                                 color: AppColors.black,
                                 fontFamily: "Mulish",
-                                fontSize: fontSized(context, 85),
+                                fontSize: fontSized(context, 35),
                               ),
                               textEditingController: controller.originAddress,
                               googleAPIKey:
@@ -149,7 +151,7 @@ class PlaceOrderScreenView
                                 labelStyle: TextStyle(
                                   color: AppColors.black,
                                   fontFamily: "Mulish",
-                                  fontSize: fontSized(context, 85),
+                                  fontSize: fontSized(context, 35),
                                 ),
                                 border: OutlineInputBorder(),
                               ),
@@ -211,8 +213,9 @@ class PlaceOrderScreenView
                             ),
                             Text(
                               "Destination Details",
+                              textScaler: textScaler,
                               style: TextStyle(
-                                  fontSize: fontSized(context, 92),
+                                  fontSize: fontSized(context, 42),
                                   color: AppColors.black,
                                   fontWeight: FontWeight.bold,
                                   fontFamily: "Inter"),
@@ -221,7 +224,7 @@ class PlaceOrderScreenView
                               style: TextStyle(
                                 color: AppColors.black,
                                 fontFamily: "Mulish",
-                                fontSize: fontSized(context, 85),
+                                fontSize: fontSized(context, 35),
                               ),
                               textEditingController:
                                   controller.destinationAddress,
@@ -229,11 +232,11 @@ class PlaceOrderScreenView
                                   "AIzaSyA1WkH5DbnyUVLhPtqo_qj3Bmr0uKPolSw",
                               decoration: InputDecoration(
                                 hintText: 'Enter Destination your address',
-                                labelText: 'Reciever Address',
+                                labelText: 'Receiver Address',
                                 labelStyle: TextStyle(
                                   color: AppColors.black,
                                   fontFamily: "Mulish",
-                                  fontSize: fontSized(context, 85),
+                                  fontSize: fontSized(context, 35),
                                 ),
                                 border: OutlineInputBorder(),
                               ),
@@ -296,8 +299,9 @@ class PlaceOrderScreenView
                             ),
                             Text(
                               "Package Details",
+                              textScaler: textScaler,
                               style: TextStyle(
-                                  fontSize: fontSized(context, 92),
+                                  fontSize: fontSized(context, 42),
                                   color: AppColors.black,
                                   fontWeight: FontWeight.bold,
                                   fontFamily: "Inter"),
@@ -416,6 +420,7 @@ class PlaceOrderScreenView
                           children: [
                             Text(
                               "More Details",
+                              textScaler: textScaler,
                               style: TextStyle(
                                   fontSize: fontSized(context, 92),
                                   color: AppColors.black,
@@ -503,8 +508,9 @@ class PlaceOrderScreenView
                                             ),
                                           ),
                                         )
-                                      : const Center(
+                                      : Center(
                                           child: Text(
+                                              textScaler: textScaler,
                                               'Kindly upload the pictures of the Items')),
                                 ),
                               ),
@@ -583,7 +589,7 @@ class PlaceOrderScreenView
                                                   isBody: true,
                                                   text: "${vehicle["name"]}",
                                                   textAlign: TextAlign.start,
-                                                  fontSize: 70,
+                                                  fontSize: 30,
                                                   color: isSelected
                                                       ? AppColors.white
                                                       : AppColors.black
@@ -646,7 +652,7 @@ class PlaceOrderScreenView
                                                             "${vehicle["name"]}",
                                                         textAlign:
                                                             TextAlign.start,
-                                                        fontSize: 70,
+                                                        fontSize: 30,
                                                         color: isSelected
                                                             ? AppColors.white
                                                             : AppColors.black

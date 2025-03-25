@@ -8,8 +8,10 @@ import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
 import 'package:ginilog_customer_app/core/components/widgets/review_summary.dart';
+import 'package:ginilog_customer_app/core/features/bookings/controller/add_review.dart';
 import 'package:ginilog_customer_app/core/features/bookings/model/accomodation_response_model.dart';
 import 'package:ginilog_customer_app/core/features/bookings/view/accommodation/find_availablity_page.dart';
+import 'package:ginilog_customer_app/core/features/bookings/view/accommodation/view_all_review.dart';
 
 class ViewAccomodationPage extends ConsumerStatefulWidget {
   const ViewAccomodationPage({
@@ -40,6 +42,19 @@ class _LoginPageState extends ConsumerState<ViewAccomodationPage> {
     super.dispose();
   }
 
+  Map<int, int> getReviewCounts(List<AccomodationReviewModel> reviews) {
+    Map<int, int> reviewCounts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+
+    for (var review in reviews) {
+      int rating = (review.ratingNum ?? 0).toInt(); // Convert num to int
+      if (reviewCounts.containsKey(rating)) {
+        reviewCounts[rating] = reviewCounts[rating]! + 1;
+      }
+    }
+
+    return reviewCounts;
+  }
+
   void _checkInBodyButtonVisibility() {
     RenderBox? box =
         _inBodyButtonKey.currentContext?.findRenderObject() as RenderBox?;
@@ -65,6 +80,8 @@ class _LoginPageState extends ConsumerState<ViewAccomodationPage> {
   }
 
   Widget _description(String description) {
+    TextScaler textScaler = MediaQuery.of(context).textScaler;
+
     return ExpandableNotifier(
         child: Padding(
       padding: const EdgeInsets.all(0),
@@ -82,8 +99,9 @@ class _LoginPageState extends ConsumerState<ViewAccomodationPage> {
                   padding: const EdgeInsets.all(0),
                   child: Text(
                     "Description",
+                    textScaler: textScaler,
                     style: TextStyle(
-                        fontSize: fontSized(context, 82),
+                        fontSize: fontSized(context, 42),
                         fontWeight: FontWeight.bold,
                         fontFamily: "Inter",
                         color: AppColors.black),
@@ -92,8 +110,9 @@ class _LoginPageState extends ConsumerState<ViewAccomodationPage> {
                   softWrap: true,
                   maxLines: 4,
                   overflow: TextOverflow.ellipsis,
+                  textScaler: textScaler,
                   style: TextStyle(
-                      fontSize: fontSized(context, 72),
+                      fontSize: fontSized(context, 32),
                       fontWeight: FontWeight.w500,
                       color: AppColors.black)),
               expanded: Column(
@@ -105,8 +124,9 @@ class _LoginPageState extends ConsumerState<ViewAccomodationPage> {
                         child: Text(description,
                             softWrap: true,
                             overflow: TextOverflow.fade,
+                            textScaler: textScaler,
                             style: TextStyle(
-                                fontSize: fontSized(context, 72),
+                                fontSize: fontSized(context, 32),
                                 fontWeight: FontWeight.w500,
                                 fontFamily: "Mulish",
                                 color: AppColors.black))),
@@ -131,6 +151,8 @@ class _LoginPageState extends ConsumerState<ViewAccomodationPage> {
 
   Widget buildItem(BuildContext context, AccomodationResponseModel userChat) {
     var reviews = userChat.accomodationReviewModels!.take(5).toList();
+    Map<int, int> reviewCounts =
+        getReviewCounts(userChat.accomodationReviewModels!);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -204,7 +226,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationPage> {
                       isBody: false,
                       text: "${userChat.accomodationName}",
                       textAlign: TextAlign.start,
-                      fontSize: 105,
+                      fontSize: 55,
                       color: AppColors.primaryDark,
                       fontStyle: FontStyle.normal,
                       fontWeight: FontWeight.bold),
@@ -244,7 +266,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationPage> {
                         text:
                             "${userChat.location}, ${userChat.locality}, ${userChat.state}",
                         textAlign: TextAlign.start,
-                        fontSize: 75,
+                        fontSize: 35,
                         color: AppColors.black,
                         fontStyle: FontStyle.normal,
                         fontWeight: FontWeight.w500),
@@ -256,7 +278,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationPage> {
                   isBody: true,
                   text: "Opens Monday - Sunday",
                   textAlign: TextAlign.start,
-                  fontSize: 62,
+                  fontSize: 32,
                   color: AppColors.black,
                   fontStyle: FontStyle.normal,
                   fontWeight: FontWeight.w600),
@@ -266,7 +288,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationPage> {
                   text:
                       "Booking Price: ${moneyFormat(context, userChat.bookingAmount!.toDouble())}",
                   textAlign: TextAlign.start,
-                  fontSize: 72,
+                  fontSize: 32,
                   color: AppColors.primaryDark,
                   fontStyle: FontStyle.normal,
                   fontWeight: FontWeight.w600)
@@ -311,7 +333,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationPage> {
                       isBody: true,
                       text: "Find Availability",
                       textAlign: TextAlign.center,
-                      fontSize: 72,
+                      fontSize: 32,
                       color: AppColors.white,
                       fontStyle: FontStyle.normal,
                       fontWeight: FontWeight.w900),
@@ -327,7 +349,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationPage> {
               isBody: true,
               text: "${widget.reservation.accomodationType} Facilities",
               textAlign: TextAlign.center,
-              fontSize: 72,
+              fontSize: 32,
               color: AppColors.black,
               fontStyle: FontStyle.normal,
               fontWeight: FontWeight.bold),
@@ -352,7 +374,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationPage> {
                       isBody: true,
                       text: userChat.accomodationFacilities![index],
                       textAlign: TextAlign.center,
-                      fontSize: 62,
+                      fontSize: 32,
                       color: AppColors.black,
                       fontStyle: FontStyle.normal,
                       fontWeight: FontWeight.w500),
@@ -378,24 +400,28 @@ class _LoginPageState extends ConsumerState<ViewAccomodationPage> {
                           isBody: true,
                           text: "Reviews",
                           textAlign: TextAlign.start,
-                          fontSize: 75,
+                          fontSize: 35,
                           color: AppColors.black,
                           fontStyle: FontStyle.normal,
                           fontWeight: FontWeight.bold),
                       const Spacer(),
                       GestureDetector(
                         onTap: () {
-                          // navigateToRoute(
-                          //     context,
-                          //     ViewAllReviewPagePage(
-                          //       reviews: userChat.gasStationReviewModels!,
-                          //     ));
+                          navigateToRoute(
+                              context,
+                              AddAccomodationReviewScreen(
+                                accomodationId: userChat.id.toString(),
+                                accomodationLogo:
+                                    userChat.accomodationLogo.toString(),
+                                accomodationName:
+                                    userChat.accomodationName.toString(),
+                              ));
                         },
                         child: const AppText(
                             isBody: true,
-                            text: "View All",
+                            text: "Add ReView",
                             textAlign: TextAlign.start,
-                            fontSize: 75,
+                            fontSize: 35,
                             decoration: TextDecoration.underline,
                             color: AppColors.primary,
                             fontStyle: FontStyle.normal,
@@ -404,9 +430,11 @@ class _LoginPageState extends ConsumerState<ViewAccomodationPage> {
                     ],
                   ),
                   addVerticalSpacing(context, 5),
-                  ReviewSummary(
-                    reviews: {5: 25328, 4: 5979, 3: 1961, 2: 1049, 1: 1303},
-                  ),
+                  userChat.accomodationReviewModels!.isEmpty
+                      ? SizedBox.shrink()
+                      : ReviewSummary(
+                          reviews: reviewCounts,
+                        ),
                   addVerticalSpacing(context, 5),
                   Padding(
                     padding: const EdgeInsets.only(left: 0, right: 0),
@@ -441,7 +469,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationPage> {
                                   isBody: true,
                                   text: "${reviews[index].userName}",
                                   textAlign: TextAlign.start,
-                                  fontSize: 76,
+                                  fontSize: 36,
                                   color: AppColors.primaryDark,
                                   fontStyle: FontStyle.normal,
                                   fontWeight: FontWeight.bold),
@@ -463,7 +491,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationPage> {
                               isBody: true,
                               text: "${reviews[index].reviewMessage}",
                               textAlign: TextAlign.start,
-                              fontSize: 76,
+                              fontSize: 36,
                               color: AppColors.primaryDark,
                               fontStyle: FontStyle.normal,
                               fontWeight: FontWeight.bold),
@@ -471,6 +499,32 @@ class _LoginPageState extends ConsumerState<ViewAccomodationPage> {
                       );
                     })),
                   ),
+                  userChat.accomodationReviewModels!.isEmpty
+                      ? SizedBox.shrink()
+                      : Align(
+                          alignment: Alignment.bottomRight,
+                          child: GestureDetector(
+                            onTap: () {
+                              navigateToRoute(
+                                  context,
+                                  ViewAllReviewPagePage(
+                                    accomodationName:
+                                        userChat.accomodationName.toString(),
+                                    reviews: userChat.accomodationReviewModels!,
+                                  ));
+                            },
+                            child: const AppText(
+                                isBody: true,
+                                text: "See All Review",
+                                textAlign: TextAlign.start,
+                                fontSize: 35,
+                                decoration: TextDecoration.underline,
+                                color: AppColors.primary,
+                                fontStyle: FontStyle.normal,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                  addVerticalSpacing(context, 5),
                 ])),
       ],
     );

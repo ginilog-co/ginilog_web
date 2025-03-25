@@ -35,11 +35,6 @@ class _AccomodationReservationWidgetState
   @override
   Widget build(BuildContext context) {
     final data3 = widget.accomodationReservation;
-
-    // DateTime dt2 = DateTime.parse(data3.createdAt.toString());
-    // String date = DateFormat("E, MMM d hh:mm a").format(dt2);
-    // // DateTime dt3 = data3.updatedAt!;
-    // // String time = DateFormat("hh:mm a").format(dt3);
     return Padding(
       padding: const EdgeInsets.only(left: 5.0, right: 5.0, top: 5.0),
       child: GestureDetector(
@@ -78,7 +73,7 @@ class _AccomodationReservationWidgetState
                           isBody: true,
                           text: "Check In: ${accomodationData.checkInTime}",
                           textAlign: TextAlign.start,
-                          fontSize: 75,
+                          fontSize: 35,
                           color: AppColors.black,
                           fontStyle: FontStyle.normal,
                           fontWeight: FontWeight.w500),
@@ -89,7 +84,7 @@ class _AccomodationReservationWidgetState
                               ? "Not Available"
                               : "Available",
                           textAlign: TextAlign.start,
-                          fontSize: 75,
+                          fontSize: 35,
                           color: AppColors.black,
                           fontStyle: FontStyle.normal,
                           fontWeight: FontWeight.w500),
@@ -123,7 +118,7 @@ class _AccomodationReservationWidgetState
                                 isBody: true,
                                 text: "${data3.accomodationName}",
                                 textAlign: TextAlign.start,
-                                fontSize: 75,
+                                fontSize: 35,
                                 color: AppColors.black,
                                 fontStyle: FontStyle.normal,
                                 fontWeight: FontWeight.bold),
@@ -133,7 +128,7 @@ class _AccomodationReservationWidgetState
                                     isBody: false,
                                     text: "Room: ${data3.roomNumber}",
                                     textAlign: TextAlign.start,
-                                    fontSize: 85,
+                                    fontSize: 45,
                                     color: AppColors.black,
                                     fontStyle: FontStyle.normal,
                                     fontWeight: FontWeight.bold),
@@ -142,7 +137,7 @@ class _AccomodationReservationWidgetState
                                     isBody: false,
                                     text: "${data3.roomType}",
                                     textAlign: TextAlign.start,
-                                    fontSize: 85,
+                                    fontSize: 45,
                                     color: AppColors.green,
                                     fontStyle: FontStyle.normal,
                                     fontWeight: FontWeight.bold),
@@ -160,7 +155,7 @@ class _AccomodationReservationWidgetState
                                       isBody: false,
                                       text: "${accomodationData.location}",
                                       textAlign: TextAlign.start,
-                                      fontSize: 85,
+                                      fontSize: 45,
                                       color: AppColors.green,
                                       fontStyle: FontStyle.normal,
                                       fontWeight: FontWeight.bold),
@@ -183,7 +178,7 @@ class _AccomodationReservationWidgetState
                           text:
                               moneyFormat(context, data3.roomPrice!.toDouble()),
                           textAlign: TextAlign.start,
-                          fontSize: 75,
+                          fontSize: 35,
                           color: AppColors.black,
                           fontStyle: FontStyle.normal,
                           fontWeight: FontWeight.bold),
@@ -214,7 +209,7 @@ class _AccomodationReservationWidgetState
                                 isBody: true,
                                 text: "View Now",
                                 textAlign: TextAlign.center,
-                                fontSize: 72,
+                                fontSize: 32,
                                 color: AppColors.white,
                                 fontStyle: FontStyle.normal,
                                 fontWeight: FontWeight.w900),

@@ -54,11 +54,16 @@ class _LoginPageState extends ConsumerState<NotificationPage> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: PreferredSize(
-          preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(16)),
+          preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(18)),
           child: Padding(
             padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-            child: const GlobalBackButton(
-                backText: "Notifications", showBackButton: true),
+            child: GlobalBackButton(
+              backText: "Notifications",
+              showBackButton: true,
+              buttonElements: [
+                IconButton(onPressed: () {}, icon: Icon(Icons.settings))
+              ],
+            ),
           )),
       body: SafeArea(
         child: Padding(
@@ -71,8 +76,8 @@ class _LoginPageState extends ConsumerState<NotificationPage> {
                   itemBuilder: (BuildContext context, int index) {
                     final data3 = getOrdered(notifications)[index];
                     DateTime dt2 = DateTime.parse(data3.createdAt.toString());
-                    String date = DateFormat("E, MMM d").format(dt2);
-                    String time = DateFormat("hh:mm").format(dt2);
+                    String date = DateFormat("E, MMM d").format(dt2.toLocal());
+                    String time = DateFormat("hh:mm").format(dt2.toLocal());
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.start,
@@ -88,13 +93,7 @@ class _LoginPageState extends ConsumerState<NotificationPage> {
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: [
                               InkWell(
-                                  onTap: () {
-                                    // navigateToRoute(
-                                    //     context,
-                                    //     MagazineDetailsPage(
-                                    //       magazineModel: post[index],
-                                    //     ));
-                                  },
+                                  onTap: () {},
                                   child: Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: Column(
@@ -107,7 +106,7 @@ class _LoginPageState extends ConsumerState<NotificationPage> {
                                             isBody: false,
                                             text: "${data3.title}",
                                             textAlign: TextAlign.start,
-                                            fontSize: 15,
+                                            fontSize: 20,
                                             color: AppColors.black,
                                             fontStyle: FontStyle.normal,
                                             maxLines: 1,
@@ -116,7 +115,7 @@ class _LoginPageState extends ConsumerState<NotificationPage> {
                                             isBody: true,
                                             text: "${data3.body}",
                                             textAlign: TextAlign.start,
-                                            fontSize: 79,
+                                            fontSize: 29,
                                             color: AppColors.black,
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
@@ -127,7 +126,7 @@ class _LoginPageState extends ConsumerState<NotificationPage> {
                                             isBody: true,
                                             text: "$date $time",
                                             textAlign: TextAlign.start,
-                                            fontSize: 75,
+                                            fontSize: 25,
                                             color: AppColors.green,
                                             fontStyle: FontStyle.normal,
                                             fontWeight: FontWeight.w400),
@@ -160,7 +159,7 @@ class _LoginPageState extends ConsumerState<NotificationPage> {
                           isBody: false,
                           text: "Nothing to show here",
                           textAlign: TextAlign.start,
-                          fontSize: 75,
+                          fontSize: 35,
                           color: AppColors.black,
                           fontStyle: FontStyle.normal,
                           fontWeight: FontWeight.bold),
@@ -168,7 +167,7 @@ class _LoginPageState extends ConsumerState<NotificationPage> {
                           isBody: true,
                           text: "There is no notification yet",
                           textAlign: TextAlign.center,
-                          fontSize: 75,
+                          fontSize: 30,
                           color: AppColors.black,
                           fontStyle: FontStyle.normal,
                           fontWeight: FontWeight.normal),

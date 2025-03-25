@@ -69,6 +69,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
   }
 
   Widget _description(String description) {
+    TextScaler textScaler = MediaQuery.of(context).textScaler;
     return ExpandableNotifier(
         child: Padding(
       padding: const EdgeInsets.all(0),
@@ -86,8 +87,9 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                   padding: const EdgeInsets.all(0),
                   child: Text(
                     "Description",
+                    textScaler: textScaler,
                     style: TextStyle(
-                        fontSize: fontSized(context, 82),
+                        fontSize: fontSized(context, 42),
                         fontWeight: FontWeight.bold,
                         fontFamily: "Inter",
                         color: AppColors.black),
@@ -96,8 +98,9 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                   softWrap: true,
                   maxLines: 4,
                   overflow: TextOverflow.ellipsis,
+                  textScaler: textScaler,
                   style: TextStyle(
-                      fontSize: fontSized(context, 72),
+                      fontSize: fontSized(context, 32),
                       fontWeight: FontWeight.w500,
                       color: AppColors.black)),
               expanded: Column(
@@ -109,8 +112,9 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                         child: Text(description,
                             softWrap: true,
                             overflow: TextOverflow.fade,
+                            textScaler: textScaler,
                             style: TextStyle(
-                                fontSize: fontSized(context, 72),
+                                fontSize: fontSized(context, 32),
                                 fontWeight: FontWeight.w500,
                                 fontFamily: "Mulish",
                                 color: AppColors.black))),
@@ -209,7 +213,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                       isBody: false,
                       text: "${userChat.accomodationName}",
                       textAlign: TextAlign.start,
-                      fontSize: 105,
+                      fontSize: 55,
                       color: AppColors.primaryDark,
                       fontStyle: FontStyle.normal,
                       fontWeight: FontWeight.bold),
@@ -249,7 +253,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                         text:
                             "${userChat.location}, ${userChat.locality}, ${userChat.state}",
                         textAlign: TextAlign.start,
-                        fontSize: 75,
+                        fontSize: 35,
                         color: AppColors.black,
                         fontStyle: FontStyle.normal,
                         fontWeight: FontWeight.w500),
@@ -261,7 +265,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                   isBody: true,
                   text: "Opens Monday - Sunday",
                   textAlign: TextAlign.start,
-                  fontSize: 62,
+                  fontSize: 32,
                   color: AppColors.black,
                   fontStyle: FontStyle.normal,
                   fontWeight: FontWeight.w600),
@@ -271,7 +275,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                   text:
                       "Booking Price: ${moneyFormat(context, widget.reservation.roomPrice!.toDouble())}",
                   textAlign: TextAlign.start,
-                  fontSize: 72,
+                  fontSize: 32,
                   color: AppColors.primaryDark,
                   fontStyle: FontStyle.normal,
                   fontWeight: FontWeight.w600)
@@ -285,7 +289,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
               isBody: true,
               text: "Room Features",
               textAlign: TextAlign.center,
-              fontSize: 72,
+              fontSize: 32,
               color: AppColors.black,
               fontStyle: FontStyle.normal,
               fontWeight: FontWeight.bold),
@@ -310,7 +314,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                       isBody: true,
                       text: widget.reservation.roomFeatures![index],
                       textAlign: TextAlign.center,
-                      fontSize: 62,
+                      fontSize: 32,
                       color: AppColors.black,
                       fontStyle: FontStyle.normal,
                       fontWeight: FontWeight.w500),
@@ -338,6 +342,9 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                     bookingPrice: widget.reservation.roomPrice!,
                     maximumNoOfGuest:
                         widget.reservation.maximumNoOfGuest!.toInt(),
+                    reservationName:
+                        widget.reservation.accomodationName.toString(),
+                    reservationAddress: userChat.location.toString(),
                   ));
             },
             child: Container(
@@ -357,7 +364,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                     isBody: true,
                     text: "Book Now",
                     textAlign: TextAlign.center,
-                    fontSize: 72,
+                    fontSize: 32,
                     color: AppColors.white,
                     fontStyle: FontStyle.normal,
                     fontWeight: FontWeight.w900),
@@ -371,7 +378,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
               isBody: true,
               text: "${widget.reservation.accomodationType} Images",
               textAlign: TextAlign.center,
-              fontSize: 72,
+              fontSize: 32,
               color: AppColors.black,
               fontStyle: FontStyle.normal,
               fontWeight: FontWeight.bold),
@@ -407,7 +414,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
               isBody: true,
               text: "${widget.reservation.accomodationType} Facilities",
               textAlign: TextAlign.center,
-              fontSize: 72,
+              fontSize: 32,
               color: AppColors.black,
               fontStyle: FontStyle.normal,
               fontWeight: FontWeight.bold),
@@ -432,7 +439,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                       isBody: true,
                       text: userChat.accomodationFacilities![index],
                       textAlign: TextAlign.center,
-                      fontSize: 62,
+                      fontSize: 32,
                       color: AppColors.black,
                       fontStyle: FontStyle.normal,
                       fontWeight: FontWeight.w500),
@@ -458,7 +465,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                           isBody: true,
                           text: "Reviews",
                           textAlign: TextAlign.start,
-                          fontSize: 75,
+                          fontSize: 35,
                           color: AppColors.black,
                           fontStyle: FontStyle.normal,
                           fontWeight: FontWeight.bold),
@@ -475,7 +482,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                             isBody: true,
                             text: "View All",
                             textAlign: TextAlign.start,
-                            fontSize: 75,
+                            fontSize: 35,
                             decoration: TextDecoration.underline,
                             color: AppColors.primary,
                             fontStyle: FontStyle.normal,
@@ -519,7 +526,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                                   isBody: true,
                                   text: "${reviews[index].userName}",
                                   textAlign: TextAlign.start,
-                                  fontSize: 76,
+                                  fontSize: 36,
                                   color: AppColors.primaryDark,
                                   fontStyle: FontStyle.normal,
                                   fontWeight: FontWeight.bold),
@@ -541,7 +548,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                               isBody: true,
                               text: "${reviews[index].reviewMessage}",
                               textAlign: TextAlign.start,
-                              fontSize: 76,
+                              fontSize: 36,
                               color: AppColors.primaryDark,
                               fontStyle: FontStyle.normal,
                               fontWeight: FontWeight.bold),
@@ -595,6 +602,10 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                         bookingPrice: widget.reservation.roomPrice!,
                         maximumNoOfGuest:
                             widget.reservation.maximumNoOfGuest!.toInt(),
+                        reservationName:
+                            widget.reservation.accomodationName.toString(),
+                        reservationAddress:
+                            accomodationData.location.toString(),
                       ));
                 },
                 child: Container(

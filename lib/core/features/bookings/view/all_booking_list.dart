@@ -58,6 +58,8 @@ class _BookingsListTabState extends ConsumerState<BookingsListTab> {
 
   @override
   Widget build(BuildContext context) {
+    TextScaler textScaler = MediaQuery.of(context).textScaler;
+
     return Scaffold(
         backgroundColor: AppColors.white,
         body: SingleChildScrollView(
@@ -70,7 +72,7 @@ class _BookingsListTabState extends ConsumerState<BookingsListTab> {
                   : Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: SerachInput(
-                        hintText: "Accomodation Names or locations",
+                        hintText: "Type an accomodation name or location here",
                         labelText: "",
                         readOnly: false,
                         prefixIcon: Icons.search,
@@ -111,7 +113,10 @@ class _BookingsListTabState extends ConsumerState<BookingsListTab> {
                             padding: const EdgeInsets.symmetric(horizontal: 5),
                             child: ChoiceChip(
                               showCheckmark: false,
-                              label: Text(locality),
+                              label: Text(
+                                locality,
+                                textScaler: textScaler,
+                              ),
                               selected: isSelected,
                               onSelected: (bool selected) {
                                 if (selected) {
@@ -151,7 +156,7 @@ class _BookingsListTabState extends ConsumerState<BookingsListTab> {
                               text: selectedLocality == "All"
                                   ? "Accomodations"
                                   : selectedLocality,
-                              fontSize: 78,
+                              fontSize: 38,
                               fontWeight: FontWeight.bold,
                             ),
                           ),

@@ -173,6 +173,8 @@ class _CustomSnackbarContentState extends State<CustomSnackbarContent>
                                 const SizedBox(height: 4),
                                 Text(
                                   widget.content,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                       color: Colors.white, fontSize: 14),
                                 ),
@@ -217,6 +219,8 @@ class _CustomSnackbarContentState extends State<CustomSnackbarContent>
                         const SizedBox(height: 4),
                         Text(
                           widget.content,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                               color: Colors.white, fontSize: 14),
                         ),

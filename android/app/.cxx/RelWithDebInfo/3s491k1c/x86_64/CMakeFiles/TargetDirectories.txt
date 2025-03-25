@@ -1,0 +1,2 @@
+C:/Users/HP USER/Documents/VSCODE PROJECT/Ginilog/ginilog_customer_app/android/app/.cxx/RelWithDebInfo/3s491k1c/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/HP USER/Documents/VSCODE PROJECT/Ginilog/ginilog_customer_app/android/app/.cxx/RelWithDebInfo/3s491k1c/x86_64/CMakeFiles/rebuild_cache.dir

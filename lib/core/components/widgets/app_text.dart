@@ -39,6 +39,7 @@ class AppText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    TextScaler textScaler = MediaQuery.of(context).textScaler;
     final style = TextStyle(
       fontSize: fontSized(context, fontSize),
       letterSpacing: letterSpacing ?? 1,
@@ -55,7 +56,7 @@ class AppText extends StatelessWidget {
         overflow: overflow,
         maxLines: maxLines,
         softWrap: softWrap,
-        textScaler: const TextScaler.linear(1),
+        textScaler: textScaler,
         textWidthBasis: textWidthBasis,
         textHeightBehavior: textHeightBehavior);
   }
@@ -65,31 +66,27 @@ double fontSized(BuildContext context, double? fontSize,
     {double desktopFactor = 6,
     double tabletFactor = 4,
     double mobileFactor = 2,
-    double scaleFactor = 4.0}) {
+    double scaleFactor = 4.0,
+    double minFontSize = 12.0,
+    double maxFontSize = 24.0}) {
   double screenWidth = MediaQuery.of(context).size.width;
-  double devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
-  double fontSizeEd;
+  TextScaler textScaler = MediaQuery.of(context).textScaler;
 
-  // Calculate font size based on device type and pixel ratio
-  if (Responsive.isDesktop(context)) {
-    fontSizeEd = fontSize == null
-        ? 14 / devicePixelRatio
-        : (screenWidth / desktopFactor) *
-            (fontSize / 100) /
-            (devicePixelRatio * scaleFactor);
-  } else if (Responsive.isTablet(context)) {
-    fontSizeEd = fontSize == null
-        ? 14 / devicePixelRatio
-        : (screenWidth / tabletFactor) *
-            (fontSize / 100) /
-            (devicePixelRatio * scaleFactor);
-  } else {
-    fontSizeEd = fontSize == null
-        ? 14 / devicePixelRatio
-        : (screenWidth / mobileFactor) *
-            (fontSize / 100) /
-            (devicePixelRatio * scaleFactor);
-  }
+  // Determine scaling factor based on device type
+  double scalingFactor = Responsive.isDesktop(context)
+      ? desktopFactor
+      : Responsive.isTablet(context)
+          ? tabletFactor
+          : mobileFactor;
 
-  return fontSizeEd;
+  // Calculate base font size
+  double baseFontSize = fontSize != null
+      ? (screenWidth / scalingFactor) * (fontSize / 100) / scaleFactor
+      : 14.0;
+
+  // Clamp to prevent extreme sizes
+  double clampedFontSize = baseFontSize.clamp(minFontSize, maxFontSize);
+
+  // Apply text scaling and return final size
+  return textScaler.scale(clampedFontSize);
 }

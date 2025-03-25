@@ -323,4 +323,35 @@ class BookingsService {
       return Future.error(handleHttpError(e));
     }
   }
+
+  Future<http.Response> addAccomodationReview(
+      {required String accomodationId,
+      required String reviewMessage,
+      required double ratingNum}) async {
+    try {
+      var stingUrl = Uri.parse(
+          "${Endpoints.baseUrl}Bookings/update-accomodation-review/$accomodationId");
+      Map<String, String> headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer ${globals.token}'
+      };
+      final msg = jsonEncode(
+        {"reviewMessage": reviewMessage, "ratingNum": ratingNum},
+      );
+      http.Response response =
+          await http.put(stingUrl, body: msg, headers: headers);
+      printData("dataResponse", response.body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        printData("successRegister", response.body);
+        return response;
+      } else {
+        printData("Error", response.body);
+        return response;
+      }
+    } catch (e) {
+      printData('Error', e.toString());
+      return Future.error(handleHttpError(e));
+    }
+  }
 }

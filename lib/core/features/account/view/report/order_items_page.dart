@@ -16,6 +16,8 @@ class OrderItemPage extends ConsumerStatefulWidget {
 class _OrderItemPageState extends ConsumerState<OrderItemPage> {
   @override
   Widget build(BuildContext context) {
+    TextScaler textScaler = MediaQuery.of(context).textScaler;
+
     final data3 = widget.order;
     // DateTime dt2 = DateTime.parse(data3.createdAt!.toLocal().toString());
     // String date = DateFormat("E, MMM d hh:mm a").format(dt2.toLocal());
@@ -68,6 +70,7 @@ class _OrderItemPageState extends ConsumerState<OrderItemPage> {
                               children: [
                                 RichText(
                                   textAlign: TextAlign.start,
+                                  textScaler: textScaler,
                                   text: TextSpan(
                                     style: const TextStyle(color: Colors.black),
                                     children: [
@@ -76,7 +79,7 @@ class _OrderItemPageState extends ConsumerState<OrderItemPage> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.w400,
-                                          fontSize: fontSized(context, 75),
+                                          fontSize: fontSized(context, 35),
                                           fontFamily: "Inter",
                                         ),
                                       ),
@@ -85,7 +88,7 @@ class _OrderItemPageState extends ConsumerState<OrderItemPage> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: fontSized(context, 75),
+                                          fontSize: fontSized(context, 35),
                                           fontFamily: "Mulish",
                                         ),
                                       ),
@@ -96,12 +99,13 @@ class _OrderItemPageState extends ConsumerState<OrderItemPage> {
                                     isBody: true,
                                     text: "#${data3.trackingNum}",
                                     textAlign: TextAlign.start,
-                                    fontSize: 75,
+                                    fontSize: 35,
                                     color: AppColors.black,
                                     fontStyle: FontStyle.normal,
                                     fontWeight: FontWeight.bold),
                                 RichText(
                                   textAlign: TextAlign.start,
+                                  textScaler: textScaler,
                                   text: TextSpan(
                                     style: const TextStyle(color: Colors.black),
                                     children: [
@@ -110,7 +114,7 @@ class _OrderItemPageState extends ConsumerState<OrderItemPage> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.w400,
-                                          fontSize: fontSized(context, 75),
+                                          fontSize: fontSized(context, 35),
                                           fontFamily: "Inter",
                                         ),
                                       ),
@@ -119,7 +123,7 @@ class _OrderItemPageState extends ConsumerState<OrderItemPage> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: fontSized(context, 75),
+                                          fontSize: fontSized(context, 35),
                                           fontFamily: "Mulish",
                                         ),
                                       ),
@@ -157,7 +161,7 @@ class _OrderItemPageState extends ConsumerState<OrderItemPage> {
                                       ? "Track"
                                       : "View",
                                   textAlign: TextAlign.center,
-                                  fontSize: 72,
+                                  fontSize: 32,
                                   color: AppColors.white,
                                   fontStyle: FontStyle.normal,
                                   fontWeight: FontWeight.w900),

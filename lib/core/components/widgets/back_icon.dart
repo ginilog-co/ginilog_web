@@ -20,6 +20,7 @@ class GlobalBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // TextScaler textScaler = MediaQuery.of(context).textScaler;
     return SizedBox(
       width: double.infinity,
       child: Column(
@@ -39,14 +40,14 @@ class GlobalBackButton extends StatelessWidget {
                             child: Container(
                               decoration: BoxDecoration(
                                 color: AppColors.darkBlue,
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(5),
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.only(
-                                    left: 10.0, right: 10, top: 5, bottom: 5),
+                                    left: 5, right: 5, top: 5, bottom: 5),
                                 child: SvgPicture.asset(
                                     'assets/svgs/back_button.svg',
-                                    width: 20,
+                                    width: 15,
                                     color: Colors.white),
                               ),
                             ),
@@ -57,7 +58,7 @@ class GlobalBackButton extends StatelessWidget {
                         isBody: true,
                         text: backText ?? "",
                         textAlign: TextAlign.start,
-                        fontSize: 78,
+                        fontSize: 38,
                         color: color,
                         fontStyle: FontStyle.normal,
                         fontWeight: FontWeight.w700)

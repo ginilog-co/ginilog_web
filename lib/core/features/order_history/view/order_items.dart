@@ -24,6 +24,7 @@ class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
     final data3 = widget.order;
     // DateTime dt2 = DateTime.parse(data3.createdAt!.toLocal().toString());
     // String date = DateFormat("E, MMM d hh:mm a").format(dt2.toLocal());
+    TextScaler textScaler = MediaQuery.of(context).textScaler;
 
     return Padding(
       padding: const EdgeInsets.only(left: 5.0, right: 5.0, top: 5.0),
@@ -82,6 +83,7 @@ class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
                               children: [
                                 RichText(
                                   textAlign: TextAlign.start,
+                                  textScaler: textScaler,
                                   text: TextSpan(
                                     style: const TextStyle(color: Colors.black),
                                     children: [
@@ -90,7 +92,7 @@ class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.w400,
-                                          fontSize: fontSized(context, 75),
+                                          fontSize: fontSized(context, 35),
                                           fontFamily: "Inter",
                                         ),
                                       ),
@@ -99,7 +101,7 @@ class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: fontSized(context, 75),
+                                          fontSize: fontSized(context, 35),
                                           fontFamily: "Mulish",
                                         ),
                                       ),
@@ -110,12 +112,13 @@ class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
                                     isBody: true,
                                     text: "#${data3.trackingNum}",
                                     textAlign: TextAlign.start,
-                                    fontSize: 75,
+                                    fontSize: 35,
                                     color: AppColors.black,
                                     fontStyle: FontStyle.normal,
                                     fontWeight: FontWeight.bold),
                                 RichText(
                                   textAlign: TextAlign.start,
+                                  textScaler: textScaler,
                                   text: TextSpan(
                                     style: const TextStyle(color: Colors.black),
                                     children: [
@@ -124,7 +127,7 @@ class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.w400,
-                                          fontSize: fontSized(context, 75),
+                                          fontSize: fontSized(context, 35),
                                           fontFamily: "Inter",
                                         ),
                                       ),
@@ -133,7 +136,7 @@ class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: fontSized(context, 75),
+                                          fontSize: fontSized(context, 35),
                                           fontFamily: "Mulish",
                                         ),
                                       ),
@@ -171,7 +174,7 @@ class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
                                       ? "Track"
                                       : "View",
                                   textAlign: TextAlign.center,
-                                  fontSize: 72,
+                                  fontSize: 32,
                                   color: AppColors.white,
                                   fontStyle: FontStyle.normal,
                                   fontWeight: FontWeight.w900),

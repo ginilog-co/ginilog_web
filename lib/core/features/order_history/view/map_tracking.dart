@@ -54,12 +54,8 @@ class _LoginPageState extends ConsumerState<OrderLiveTrackingPage> {
           preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(15)),
           child: Padding(
             padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-            child: const Column(
-              children: [
-                GlobalBackButton(
-                    backText: 'Live Order Tracking', showBackButton: true),
-              ],
-            ),
+            child: GlobalBackButton(
+                backText: 'Live Order Tracking', showBackButton: true),
           )),
       key: key,
       body: Column(
@@ -97,7 +93,7 @@ class _LoginPageState extends ConsumerState<OrderLiveTrackingPage> {
                 isBody: false,
                 text: "Tracking Number",
                 textAlign: TextAlign.start,
-                fontSize: 75,
+                fontSize: 35,
                 color: AppColors.black,
                 fontStyle: FontStyle.normal,
                 fontWeight: FontWeight.w700),
@@ -115,7 +111,7 @@ class _LoginPageState extends ConsumerState<OrderLiveTrackingPage> {
                     isBody: true,
                     text: "TN: ${order.trackingNum}",
                     textAlign: TextAlign.start,
-                    fontSize: 60,
+                    fontSize: 30,
                     color: AppColors.green,
                     fontStyle: FontStyle.normal,
                     fontWeight: FontWeight.bold),
@@ -201,7 +197,7 @@ class _LoginPageState extends ConsumerState<OrderLiveTrackingPage> {
                   isBody: false,
                   text: "Package Status: ${status.name.firstCap}",
                   textAlign: TextAlign.start,
-                  fontSize: 80,
+                  fontSize: 40,
                   color: status.name.firstCap == currentStatus
                       ? AppColors.grey
                       : AppColors.green,
@@ -211,7 +207,7 @@ class _LoginPageState extends ConsumerState<OrderLiveTrackingPage> {
                   isBody: true,
                   text: statusDate,
                   textAlign: TextAlign.start,
-                  fontSize: 65,
+                  fontSize: 25,
                   color: AppColors.black,
                   fontStyle: FontStyle.normal,
                   fontWeight: FontWeight.bold),
@@ -221,7 +217,7 @@ class _LoginPageState extends ConsumerState<OrderLiveTrackingPage> {
                   textAlign: TextAlign.start,
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
-                  fontSize: 65,
+                  fontSize: 25,
                   color: AppColors.black,
                   fontStyle: FontStyle.normal,
                   fontWeight: FontWeight.bold),

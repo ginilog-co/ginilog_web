@@ -44,7 +44,7 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                       children: [
                         CircleAvatar(
                           backgroundColor: AppColors.grey5,
-                          radius: 25,
+                          radius: 15,
                           backgroundImage: controller.profilePicture!.isEmpty ||
                                   controller.profilePicture == null
                               ? AssetImage("assets/images/profile_icon.png")
@@ -55,7 +55,7 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                             isBody: false,
                             text: controller.allNames,
                             textAlign: TextAlign.start,
-                            fontSize: 80,
+                            fontSize: 30,
                             color: AppColors.black,
                             fontStyle: FontStyle.normal,
                             fontWeight: FontWeight.bold),
@@ -134,7 +134,7 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                           isBody: true,
                           text: "Our Services",
                           textAlign: TextAlign.start,
-                          fontSize: 100,
+                          fontSize: 50,
                           color: AppColors.black,
                           fontStyle: FontStyle.normal,
                           fontWeight: FontWeight.w500),
@@ -153,8 +153,8 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                       spacing: 10,
                       children: [
                         SizedBox(
-                          width: getScreenWidth(context) / 2,
-                          height: 250,
+                          //  width: getScreenWidth(context) / 2,
+                          height: getScreenHeight(context) / 3.8,
                           child: GestureDetector(
                             onTap: () {
                               showModalBottomSheet(
@@ -185,7 +185,7 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                                     isBody: true,
                                     text: "Send A Parcel",
                                     textAlign: TextAlign.start,
-                                    fontSize: 70,
+                                    fontSize: 30,
                                     color: AppColors.black,
                                     fontStyle: FontStyle.normal,
                                     fontWeight: FontWeight.w400),
@@ -194,14 +194,16 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                           ),
                         ),
                         SizedBox(
-                          width: getScreenWidth(context) / 2,
-                          height: 250,
+                          //  width: getScreenWidth(context) / 2,
+                          height: getScreenHeight(context) / 3.8,
                           child: GestureDetector(
                             onTap: () {
                               navigateToRoute(
                                   context, AccomodationReservationList());
                             },
                             child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 Container(
                                   width: getScreenWidth(context) / 2,
@@ -220,7 +222,7 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                                     isBody: true,
                                     text: "Accommodation Bookings",
                                     textAlign: TextAlign.start,
-                                    fontSize: 70,
+                                    fontSize: 30,
                                     color: AppColors.black,
                                     fontStyle: FontStyle.normal,
                                     fontWeight: FontWeight.w400),

@@ -811,6 +811,7 @@ class GlobalTextField extends StatefulWidget {
 class _GlobalTextFieldState extends State<GlobalTextField> {
   @override
   Widget build(BuildContext context) {
+    //  TextScaler textScaler = MediaQuery.of(context).textScaler;
     return TextFormField(
       controller: widget.textController,
       keyboardType: widget.keyBoardType,
@@ -839,7 +840,7 @@ class _GlobalTextFieldState extends State<GlobalTextField> {
       style: TextStyle(
         color: AppColors.black,
         fontFamily: "Mulish",
-        fontSize: fontSized(context, 85),
+        fontSize: fontSized(context, 35),
       ),
       decoration: InputDecoration(
         floatingLabelBehavior: FloatingLabelBehavior.auto,
