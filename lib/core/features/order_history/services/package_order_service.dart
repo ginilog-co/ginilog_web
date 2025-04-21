@@ -4,13 +4,10 @@ import 'package:ginilog_customer_app/core/components/extension/error_handling.da
 import 'package:ginilog_customer_app/core/components/helpers/endpoints.dart';
 import 'package:ginilog_customer_app/core/components/helpers/globals.dart';
 import 'package:ginilog_customer_app/core/components/utils/constants.dart';
-import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/features/order_history/model/package_orders_model.dart';
 import 'package:http/http.dart' as http;
 
 class PackageOrderService {
-  final cache = DefaultCacheManager();
-
   Future<http.Response> createOrderWithAddress({
     required String companyId,
     required String itemName,
@@ -184,43 +181,25 @@ class PackageOrderService {
         'Authorization': 'Bearer ${globals.token}',
       };
       var url = Uri.parse(
-          "${Endpoints.baseUrl}Logistics/package-orders?AnyItem=${globals.userId}");
-      final response =
-          await cache.downloadFile(url.toString(), authHeaders: headers2);
-
-      if (response.file.existsSync()) {
-        String file = await response.file.readAsString();
-
-        // Validate file content
-        if (file.isNotEmpty && (file.startsWith('{') || file.startsWith('['))) {
-          try {
-            var data1 = packageOrderResponseModelFromJson(file);
-            data = data1;
-            printData('All Package Order', file);
-            return data;
-          } catch (e) {
-            printData('All Package Order Parsing Error', e.toString());
-            return Future.error('Invalid JSON format');
-          }
-        } else {
-          response.file.deleteSync();
-          var data1 = packageOrderResponseModelFromJson(file);
-          data = data1;
-          printData('All Package Order', file);
-          return data;
-        }
+        "${Endpoints.baseUrl}Logistics/package-orders?AnyItem=${globals.userId}",
+      );
+      var response = await http.get(url, headers: headers2);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        var data1 = packageOrderResponseModelFromJson(response.body);
+        data = data1;
+        printData('All Package Order', response.body);
+        return data;
       } else {
-        printData('File not found', response.file.path);
-        return [];
+        printData('All Package Order Error', response.body);
       }
     } catch (e) {
       printData('Error', e.toString());
       return Future.error(handleHttpError(e));
     }
+    return data;
   }
 
   // Stream Package Order
-
   Stream<List<PackageOrderResponseModel>>
       getAllStreamPackageOrdersData() async* {
     List<PackageOrderResponseModel> data = [];
@@ -228,41 +207,22 @@ class PackageOrderService {
       Map<String, String> headers2 = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Authorization': 'Bearer ${globals.token}',
+        'Authorization': 'Bearer ${globals.token}'
       };
       var url = Uri.parse(
           "${Endpoints.baseUrl}Logistics/package-orders?AnyItem=${globals.userId}");
-      final response =
-          await cache.downloadFile(url.toString(), authHeaders: headers2);
-
-      if (response.file.existsSync()) {
-        String file = await response.file.readAsString();
-
-        // Validate file content
-        if (file.isNotEmpty && (file.startsWith('{') || file.startsWith('['))) {
-          try {
-            var data1 = packageOrderResponseModelFromJson(file);
-            data = data1;
-            printData('All Package Order Stream', file);
-            yield data;
-          } catch (e) {
-            printData('All Package Order Stream Parsing Error', e.toString());
-            yield* Stream.error('Invalid JSON format');
-          }
-        } else {
-          response.file.deleteSync();
-          var data1 = packageOrderResponseModelFromJson(file);
-          data = data1;
-          printData('All Package Order Stream', file);
-          yield data;
-        }
+      var response = await http.get(url, headers: headers2);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        var data1 = packageOrderResponseModelFromJson(response.body);
+        data = data1;
+        printData('All Package Order Stream', response.body);
+        yield data;
       } else {
-        printData('Package order Stream File not found', response.file.path);
-        yield [];
+        printData('All Package Order Stream Error2S', response.body);
       }
     } catch (e) {
       printData('Error', e.toString());
-      yield* Stream.error(handleHttpError(e));
+      yield* Stream.error(e);
     }
   }
 

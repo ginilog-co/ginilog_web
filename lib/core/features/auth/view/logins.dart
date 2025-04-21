@@ -139,7 +139,7 @@ class LoginScreensView
                                 fontWeight: FontWeight.w500,
                                 fontFamily: "Mulish",
                                 color: AppColors.black,
-                                fontSize: fontSized(context, 65)),
+                                fontSize: fontSized(context, 45)),
                             text: "I Agree to the ",
                             children: <TextSpan>[
                               TextSpan(
@@ -148,7 +148,7 @@ class LoginScreensView
                                     fontWeight: FontWeight.w500,
                                     fontFamily: "Mulish",
                                     color: AppColors.primary,
-                                    fontSize: fontSized(context, 65)),
+                                    fontSize: fontSized(context, 45)),
                                 recognizer: TapGestureRecognizer()
                                   ..onTap = () {
                                     controller.urlString(
@@ -160,7 +160,7 @@ class LoginScreensView
                                 style: TextStyle(
                                     fontWeight: FontWeight.w500,
                                     fontFamily: "Mulish",
-                                    fontSize: fontSized(context, 65)),
+                                    fontSize: fontSized(context, 45)),
                               ),
                               TextSpan(
                                 text: "Privacy Policy",
@@ -168,7 +168,7 @@ class LoginScreensView
                                     fontWeight: FontWeight.w500,
                                     fontFamily: "Mulish",
                                     color: AppColors.primary,
-                                    fontSize: fontSized(context, 65)),
+                                    fontSize: fontSized(context, 45)),
                                 recognizer: TapGestureRecognizer()
                                   ..onTap = () {
                                     controller.urlString(

@@ -1,2 +1,0 @@
-C:/Users/HP USER/Documents/VSCODE PROJECT/Ginilog/ginilog_customer_app/android/app/.cxx/Debug/5y3u3ky2/armeabi-v7a/CMakeFiles/edit_cache.dir
-C:/Users/HP USER/Documents/VSCODE PROJECT/Ginilog/ginilog_customer_app/android/app/.cxx/Debug/5y3u3ky2/armeabi-v7a/CMakeFiles/rebuild_cache.dir

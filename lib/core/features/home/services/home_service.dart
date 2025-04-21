@@ -4,14 +4,12 @@ import 'package:ginilog_customer_app/core/components/extension/error_handling.da
 import 'package:ginilog_customer_app/core/components/helpers/endpoints.dart';
 import 'package:ginilog_customer_app/core/components/helpers/globals.dart';
 import 'package:ginilog_customer_app/core/components/utils/constants.dart';
-import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/features/home/model/company_response_model.dart';
 import 'package:ginilog_customer_app/core/features/home/model/notification_model.dart';
 import 'package:ginilog_customer_app/core/features/home/model/riders_response_model.dart';
 import 'package:http/http.dart' as http;
 
 class HomeService {
-  final cache = DefaultCacheManager();
   // Logistics Company
   Future<Map<String, dynamic>?> getPlaceDetails(String placeId) async {
     final String apiKey = "AIzaSyA1WkH5DbnyUVLhPtqo_qj3Bmr0uKPolSw";
@@ -57,7 +55,7 @@ class HomeService {
     }
   }
 
-  Future<List<LogisticResponseModel>> getAllLogisticsData2() async {
+  Future<List<LogisticResponseModel>> getAllLogisticsData() async {
     List<LogisticResponseModel> data = [];
     try {
       Map<String, String> headers2 = {
@@ -66,60 +64,15 @@ class HomeService {
         'Authorization': 'Bearer ${globals.token}'
       };
       var url = Uri.parse("${Endpoints.baseUrl}Logistics");
-      final response =
-          await cache.downloadFile(url.toString(), authHeaders: headers2);
-      String file = await response.file.readAsString();
-      if (response.file.existsSync()) {
-        var data1 = logisticResponseModelFromJson(file);
+      var response = await http.get(url, headers: headers2);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        var data1 = logisticResponseModelFromJson(response.body);
         data = data1;
         printData('All Logistics Company', data);
         return data;
       } else {
-        printData('All Logistics Company Error', file);
+        printData('All Logistics Company Error', response.body);
         return data;
-      }
-    } catch (e) {
-      printData('Error', e.toString());
-      return Future.error(handleHttpError(e));
-    }
-  }
-
-  Future<List<LogisticResponseModel>> getAllLogisticsData() async {
-    List<LogisticResponseModel> data = [];
-    try {
-      Map<String, String> headers2 = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ${globals.token}',
-      };
-      var url = Uri.parse("${Endpoints.baseUrl}Logistics");
-      final response =
-          await cache.downloadFile(url.toString(), authHeaders: headers2);
-
-      if (response.file.existsSync()) {
-        String file = await response.file.readAsString();
-
-        // Validate file content
-        if (file.isNotEmpty && (file.startsWith('{') || file.startsWith('['))) {
-          try {
-            var data1 = logisticResponseModelFromJson(file);
-            data = data1;
-            printData('All Logistics Company', file);
-            return data;
-          } catch (e) {
-            printData('All Logistics Company Parsing Error', e.toString());
-            return Future.error('Invalid JSON format');
-          }
-        } else {
-          response.file.deleteSync();
-          var data1 = logisticResponseModelFromJson(file);
-          data = data1;
-          printData('All Logistics Company', file);
-          return data;
-        }
-      } else {
-        printData('File not found', response.file.path);
-        return [];
       }
     } catch (e) {
       printData('Error', e.toString());
@@ -133,113 +86,21 @@ class HomeService {
       Map<String, String> headers2 = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Authorization': 'Bearer ${globals.token}',
+        'Authorization': 'Bearer ${globals.token}'
       };
       var url = Uri.parse("${Endpoints.baseUrl}Logistics");
-      final response =
-          await cache.downloadFile(url.toString(), authHeaders: headers2);
-
-      if (response.file.existsSync()) {
-        String file = await response.file.readAsString();
-
-        // Validate file content
-        if (file.isNotEmpty && (file.startsWith('{') || file.startsWith('['))) {
-          try {
-            var data1 = logisticResponseModelFromJson(file);
-            data = data1;
-            printData('All Logistics Company2S', file);
-            yield data;
-          } catch (e) {
-            printData('All Logistics Company Parsing Error', e.toString());
-            yield* Stream.error('Invalid JSON format');
-          }
-        } else {
-          response.file.deleteSync();
-          var data1 = logisticResponseModelFromJson(file);
-          data = data1;
-          printData('All Logistics Company2S', file);
-          yield data;
-        }
+      var response = await http.get(url, headers: headers2);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        var data1 = logisticResponseModelFromJson(response.body);
+        data = data1;
+        printData('All Logistics Company2S', response.body);
+        yield data;
       } else {
-        printData('File not found', response.file.path);
-        yield [];
+        printData('All Logistics Company Error2S', response.body);
       }
     } catch (e) {
       printData('Error', e.toString());
-      yield* Stream.error(handleHttpError(e));
-    }
-  }
-
-  // Stream<List<LogisticResponseModel>> getAllStreamLogisticsData2(
-  //     {required String state, required String city}) async* {
-  //   List<LogisticResponseModel> data = [];
-  //   try {
-  //     Map<String, String> headers2 = {
-  //       'Content-Type': 'application/json',
-  //       'Accept': 'application/json',
-  //       'Authorization': 'Bearer ${globals.token}'
-  //     };
-  //     var url = Uri.parse(
-  //         "${Endpoints.baseUrl}Logistics/filter?State=$state&City=$city");
-  //     final response =
-  //         await cache.downloadFile(url.toString(), authHeaders: headers2);
-  //     String file = await response.file.readAsString();
-  //     if (response.file.existsSync()) {
-  //       var data1 = logisticResponseModelFromJson(file);
-  //       data = data1;
-  //       printData('All Logistics Company2S', file);
-  //       yield data;
-  //     } else {
-  //       printData('All Logistics Company Error2S', file);
-  //     }
-  //   } catch (e) {
-  //     printData('Error', e.toString());
-  //     yield* Stream.error(e);
-  //   }
-  // }
-
-  Stream<List<LogisticResponseModel>> getAllStreamLogisticsData2(
-      {required String state, required String city}) async* {
-    List<LogisticResponseModel> data = [];
-    try {
-      Map<String, String> headers2 = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ${globals.token}',
-      };
-      var url = Uri.parse(
-          "${Endpoints.baseUrl}Logistics/filter?State=$state&City=$city");
-      final response =
-          await cache.downloadFile(url.toString(), authHeaders: headers2);
-
-      if (response.file.existsSync()) {
-        String file = await response.file.readAsString();
-
-        // Validate file content
-        if (file.isNotEmpty && (file.startsWith('{') || file.startsWith('['))) {
-          try {
-            var data1 = logisticResponseModelFromJson(file);
-            data = data1;
-            printData('All Logistics Company2S', file);
-            yield data;
-          } catch (e) {
-            printData('All Logistics Company Parsing Error', e.toString());
-            yield* Stream.error('Invalid JSON format');
-          }
-        } else {
-          response.file.deleteSync();
-          var data1 = logisticResponseModelFromJson(file);
-          data = data1;
-          printData('All Logistics Company2S', file);
-          yield data;
-        }
-      } else {
-        printData('File not found', response.file.path);
-        yield [];
-      }
-    } catch (e) {
-      printData('Error', e.toString());
-      yield* Stream.error(handleHttpError(e));
+      yield* Stream.error(e);
     }
   }
 
@@ -356,39 +217,23 @@ class HomeService {
         'Accept': 'application/json',
         'Authorization': 'Bearer ${globals.token}',
       };
-      var url = Uri.parse("${Endpoints.baseUrl}Notifications");
-      final response =
-          await cache.downloadFile(url.toString(), authHeaders: headers2);
-
-      if (response.file.existsSync()) {
-        String file = await response.file.readAsString();
-
-        // Validate file content
-        if (file.isNotEmpty && (file.startsWith('{') || file.startsWith('['))) {
-          try {
-            var data1 = notificationResponseModelFromJson(file);
-            data = data1;
-            printData('All Notification', file);
-            return data;
-          } catch (e) {
-            printData('All Notification Parsing Error', e.toString());
-            return Future.error('Invalid JSON format');
-          }
-        } else {
-          response.file.deleteSync();
-          var data1 = notificationResponseModelFromJson(file);
-          data = data1;
-          printData('All Notification', file);
-          return data;
-        }
+      var url = Uri.parse(
+        "${Endpoints.baseUrl}Notifications",
+      );
+      var response = await http.get(url, headers: headers2);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        var data1 = notificationResponseModelFromJson(response.body);
+        data = data1;
+        printData('All Notification', response.body);
+        return data;
       } else {
-        printData('File not found', response.file.path);
-        return [];
+        printData('All Notification Error', response.body);
       }
     } catch (e) {
       printData('Error', e.toString());
       return Future.error(handleHttpError(e));
     }
+    return data;
   }
 
 // Riders
@@ -400,39 +245,23 @@ class HomeService {
         'Accept': 'application/json',
         'Authorization': 'Bearer ${globals.token}',
       };
-      var url = Uri.parse("${Endpoints.baseUrl}Logistics/rider");
-      final response =
-          await cache.downloadFile(url.toString(), authHeaders: headers2);
-
-      if (response.file.existsSync()) {
-        String file = await response.file.readAsString();
-
-        // Validate file content
-        if (file.isNotEmpty && (file.startsWith('{') || file.startsWith('['))) {
-          try {
-            var data1 = ridersResponseModelFromJson(file);
-            data = data1;
-            printData('All Riders', file);
-            return data;
-          } catch (e) {
-            printData('All Riders Parsing Error', e.toString());
-            return Future.error('Invalid JSON format');
-          }
-        } else {
-          response.file.deleteSync();
-          var data1 = ridersResponseModelFromJson(file);
-          data = data1;
-          printData('All Riders', file);
-          return data;
-        }
+      var url = Uri.parse(
+        "${Endpoints.baseUrl}Logistics/rider",
+      );
+      var response = await http.get(url, headers: headers2);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        var data1 = ridersResponseModelFromJson(response.body);
+        data = data1;
+        printData('All Riders', response.body);
+        return data;
       } else {
-        printData('File not found', response.file.path);
-        return [];
+        printData('All Riders Error', response.body);
       }
     } catch (e) {
       printData('Error', e.toString());
       return Future.error(handleHttpError(e));
     }
+    return data;
   }
 
   // Add Rider Review

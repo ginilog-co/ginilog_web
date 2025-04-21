@@ -4,16 +4,40 @@ import 'package:ginilog_customer_app/core/components/extension/error_handling.da
 import 'package:ginilog_customer_app/core/components/helpers/endpoints.dart';
 import 'package:ginilog_customer_app/core/components/helpers/globals.dart';
 import 'package:ginilog_customer_app/core/components/utils/constants.dart';
-import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/features/bookings/model/accomodation_reservations_response_model.dart';
 import 'package:ginilog_customer_app/core/features/bookings/model/accomodation_response_model.dart';
 import 'package:ginilog_customer_app/core/features/bookings/model/customer_book_response_model.dart';
 import 'package:http/http.dart' as http;
 
 class BookingsService {
-  final cache = DefaultCacheManager();
-
 // Accomodation
+  Future<List<AccomodationResponseModel>> getAllAccomodationData() async {
+    List<AccomodationResponseModel> data = [];
+    try {
+      Map<String, String> headers2 = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer ${globals.token}',
+      };
+      var url = Uri.parse(
+        "${Endpoints.baseUrl}Bookings/accomodation",
+      );
+      var response = await http.get(url, headers: headers2);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        var data1 = accomodationResponseModelFromJson(response.body);
+        data = data1;
+        printData('All Accomodation', response.body);
+        return data;
+      } else {
+        printData('All Accomodation Error', response.body);
+      }
+    } catch (e) {
+      printData('Error', e.toString());
+      return Future.error(handleHttpError(e));
+    }
+    return data;
+  }
+
   Future<AccomodationResponseModel> getAccomodationData(
       {required String accomodationId}) async {
     AccomodationResponseModel data = AccomodationResponseModel();
@@ -39,95 +63,6 @@ class BookingsService {
     } catch (e) {
       printData('Error', e.toString());
       return Future.error(handleHttpError(e));
-    }
-  }
-
-  Future<List<AccomodationResponseModel>> getAllAccomodationData() async {
-    List<AccomodationResponseModel> data = [];
-    try {
-      Map<String, String> headers2 = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ${globals.token}',
-      };
-      var url = Uri.parse("${Endpoints.baseUrl}Bookings/accomodation");
-      final response =
-          await cache.downloadFile(url.toString(), authHeaders: headers2);
-
-      if (response.file.existsSync()) {
-        String file = await response.file.readAsString();
-
-        // Validate file content
-        if (file.isNotEmpty && (file.startsWith('{') || file.startsWith('['))) {
-          try {
-            var data1 = accomodationResponseModelFromJson(file);
-            data = data1;
-            printData('All Accomodation', file);
-            return data;
-          } catch (e) {
-            printData('All Accomodation Parsing Error', e.toString());
-            return Future.error('Invalid JSON format');
-          }
-        } else {
-          response.file.deleteSync();
-          var data1 = accomodationResponseModelFromJson(file);
-          data = data1;
-          printData('All Accomodation', file);
-          return data;
-        }
-      } else {
-        printData('File not found', response.file.path);
-        return [];
-      }
-    } catch (e) {
-      printData('Error', e.toString());
-      return Future.error(handleHttpError(e));
-    }
-  }
-
-  // Stream Accomodation
-
-  Stream<List<AccomodationResponseModel>>
-      getAllStreamAccomodationData() async* {
-    List<AccomodationResponseModel> data = [];
-    try {
-      Map<String, String> headers2 = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ${globals.token}',
-      };
-      var url = Uri.parse("${Endpoints.baseUrl}Bookings/accomodation");
-      final response =
-          await cache.downloadFile(url.toString(), authHeaders: headers2);
-
-      if (response.file.existsSync()) {
-        String file = await response.file.readAsString();
-
-        // Validate file content
-        if (file.isNotEmpty && (file.startsWith('{') || file.startsWith('['))) {
-          try {
-            var data1 = accomodationResponseModelFromJson(file);
-            data = data1;
-            printData('All Accomodation Stream', file);
-            yield data;
-          } catch (e) {
-            printData('All Accomodation Stream Parsing Error', e.toString());
-            yield* Stream.error('Invalid JSON format');
-          }
-        } else {
-          response.file.deleteSync();
-          var data1 = accomodationResponseModelFromJson(file);
-          data = data1;
-          printData('All Accomodation Stream', file);
-          yield data;
-        }
-      } else {
-        printData('Accomodation Stream File not found', response.file.path);
-        yield [];
-      }
-    } catch (e) {
-      printData('Error', e.toString());
-      yield* Stream.error(handleHttpError(e));
     }
   }
 
@@ -197,87 +132,23 @@ class BookingsService {
         'Accept': 'application/json',
         'Authorization': 'Bearer ${globals.token}',
       };
-      var url =
-          Uri.parse("${Endpoints.baseUrl}Bookings/accomodation-reservations");
-      final response =
-          await cache.downloadFile(url.toString(), authHeaders: headers2);
-
-      if (response.file.existsSync()) {
-        String file = await response.file.readAsString();
-
-        // Validate file content
-        if (file.isNotEmpty && (file.startsWith('{') || file.startsWith('['))) {
-          try {
-            var data1 = accomodationReservationResponseModelFromJson(file);
-            data = data1;
-            printData('All Accomodation Reservations', file);
-            return data;
-          } catch (e) {
-            printData(
-                'All Accomodation Reservations Parsing Error', e.toString());
-            return Future.error('Invalid JSON format');
-          }
-        } else {
-          response.file.deleteSync();
-          var data1 = accomodationReservationResponseModelFromJson(file);
-          data = data1;
-          printData('All Accomodation Reservations', file);
-          return data;
-        }
+      var url = Uri.parse(
+        "${Endpoints.baseUrl}Bookings/accomodation-reservations",
+      );
+      var response = await http.get(url, headers: headers2);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        var data1 = accomodationReservationResponseModelFromJson(response.body);
+        data = data1;
+        printData('All Accomodation Reservations', response.body);
+        return data;
       } else {
-        printData('File not found', response.file.path);
-        return [];
+        printData('All Accomodation Reservations Error', response.body);
       }
     } catch (e) {
       printData('Error', e.toString());
       return Future.error(handleHttpError(e));
     }
-  }
-
-  Stream<List<AccomodationReservationResponseModel>>
-      getAllStreamAccomodationReservationsData() async* {
-    List<AccomodationReservationResponseModel> data = [];
-    try {
-      Map<String, String> headers2 = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ${globals.token}',
-      };
-      var url =
-          Uri.parse("${Endpoints.baseUrl}Bookings/accomodation-reservations");
-      final response =
-          await cache.downloadFile(url.toString(), authHeaders: headers2);
-
-      if (response.file.existsSync()) {
-        String file = await response.file.readAsString();
-
-        // Validate file content
-        if (file.isNotEmpty && (file.startsWith('{') || file.startsWith('['))) {
-          try {
-            var data1 = accomodationReservationResponseModelFromJson(file);
-            data = data1;
-            printData('All Accomodation Reservations', file);
-            yield data;
-          } catch (e) {
-            printData(
-                'All Accomodation Reservations Parsing Error', e.toString());
-            yield* Stream.error('Invalid JSON format');
-          }
-        } else {
-          response.file.deleteSync();
-          var data1 = accomodationReservationResponseModelFromJson(file);
-          data = data1;
-          printData('All Accomodation Reservations', file);
-          yield data;
-        }
-      } else {
-        printData('File not found', response.file.path);
-        yield [];
-      }
-    } catch (e) {
-      printData('Error', e.toString());
-      yield* Stream.error(handleHttpError(e));
-    }
+    return data;
   }
 
   Future<List<CustomerBookResponseModel>> getAllCustomerBookData() async {
@@ -289,39 +160,22 @@ class BookingsService {
         'Authorization': 'Bearer ${globals.token}',
       };
       var url = Uri.parse(
-          "${Endpoints.baseUrl}Bookings/accomodation-reservations-customer");
-      final response =
-          await cache.downloadFile(url.toString(), authHeaders: headers2);
-
-      if (response.file.existsSync()) {
-        String file = await response.file.readAsString();
-
-        // Validate file content
-        if (file.isNotEmpty && (file.startsWith('{') || file.startsWith('['))) {
-          try {
-            var data1 = customerBookResponseModelFromJson(file);
-            data = data1;
-            printData('All Customer Reservations', file);
-            return data;
-          } catch (e) {
-            printData('All Customer Reservations Parsing Error', e.toString());
-            return Future.error('Invalid JSON format');
-          }
-        } else {
-          response.file.deleteSync();
-          var data1 = customerBookResponseModelFromJson(file);
-          data = data1;
-          printData('All Customer Reservations', file);
-          return data;
-        }
+        "${Endpoints.baseUrl}Bookings/accomodation-reservations-customer",
+      );
+      var response = await http.get(url, headers: headers2);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        var data1 = customerBookResponseModelFromJson(response.body);
+        data = data1;
+        printData('All Customer Reservations', response.body);
+        return data;
       } else {
-        printData('File not found', response.file.path);
-        return [];
+        printData('All Customer Reservations Error', response.body);
       }
     } catch (e) {
       printData('Error', e.toString());
       return Future.error(handleHttpError(e));
     }
+    return data;
   }
 
   Future<http.Response> addAccomodationReview(

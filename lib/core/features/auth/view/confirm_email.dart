@@ -17,6 +17,7 @@ class ConfirmEmailAddressView extends StatelessView<ConfirmEmailAddressScreen,
 
   @override
   Widget build(BuildContext context) {
+    TextScaler textScaler = MediaQuery.of(context).textScaler;
     return Scaffold(
         backgroundColor: AppColors.white,
         body: SingleChildScrollView(
@@ -42,6 +43,7 @@ class ConfirmEmailAddressView extends StatelessView<ConfirmEmailAddressScreen,
                   const SizedBox(height: 8),
                   RichText(
                     textAlign: TextAlign.center,
+                    textScaler: textScaler,
                     text: TextSpan(
                       style: const TextStyle(color: Colors.black),
                       children: [

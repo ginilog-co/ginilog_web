@@ -11,7 +11,7 @@ import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
 import 'package:ginilog_customer_app/core/features/bookings/services/booking_services.dart';
 import 'package:ginilog_customer_app/core/features/home/widget/package_info_page.dart.dart';
-import 'package:paystack_for_flutter/paystack_for_flutter.dart';
+import 'package:paystack_payment/paystack_payment.dart';
 
 class BookingPaymentBottomSheet extends StatefulWidget {
   const BookingPaymentBottomSheet(
@@ -141,37 +141,100 @@ class _BookingPaymentBottomSheetState extends State<BookingPaymentBottomSheet> {
   }
 
 // PAYSTACK
+//   void handlePaystackPayment(int days) {
+//     int fatNum = days == 0 ? 1 : days;
+//     PaystackFlutter().pay(
+//       context: context,
+//       secretKey: Endpoints
+//           .paystackSecretKey, // Your Paystack secret key gotten from your Paystack dashboard.
+//       amount: ((widget.amount * fatNum) *
+//           100), // The amount to be charged in the smallest currency unit. If amount is 600, multiply by 100(600*100)
+//       email: globals.userEmail ??
+//           widget.customerEmail, // The customer's email address.
+//       callbackUrl:
+//           'https://callback.com', // The URL to which Paystack will redirect the user after the transaction.
+//       showProgressBar:
+//           true, // If true, it shows progress bar to inform user an action is in progress when getting checkout link from Paystack.
+//       paymentOptions: [
+//         PaymentOption.card,
+//         PaymentOption.bankTransfer,
+//         PaymentOption.mobileMoney,
+//         PaymentOption.ussd,
+//         PaymentOption.eft,
+//         PaymentOption.bank
+//       ],
+//       currency: Currency.NGN,
+//       metaData: {
+//         "product_name": "Nike Sneakers",
+//         "product_quantity": 3,
+//         "product_price": 24000
+//       }, // Additional metadata to be associated with the transaction
+//       onSuccess: (paystackCallback) async {
+//         setState(() {
+//           isLoading = true;
+//         });
+//         final response2 = await BookingsService().bookAccomodationReservation(
+//             reservationId: widget.reservationId.toString(),
+//             customerName: widget.customerName,
+//             customerPhoneNumber: widget.customerPhoneNumber,
+//             customerEmail: widget.customerEmail,
+//             trnxReference: paystackCallback.reference,
+//             paymentStatus: true,
+//             numberOfGuests: widget.numberOfGuests,
+//             comment: widget.comment,
+//             paymentChannel: "Paystack",
+//             reservationStartDate: widget.reservationStartDate,
+//             reservationEndDate: widget.reservationEndDate,
+//             noOfDays: days);
+//         if (response2.statusCode == 200 || response2.statusCode == 201) {
+// // await sendNotifications(
+//           //     "You have successfully placed an order of ${widget}Kg gas.");
+//           setState(() {
+//             isLoading = false;
+//           });
+//           navigateToRoute(
+//               context,
+//               PaymentConfirmationPage(
+//                   isPackage: false,
+//                   totalAmount: widget.amount.toString(),
+//                   cardNumber: "card Number"));
+//           setState(() {
+//             isLoading = false;
+//           });
+//         } else {
+//           setState(() {
+//             isLoading = false;
+//           });
+//           showCustomSnackbar(context,
+//               title: "Order Error",
+//               content: "Order could not Completed because${response2.body}",
+//               type: SnackbarType.error,
+//               isTopPosition: false);
+//         }
+//         // generateOrderNumber();
+//       }, // A callback function to be called when the payment is successful.
+//       onCancelled: (paystackCallback) {
+//         setState(() {
+//           isLoading = false;
+//         });
+//         showCustomSnackbar(context,
+//             title: "Payment Error",
+//             content: "The payment could not be process",
+//             type: SnackbarType.error,
+//             isTopPosition: false);
+//       }, // A callback function to be called when the payment is canceled.
+//     );
+//   }
 
-// FLUTTERWAVE
   void handlePaystackPayment(int days) {
     int fatNum = days == 0 ? 1 : days;
-    PaystackFlutter().pay(
+    final paystack = PaystackPayment(secretKey: Endpoints.paystackSecretKey);
+    paystack.pay(
       context: context,
-      secretKey: Endpoints
-          .paystackSecretKey, // Your Paystack secret key gotten from your Paystack dashboard.
-      amount: ((widget.amount * fatNum) *
-          100), // The amount to be charged in the smallest currency unit. If amount is 600, multiply by 100(600*100)
-      email: globals.userEmail ??
-          widget.customerEmail, // The customer's email address.
-      callbackUrl:
-          'https://callback.com', // The URL to which Paystack will redirect the user after the transaction.
-      showProgressBar:
-          true, // If true, it shows progress bar to inform user an action is in progress when getting checkout link from Paystack.
-      paymentOptions: [
-        PaymentOption.card,
-        PaymentOption.bankTransfer,
-        PaymentOption.mobileMoney,
-        PaymentOption.ussd,
-        PaymentOption.eft,
-        PaymentOption.bank
-      ],
-      currency: Currency.NGN,
-      metaData: {
-        "product_name": "Nike Sneakers",
-        "product_quantity": 3,
-        "product_price": 24000
-      }, // Additional metadata to be associated with the transaction
-      onSuccess: (paystackCallback) async {
+      email: "${globals.userEmail}",
+      amount: (widget.amount * fatNum),
+      currency: 'NGN',
+      onSuccess: (response) async {
         setState(() {
           isLoading = true;
         });
@@ -180,7 +243,7 @@ class _BookingPaymentBottomSheetState extends State<BookingPaymentBottomSheet> {
             customerName: widget.customerName,
             customerPhoneNumber: widget.customerPhoneNumber,
             customerEmail: widget.customerEmail,
-            trnxReference: paystackCallback.reference,
+            trnxReference: response.reference!,
             paymentStatus: true,
             numberOfGuests: widget.numberOfGuests,
             comment: widget.comment,
@@ -189,7 +252,7 @@ class _BookingPaymentBottomSheetState extends State<BookingPaymentBottomSheet> {
             reservationEndDate: widget.reservationEndDate,
             noOfDays: days);
         if (response2.statusCode == 200 || response2.statusCode == 201) {
-// await sendNotifications(
+          // await sendNotifications(
           //     "You have successfully placed an order of ${widget}Kg gas.");
           setState(() {
             isLoading = false;
@@ -207,24 +270,39 @@ class _BookingPaymentBottomSheetState extends State<BookingPaymentBottomSheet> {
           setState(() {
             isLoading = false;
           });
-          showCustomSnackbar(context,
-              title: "Order Error",
-              content: "Order could not Completed because${response2.body}",
-              type: SnackbarType.error,
-              isTopPosition: false);
+          showCustomSnackbar(
+            context,
+            title: "Order Error",
+            content: "Order could not Completed because${response2.body}",
+            type: SnackbarType.error,
+            isTopPosition: false,
+          );
         }
-        // generateOrderNumber();
-      }, // A callback function to be called when the payment is successful.
-      onCancelled: (paystackCallback) {
+      },
+      onError: (response) {
         setState(() {
           isLoading = false;
         });
-        showCustomSnackbar(context,
-            title: "Payment Error",
-            content: "The payment could not be process",
-            type: SnackbarType.error,
-            isTopPosition: false);
-      }, // A callback function to be called when the payment is canceled.
+        showCustomSnackbar(
+          context,
+          title: "${response.message}Payment Error",
+          content: "The payment could not be process",
+          type: SnackbarType.error,
+          isTopPosition: false,
+        );
+      },
+      onCancel: (response) {
+        setState(() {
+          isLoading = false;
+        });
+        showCustomSnackbar(
+          context,
+          title: "${response.message}Payment Error",
+          content: "The payment could not be process",
+          type: SnackbarType.error,
+          isTopPosition: false,
+        );
+      },
     );
   }
 
@@ -232,6 +310,7 @@ class _BookingPaymentBottomSheetState extends State<BookingPaymentBottomSheet> {
     return DateTime.now().millisecondsSinceEpoch.toString();
   }
 
+// FLUTTERWAVE
   Future<void> handleFlutterWavePayment(int days) async {
     final Customer customer = Customer(
       name: widget.customerName,

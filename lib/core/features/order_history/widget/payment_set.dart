@@ -12,7 +12,7 @@ import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dar
 import 'package:ginilog_customer_app/core/features/home/widget/package_info_page.dart.dart';
 import 'package:ginilog_customer_app/core/features/order_history/model/package_orders_model.dart';
 import 'package:ginilog_customer_app/core/features/order_history/services/package_order_service.dart';
-import 'package:paystack_for_flutter/paystack_for_flutter.dart';
+import 'package:paystack_payment/paystack_payment.dart';
 
 class PaymentMethodBottomSheet extends StatefulWidget {
   const PaymentMethodBottomSheet({
@@ -121,47 +121,25 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
 
 // PAYSTACK
 
-// FLUTTERWAVE
-
   void handlePaystackPayment() {
-    PaystackFlutter().pay(
+    final paystack = PaystackPayment(secretKey: Endpoints.paystackSecretKey);
+    paystack.pay(
       context: context,
-      secretKey: Endpoints
-          .paystackSecretKey, // Your Paystack secret key gotten from your Paystack dashboard.
-      amount: ((widget.order.shippingCost! + widget.order.vatCost!.toDouble()) *
-          100), // The amount to be charged in the smallest currency unit. If amount is 600, multiply by 100(600*100)
-      email: globals.userEmail ??
-          widget.order.senderEmail!, // The customer's email address.
-      callbackUrl:
-          'https://callback.com', // The URL to which Paystack will redirect the user after the transaction.
-      showProgressBar:
-          true, // If true, it shows progress bar to inform user an action is in progress when getting checkout link from Paystack.
-      paymentOptions: [
-        PaymentOption.card,
-        PaymentOption.bankTransfer,
-        PaymentOption.mobileMoney,
-        PaymentOption.ussd,
-        PaymentOption.eft,
-        PaymentOption.bank
-      ],
-      currency: Currency.NGN,
-      metaData: {
-        "product_name": "Nike Sneakers",
-        "product_quantity": 3,
-        "product_price": 24000
-      }, // Additional metadata to be associated with the transaction
-      onSuccess: (paystackCallback) async {
+      email: "${globals.userEmail}",
+      amount: (widget.order.shippingCost! + widget.order.vatCost!.toDouble()),
+      currency: 'NGN',
+      onSuccess: (response) async {
         setState(() {
           isLoading = true;
         });
         final response2 = await PackageOrderService().makePayment(
           orderId: widget.order.id.toString(),
-          trnxReference: paystackCallback.reference,
+          trnxReference: response.reference!,
           paymentStatus: true,
           paymentChannel: "Paystack",
         );
         if (response2.statusCode == 200 || response2.statusCode == 201) {
-// await sendNotifications(
+          // await sendNotifications(
           //     "You have successfully placed an order of ${widget}Kg gas.");
           setState(() {
             isLoading = false;
@@ -179,24 +157,39 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
           setState(() {
             isLoading = false;
           });
-          showCustomSnackbar(context,
-              title: "Order Error",
-              content: "Order could not Completed because${response2.body}",
-              type: SnackbarType.error,
-              isTopPosition: false);
+          showCustomSnackbar(
+            context,
+            title: "Order Error",
+            content: "Order could not Completed because${response2.body}",
+            type: SnackbarType.error,
+            isTopPosition: false,
+          );
         }
-        // generateOrderNumber();
-      }, // A callback function to be called when the payment is successful.
-      onCancelled: (paystackCallback) {
+      },
+      onError: (response) {
         setState(() {
           isLoading = false;
         });
-        showCustomSnackbar(context,
-            title: "Payment Error",
-            content: "The payment could not be process",
-            type: SnackbarType.error,
-            isTopPosition: false);
-      }, // A callback function to be called when the payment is canceled.
+        showCustomSnackbar(
+          context,
+          title: "${response.message}Payment Error",
+          content: "The payment could not be process",
+          type: SnackbarType.error,
+          isTopPosition: false,
+        );
+      },
+      onCancel: (response) {
+        setState(() {
+          isLoading = false;
+        });
+        showCustomSnackbar(
+          context,
+          title: "${response.message}Payment Error",
+          content: "The payment could not be process",
+          type: SnackbarType.error,
+          isTopPosition: false,
+        );
+      },
     );
   }
 
@@ -204,6 +197,7 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
     return DateTime.now().millisecondsSinceEpoch.toString();
   }
 
+//FLUTTERWAVE
   Future<void> handleFlutterWavePayment() async {
     final Customer customer = Customer(
       name: "${widget.order.senderName}",
