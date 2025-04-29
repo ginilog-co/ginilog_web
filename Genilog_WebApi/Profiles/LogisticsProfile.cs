@@ -19,11 +19,11 @@ namespace Genilog_WebApi.Profiles
 
             CreateMap<OrderModelData, OrderModelDataDto>()
               .ReverseMap();
+            CreateMap<OrderDeliveryFlow, OrderDeliveryFlowDto>()
+              .ReverseMap();
 
             CreateMap<RidersChatModelData, RidersChatModelDataDto>()
            .ReverseMap();
-            CreateMap<PackageImageList, PackageImageListDto>()
-            .ReverseMap();
 
         }
     }

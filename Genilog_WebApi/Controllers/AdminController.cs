@@ -16,6 +16,8 @@ using System.Security.Claims;
 using Genilog_WebApi.EmailSender;
 using Genilog_WebApi.Repository.NotificationRepo;
 using Microsoft.AspNetCore.SignalR;
+using Genilog_WebApi.Model.BookingsModel;
+using Genilog_WebApi.Repository.BookingsRepo;
 
 
 namespace Genilog_WebApi.Controllers
@@ -23,8 +25,7 @@ namespace Genilog_WebApi.Controllers
     [Route("api/[controller]")]
     [ApiController]
     public class AdminController(IHostEnvironment _env, IAdminRepository usersRepository, IMapper mapper, ITokenHandler tokenHandler, IRolesRepository rolesRepository,
-     IUser_RoleRepository user_RoleRepository, IUploadRepository uploadRepository, IGeneralUserRepository generalUserRepository,
-     IHubContext<AdminHubRepository> _hubContext, IHubContext<NotificationHub> _notificationHubContext) : ControllerBase
+     IUser_RoleRepository user_RoleRepository, IUploadRepository uploadRepository, IGeneralUserRepository generalUserRepository) : ControllerBase
     {
         private readonly IHostEnvironment _env = _env;
         private readonly IAdminRepository usersRepository = usersRepository;
@@ -34,8 +35,6 @@ namespace Genilog_WebApi.Controllers
         private readonly IUser_RoleRepository user_RoleRepository = user_RoleRepository;
         private readonly IUploadRepository uploadRepository = uploadRepository;
         private readonly IGeneralUserRepository generalUserRepository = generalUserRepository;
-        private readonly IHubContext<AdminHubRepository> _hubContext = _hubContext;
-        private readonly IHubContext<NotificationHub> _notificationHubContext = _notificationHubContext;
         readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
 
         [HttpPost]
@@ -47,7 +46,7 @@ namespace Genilog_WebApi.Controllers
             if (user != null)
             {
                 var userD = await usersRepository.GetAsync(user.Id);
-                if (user.UserType == "Super_Admin")
+                if (user.UserType == "Super_Admin"|| user.UserType == "Admin")
                 {
                     //generate jwt token
                     var token = tokenHandler.CreateTokenAsync(user);
@@ -71,30 +70,6 @@ namespace Genilog_WebApi.Controllers
                     };
                     return Ok(userDto);
 
-                }
-                else if (user.UserType == "Admin")
-                {
-                    //generate jwt token
-                    var token = tokenHandler.CreateTokenAsync(user);
-                    var refreshToken = tokenHandler.RefreshTokenAsync(user.Email!);
-                    // var userId = usersRepository.Userd;
-                    var userDto = new AdminLoginDto()
-                    {
-                        Token = await token,
-                        RefreshToken = await refreshToken,
-                        RefreshTokenExpiryTime = user.RefreshTokenExpiryTime,
-                        UserId = user.Id,
-                        Email = user.Email,
-                        UserType = user.UserType,
-                        EmailVerified = user.EmailConfirmed,
-                        PhoneVerified = user.PhoneNoConfirmed,
-                        FullName = $"{user.FirstName} {user.LastName}",
-                        State = userD.State,
-                        Locality = userD.Locality,
-                        Address = userD.Address,
-                        Branch = userD.Branch,
-                    };
-                    return Ok(userDto);
                 }
                 else
                 {
@@ -245,8 +220,6 @@ namespace Genilog_WebApi.Controllers
                         DatePublished = users.DatePublished,
                         CreatedAt = users.CreatedAt,
                     };
-                    await _hubContext.Clients.All.SendAsync("GetAdmin", userDto);
-                    await _notificationHubContext.Clients.Group(users.Id.ToString()).SendAsync("NOTIFICATION", userDto);
                     return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.Id }, userDto);
                 }
                 else
@@ -318,7 +291,6 @@ namespace Genilog_WebApi.Controllers
                 DatePublished = user.DatePublished,
                 CreatedAt = user.CreatedAt,
             };
-            await _hubContext.Clients.All.SendAsync("GetAdmin", userDto);
             return Ok(userDto2);
         }
 
@@ -433,6 +405,129 @@ namespace Genilog_WebApi.Controllers
 
         }
 
+        // ADVERT LINE
+        [HttpGet]
+        [Route("advert")]
+        [Authorize]
+        public async Task<IActionResult> GetAllAirlinesAsync()
+        {
+            var events = await usersRepository.GetAllAdvertAsync();
+            events = [.. events.OrderByDescending(x => x.CreatedAt)];
+            var userDto = mapper.Map<List<AdvertHolderModelDto>>(events);
+            return Ok(userDto);
+        }
+
+        [HttpGet]
+        [Route("advert/{id:guid}")]
+        [ActionName("GetAdvertAsync")]
+        [Authorize]
+        public async Task<IActionResult> GetAdvertAsync(Guid id)
+        {
+            var contacts = await usersRepository.GetAdvertAsync(id);
+            if (contacts == null)
+            {
+                return BadRequest("Id Does not Exist");
+            }
+            else
+            {
+                var contactsDto = mapper.Map<AdvertHolderModelDto>(contacts);
+                return Ok(contactsDto);
+            }
+        }
+
+        [HttpDelete]
+        [Route("advert/{id:guid}")]
+        [Authorize(Roles = "Manager,Admin,Super_Admin")]
+        public async Task<IActionResult> DeleteAdvertAsync(Guid id)
+        {
+            // Get the region from the database
+            var user = await usersRepository.DeleteAdvertAsync(id);
+            // if null NotFound
+            if (user == null)
+            {
+                return BadRequest("Advert Does not Exist");
+            }
+
+            else
+            {
+                var userDto = mapper.Map<AdvertHolderModelDto>(user);
+                return Ok(userDto);
+            }
+        }
+
+        [HttpPut]
+        [Route("advert/{id:guid}")]
+        [Authorize(Roles = "User,Manager,Admin,Super_Admin")]
+        public async Task<IActionResult> UpdateAdvertAsync([FromRoute] Guid id, [FromBody] AddAdvert request)
+        {
+            var userDto1 = await usersRepository.GetAdvertAsync(id);
+            if (userDto1 == null)
+            {
+                return BadRequest("Id Does not Exist");
+            }
+
+            // convert back to dto
+            else
+            {
+                var user = new AdvertHolderModel()
+                {
+                    AdvertImage = !string.IsNullOrWhiteSpace(request.AdvertImage) ? request.AdvertImage : userDto1.AdvertImage,
+                    AdvertName = !string.IsNullOrWhiteSpace(request.AdvertName) ? request.AdvertName : userDto1.AdvertName,
+                    AdvertType = !string.IsNullOrWhiteSpace(request.AdvertType) ? request.AdvertType : userDto1.AdvertType,
+                    AdvertItemCost = (request.AdvertItemCost ?? userDto1.AdvertItemCost),
+                    AdvertItemDescription = !string.IsNullOrWhiteSpace(request.AdvertItemDescription) ? request.AdvertItemDescription : userDto1.AdvertItemDescription,
+                    AdvertDays4 = (request.AdvertDays4 ?? userDto1.AdvertDays4),
+                };
+                // Update detials to repository
+                user = await usersRepository.UpdateAdvertAsync(id, user);
+                var contact = await usersRepository.GetAdvertAsync(user.Id);
+                var userDto = mapper.Map<AdvertHolderModelDto>(contact);
+                return Ok(userDto);
+            }
+        }
+
+        [HttpPost("advert")]
+        [Authorize(Roles = "Manager,Admin,Super_Admin")]
+        public async Task<IActionResult> AddAdvertAsync([FromBody] AddAdvert request)
+        {
+            var check = ValidateAdvert(request);
+
+
+            if (!check)
+            {
+                return BadRequest(ModelState);
+            }
+            else
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!Guid.TryParse(userId, out Guid userGuid))
+                {
+                    return BadRequest("Invalid User ID format.");
+                }
+                var contacts = new AdvertHolderModel()
+                {
+                    AdminId = userGuid,
+                    AdvertItemId = request.AdvertItemId,
+                    AdvertImage = request.AdvertImage,
+                    AdvertItemDescription = request.AdvertItemDescription,
+                    AdvertType = request.AdvertType,
+                    AdvertName = request.AdvertName,
+                    AdvertItemCost =(double)request.AdvertItemCost!,
+                    AdvertDays4 = (int)request.AdvertDays4!,
+                    CreatedAt = DateTime.Now,
+
+                };
+                // Pass detials to repository
+                contacts = await usersRepository.AddAdvertAsync(contacts);
+
+                // convert back to dto
+                var contact = await usersRepository.GetAdvertAsync(contacts.Id);
+                var contactsDto = mapper.Map<AdvertHolderModelDto>(contact);
+                return CreatedAtAction(nameof(GetAdvertAsync), new { id = contactsDto.Id }, contactsDto);
+            }
+        }
+
+
         #region private methods
 
         private static string Generate_otp()
@@ -484,6 +579,22 @@ namespace Genilog_WebApi.Controllers
             {
                 ModelState.AddModelError($"{nameof(request.PhoneNo)}", $"{nameof(request.PhoneNo)}  already Exist");
             }
+            if (ModelState.ErrorCount > 0)
+            {
+                return false;
+            }
+            return true;
+
+        }
+
+        private bool ValidateAdvert(AddAdvert request)
+        {
+            if (request == null)
+            {
+                ModelState.AddModelError(nameof(request), $"Add  Data Is Required");
+                return false;
+            }
+
             if (ModelState.ErrorCount > 0)
             {
                 return false;

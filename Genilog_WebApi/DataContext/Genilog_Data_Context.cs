@@ -37,18 +37,13 @@ namespace Genilog_WebApi.DataContext
                 .HasOne(x => x.RidersModelDatas)
                 .WithMany(y => y.RidersReviewModels)
                 .HasForeignKey(x => x.RidersModelDataId);
-            modelBuilder.Entity<PackageImageList>()
+
+            modelBuilder.Entity<OrderDeliveryFlow>()
               .HasOne(x => x.OrderModelDatas)
-              .WithMany(y => y.PackageImageLists)
+              .WithMany(y => y.OrderDeliveryFlows)
               .HasForeignKey(x => x.OrderModelDataId);
 
             //Airline Model
-           
-          
-            modelBuilder.Entity<AirlineImages>()
-                .HasOne(x => x.AirlineDataModels)
-                .WithMany(y => y.AirlineImages)
-                .HasForeignKey(x => x.AirlineDataModelId);
             modelBuilder.Entity<AirLineServiceLocation>()
                 .HasOne(x => x.AirlineDataModels)
                 .WithMany(y => y.AirLineServiceLocations)
@@ -59,70 +54,52 @@ namespace Genilog_WebApi.DataContext
                 .WithMany(y => y.AirCraftList)
                 .HasForeignKey(x => x.AirlineDataModelId);
 
-            modelBuilder.Entity<AirlinePayment>()
-                .HasOne(x => x.AirlineDataModels)
-                .WithMany(y => y.AirlinePayments)
-                .HasForeignKey(x => x.AirlineDataModelId);
-
             modelBuilder.Entity<AirlineReviewModel>()
                 .HasOne(x => x.AirlineDataModels)
                 .WithMany(y => y.AirlineReviewModels)
                 .HasForeignKey(x => x.AirlineDataModelId);
 
 
-            // Hotel Data
-            modelBuilder.Entity<HotelDataModel>()
-            .HasOne(a => a.HotelMonday)
-            .WithOne(b => b.HotelDataModels)
-            .HasForeignKey<HotelMondayModel>(b => b.HotelDataModelId);
+            // Accomodation Data
+            modelBuilder.Entity<AccomodationDataModel>()
+            .HasOne(a => a.AccomodationMonday)
+            .WithOne(b => b.AccomodationDataModels)
+            .HasForeignKey<AccomodationMondayModel>(b => b.AccomodationDataModelId);
 
-            modelBuilder.Entity<HotelDataModel>()
-                .HasOne(a => a.HotelTuesday)
-                .WithOne(b => b.HotelDataModels)
-                .HasForeignKey<HotelTuesdayModel>(b => b.HotelDataModelId);
+            modelBuilder.Entity<AccomodationDataModel>()
+                .HasOne(a => a.AccomodationTuesday)
+                .WithOne(b => b.AccomodationDataModels)
+                .HasForeignKey<AccomodationTuesdayModel>(b => b.AccomodationDataModelId);
 
-            modelBuilder.Entity<HotelDataModel>()
-                .HasOne(a => a.HotelWednesday)
-                .WithOne(b => b.HotelDataModels)
-                .HasForeignKey<HotelWednesdayModel>(b => b.HotelDataModelId);
+            modelBuilder.Entity<AccomodationDataModel>()
+                .HasOne(a => a.AccomodationWednesday)
+                .WithOne(b => b.AccomodationDataModels)
+                .HasForeignKey<AccomodationWednesdayModel>(b => b.AccomodationDataModelId);
 
-            modelBuilder.Entity<HotelDataModel>()
-                .HasOne(a => a.HotelThursday)
-                .WithOne(b => b.HotelDataModels)
-                .HasForeignKey<HotelThursdayModel>(b => b.HotelDataModelId);
+            modelBuilder.Entity<AccomodationDataModel>()
+                .HasOne(a => a.AccomodationThursday)
+                .WithOne(b => b.AccomodationDataModels)
+                .HasForeignKey<AccomodationThursdayModel>(b => b.AccomodationDataModelId);
 
-            modelBuilder.Entity<HotelDataModel>()
-                .HasOne(a => a.HotelFriday)
-                .WithOne(b => b.HotelDataModels)
-                .HasForeignKey<HotelFridayModel>(b => b.HotelDataModelId);
+            modelBuilder.Entity<AccomodationDataModel>()
+                .HasOne(a => a.AccomodationFriday)
+                .WithOne(b => b.AccomodationDataModels)
+                .HasForeignKey<AccomodationFridayModel>(b => b.AccomodationDataModelId);
 
-            modelBuilder.Entity<HotelDataModel>()
-                .HasOne(a => a.HotelSaturday)
-                .WithOne(b => b.HotelDataModels)
-                .HasForeignKey<HotelSaturdayModel>(b => b.HotelDataModelId);
+            modelBuilder.Entity<AccomodationDataModel>()
+                .HasOne(a => a.AccomodationSaturday)
+                .WithOne(b => b.AccomodationDataModels)
+                .HasForeignKey<AccomodationSaturdayModel>(b => b.AccomodationDataModelId);
 
-            modelBuilder.Entity<HotelDataModel>()
-                .HasOne(a => a.HotelSunday)
-                .WithOne(b => b.HotelDataModels)
-                .HasForeignKey<HotelSundayModel>(b => b.HotelDataModelId);
+            modelBuilder.Entity<AccomodationDataModel>()
+                .HasOne(a => a.AccomodationSunday)
+                .WithOne(b => b.AccomodationDataModels)
+                .HasForeignKey<AccomodationSundayModel>(b => b.AccomodationDataModelId);
 
-            modelBuilder.Entity<HotelImages>()
-            .HasOne(x => x.HotelDataTables)
-           .WithMany(y => y.HotelImages)
-           .HasForeignKey(x => x.HotelDataTableId);
-
-            modelBuilder.Entity<HotelFacilities>()
-             .HasOne(x => x.HotelDataTables)
-            .WithMany(y => y.HotelFacilities)
-            .HasForeignKey(x => x.HotelDataTableId);
-
-            modelBuilder.Entity<HotelReviewModel>()
-             .HasOne(x => x.HotelDataTables)
-            .WithMany(y => y.HotelReviewModels)
-            .HasForeignKey(x => x.HotelDataTableId);
-
-
-
+            modelBuilder.Entity<AccomodationReviewModel>()
+             .HasOne(x => x.AccomodationDataTables)
+            .WithMany(y => y.AccomodationReviewModels)
+            .HasForeignKey(x => x.AccomodationDataTableId);
         }
         public DbSet<GeneralUsers>? GeneralUsers { get; set; }
         public DbSet<UsersDataModelTable>? UsersDataModelTables { get; set; }
@@ -140,28 +117,26 @@ namespace Genilog_WebApi.DataContext
         public DbSet<RidersModelData>? RidersModelDatas { get; set; }
         public DbSet<RidersReviewModel>? RidersReviewModels { get; set; }
         public DbSet<OrderModelData>? OrderModelDatas { get; set; }
-        public DbSet<PackageImageList>? PackageImageLists { get; set; }
         public DbSet<RidersChatModelData>? RidersChatModelDatas { get; set; }
+        public DbSet<OrderDeliveryFlow>? OrderDeliveryFlows { get; set; }
 
-        // Hotels Data
-        public DbSet<HotelDataModel>? HotelDataModels { get; set; }
-        public DbSet<HotelImages>? HotelImages { get; set; }
-        public DbSet<HotelFacilities>? HotelFacilities { get; set; }
-        public DbSet<HotelReviewModel>? HotelReviewModels { get; set; }
-        public DbSet<HotelMondayModel>? HotelMonday { get; set; }
-        public DbSet<HotelTuesdayModel>? HotelTuesday { get; set; }
-        public DbSet<HotelWednesdayModel>? HotelWednesday { get; set; }
-        public DbSet<HotelThursdayModel>? HotelThursday { get; set; }
-        public DbSet<HotelFridayModel>? HotelFriday { get; set; }
-        public DbSet<HotelSaturdayModel>? HotelSaturday { get; set; }
-        public DbSet<HotelSundayModel>? HotelSunday { get; set; }
-        public DbSet<HotelChatModel>? HotelChatModels { get; set; }
+        // Accomodations Data
+        public DbSet<AccomodationDataModel>? AccomodationDataModels { get; set; }
+        public DbSet<AccomodationReviewModel>? AccomodationReviewModels { get; set; }
+        public DbSet<AccomodationMondayModel>? AccomodationMonday { get; set; }
+        public DbSet<AccomodationTuesdayModel>? AccomodationTuesday { get; set; }
+        public DbSet<AccomodationWednesdayModel>? AccomodationWednesday { get; set; }
+        public DbSet<AccomodationThursdayModel>? AccomodationThursday { get; set; }
+        public DbSet<AccomodationFridayModel>? AccomodationFriday { get; set; }
+        public DbSet<AccomodationSaturdayModel>? AccomodationSaturday { get; set; }
+        public DbSet<AccomodationSundayModel>? AccomodationSunday { get; set; }
+        public DbSet<AccomodationChatModel>? AccomodationChatModels { get; set; }
+        public DbSet<BookAccomodationReservatioModel>? BookAccomodationReservatioModels { get; set; }
+        public DbSet<CustomerBookedReservation>? CustomerBookedReservations { get; set; }
 
         // AirLine Data
         public DbSet<AirlineDataModel>? AirlineDataModels { get; set; }
-        public DbSet<AirlineImages>? AirlineImages { get; set; }
         public DbSet<AirCraftList>? AirCraftList { get; set; }
-        public DbSet<AirlinePayment>? AirlinePayments { get; set; }
         public DbSet<AirlineReviewModel>? AirlineReviewModels { get; set; }
         public DbSet<AirLineServiceLocation>? AirLineServiceLocations { get; set; }
         public DbSet<AirlineChatModel>? AirlineChatModels { get; set; }
@@ -169,6 +144,7 @@ namespace Genilog_WebApi.DataContext
 
         // Wallet System
         public DbSet<PayoutDataModel>? PayoutDataModels { get; set; }
+        public DbSet<AdvertHolderModel>? AdvertHolderModels { get; set; }
     }
 }
 

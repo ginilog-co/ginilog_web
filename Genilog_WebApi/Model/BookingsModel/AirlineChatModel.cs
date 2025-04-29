@@ -27,8 +27,8 @@
         public DateTime? CreatedAt { get; set; }
     }
 
-    // Hotel Chat Model
-    public class HotelChatModel
+    // Accomodation Chat Model
+    public class AccomodationChatModel
     {
         public Guid Id { get; set; }
         public Guid SenderId { get; set; }
@@ -40,7 +40,7 @@
         public bool IsRead { get; set; }
         public DateTime? CreatedAt { get; set; }
     }
-    public class HotelChatModelDto
+    public class AccomodationChatModelDto
     {
         public Guid Id { get; set; }
         public Guid SenderId { get; set; }

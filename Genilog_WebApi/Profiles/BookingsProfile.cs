@@ -7,42 +7,38 @@ namespace Genilog_WebApi.Profiles
     {
         public BookingsProfile()
         {
-            CreateMap<HotelDataModel, HotelDataModelDto>()
+            CreateMap<AccomodationDataModel, AccomodationDataModelDto>()
                 .ReverseMap();
-            CreateMap<HotelImages, HotelImagesDto>()
+            CreateMap<BookAccomodationReservatioModel, BookAccomodationReservatioModelDto>()
+             .ReverseMap(); 
+            CreateMap<CustomerBookedReservation, CustomerBookedReservationDto>()
              .ReverseMap();
-            CreateMap<HotelFacilities, HotelFacilitiesDto>()
+            CreateMap<AccomodationReviewModel, AccomodationReviewModelDto>()
              .ReverseMap();
-            CreateMap<HotelReviewModel, HotelReviewModelDto>()
-             .ReverseMap();
-            CreateMap<HotelMondayModel, HotelMondayModelDto>()
+            CreateMap<AccomodationMondayModel, AccomodationMondayModelDto>()
          .ReverseMap();
 
-            CreateMap<HotelTuesdayModel, HotelTuesdayModelDto>()
+            CreateMap<AccomodationTuesdayModel, AccomodationTuesdayModelDto>()
                 .ReverseMap();
 
-            CreateMap<HotelWednesdayModel, HotelWednesdayModelDto>()
+            CreateMap<AccomodationWednesdayModel, AccomodationWednesdayModelDto>()
                 .ReverseMap();
 
-            CreateMap<HotelThursdayModel, HotelThursdayModelDto>()
+            CreateMap<AccomodationThursdayModel, AccomodationThursdayModelDto>()
                 .ReverseMap();
 
-            CreateMap<HotelFridayModel, HotelFridayModelDto>()
+            CreateMap<AccomodationFridayModel, AccomodationFridayModelDto>()
                 .ReverseMap();
 
-            CreateMap<HotelSaturdayModel, HotelSaturdayModelDto>()
+            CreateMap<AccomodationSaturdayModel, AccomodationSaturdayModelDto>()
                 .ReverseMap();
 
-            CreateMap<HotelSundayModel, HotelSundayModelDto>()
+            CreateMap<AccomodationSundayModel, AccomodationSundayModelDto>()
                 .ReverseMap();
 
             CreateMap<AirlineDataModel, AirlineDataModelDto>()
               .ReverseMap();
-            CreateMap<AirlineImages, AirlineImagesDto>()
-             .ReverseMap();
             CreateMap<AirCraftList, AirCraftListDto>()
-             .ReverseMap();
-            CreateMap<AirlinePayment, AirlinePaymentDto>()
              .ReverseMap();
             CreateMap<AirlineReviewModel, AirlineReviewModelDto>()
              .ReverseMap();

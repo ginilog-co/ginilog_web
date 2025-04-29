@@ -1,0 +1,41 @@
+﻿namespace Genilog_WebApi.Model.AdminsModel
+{
+    public class AdvertHolderModel
+    {
+        public Guid Id { get; set; }
+        public Guid AdminId { get; set; }
+        public Guid AdvertItemId { get; set; }
+        public string? AdvertImage { get; set; }
+        public string? AdvertName { get; set; }
+        public string? AdvertType { get; set; }
+        public string? AdvertItemDescription { get; set; }
+        public double AdvertItemCost { get; set; }
+        public int AdvertDays4 { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+    public class AdvertHolderModelDto
+    {
+        public Guid Id { get; set; }
+        public Guid AdminId { get; set; }
+        public Guid AdvertItemId { get; set; }
+        public string? AdvertImage { get; set; }
+        public string? AdvertName { get; set; }
+        public string? AdvertType { get; set; }
+        public string? AdvertItemDescription { get; set; }
+        public double AdvertItemCost { get; set; }
+        public int AdvertDays4 { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+
+    public class AddAdvert
+    {
+        public Guid AdminId { get; set; }
+        public Guid AdvertItemId { get; set; }
+        public string? AdvertImage { get; set; }
+        public string? AdvertName { get; set; }
+        public string? AdvertType { get; set; }
+        public string? AdvertItemDescription { get; set; }
+        public double? AdvertItemCost { get; set; }
+        public int? AdvertDays4 { get; set; }
+    }
+}

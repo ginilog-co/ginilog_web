@@ -10,19 +10,20 @@ using System.Net;
 using Genilog_WebApi.EmailSender;
 using Genilog_WebApi.Repository.NotificationRepo;
 using Microsoft.AspNetCore.SignalR;
+using Genilog_WebApi.Repository.UserRepo;
+using Genilog_WebApi.Model.UsersDataModel;
 
 namespace Genilog_WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class InfoController(IFeedbackRepository contactUsRepository,
-        IMapper mapper, IHostEnvironment _env, IHubContext<NotificationHub> _notificationHubContext) : ControllerBase
+        IMapper mapper, IHostEnvironment _env, IUserRepository newUsersRepository) : ControllerBase
     {
         private readonly IFeedbackRepository contactUsRepository = contactUsRepository;
+        private readonly IUserRepository newUsersRepository = newUsersRepository;
         private readonly IMapper mapper = mapper;
         private readonly IHostEnvironment _env = _env;
-        readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
-        private readonly IHubContext<NotificationHub> _notificationHubContext = _notificationHubContext;
         [HttpGet("feedback")]
         [Authorize(Roles = "Super_Admin,Admin")]
         public async Task<IActionResult> GetAllRiderPayoutAsync([FromQuery] SearchFeedback search)
@@ -69,8 +70,6 @@ namespace Genilog_WebApi.Controllers
         [HttpPost("feedback")]
         public async Task<IActionResult> AddFeedbackAsync(AddFeedback request)
         {
-            
-            
             var check = ValidateTicket(request);
 
             if (!check)
@@ -106,7 +105,6 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
-
         [HttpPost("send-mail")]
         [Authorize(Roles = "Super_Admin,Admin")]
         public IActionResult SendMail(SendMailModel request)
@@ -119,10 +117,33 @@ namespace Genilog_WebApi.Controllers
             }
             else
             {
-                EmailTemplates.SendMail(request.Email!, request.Name!, request.Message!);
+                EmailTemplates.SendEmail(request.Email!, request.Message!, request.Title!, request.Name!, ""!);
                 return Ok($"Mail Sent Successfully");
             }
         }
+
+        [HttpPost("send-all-mail")]
+        [Authorize(Roles = "Super_Admin,Admin")]
+        public async Task<IActionResult> SendAllMail(SendMailModel2 request)
+        {
+            var check = ValidateMail(request);
+
+            if (!check)
+            {
+                return BadRequest(ModelState);
+            }
+            else
+            {
+                var user = await newUsersRepository.GetAllAsync();
+                var userDto = mapper.Map<List<UsersDataModelTableDto>>(user);
+                for (int i = 0; i < userDto.Count; i++)
+                {
+                    EmailTemplates.SendEmail(userDto[i].Email!, request.Message!, request.Title!, $"{userDto[i].FirstName} {userDto[i].LastName}", request.Link!);
+                }
+                return Ok($"Mail Sent Successfully");
+            }
+        }
+
         #region private methods
 
         private bool ValidateTicket(AddFeedback request)
@@ -156,6 +177,23 @@ namespace Genilog_WebApi.Controllers
             return true;
 
         }
+
+        private bool ValidateMail(SendMailModel2 request)
+        {
+            if (request == null)
+            {
+                ModelState.AddModelError(nameof(request), $"Add  Data Is Required");
+                return false;
+            }
+
+            if (ModelState.ErrorCount > 0)
+            {
+                return false;
+            }
+            return true;
+
+        }
+
 
         #endregion
     }

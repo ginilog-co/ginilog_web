@@ -22,8 +22,9 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
         Task<OrderModelData> DeleteOrderAsync(Guid id);
         Task<OrderModelData> UpdateOrderAsync(Guid id, OrderModelData region);
         Task<OrderModelData> AssignRiderAsync(Guid id, OrderModelData region);
-        // Order Image List
-        Task<PackageImageList> AddPackageImagesAsync(PackageImageList region);
-        Task<PackageImageList> DeletePackageImagesAsync(Guid id);
+        // order delivery flow
+        Task<OrderDeliveryFlow> AddOrderDeliveryFlowAsync(OrderDeliveryFlow region);
+        Task<OrderDeliveryFlow> DeleteOrderDeliveryFlowAsync(Guid id);
+        Task<bool> OrderDeliveryFlowExistAsync(string orderStatus, Guid orderModelId, OrderDeliveryFlow region);
     }
 }

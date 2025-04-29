@@ -39,7 +39,6 @@ namespace Genilog_WebApi.Repository.BookingsRepo
             return await mAAP_Context.AirlineDataModels!
                   .Include(x => x.AirlineImages)
                   .Include(x => x.AirCraftList)
-                  .Include(x => x.AirlinePayments)
                   .Include(x => x.AirLineServiceLocations)
                   .Include(x => x.AirlineReviewModels)
                   .OrderBy(x => x.CreatedAt).
@@ -54,7 +53,6 @@ namespace Genilog_WebApi.Repository.BookingsRepo
                   .Include(x => x.AirlineImages)
                   .Include(x => x.AirCraftList)
                    .Include(x => x.AirLineServiceLocations)
-                  .Include(x => x.AirlinePayments)
                   .Include(x => x.AirlineReviewModels).
                FirstOrDefaultAsync(x => x.Id == id);
 #pragma warning restore CS8603 // Possible null reference return.
@@ -89,34 +87,6 @@ namespace Genilog_WebApi.Repository.BookingsRepo
                 return dataValue;
             }
         }
-
-
-        public async Task<AirlineImages> AddAirlineImageAsync(AirlineImages dataInfo)
-        {
-            dataInfo.Id = Guid.NewGuid();
-            await mAAP_Context.AddAsync(dataInfo);
-            await mAAP_Context.SaveChangesAsync();
-            return dataInfo;
-        }
-
-        public async Task<AirlineImages> DeleteAirlineImageAsync(Guid id)
-        {
-            var tickets = await mAAP_Context.AirlineImages!.FirstOrDefaultAsync(x => x.Id == id);
-            if (tickets == null)
-            {
-#pragma warning disable CS8603 // Possible null reference return.
-                return null;
-#pragma warning restore CS8603 // Possible null reference return.
-            }
-            else
-            {
-                // Delete Region
-                mAAP_Context.AirlineImages!.Remove(tickets);
-                await mAAP_Context.SaveChangesAsync();
-                return tickets;
-            }
-        }
-
         public async Task<AirCraftList> AddAirCraftListAsync(AirCraftList dataInfo)
         {
             dataInfo.Id = Guid.NewGuid();
@@ -142,33 +112,6 @@ namespace Genilog_WebApi.Repository.BookingsRepo
                 return tickets;
             }
         }
-
-        public async Task<AirlinePayment> AddAirlinePaymentAsync(AirlinePayment dataInfo)
-        {
-            dataInfo.Id = Guid.NewGuid();
-            await mAAP_Context.AddAsync(dataInfo);
-            await mAAP_Context.SaveChangesAsync();
-            return dataInfo;
-        }
-
-        public async Task<AirlinePayment> DeleteAirlinePaymentAsync(Guid id)
-        {
-            var tickets = await mAAP_Context.AirlinePayments!.FirstOrDefaultAsync(x => x.Id == id);
-            if (tickets == null)
-            {
-#pragma warning disable CS8603 // Possible null reference return.
-                return null;
-#pragma warning restore CS8603 // Possible null reference return.
-            }
-            else
-            {
-                // Delete Region
-                mAAP_Context.AirlinePayments!.Remove(tickets);
-                await mAAP_Context.SaveChangesAsync();
-                return tickets;
-            }
-        }
-
         public async Task<AirlineReviewModel> AddAirlineReviewAsync(AirlineReviewModel dataInfo)
         {
             dataInfo.Id = Guid.NewGuid();

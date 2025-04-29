@@ -10,14 +10,8 @@ namespace Genilog_WebApi.Repository.BookingsRepo
         Task<AirlineDataModel> DeleteAsync(Guid id);
         Task<AirlineDataModel> UpdateAsync(Guid id, AirlineDataModel region);
 
-        Task<AirlineImages> AddAirlineImageAsync(AirlineImages region);
-        Task<AirlineImages> DeleteAirlineImageAsync(Guid id);
-
         Task<AirCraftList> AddAirCraftListAsync(AirCraftList region);
         Task<AirCraftList> DeleteAirCraftListAsync(Guid id);
-
-        Task<AirlinePayment> AddAirlinePaymentAsync(AirlinePayment region);
-        Task<AirlinePayment> DeleteAirlinePaymentAsync(Guid id);
 
         Task<AirlineReviewModel> AddAirlineReviewAsync(AirlineReviewModel region);
         Task<AirlineReviewModel> DeleteAirlineReviewAsync(Guid id);

@@ -20,7 +20,6 @@ namespace Genilog_WebApi.Model.AdminsModel
         public string? DatePublished { get; set; }
         public DateTime? CreatedAt { get; set; }
     }
-
     public class AdminModelTableDto
     {
         public Guid Id { get; set; }

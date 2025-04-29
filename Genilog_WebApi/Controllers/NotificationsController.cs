@@ -12,25 +12,32 @@ using Genilog_WebApi.Model;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 using Google.Cloud.Firestore.V1;
+using Microsoft.Extensions.Logging;
 
 namespace Genilog_WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class NotificationsController(IMapper mapper, IHostEnvironment _env, IGeneralUserRepository generalUserRepository,INotificationRepository notificationRepository, IHubContext<NotificationHub> _hubContext) : ControllerBase
+    public class NotificationsController(IMapper mapper, IHostEnvironment _env, IGeneralUserRepository generalUserRepository,INotificationRepository notificationRepository) : ControllerBase
     {
         private readonly IMapper mapper = mapper;
         private readonly IHostEnvironment _env = _env;
         private readonly IGeneralUserRepository generalUserRepository = generalUserRepository;
         private readonly INotificationRepository notificationRepository = notificationRepository;
-      //  readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\bmg-project-edf2f-firebase-adminsdk-gqzbj-f6515ebae6.json");
-        private readonly IHubContext<NotificationHub> _hubContext= _hubContext;
+
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> GetAllNotificationAsync()
         {
-            var contacts = await notificationRepository.GetAllAsync();
-            var contactsDto = mapper.Map<List<NotificationModelDto>>(contacts);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userId, out Guid userGuid))
+            {
+                return BadRequest("Invalid User ID format.");
+            }
+            var events = await notificationRepository.GetAllAsync();
+            var valid = events.Where(x => x.UserId == userGuid);
+            events = [.. valid.OrderByDescending(x => x.CreatedAt)];
+            var contactsDto = mapper.Map<List<NotificationModelDto>>(events);
             return Ok(contactsDto);
         }
 
@@ -148,24 +155,7 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
-        [HttpPost("send-hub")]
-        [Authorize]
-        public async Task<IActionResult> AddNotificationHubAsync(AddNotification request)
-        {
-            var check = ValidateNotification(request);
-
-            if (!check)
-            {
-                return BadRequest(ModelState);
-            }
-            else
-            {
-                await _hubContext.Clients.All.SendAsync("ReceiveMessage", request.Title, request.Body);
-                return Ok("Error sending the message");
-               
-
-            }
-        }
+       
 
         [HttpPost("send-notification")]
         [Authorize]
@@ -186,7 +176,6 @@ namespace Genilog_WebApi.Controllers
                 {
                     return BadRequest("Invalid User ID format.");
                 }
-                await _hubContext.Clients.User(userGuid.ToString()).SendAsync("ReceiveMessage", request.Title, request.Body);
                 var contacts = new NotificationModel()
                 {
                     UserId = userGuid,
@@ -261,29 +250,6 @@ namespace Genilog_WebApi.Controllers
          
             return result;
         }
-
-        private async Task<string> SendNotificationHub( string user, string message, string notificationType, Guid userId)
-        {
-            
-            
-
-            await _hubContext.Clients.All.SendAsync("ReceiveMessage", user, message);
-            var contacts = new NotificationModel()
-            {
-                UserId = userId,
-                Title = "",
-                Body = message,
-                DeviceToken = "",
-                UpdatedAt = DateTime.UtcNow,
-                CreatedAt = DateTime.UtcNow,
-                ImageUrl = "",
-                NotificationType = notificationType,
-            };
-            // Pass detials to repository
-            await notificationRepository.AddAsync(contacts);
-            return "Successfully";
-        }
-
 
         #endregion
     }

@@ -20,21 +20,11 @@ namespace Genilog_WebApi.Model.BookingsModel
         public double Rating { get; set; }
        
         public bool Available { get; set; }
-        public List<AirlineImages>? AirlineImages { get; set; }
+        public List<string>? AirlineImages { get; set; }
         public List<AirCraftList>? AirCraftList { get; set; }
         public List<AirLineServiceLocation>? AirLineServiceLocations { get; set; }
-        public List<AirlinePayment>? AirlinePayments { get; set; }
         public List<AirlineReviewModel>? AirlineReviewModels { get; set; }
         public DateTime CreatedAt { get; set; }
-    }
-
-    // Places Images
-    public class AirlineImages
-    {
-        public Guid Id { get; set; }
-        public string? ImagePath { get; set; }
-        public AirlineDataModel? AirlineDataModels { get; set; }
-        public Guid AirlineDataModelId { get; set; }
     }
 
     // AirCraft List
@@ -55,16 +45,6 @@ namespace Genilog_WebApi.Model.BookingsModel
         public string? Code { get; set; }
         public string? City { get; set; }
         public string? Country { get; set; }
-        public AirlineDataModel? AirlineDataModels { get; set; }
-        public Guid AirlineDataModelId { get; set; }
-    }
-
-    // AirCraft Payment
-    public class AirlinePayment
-    {
-        public Guid Id { get; set; }
-        public string? Titles { get; set; }
-        public double Amount { get; set; }
         public AirlineDataModel? AirlineDataModels { get; set; }
         public Guid AirlineDataModelId { get; set; }
     }
@@ -101,20 +81,12 @@ namespace Genilog_WebApi.Model.BookingsModel
         public string? Locality { get; set; }
         public double BookingAmount { get; set; }
         public double Rating { get; set; }
-       
         public bool Available { get; set; }
-        public List<AirlineImagesDto>? AirlineImages { get; set; }
+        public List<string>? AirlineImages { get; set; }
         public List<AirCraftListDto>? AirCraftList { get; set; }
         public List<AirLineServiceLocationDto>? AirLineServiceLocations { get; set; }
-        public List<AirlinePaymentDto>? AirlinePayments { get; set; }
         public List<AirlineReviewModelDto>? AirlineReviewModels { get; set; }
         public DateTime CreatedAt { get; set; }
-    }
-    public class AirlineImagesDto
-    {
-        public Guid Id { get; set; }
-        public string? ImagePath { get; set; }
-        public Guid AirlineDataModelId { get; set; }
     }
     public class AirCraftListDto
     {
@@ -132,13 +104,6 @@ namespace Genilog_WebApi.Model.BookingsModel
         public string? Code { get; set; }
         public string? City { get; set; }
         public string? Country { get; set; }
-        public Guid AirlineDataModelId { get; set; }
-    }
-    public class AirlinePaymentDto
-    {
-        public Guid Id { get; set; }
-        public string? Titles { get; set; }
-        public double Amount { get; set; }
         public Guid AirlineDataModelId { get; set; }
     }
     public class AirlineReviewModelDto
@@ -169,7 +134,6 @@ namespace Genilog_WebApi.Model.BookingsModel
         public string? Locality { get; set; }
         public double BookingAmount { get; set; }
         public double? Rating { get; set; }
-       
         public bool? Available { get; set; }
         public List<string>? AirlineImages { get; set; }
     }
@@ -187,7 +151,7 @@ namespace Genilog_WebApi.Model.BookingsModel
         public string? Locality { get; set; }
         public double? BookingAmount { get; set; }
         public double? Rating { get; set; }
-       
+        public List<string>? AirlineImages { get; set; }
         public bool? Available { get; set; }
     }
 

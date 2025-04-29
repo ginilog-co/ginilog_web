@@ -72,6 +72,44 @@ namespace Genilog_WebApi.Migrations
                     b.ToTable("AdminModelTables");
                 });
 
+            modelBuilder.Entity("Genilog_WebApi.Model.AdminsModel.AdvertHolderModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AdminId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("AdvertDays4")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AdvertImage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("AdvertItemCost")
+                        .HasColumnType("float");
+
+                    b.Property<string>("AdvertItemDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("AdvertItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AdvertName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AdvertType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AdvertHolderModels");
+                });
+
             modelBuilder.Entity("Genilog_WebApi.Model.AuthModel.DeviceTokenModel", b =>
                 {
                     b.Property<Guid>("Id")
@@ -213,6 +251,343 @@ namespace Genilog_WebApi.Migrations
                     b.ToTable("User_Roles");
                 });
 
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AccomodationChatModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GroupChatId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ItemImageURL")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MessageType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("ReceiverId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("SenderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AccomodationChatModels");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AccomodationDataModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AccomodationAdvertType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccomodationDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccomodationEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.PrimitiveCollection<string>("AccomodationFacilities")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.PrimitiveCollection<string>("AccomodationImages")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccomodationLogo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccomodationName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccomodationPhoneNo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccomodationType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccomodationWebsite")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("AdminId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Available")
+                        .HasColumnType("bit");
+
+                    b.Property<double>("BookingAmount")
+                        .HasColumnType("float");
+
+                    b.Property<string>("CheckInTime")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CheckOutTime")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Country")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Locality")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Location")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("float");
+
+                    b.Property<int>("NoOfRooms")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Postcode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("Rating")
+                        .HasColumnType("float");
+
+                    b.Property<string>("State")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AccomodationDataModels");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AccomodationFridayModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AccomodationDataModelId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("HourEnd")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("HourStart")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("IsClosed")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccomodationDataModelId")
+                        .IsUnique();
+
+                    b.ToTable("AccomodationFriday");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AccomodationMondayModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AccomodationDataModelId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("HourEnd")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("HourStart")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("IsClosed")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccomodationDataModelId")
+                        .IsUnique();
+
+                    b.ToTable("AccomodationMonday");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AccomodationReviewModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AccomodationDataTableId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ProfileImage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("RatingNum")
+                        .HasColumnType("float");
+
+                    b.Property<string>("ReviewMessage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccomodationDataTableId");
+
+                    b.ToTable("AccomodationReviewModels");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AccomodationSaturdayModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AccomodationDataModelId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("HourEnd")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("HourStart")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("IsClosed")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccomodationDataModelId")
+                        .IsUnique();
+
+                    b.ToTable("AccomodationSaturday");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AccomodationSundayModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AccomodationDataModelId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("HourEnd")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("HourStart")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("IsClosed")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccomodationDataModelId")
+                        .IsUnique();
+
+                    b.ToTable("AccomodationSunday");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AccomodationThursdayModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AccomodationDataModelId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("HourEnd")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("HourStart")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("IsClosed")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccomodationDataModelId")
+                        .IsUnique();
+
+                    b.ToTable("AccomodationThursday");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AccomodationTuesdayModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AccomodationDataModelId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("HourEnd")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("HourStart")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("IsClosed")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccomodationDataModelId")
+                        .IsUnique();
+
+                    b.ToTable("AccomodationTuesday");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AccomodationWednesdayModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AccomodationDataModelId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("HourEnd")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("HourStart")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("IsClosed")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccomodationDataModelId")
+                        .IsUnique();
+
+                    b.ToTable("AccomodationWednesday");
+                });
+
             modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AirCraftList", b =>
                 {
                     b.Property<Guid>("Id")
@@ -310,6 +685,9 @@ namespace Genilog_WebApi.Migrations
                     b.Property<string>("AirlineEmail")
                         .HasColumnType("nvarchar(max)");
 
+                    b.PrimitiveCollection<string>("AirlineImages")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("AirlineInfo")
                         .HasColumnType("nvarchar(max)");
 
@@ -354,47 +732,6 @@ namespace Genilog_WebApi.Migrations
                     b.ToTable("AirlineDataModels");
                 });
 
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AirlineImages", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("AirlineDataModelId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ImagePath")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AirlineDataModelId");
-
-                    b.ToTable("AirlineImages");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AirlinePayment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("AirlineDataModelId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<double>("Amount")
-                        .HasColumnType("float");
-
-                    b.Property<string>("Titles")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AirlineDataModelId");
-
-                    b.ToTable("AirlinePayments");
-                });
-
             modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AirlineReviewModel", b =>
                 {
                     b.Property<Guid>("Id")
@@ -427,6 +764,157 @@ namespace Genilog_WebApi.Migrations
                     b.HasIndex("AirlineDataModelId");
 
                     b.ToTable("AirlineReviewModels");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.BookAccomodationReservatioModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AccomodationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AccomodationImage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccomodationLocality")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccomodationName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccomodationState")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccomodationType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("AdminId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool?>("IsBooked")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("MaximumNoOfGuest")
+                        .HasColumnType("int");
+
+                    b.Property<string>("QRCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.PrimitiveCollection<string>("RoomFeatures")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.PrimitiveCollection<string>("RoomImages")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RoomNumber")
+                        .HasColumnType("int");
+
+                    b.Property<double>("RoomPrice")
+                        .HasColumnType("float");
+
+                    b.Property<string>("RoomType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TicketNum")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdateddAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("BookAccomodationReservatioModels");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.CustomerBookedReservation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AccomodationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AccomodationImage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccomodationLocation")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccomodationName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccomodationType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Comment")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CustomerEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CustomerName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CustomerPhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("NoOfDays")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NumberOfGuests")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PaymentChannel")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("PaymentStatus")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("QRCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ReservationEndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ReservationStartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ResevationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("RoomNumber")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("TicketClosed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("TicketNum")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("TotalCost")
+                        .HasColumnType("float");
+
+                    b.Property<string>("TrnxReference")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdateddAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CustomerBookedReservations");
                 });
 
             modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.FlightTicketBookModel", b =>
@@ -462,6 +950,9 @@ namespace Genilog_WebApi.Migrations
                     b.Property<string>("DapatureTime")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("DepartureAirpot")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Destination")
                         .HasColumnType("nvarchar(max)");
 
@@ -472,6 +963,9 @@ namespace Genilog_WebApi.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("OperatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ReturnAirpot")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("SmallLuggageKg")
@@ -495,375 +989,6 @@ namespace Genilog_WebApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("FlightTicketBookModels");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelChatModel", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("GroupChatId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("ItemImageURL")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Message")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MessageType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("ReceiverId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("SenderId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("HotelChatModels");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelDataModel", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("AdminId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("Available")
-                        .HasColumnType("bit");
-
-                    b.Property<double>("BookingAmount")
-                        .HasColumnType("float");
-
-                    b.Property<string>("CheckInTime")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CheckOutTime")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Country")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("HotelAdvertType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("HotelDescription")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("HotelEmail")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("HotelLogo")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("HotelName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("HotelPhoneNo")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("HotelType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("HotelWebsite")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<double>("Latitude")
-                        .HasColumnType("float");
-
-                    b.Property<string>("Locality")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Location")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<double>("Longitude")
-                        .HasColumnType("float");
-
-                    b.Property<int>("NoOfRooms")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Postcode")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<double>("Rating")
-                        .HasColumnType("float");
-
-                    b.Property<string>("State")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("HotelDataModels");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelFacilities", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Facilities")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("HotelDataTableId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("HotelDataTableId");
-
-                    b.ToTable("HotelFacilities");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelFridayModel", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("HotelDataModelId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("HourEnd")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("HourStart")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool?>("IsClosed")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("HotelDataModelId")
-                        .IsUnique();
-
-                    b.ToTable("HotelFriday");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelImages", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("HotelDataTableId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ImagePath")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("HotelDataTableId");
-
-                    b.ToTable("HotelImages");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelMondayModel", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("HotelDataModelId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("HourEnd")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("HourStart")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool?>("IsClosed")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("HotelDataModelId")
-                        .IsUnique();
-
-                    b.ToTable("HotelMonday");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelReviewModel", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("HotelDataTableId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ProfileImage")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<double>("RatingNum")
-                        .HasColumnType("float");
-
-                    b.Property<string>("ReviewMessage")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("UserName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("HotelDataTableId");
-
-                    b.ToTable("HotelReviewModels");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelSaturdayModel", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("HotelDataModelId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("HourEnd")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("HourStart")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool?>("IsClosed")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("HotelDataModelId")
-                        .IsUnique();
-
-                    b.ToTable("HotelSaturday");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelSundayModel", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("HotelDataModelId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("HourEnd")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("HourStart")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool?>("IsClosed")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("HotelDataModelId")
-                        .IsUnique();
-
-                    b.ToTable("HotelSunday");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelThursdayModel", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("HotelDataModelId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("HourEnd")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("HourStart")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool?>("IsClosed")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("HotelDataModelId")
-                        .IsUnique();
-
-                    b.ToTable("HotelThursday");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelTuesdayModel", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("HotelDataModelId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("HourEnd")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("HourStart")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool?>("IsClosed")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("HotelDataModelId")
-                        .IsUnique();
-
-                    b.ToTable("HotelTuesday");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelWednesdayModel", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("HotelDataModelId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("HourEnd")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("HourStart")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool?>("IsClosed")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("HotelDataModelId")
-                        .IsUnique();
-
-                    b.ToTable("HotelWednesday");
                 });
 
             modelBuilder.Entity("Genilog_WebApi.Model.InfoModel.FeedbackModelData", b =>
@@ -907,6 +1032,9 @@ namespace Genilog_WebApi.Migrations
                     b.Property<string>("AccountNumber")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid>("AdminId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<bool>("Available")
                         .HasColumnType("bit");
 
@@ -934,6 +1062,9 @@ namespace Genilog_WebApi.Migrations
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.PrimitiveCollection<string>("DeliveryTypes")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<double>("Latitude")
                         .HasColumnType("float");
 
@@ -957,6 +1088,9 @@ namespace Genilog_WebApi.Migrations
 
                     b.Property<int>("Rating")
                         .HasColumnType("int");
+
+                    b.PrimitiveCollection<string>("ServiceAreas")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("State")
                         .HasColumnType("nvarchar(max)");
@@ -1001,6 +1135,37 @@ namespace Genilog_WebApi.Migrations
                     b.HasIndex("CompanyModelDataId");
 
                     b.ToTable("CompanyReviewModels");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.OrderDeliveryFlow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<double>("CurrentLatitude")
+                        .HasColumnType("float");
+
+                    b.Property<string>("CurrentLocation")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("CurrentLongitude")
+                        .HasColumnType("float");
+
+                    b.Property<Guid>("OrderModelDataId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("OrderStatus")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderModelDataId");
+
+                    b.ToTable("OrderDeliveryFlows");
                 });
 
             modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.OrderModelData", b =>
@@ -1060,7 +1225,13 @@ namespace Genilog_WebApi.Migrations
                     b.Property<int>("ItemQuantity")
                         .HasColumnType("int");
 
+                    b.Property<double>("ItemWeight")
+                        .HasColumnType("float");
+
                     b.Property<string>("OrderStatus")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.PrimitiveCollection<string>("PackageImageLists")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PackageType")
@@ -1076,6 +1247,9 @@ namespace Genilog_WebApi.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RecieverAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RecieverCountry")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RecieverEmail")
@@ -1108,7 +1282,13 @@ namespace Genilog_WebApi.Migrations
                     b.Property<string>("RiderName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("RiderType")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("SenderAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SenderCountry")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SenderEmail")
@@ -1138,6 +1318,9 @@ namespace Genilog_WebApi.Migrations
                     b.Property<double>("ShippingCost")
                         .HasColumnType("float");
 
+                    b.Property<string>("ShippingType")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("TrackingNum")
                         .HasColumnType("nvarchar(max)");
 
@@ -1150,28 +1333,12 @@ namespace Genilog_WebApi.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<double>("VatCost")
+                        .HasColumnType("float");
+
                     b.HasKey("Id");
 
                     b.ToTable("OrderModelDatas");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.PackageImageList", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ImageUrlFile")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("OrderModelDataId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrderModelDataId");
-
-                    b.ToTable("PackageImageLists");
                 });
 
             modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.RidersChatModelData", b =>
@@ -1529,6 +1696,94 @@ namespace Genilog_WebApi.Migrations
                     b.Navigation("Roles");
                 });
 
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AccomodationFridayModel", b =>
+                {
+                    b.HasOne("Genilog_WebApi.Model.BookingsModel.AccomodationDataModel", "AccomodationDataModels")
+                        .WithOne("AccomodationFriday")
+                        .HasForeignKey("Genilog_WebApi.Model.BookingsModel.AccomodationFridayModel", "AccomodationDataModelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AccomodationDataModels");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AccomodationMondayModel", b =>
+                {
+                    b.HasOne("Genilog_WebApi.Model.BookingsModel.AccomodationDataModel", "AccomodationDataModels")
+                        .WithOne("AccomodationMonday")
+                        .HasForeignKey("Genilog_WebApi.Model.BookingsModel.AccomodationMondayModel", "AccomodationDataModelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AccomodationDataModels");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AccomodationReviewModel", b =>
+                {
+                    b.HasOne("Genilog_WebApi.Model.BookingsModel.AccomodationDataModel", "AccomodationDataTables")
+                        .WithMany("AccomodationReviewModels")
+                        .HasForeignKey("AccomodationDataTableId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AccomodationDataTables");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AccomodationSaturdayModel", b =>
+                {
+                    b.HasOne("Genilog_WebApi.Model.BookingsModel.AccomodationDataModel", "AccomodationDataModels")
+                        .WithOne("AccomodationSaturday")
+                        .HasForeignKey("Genilog_WebApi.Model.BookingsModel.AccomodationSaturdayModel", "AccomodationDataModelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AccomodationDataModels");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AccomodationSundayModel", b =>
+                {
+                    b.HasOne("Genilog_WebApi.Model.BookingsModel.AccomodationDataModel", "AccomodationDataModels")
+                        .WithOne("AccomodationSunday")
+                        .HasForeignKey("Genilog_WebApi.Model.BookingsModel.AccomodationSundayModel", "AccomodationDataModelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AccomodationDataModels");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AccomodationThursdayModel", b =>
+                {
+                    b.HasOne("Genilog_WebApi.Model.BookingsModel.AccomodationDataModel", "AccomodationDataModels")
+                        .WithOne("AccomodationThursday")
+                        .HasForeignKey("Genilog_WebApi.Model.BookingsModel.AccomodationThursdayModel", "AccomodationDataModelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AccomodationDataModels");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AccomodationTuesdayModel", b =>
+                {
+                    b.HasOne("Genilog_WebApi.Model.BookingsModel.AccomodationDataModel", "AccomodationDataModels")
+                        .WithOne("AccomodationTuesday")
+                        .HasForeignKey("Genilog_WebApi.Model.BookingsModel.AccomodationTuesdayModel", "AccomodationDataModelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AccomodationDataModels");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AccomodationWednesdayModel", b =>
+                {
+                    b.HasOne("Genilog_WebApi.Model.BookingsModel.AccomodationDataModel", "AccomodationDataModels")
+                        .WithOne("AccomodationWednesday")
+                        .HasForeignKey("Genilog_WebApi.Model.BookingsModel.AccomodationWednesdayModel", "AccomodationDataModelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AccomodationDataModels");
+                });
+
             modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AirCraftList", b =>
                 {
                     b.HasOne("Genilog_WebApi.Model.BookingsModel.AirlineDataModel", "AirlineDataModels")
@@ -1551,28 +1806,6 @@ namespace Genilog_WebApi.Migrations
                     b.Navigation("AirlineDataModels");
                 });
 
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AirlineImages", b =>
-                {
-                    b.HasOne("Genilog_WebApi.Model.BookingsModel.AirlineDataModel", "AirlineDataModels")
-                        .WithMany("AirlineImages")
-                        .HasForeignKey("AirlineDataModelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AirlineDataModels");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AirlinePayment", b =>
-                {
-                    b.HasOne("Genilog_WebApi.Model.BookingsModel.AirlineDataModel", "AirlineDataModels")
-                        .WithMany("AirlinePayments")
-                        .HasForeignKey("AirlineDataModelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AirlineDataModels");
-                });
-
             modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AirlineReviewModel", b =>
                 {
                     b.HasOne("Genilog_WebApi.Model.BookingsModel.AirlineDataModel", "AirlineDataModels")
@@ -1582,116 +1815,6 @@ namespace Genilog_WebApi.Migrations
                         .IsRequired();
 
                     b.Navigation("AirlineDataModels");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelFacilities", b =>
-                {
-                    b.HasOne("Genilog_WebApi.Model.BookingsModel.HotelDataModel", "HotelDataTables")
-                        .WithMany("HotelFacilities")
-                        .HasForeignKey("HotelDataTableId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("HotelDataTables");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelFridayModel", b =>
-                {
-                    b.HasOne("Genilog_WebApi.Model.BookingsModel.HotelDataModel", "HotelDataModels")
-                        .WithOne("HotelFriday")
-                        .HasForeignKey("Genilog_WebApi.Model.BookingsModel.HotelFridayModel", "HotelDataModelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("HotelDataModels");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelImages", b =>
-                {
-                    b.HasOne("Genilog_WebApi.Model.BookingsModel.HotelDataModel", "HotelDataTables")
-                        .WithMany("HotelImages")
-                        .HasForeignKey("HotelDataTableId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("HotelDataTables");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelMondayModel", b =>
-                {
-                    b.HasOne("Genilog_WebApi.Model.BookingsModel.HotelDataModel", "HotelDataModels")
-                        .WithOne("HotelMonday")
-                        .HasForeignKey("Genilog_WebApi.Model.BookingsModel.HotelMondayModel", "HotelDataModelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("HotelDataModels");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelReviewModel", b =>
-                {
-                    b.HasOne("Genilog_WebApi.Model.BookingsModel.HotelDataModel", "HotelDataTables")
-                        .WithMany("HotelReviewModels")
-                        .HasForeignKey("HotelDataTableId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("HotelDataTables");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelSaturdayModel", b =>
-                {
-                    b.HasOne("Genilog_WebApi.Model.BookingsModel.HotelDataModel", "HotelDataModels")
-                        .WithOne("HotelSaturday")
-                        .HasForeignKey("Genilog_WebApi.Model.BookingsModel.HotelSaturdayModel", "HotelDataModelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("HotelDataModels");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelSundayModel", b =>
-                {
-                    b.HasOne("Genilog_WebApi.Model.BookingsModel.HotelDataModel", "HotelDataModels")
-                        .WithOne("HotelSunday")
-                        .HasForeignKey("Genilog_WebApi.Model.BookingsModel.HotelSundayModel", "HotelDataModelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("HotelDataModels");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelThursdayModel", b =>
-                {
-                    b.HasOne("Genilog_WebApi.Model.BookingsModel.HotelDataModel", "HotelDataModels")
-                        .WithOne("HotelThursday")
-                        .HasForeignKey("Genilog_WebApi.Model.BookingsModel.HotelThursdayModel", "HotelDataModelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("HotelDataModels");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelTuesdayModel", b =>
-                {
-                    b.HasOne("Genilog_WebApi.Model.BookingsModel.HotelDataModel", "HotelDataModels")
-                        .WithOne("HotelTuesday")
-                        .HasForeignKey("Genilog_WebApi.Model.BookingsModel.HotelTuesdayModel", "HotelDataModelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("HotelDataModels");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelWednesdayModel", b =>
-                {
-                    b.HasOne("Genilog_WebApi.Model.BookingsModel.HotelDataModel", "HotelDataModels")
-                        .WithOne("HotelWednesday")
-                        .HasForeignKey("Genilog_WebApi.Model.BookingsModel.HotelWednesdayModel", "HotelDataModelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("HotelDataModels");
                 });
 
             modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.CompanyReviewModel", b =>
@@ -1705,10 +1828,10 @@ namespace Genilog_WebApi.Migrations
                     b.Navigation("CompanyModelDatas");
                 });
 
-            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.PackageImageList", b =>
+            modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.OrderDeliveryFlow", b =>
                 {
                     b.HasOne("Genilog_WebApi.Model.LogisticsModel.OrderModelData", "OrderModelDatas")
-                        .WithMany("PackageImageLists")
+                        .WithMany("OrderDeliveryFlows")
                         .HasForeignKey("OrderModelDataId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1748,40 +1871,32 @@ namespace Genilog_WebApi.Migrations
                     b.Navigation("User_Roles");
                 });
 
+            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AccomodationDataModel", b =>
+                {
+                    b.Navigation("AccomodationFriday");
+
+                    b.Navigation("AccomodationMonday");
+
+                    b.Navigation("AccomodationReviewModels");
+
+                    b.Navigation("AccomodationSaturday");
+
+                    b.Navigation("AccomodationSunday");
+
+                    b.Navigation("AccomodationThursday");
+
+                    b.Navigation("AccomodationTuesday");
+
+                    b.Navigation("AccomodationWednesday");
+                });
+
             modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.AirlineDataModel", b =>
                 {
                     b.Navigation("AirCraftList");
 
                     b.Navigation("AirLineServiceLocations");
 
-                    b.Navigation("AirlineImages");
-
-                    b.Navigation("AirlinePayments");
-
                     b.Navigation("AirlineReviewModels");
-                });
-
-            modelBuilder.Entity("Genilog_WebApi.Model.BookingsModel.HotelDataModel", b =>
-                {
-                    b.Navigation("HotelFacilities");
-
-                    b.Navigation("HotelFriday");
-
-                    b.Navigation("HotelImages");
-
-                    b.Navigation("HotelMonday");
-
-                    b.Navigation("HotelReviewModels");
-
-                    b.Navigation("HotelSaturday");
-
-                    b.Navigation("HotelSunday");
-
-                    b.Navigation("HotelThursday");
-
-                    b.Navigation("HotelTuesday");
-
-                    b.Navigation("HotelWednesday");
                 });
 
             modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.CompanyModelData", b =>
@@ -1791,7 +1906,7 @@ namespace Genilog_WebApi.Migrations
 
             modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.OrderModelData", b =>
                 {
-                    b.Navigation("PackageImageLists");
+                    b.Navigation("OrderDeliveryFlows");
                 });
 
             modelBuilder.Entity("Genilog_WebApi.Model.LogisticsModel.RidersModelData", b =>

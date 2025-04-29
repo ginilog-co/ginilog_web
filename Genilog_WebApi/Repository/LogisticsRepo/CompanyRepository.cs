@@ -83,6 +83,8 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
                 dataValue.BankName = dataInfo.BankName;
                 dataValue.AccountName = dataInfo.AccountName;
                 dataValue.AccountNumber = dataInfo.AccountNumber;
+                dataValue.DeliveryTypes = dataInfo.DeliveryTypes;
+                dataValue.ServiceAreas = dataInfo.ServiceAreas;
                 await mAAP_Context.SaveChangesAsync();
                 return dataValue;
             }
@@ -119,7 +121,7 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
         public async Task<IEnumerable<OrderModelData>> GetAllOrderAsync()
         {
             return await mAAP_Context.OrderModelDatas!
-                 .Include(x => x.PackageImageLists)
+                 .Include(x => x.OrderDeliveryFlows)
                 .OrderBy(x => x.CreatedAt)
                 .ToListAsync();
         }
@@ -127,7 +129,7 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
         {
 #pragma warning disable CS8603 // Possible null reference return.
             return await mAAP_Context.OrderModelDatas!
-                 .Include(x => x.PackageImageLists)
+                 .Include(x => x.OrderDeliveryFlows)
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
@@ -170,6 +172,7 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
                 dataValue.ExpectedDeliveryTime = dataInfo.ExpectedDeliveryTime;
                 dataValue.ConfirmationImage = dataInfo.ConfirmationImage;
                 dataValue.ShippingCost = dataInfo.ShippingCost;
+                dataValue.VatCost = dataInfo.VatCost;
                 dataValue.TrnxReference = dataInfo.TrnxReference;
                 dataValue.PaymentChannel = dataInfo.PaymentChannel;
                 dataValue.PaymentStatus = dataInfo.PaymentStatus;
@@ -198,30 +201,53 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
                 return dataValue;
             }
         }
-        // Order Images
-        public async Task<PackageImageList> AddPackageImagesAsync(PackageImageList region)
+        // order delivery flow
+        public async Task<OrderDeliveryFlow> AddOrderDeliveryFlowAsync(OrderDeliveryFlow dataInfo)
         {
-            region.Id = Guid.NewGuid();
-            await mAAP_Context.AddAsync(region);
+            dataInfo.Id = Guid.NewGuid();
+            await mAAP_Context.AddAsync(dataInfo);
             await mAAP_Context.SaveChangesAsync();
-            return region;
+            return dataInfo;
         }
 
-        public async Task<PackageImageList> DeletePackageImagesAsync(Guid id)
+        public async Task<OrderDeliveryFlow> DeleteOrderDeliveryFlowAsync(Guid id)
         {
-            var tickets = await mAAP_Context.PackageImageLists!.FirstOrDefaultAsync(x => x.Id == id);
+            var tickets = await mAAP_Context.OrderDeliveryFlows!.FirstOrDefaultAsync(x => x.Id == id);
             if (tickets == null)
             {
 #pragma warning disable CS8603 // Possible null reference return.
                 return null;
+#pragma warning restore CS8603 // Possible null reference return.
             }
             else
             {
                 // Delete Region
-                mAAP_Context.PackageImageLists!.Remove(tickets);
+                mAAP_Context.OrderDeliveryFlows!.Remove(tickets);
                 await mAAP_Context.SaveChangesAsync();
                 return tickets;
             }
         }
+        public async Task<bool> OrderDeliveryFlowExistAsync(string orderStatus, Guid orderModelId, OrderDeliveryFlow dataInfo)
+        {
+            var user = await mAAP_Context.OrderDeliveryFlows!.AnyAsync(x => x.OrderStatus == orderStatus && x.OrderModelDataId==orderModelId);
+            if (user)
+            {
+                var dataValue = await mAAP_Context.OrderDeliveryFlows!.FirstOrDefaultAsync(x => x.OrderStatus == orderStatus && x.OrderModelDataId == orderModelId);
+                dataValue!.OrderStatus = dataInfo.OrderStatus;
+                dataValue.CurrentLatitude = dataInfo.CurrentLatitude;
+                dataValue.CurrentLongitude = dataInfo.CurrentLongitude;
+                dataValue.CurrentLocation = dataInfo.CurrentLocation;
+                dataValue.UpdatedAt = dataInfo.UpdatedAt;
+                await mAAP_Context.SaveChangesAsync();
+#pragma warning disable CS8603 // Possible null reference return.
+                return true;
+#pragma warning restore CS8603 // Possible null reference return.
+            }
+            else
+            {
+                return false;
+            }
+        }
+   
     }
 }

@@ -73,5 +73,68 @@ namespace Genilog_WebApi.Repository.AdminRepo
                 return existinguser;
             }
         }
+
+        // ADVERT LINE
+        public async Task<AdvertHolderModel> AddAdvertAsync(AdvertHolderModel users)
+        {
+            users.Id=Guid.NewGuid();
+            await maap_Context.AdvertHolderModels!.AddAsync(users);
+            await maap_Context.SaveChangesAsync();
+            return users;
+
+        }
+
+        public async Task<AdvertHolderModel> DeleteAdvertAsync(Guid id)
+        {
+            var users = await maap_Context.AdvertHolderModels!.FirstOrDefaultAsync(x => x.Id == id);
+            if (users == null)
+            {
+#pragma warning disable CS8603 // Possible null reference return.
+                return null;
+#pragma warning restore CS8603 // Possible null reference return.
+            }
+            else
+            {
+                // Delete Region
+                maap_Context.AdvertHolderModels!.Remove(users);
+                await maap_Context.SaveChangesAsync();
+                return users;
+            }
+        }
+
+        public async Task<IEnumerable<AdvertHolderModel>> GetAllAdvertAsync()
+        {
+            return await maap_Context.AdvertHolderModels!.ToListAsync();
+        }
+
+        public async Task<AdvertHolderModel> GetAdvertAsync(Guid id)
+        {
+#pragma warning disable CS8603 // Possible null reference return.
+            return await maap_Context.AdvertHolderModels!.FirstOrDefaultAsync(x => x.Id == id);
+#pragma warning restore CS8603 // Possible null reference return.
+        }
+
+        public async Task<AdvertHolderModel> UpdateAdvertAsync(Guid id, AdvertHolderModel user)
+        {
+            var existinguser = await maap_Context.AdvertHolderModels!.FirstOrDefaultAsync(x => x.Id == id);
+
+            if (existinguser == null)
+            {
+#pragma warning disable CS8603 // Possible null reference return.
+                return null;
+#pragma warning restore CS8603 // Possible null reference return.
+            }
+            else
+            {
+                existinguser.AdvertImage = user.AdvertImage;
+                existinguser.AdvertName = user.AdvertName;
+                existinguser.AdvertType = user.AdvertType;
+                existinguser.AdvertItemDescription = user.AdvertItemDescription;
+                existinguser.AdvertItemCost = user.AdvertItemCost;
+                existinguser.AdvertDays4 = user.AdvertDays4;
+                await maap_Context.SaveChangesAsync();
+                return existinguser;
+            }
+        }
     }
 }

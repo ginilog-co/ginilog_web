@@ -4,96 +4,96 @@
     {
     }
 
-    // Hotel Time Schedule
-    public class HotelMondayModel
+    // Accomodation Time Schedule
+    public class AccomodationMondayModel
     {
         public Guid Id { get; set; }
         public string? HourStart { get; set; }
         public string? HourEnd { get; set; }
         public bool? IsClosed { get; set; }
-        public HotelDataModel? HotelDataModels { get; set; }
-        public Guid HotelDataModelId { get; set; }
+        public AccomodationDataModel? AccomodationDataModels { get; set; }
+        public Guid AccomodationDataModelId { get; set; }
     }
-    public class HotelTuesdayModel
+    public class AccomodationTuesdayModel
     {
         public Guid Id { get; set; }
         public string? HourStart { get; set; }
         public string? HourEnd { get; set; }
         public bool? IsClosed { get; set; }
-        public HotelDataModel? HotelDataModels { get; set; }
-        public Guid HotelDataModelId { get; set; }
+        public AccomodationDataModel? AccomodationDataModels { get; set; }
+        public Guid AccomodationDataModelId { get; set; }
     }
-    public class HotelWednesdayModel
+    public class AccomodationWednesdayModel
     {
         public Guid Id { get; set; }
         public string? HourStart { get; set; }
         public string? HourEnd { get; set; }
         public bool? IsClosed { get; set; }
-        public HotelDataModel? HotelDataModels { get; set; }
-        public Guid HotelDataModelId { get; set; }
+        public AccomodationDataModel? AccomodationDataModels { get; set; }
+        public Guid AccomodationDataModelId { get; set; }
     }
-    public class HotelThursdayModel
+    public class AccomodationThursdayModel
     {
         public Guid Id { get; set; }
         public string? HourStart { get; set; }
         public string? HourEnd { get; set; }
         public bool? IsClosed { get; set; }
-        public HotelDataModel? HotelDataModels { get; set; }
-        public Guid HotelDataModelId { get; set; }
+        public AccomodationDataModel? AccomodationDataModels { get; set; }
+        public Guid AccomodationDataModelId { get; set; }
     }
-    public class HotelFridayModel
+    public class AccomodationFridayModel
     {
         public Guid Id { get; set; }
         public string? HourStart { get; set; }
         public string? HourEnd { get; set; }
         public bool? IsClosed { get; set; }
-        public HotelDataModel? HotelDataModels { get; set; }
-        public Guid HotelDataModelId { get; set; }
+        public AccomodationDataModel? AccomodationDataModels { get; set; }
+        public Guid AccomodationDataModelId { get; set; }
     }
-    public class HotelSaturdayModel
+    public class AccomodationSaturdayModel
     {
         public Guid Id { get; set; }
         public string? HourStart { get; set; }
         public string? HourEnd { get; set; }
         public bool? IsClosed { get; set; }
-        public HotelDataModel? HotelDataModels { get; set; }
-        public Guid HotelDataModelId { get; set; }
+        public AccomodationDataModel? AccomodationDataModels { get; set; }
+        public Guid AccomodationDataModelId { get; set; }
     }
-    public class HotelSundayModel
+    public class AccomodationSundayModel
     {
         public Guid Id { get; set; }
         public string? HourStart { get; set; }
         public string? HourEnd { get; set; }
         public bool? IsClosed { get; set; }
-        public HotelDataModel? HotelDataModels { get; set; }
-        public Guid HotelDataModelId { get; set; }
+        public AccomodationDataModel? AccomodationDataModels { get; set; }
+        public Guid AccomodationDataModelId { get; set; }
     }
     // dtos
-    public class HotelMondayModelDto
+    public class AccomodationMondayModelDto
     {
         public Guid Id { get; set; }
         public string? HourStart { get; set; }
         public string? HourEnd { get; set; }
         public bool? IsClosed { get; set; }
-        public Guid HotelDataModelId { get; set; }
+        public Guid AccomodationDataModelId { get; set; }
     }
-    public class HotelTuesdayModelDto
+    public class AccomodationTuesdayModelDto
     {
         public Guid Id { get; set; }
         public string? HourStart { get; set; }
         public string? HourEnd { get; set; }
         public bool? IsClosed { get; set; }
-        public Guid HotelDataModelId { get; set; }
+        public Guid AccomodationDataModelId { get; set; }
     }
-    public class HotelWednesdayModelDto
+    public class AccomodationWednesdayModelDto
     {
         public Guid Id { get; set; }
         public string? HourStart { get; set; }
         public string? HourEnd { get; set; }
         public bool? IsClosed { get; set; }
-        public Guid HotelDataModelId { get; set; }
+        public Guid AccomodationDataModelId { get; set; }
     }
-    public class HotelThursdayModelDto
+    public class AccomodationThursdayModelDto
     {
         public Guid Id { get; set; }
         public string? HourStart { get; set; }
@@ -101,29 +101,29 @@
         public bool? IsClosed { get; set; }
         public Guid AirlineDataModelId { get; set; }
     }
-    public class HotelFridayModelDto
+    public class AccomodationFridayModelDto
     {
         public Guid Id { get; set; }
         public string? HourStart { get; set; }
         public string? HourEnd { get; set; }
         public bool? IsClosed { get; set; }
-        public Guid HotelDataModelId { get; set; }
+        public Guid AccomodationDataModelId { get; set; }
     }
-    public class HotelSaturdayModelDto
+    public class AccomodationSaturdayModelDto
     {
         public Guid Id { get; set; }
         public string? HourStart { get; set; }
         public string? HourEnd { get; set; }
         public bool? IsClosed { get; set; }
-        public Guid HotelDataModelId { get; set; }
+        public Guid AccomodationDataModelId { get; set; }
     }
-    public class HotelSundayModelDto
+    public class AccomodationSundayModelDto
     {
         public Guid Id { get; set; }
         public string? HourStart { get; set; }
         public string? HourEnd { get; set; }
         public bool? IsClosed { get; set; }
-        public Guid HotelDataModelId { get; set; }
+        public Guid AccomodationDataModelId { get; set; }
     }
 
 

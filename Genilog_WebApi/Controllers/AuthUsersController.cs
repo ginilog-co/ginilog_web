@@ -22,7 +22,7 @@ namespace Genilog_WebApi.Controllers
     [Route("api/[controller]")]
     [ApiController]
     public class AuthUsersController(IHostEnvironment _env, IGeneralUserRepository userRepository, ITokenHandler tokenHandler, IMapper mapper, IRolesRepository rolesRepository, IUser_RoleRepository user_RoleRepository, IUserRepository newUsersRepository,
-        IUploadRepository uploadRepository, IHubContext<UserHubRepository> _hubContext, IHubContext<NotificationHub> _notificationHubContext) : ControllerBase
+        IUploadRepository uploadRepository) : ControllerBase
     {
         private readonly IHostEnvironment _env = _env;
         private readonly IGeneralUserRepository userRepository = userRepository;
@@ -32,8 +32,6 @@ namespace Genilog_WebApi.Controllers
         private readonly IUser_RoleRepository user_RoleRepository = user_RoleRepository;
         private readonly IUserRepository newUsersRepository = newUsersRepository;
         private readonly IUploadRepository uploadRepository = uploadRepository;
-        private readonly IHubContext<UserHubRepository> _hubContext = _hubContext;
-        private readonly IHubContext<NotificationHub> _notificationHubContext = _notificationHubContext;
         // readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
 
         private const string googleClientId = "650523296976-86526ebsjn0266ogajsl6fllfl08jn5h.apps.googleusercontent.com";
@@ -336,7 +334,6 @@ namespace Genilog_WebApi.Controllers
                         ProfileImage = userD.ProfilePicture,
                         IdAuthPassword = userId!
                     };
-                    await _notificationHubContext.Clients.Group(loginUser.Id.ToString()).SendAsync("NOTIFICATION", userDto);
                     return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.UserId }, userDto);
                 }
             }
@@ -495,7 +492,6 @@ namespace Genilog_WebApi.Controllers
                         ProfileImage = userD.ProfilePicture,
                         IdAuthPassword = payload.Subject
                     };
-                    await _notificationHubContext.Clients.Group(loginUser.Id.ToString()).SendAsync("NOTIFICATION", userDto);
                     return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.UserId }, userDto);
                 }
             }
@@ -741,8 +737,6 @@ namespace Genilog_WebApi.Controllers
                 // convert back to dto
                 var user = await newUsersRepository.GetAsync(users.Id);
                 var userDto = mapper.Map<UsersDataModelTableDto>(user);
-                await _hubContext.Clients.All.SendAsync("GetUser", userDto);
-                await _notificationHubContext.Clients.Group(users.Id.ToString()).SendAsync("NOTIFICATION", userDto);
                 return Ok(userDto);
             }
         }
@@ -835,7 +829,6 @@ namespace Genilog_WebApi.Controllers
                 var token = await userRepository.GetAllDeviceTokenAsync();
                 var userDto = mapper.Map<UsersDataModelTableDto>(userDto12);
                 userDto.DeviceTokenModels = token.Where(x => x.UserId == user.Id).ToList();
-                await _hubContext.Clients.All.SendAsync("GetUser", userDto);
                 return Ok(userDto);
 
             }
@@ -915,7 +908,6 @@ namespace Genilog_WebApi.Controllers
               
                 var userDto12 = await newUsersRepository.GetAsync(userDto1.Id);
                 var userDto = mapper.Map<UsersDataModelTableDto>(userDto12);
-                await _hubContext.Clients.All.SendAsync("GetUser", userDto);
                 return Ok(userDto);
             }
 
@@ -954,7 +946,6 @@ namespace Genilog_WebApi.Controllers
             // check the null value
             var userDto12 = await newUsersRepository.GetAsync(userDto1.Id);
             var userDto = mapper.Map<UsersDataModelTableDto>(userDto12);
-            await _hubContext.Clients.All.SendAsync("GetUser", userDto);
             return Ok(userDto);
 
         }

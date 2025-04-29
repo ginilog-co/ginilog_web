@@ -1,22 +1,27 @@
 ﻿using AutoMapper;
 using FirebaseAdmin.Messaging;
-using Genilog_WebApi.EmailSender;
+using Genilog_WebApi.Key;
 using Genilog_WebApi.Model;
 using Genilog_WebApi.Model.AuthModel;
+using Genilog_WebApi.Model.BookingsModel;
 using Genilog_WebApi.Model.LogisticsModel;
 using Genilog_WebApi.Model.Notification_Model;
+using Genilog_WebApi.Model.WalletModel;
 using Genilog_WebApi.Repository.AuthRepo;
 using Genilog_WebApi.Repository.LogisticsRepo;
 using Genilog_WebApi.Repository.NotificationRepo;
+using Genilog_WebApi.Repository.PlacesRepo;
 using Genilog_WebApi.Repository.UploadRepo;
 using Genilog_WebApi.Repository.UserRepo;
-using Google.Cloud.Firestore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Newtonsoft.Json;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Mail;
 using System.Security.Claims;
+using System.Text;
 
 namespace Genilog_WebApi.Controllers
 {
@@ -25,7 +30,7 @@ namespace Genilog_WebApi.Controllers
     public class LogisticsController(IHostEnvironment _env, IMapper mapper, ITokenHandler tokenHandler
         , IGeneralUserRepository generalUserRepository, IUploadRepository uploadRepository, IRolesRepository rolesRepository, IUser_RoleRepository user_RoleRepository, 
         IRidersRepository ridersRepository, ICompanyRepository companyRepository
-         , INotificationRepository notificationRepository, IHubContext<LogisticsHubRepository> _hubContext, IHubContext<NotificationHub> _notificationHubContext,
+         , INotificationRepository notificationRepository,
         IUserRepository newUsersRepository) : ControllerBase
     {
         private readonly IHostEnvironment _env = _env;
@@ -38,216 +43,8 @@ namespace Genilog_WebApi.Controllers
         private readonly ICompanyRepository companyRepository = companyRepository;
         private readonly IRidersRepository ridersRepository = ridersRepository;
         readonly INotificationRepository notificationRepository = notificationRepository;
-        private readonly IHubContext<LogisticsHubRepository> _hubContext = _hubContext;
-        private readonly IHubContext<NotificationHub> _notificationHubContext = _notificationHubContext;
         private readonly IUserRepository newUsersRepository = newUsersRepository;
         //  readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
-
-
-        // This Is Rider SECTION
-        [HttpPost]
-        [Route("login")]
-        public async Task<IActionResult> LoginAsync(LoginRequset requset)
-        {
-
-            var user = await generalUserRepository.AuthenticateAsync(requset.Email_PhoneNo!, requset.Password!);
-
-            if (user != null)
-            {
-
-                if (user.UserType == "Manager" || user.UserType == "Rider")
-                {
-
-                    if (user.EmailConfirmed == false)
-                    {
-                        var user2 = await generalUserRepository.RequestNewEmailTokenAsync(user.Email!);
-                        EmailTemplates.SendEmailVerificationCode(user.Email!, user2.VerificationToken!, user.LastName!);
-                        //  string message1 = user.FirstName + " Your BMG(Bring My Gas) App Account Verication Code is " + user2.VerificationToken!;
-                        var error = new ErrorModel()
-                        {
-                            Message = "User Email Not Yet Verify",
-                            Status = true
-                        };
-                        return BadRequest(error);
-                    }
-                    else
-                    {
-                        var token = tokenHandler.CreateTokenAsync(user);
-                        var refreshToken = tokenHandler.RefreshTokenAsync(user.Email!);
-                        // var userId = userRepository.Userd;
-
-                        var userDto = new LoginDto()
-                        {
-                            Token = await token,
-                            RefreshToken = await refreshToken,
-                            RefreshTokenExpiryTime = user.RefreshTokenExpiryTime,
-                            UserId = user.Id,
-                            Email = user.Email,
-                            UserType = user.UserType,
-                            EmailVerified = user.EmailConfirmed,
-                            PhoneVerified = user.PhoneNoConfirmed,
-                            FullName = $"{user.FirstName} {user.LastName}",
-                            ProfileImage = user.ImagePath,
-
-                        };
-                        return Ok(userDto);
-                    }
-                }
-                else
-                {
-                    var error = new ErrorModel()
-                    {
-                        Message = "Not A Manager Or Rider Account",
-                        Status = true
-                    };
-                    return BadRequest(error);
-
-                }
-            }
-            else
-            {
-                var error = new ErrorModel()
-                {
-                    Message = "User Does not Exist",
-                    Status = true
-                };
-                return BadRequest(error);
-            }
-        }
-
-        [HttpPost("email-verification")]
-        public async Task<IActionResult> Verify(EmailVerification verification)
-        {
-
-            var user = await generalUserRepository.VerifyAsync(verification.Token!);
-            if (user == null)
-            {
-                return BadRequest("Invalid token.");
-            }
-            else
-            {
-                user = await generalUserRepository.AuthenticateAsync(user.Email!, verification.Password!);
-                var userD = await generalUserRepository.GetAsync(user.Id);
-                if (user != null)
-                {
-                    if (user.UserType != "Manager")
-                    {
-                        return BadRequest("Not A User Account");
-                    }
-                    else
-                    {
-                        //generate jwt token
-                        var token = tokenHandler.CreateTokenAsync(user);
-                        var refreshToken = tokenHandler.RefreshTokenAsync(user.Email!);
-                        // var userId = userRepository.Userd;
-
-                        var userDto = new LoginDto()
-                        {
-
-                            Token = await token,
-                            RefreshToken = await refreshToken,
-                            RefreshTokenExpiryTime = user.RefreshTokenExpiryTime,
-                            UserId = user.Id,
-                            Email = user.Email,
-                            UserType = user.UserType,
-                            EmailVerified = user.EmailConfirmed,
-                            PhoneVerified = user.PhoneNoConfirmed,
-                            FullName = $"{userD.FirstName} {userD.LastName}",
-                        };
-                        return Ok(userDto);
-                    }
-                }
-                else
-                {
-                    return BadRequest("InValid Password");
-                }
-            }
-
-        }
-
-        [HttpPost("forgot-password-request-token")]
-        public async Task<IActionResult> ForgotPassword(ForgetPasswordRequest email)
-        {
-            var user = await generalUserRepository.ForgetPasswordAsync(email.Email!);
-            if (user == null)
-            {
-                return BadRequest("User not found.");
-            }
-            else if (user.UserType == "Manager" || user.UserType == "Rider")
-            {
-                SendChangePasswordCodeEmail(email.Email!, user.PasswordResetToken!, user.FirstName!);
-                return Ok($"Password Reset token has been Sent to your Email");
-            }
-            else
-            {
-                return BadRequest("User not found.");
-               
-            }
-        }
-
-        [HttpPost("email-verification-request-token")]
-        public async Task<IActionResult> EmailAvailableRequestToken(ForgetPasswordRequest email)
-        {
-            var user = await generalUserRepository.RequestNewEmailTokenAsync(email.Email!);
-            if (user == null)
-            {
-                return BadRequest("User not found.");
-            }
-           
-            else if (user.UserType == "Manager" || user.UserType == "Rider")
-            {
-                SendEmailAvailableCode(email.Email!, user.VerificationToken!, user.LastName!);
-                return Ok($"New token has been Sent to your Email");
-            }
-            else
-            {
-               return BadRequest("User not found.");
-            }
-        }
-
-        [HttpPost("reset-password")]
-        public async Task<IActionResult> ResettPassword(ResetPasswordRequest request)
-        {
-            var user = await generalUserRepository.PasswordResetAsync(request.Token, request.Password);
-            if (user == null)
-            {
-                return BadRequest("Invalid Token.");
-            }
-            else
-            {
-                return Ok("Password successfully reset");
-            }
-        }
-
-        [HttpPost("phone-no-verification")]
-        public async Task<IActionResult> PhoneNoVerify(PhoneVerification otp)
-        {
-            var user = await generalUserRepository.PhoneNoVerifyAsync(otp.Otp!);
-            if (user == null)
-            {
-                return BadRequest("Invalid otp token.");
-            }
-            else
-            {
-                return Ok($"PhoneNo verified!");
-            }
-        }
-
-        [HttpPost("two-factor-enabled/{id:Guid}")]
-        public async Task<IActionResult> TwoFactorEnabled([FromRoute] Guid id)
-        {
-            var user = await generalUserRepository.TwoFactorEnabledAsync(id);
-            if (user == null)
-            {
-                return BadRequest("User Does Not Exist");
-            }
-            else
-            {
-                return Ok($"User Two Factor Authentication Enabled");
-            }
-        }
-
-
 
         // This Is Gas Station SECTION
         [HttpGet]
@@ -329,7 +126,7 @@ namespace Genilog_WebApi.Controllers
 
         [HttpPut]
         [Route("{id:guid}")]
-        [Authorize(Roles = "Station_User,Super_Admin")]
+        [Authorize(Roles = "Super_Admin")]
         public async Task<IActionResult> UpdateCompanyAsync([FromRoute] Guid id, [FromBody] UpdateCompany request)
         {
             var userDto1 = await companyRepository.GetAsync(id);
@@ -341,10 +138,10 @@ namespace Genilog_WebApi.Controllers
             // convert back to dto
             else
             {
-                var gen = await generalUserRepository.GetAsync(userDto1.Id);
                 var user = new CompanyModelData()
                 {
                     CompanyName = !string.IsNullOrWhiteSpace(request.CompanyName) ? request.CompanyName : userDto1.CompanyName,
+                    CompanyEmail=!string.IsNullOrWhiteSpace(request.CompanyEmail) ? request.CompanyEmail : userDto1.CompanyEmail,
                     CompanyAddress = !string.IsNullOrWhiteSpace(request.CompanyAddress) ? request.CompanyAddress : userDto1.CompanyAddress,
                     CompanyRegNo = !string.IsNullOrWhiteSpace(request.CompanyRegNo) ? request.CompanyRegNo : userDto1.CompanyRegNo,
                     CompanyInfo = !string.IsNullOrWhiteSpace(request.CompanyInfo) ? request.CompanyInfo : userDto1.CompanyInfo,
@@ -363,20 +160,12 @@ namespace Genilog_WebApi.Controllers
                     NofOfBikes = (int)(request.NofOfBikes ?? userDto1.NofOfBikes),
                     Available = (bool)(request.Available ?? userDto1.Available),
                     NoOfTrucks = (int)(request.NoOfTrucks ?? userDto1.NoOfTrucks),
+                    ServiceAreas= (request.ServiceAreas ?? userDto1.ServiceAreas),
+                    DeliveryTypes=(request.DeliveryTypes ?? userDto1.DeliveryTypes),
                 };
-                // Update detials to repository
-                user = await companyRepository.UpdateAsync(id, user);
-                gen = new GeneralUsers()
-                {
-                    LastName = !string.IsNullOrWhiteSpace(request.LastName) ? $"{request.LastName}" : gen.LastName,
-                    FirstName = !string.IsNullOrWhiteSpace(request.FirstName) ? $"{request.FirstName}" : gen.FirstName,
-                    PhoneNo = user.PhoneNumber,
-                    ImagePath = user.CompanyLogo,
-                };
-                await generalUserRepository.UpdateAsync(user.Id, gen);
+              
                 var contact = await companyRepository.GetAsync(user.Id);
                 var userDto = mapper.Map<CompanyModelDataDto>(contact);
-                await _hubContext.Clients.All.SendAsync("GetCompany", userDto);
                 return Ok(userDto);
             }
         }
@@ -386,44 +175,22 @@ namespace Genilog_WebApi.Controllers
         public async Task<IActionResult> AddCompanyAsync(AddCompany request)
         {
             var check = ValidateCompany(request);
-            var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
-            var timeStamp = Timestamp.GetCurrentTimestamp();
             if (!check)
             {
                 return BadRequest(ModelState);
             }
             else
             {
-                var generalUsers = new GeneralUsers()
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!Guid.TryParse(userId, out Guid userGuid))
                 {
-                    FirstName = request.FirstName,
-                    LastName = request.LastName,
-                    Email = request.CompanyEmail,
-                    UserType = "Manager",
-                    VerificationToken = CreateRandomToken(),
-                    EmailConfirmed = false,
-                    PhoneNo = request.PhoneNumber,
-                    ImagePath = request.CompanyLogo,
-                    CreatedAt = DateTime.UtcNow,
-                    LockOutEndEnabled = false,
-                    AccessFailedCount = 0,
-                    TwoFactorEnabled = false,
-                    LockOutEnd = DateTime.UtcNow.AddDays(30),
-                    PhoneNoConfirmed = false,
-                    ResetTokenExpires = DateTime.UtcNow.AddMinutes(10),
-                    EmailTokenExpires = DateTime.UtcNow.AddMinutes(10),
-                    PhoneNoTokenExpires = DateTime.UtcNow.AddMinutes(10),
-                    RefreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(10),
-                    VerifiedAt = DateTime.UtcNow,
-                    PhoneVerificationToken = CreateRandomToken(),
-                    PhoneVerifiedAt = DateTime.UtcNow.AddMinutes(10),
-                    PasswordResetToken = "",
-                    RefreshToken = "",
-                };
-                generalUsers = await generalUserRepository.AddAsync(generalUsers, request.Password!);
+                    return BadRequest("Invalid User ID format.");
+                }
+
                 var contacts = new CompanyModelData()
                 {
-                    Id = generalUsers.Id,
+                    Id = Guid.NewGuid(),
+                    AdminId=userGuid,
                     CompanyName = request.CompanyName,
                     CompanyInfo = request.CompanyInfo,
                     CompanyEmail = request.CompanyEmail,
@@ -444,27 +211,17 @@ namespace Genilog_WebApi.Controllers
                     PostCodes = request.PostCodes,
                     Latitude = request.Latitude,
                     Longitude = request.Longitude,
+                    ServiceAreas = request.ServiceAreas,
+                    DeliveryTypes = request.DeliveryTypes,
                     CreatedAt = DateTime.UtcNow,
                 };
                 // Pass detials to repository
                 contacts = await companyRepository.AddAsync(contacts);
-                var roles = new Roles()
-                {
-                    Name = "Manager"
-                };
-                roles = await rolesRepository.AddAsync(roles);
-                var user_Roles = new User_Role()
-                {
-                    GeneralUsersId = contacts.Id,
-                    RoleId = roles.Id,
-                };
-                await user_RoleRepository.AddAsync(user_Roles);
-
-                EmailTemplates.SendEmailVerificationCode(generalUsers.Email!, generalUsers.VerificationToken!, generalUsers.LastName!);
                 // convert back to dto
                 var contactsDto = new CompanyModelDataDto()
                 {
                     Id = contacts.Id,
+                    AdminId = contacts.AdminId,
                     CompanyName = contacts.CompanyName,
                     CompanyInfo = contacts.CompanyInfo,
                     CompanyEmail = contacts.CompanyEmail,
@@ -486,9 +243,9 @@ namespace Genilog_WebApi.Controllers
                     PostCodes = contacts.PostCodes,
                     Available = contacts.Available,
                     CreatedAt = contacts.CreatedAt,
+                    DeliveryTypes = contacts.DeliveryTypes,
+                    ServiceAreas = contacts.ServiceAreas,
                 };
-                await _hubContext.Clients.All.SendAsync("GetCompany", contactsDto);
-                await _notificationHubContext.Clients.Group(contacts.Id.ToString()).SendAsync("NOTIFICATION", contactsDto);
                 return CreatedAtAction(nameof(GetCompanyAsync), new { id = contactsDto.Id }, contactsDto);
             }
         }
@@ -566,7 +323,7 @@ namespace Genilog_WebApi.Controllers
             // if null NotFound
             if (user == null)
             {
-                return BadRequest("Hotel Does not Exist");
+                return BadRequest("Accomodation Does not Exist");
             }
 
             else
@@ -624,7 +381,6 @@ namespace Genilog_WebApi.Controllers
                 await generalUserRepository.UpdateAsync(user.Id, gen);
                 var contact = await ridersRepository.GetAsync(user.Id);
                 var userDto = mapper.Map<RidersModelDataDto>(contact);
-                await _hubContext.Clients.All.SendAsync("GetRider", userDto);
                 return Ok(userDto);
             }
         }
@@ -709,7 +465,6 @@ namespace Genilog_WebApi.Controllers
                 // convert back to dto
                 var contact = await ridersRepository.GetAsync(contacts.Id);
                 var contactsDto = mapper.Map<RidersModelDataDto>(contact);
-                await _hubContext.Clients.All.SendAsync("GetRider", contactsDto);
                 return CreatedAtAction(nameof(GetRidersAsync), new { id = contactsDto.Id }, contactsDto);
             }
         }
@@ -857,6 +612,7 @@ namespace Genilog_WebApi.Controllers
                     ItemModelNumber=request.ItemModelNumber,
                     ItemName=request.ItemName,
                     ItemQuantity=request.ItemQuantity,
+                    ItemWeight=request.ItemWeight,
                     ConfirmationImage="",
                     Comment="",
                     QRCode="",
@@ -872,12 +628,13 @@ namespace Genilog_WebApi.Controllers
                     CompanyName=company.CompanyName,
                     CompanyPhoneNo=company.PhoneNumber,
                     // Sender
-                    SenderName = $"{user.FirstName} {user.LastName}",
-                    SenderPhoneNo = user.PhoneNo,
-                    SenderEmail = user.Email,
+                    SenderName = request.SenderName,
+                    SenderPhoneNo = request.SenderPhoneNo,
+                    SenderEmail = request.SenderEmail,
                     SenderAddress = request.SenderAddress,
                     SenderLocality = request.SenderState,
                     SenderState = request.SenderState,
+                    SenderCountry=request.SenderCountry,
                     SenderPostalCode = request.SenderPostalCode,
                     SenderLatitude = request.SenderLatitude,
                     SenderLongitude = request.SenderLongitude,
@@ -887,11 +644,13 @@ namespace Genilog_WebApi.Controllers
                     RecieverLocality= request.RecieverLocality,
                     RecieverName= request.RecieverName,
                     RecieverState= request.RecieverState,
+                    RecieverCountry= request.RecieverCountry,
                     RecieverPhoneNo= request.RecieverPhoneNo,
                     RecieverPostalCode= request.RecieverPostalCode,
                     RecieverLatitude= request.RecieverLatitude,
                     RecieverLongitude= request.RecieverLongitude,
-                    ShippingCost=0.001,
+                    ShippingCost=0,
+                    VatCost=0,
                     TrnxReference = "",
                     PaymentStatus = false,
                     PaymentChannel = "",
@@ -899,18 +658,262 @@ namespace Genilog_WebApi.Controllers
                     RiderName = "",
                     UpdatedAt = nigeriaTime,
                     CreatedAt = nigeriaTime,
+                    PackageImageLists=request.PackageImageLists,
+                    RiderType=request.RiderType,
+                    ShippingType=request.ShippingType,
                    
                 };
                 // Pass detials to repository
                 contacts = await companyRepository.AddOrderAsync(contacts);
+                var orderflow = new OrderDeliveryFlow
+                {
+                    OrderModelDataId = contacts.Id,
+                    OrderStatus=contacts.OrderStatus,
+                    CurrentLatitude= contacts.CurrentLatitude,
+                    CurrentLongitude= contacts.CurrentLongitude,
+                    CurrentLocation= contacts.CurrentLocation,
+                    UpdatedAt= contacts.UpdatedAt,
+                };
+                await companyRepository.AddOrderDeliveryFlowAsync(orderflow);
                 var datra = await companyRepository.GetOrderAsync(contacts.Id);
                 var contactsDto = mapper.Map<OrderModelDataDto>(datra);
-                // await _hubContext.Clients.All.SendAsync("ReceiveMessage", user.RiderName, $"The Rider has the Order {user.OrderNum} on {user.OrderStatus} Status");
-                // var contactsDto = mapper.Map<GasOrderModelDataDto>(order);
-                // await _gasStationHubContext.Clients.Group(user.Id.ToString()).SendAsync("ORDER", contactsDto);
                 return Ok(contactsDto);
             }
         }
+
+        //paystack
+        [HttpPut("initialize-package-orders/{id:guid}")]
+        [Authorize(Roles = "User")]
+        public async Task<IActionResult> InitializePayment([FromRoute] Guid id)
+        {
+
+            var events = await companyRepository.GetOrderAsync(id);
+            if (events == null)
+            {
+                return BadRequest("Accommodation Does not Exist");
+            }
+            else
+            {
+   
+                var url = "https://api.paystack.co/transaction/initialize";
+                var data = new
+                {
+                    email = events.SenderEmail,
+                    amount = (events.ShippingCost + events.VatCost) * 100,  // Amount in Kobo (100 kobo = 1 Naira)
+                    callback_url = $"{Cls_Keys.ServerURL}/api/Logistics/verify-package-orders?orderId={events.Id}", // The URL to redirect after payment
+                    channels = new[] { "card", "bank", "ussd", "mobile_money", "bank_transfer" },
+                    metadata = new
+                    {
+                        cancel_action = $"{Cls_Keys.ServerURL}/api/paystack-redirect?status=cancelled"
+                    }
+                };
+
+                using var httpClient = new HttpClient();
+
+                StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.PaystackSecretKey);
+                using var response = await httpClient.PostAsync($"{url}", content);
+                string apiResponse = await response.Content.ReadAsStringAsync();
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    var paystackResponse = JsonConvert.DeserializeObject<PaystackResponse>(apiResponse);
+
+
+                    return Ok(paystackResponse);
+                }
+                else
+                {
+                    var error = new ErrorModel()
+                    {
+                        Message = $"{apiResponse}",
+                        Status = true
+                    };
+                    return BadRequest(error);
+                }
+
+            }
+
+        }
+
+        [HttpGet("verify-package-orders")]
+        public async Task<IActionResult> VerifyPharmacyProductOrderPayment([FromQuery] Guid orderId, [FromQuery] string trxref, [FromQuery] string reference)
+        {
+
+            var url = $"https://api.paystack.co/transaction/verify/{reference}";
+
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.PaystackSecretKey);
+            using var response = await httpClient.GetAsync($"{url}");
+            string apiResponse = await response.Content.ReadAsStringAsync();
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                var paystackResponse = new PaymentSucessData()
+                {
+                    Status = true,
+                    Message = "Payment Made Sucessfully",
+                    AccessCode = trxref,
+                    Reference = reference
+                };
+
+                var tronData = await companyRepository.GetOrderAsync(orderId);
+                var user = new OrderModelData()
+                {
+                    OrderStatus = tronData.OrderStatus,
+                    ExpectedDeliveryTime = tronData.ExpectedDeliveryTime,
+                    ConfirmationImage = tronData.ConfirmationImage,
+                    ShippingCost = tronData.ShippingCost,
+                    VatCost = tronData.VatCost,
+                    TrnxReference = paystackResponse.Reference,
+                    PaymentChannel = "Paystack",
+                    PaymentStatus = paystackResponse.Status,
+                    Comment = tronData.Comment,
+                    CurrentLatitude = tronData.CurrentLatitude,
+                    CurrentLongitude = tronData.CurrentLongitude,
+                    CurrentLocation = tronData.CurrentLocation,
+                    UpdatedAt = DateTime.UtcNow,
+                };
+
+                // Update detials to repository
+                user = await companyRepository.UpdateOrderAsync(tronData.Id, user);
+                return Ok(paystackResponse);
+            }
+            else
+            {
+                var error = new ErrorModel()
+                {
+                    Message = $"{apiResponse}",
+                    Status = true
+                };
+                return BadRequest(error);
+            }
+        }
+
+
+        //flutterwave
+        [HttpPut("initialize-flutterwave-package-orders/{id:guid}")]
+        [Authorize(Roles = "User")]
+        public async Task<IActionResult> InitializeFlutterwavePayment([FromRoute] Guid id)
+        {
+          
+
+            var events = await companyRepository.GetOrderAsync(id);
+
+            if (events == null)
+            {
+                return BadRequest("Accommodation Does not Exist");
+            }
+            else
+            {
+
+                var url = "https://api.flutterwave.com/v3/payments";
+                var data = new
+                {
+                    tx_ref = CreateRandomTokenSix(),
+                    amount = events.ShippingCost + events.VatCost,  // Amount in Kobo (100 kobo = 1 Naira)
+                    customer = new
+                    {
+                        email = events.SenderEmail,
+                        name = events.SenderName
+                    },
+                    currency = "NGN",
+                    redirect_url = $"{Cls_Keys.ServerURL}/api/Logistics/verify-flutterwave-package-orders?orderId={events.Id}", // The URL to redirect after payment
+                    customizations = new
+                    {
+                        title = "My App Payment",
+                        description = "Payment for items in cart"
+                    }
+                };
+
+
+                using var httpClient = new HttpClient();
+
+                StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.FlutterwaveSecretKey);
+                using var response = await httpClient.PostAsync($"{url}", content);
+                string apiResponse = await response.Content.ReadAsStringAsync();
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    var paystackResponse = JsonConvert.DeserializeObject<FlutterwaveResponse>(apiResponse);
+                    return Ok(paystackResponse);
+                }
+                else
+                {
+                    var error = new ErrorModel()
+                    {
+                        Message = $"{apiResponse}",
+                        Status = true
+                    };
+                    return BadRequest(error);
+                }
+
+            }
+
+        }
+
+        [HttpGet("verify-flutterwave-accomodation-reservations-customer")]
+        public async Task<IActionResult> VerifyFlutterwavePayment([FromQuery] Guid orderId, [FromQuery] string status, [FromQuery] string tx_ref, [FromQuery] string transaction_id)
+        {
+            var url = $"https://api.flutterwave.com/v3/transactions/{transaction_id}/verify";
+
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.FlutterwaveSecretKey);
+            using var response = await httpClient.GetAsync($"{url}");
+            string apiResponse = await response.Content.ReadAsStringAsync();
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                var paystackResponse = new PaymentSucessData()
+                {
+                    Status = true,
+                    Message = "Payment Made Sucessfully",
+                    AccessCode = transaction_id,
+                    Reference = tx_ref,
+                    PaymentStatus = status
+                };
+
+                if (paystackResponse.PaymentStatus == "successful")
+                {
+
+                    var tronData = await companyRepository.GetOrderAsync(orderId);
+                    var user = new OrderModelData()
+                    {
+                        OrderStatus = tronData.OrderStatus,
+                        ExpectedDeliveryTime = tronData.ExpectedDeliveryTime,
+                        ConfirmationImage = tronData.ConfirmationImage,
+                        ShippingCost = tronData.ShippingCost,
+                        VatCost = tronData.VatCost,
+                        TrnxReference = paystackResponse.Reference,
+                        PaymentChannel = "Flutterwave",
+                        PaymentStatus = paystackResponse.Status,
+                        Comment = tronData.Comment,
+                        CurrentLatitude = tronData.CurrentLatitude,
+                        CurrentLongitude = tronData.CurrentLongitude,
+                        CurrentLocation = tronData.CurrentLocation,
+                        UpdatedAt = DateTime.UtcNow,
+                    };
+
+                    // Update detials to repository
+                    user = await companyRepository.UpdateOrderAsync(tronData.Id, user);
+                    // TODO: Mark payment as successful in DB
+                    return Redirect($"{Cls_Keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
+                }
+                else
+                {
+
+                    return Redirect($"{Cls_Keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
+                }
+
+            }
+            else
+            {
+                var error = new ErrorModel()
+                {
+                    Message = $"{apiResponse}",
+                    Status = true
+                };
+                return BadRequest(error);
+            }
+        }
+
 
 
         [HttpPut]
@@ -933,31 +936,48 @@ namespace Genilog_WebApi.Controllers
             // convert back to dto
             else
             {
-
                 var user = new OrderModelData()
                 {
                     OrderStatus = !string.IsNullOrWhiteSpace(request.OrderStatus) ? request.OrderStatus : userDto1.OrderStatus,
                     ExpectedDeliveryTime= !string.IsNullOrWhiteSpace(request.ExpectedDeliveryTime) ? request.ExpectedDeliveryTime : userDto1.ExpectedDeliveryTime,
                     ConfirmationImage = !string.IsNullOrWhiteSpace(request.ConfirmationImage) ? request.ConfirmationImage : userDto1.ConfirmationImage,
-                    ShippingCost = (double)(request.ShippingCost ?? userDto1.ShippingCost),
+                    ShippingCost = (request.ShippingCost ?? userDto1.ShippingCost),
+                    VatCost = (request.VatCost ?? userDto1.VatCost),
                     TrnxReference = !string.IsNullOrWhiteSpace(request.TrnxReference) ? request.TrnxReference : userDto1.TrnxReference,
                     PaymentChannel = !string.IsNullOrWhiteSpace(request.PaymentChannel) ? request.PaymentChannel : userDto1.PaymentChannel,
                     PaymentStatus = (bool)(request.PaymentStatus ?? userDto1.PaymentStatus),
                     Comment = !string.IsNullOrWhiteSpace(request.Comment) ? request.Comment : userDto1.Comment,
-                    CurrentLatitude = (double)(request.CurrentLatitude ?? userDto1.CurrentLatitude),
-                    CurrentLongitude = (double)(request.CurrentLongitude ?? userDto1.CurrentLongitude),
+                    CurrentLatitude = (request.CurrentLatitude ?? userDto1.CurrentLatitude),
+                    CurrentLongitude = (request.CurrentLongitude ?? userDto1.CurrentLongitude),
                     CurrentLocation = !string.IsNullOrWhiteSpace(request.CurrentLocation) ? request.CurrentLocation : userDto1.CurrentLocation,
                     UpdatedAt = nigeriaTime,
                 };
 
                 // Update detials to repository
                 user = await companyRepository.UpdateOrderAsync(id, user);
-                var datra = await companyRepository.GetOrderAsync(user.Id);
-                var contactsDto = mapper.Map<OrderModelDataDto>(datra);
-                // await _hubContext.Clients.All.SendAsync("ReceiveMessage", user.RiderName, $"The Rider has the Order {user.OrderNum} on {user.OrderStatus} Status");
-                // var contactsDto = mapper.Map<GasOrderModelDataDto>(order);
-                // await _gasStationHubContext.Clients.Group(user.Id.ToString()).SendAsync("ORDER", contactsDto);
-                return Ok(contactsDto);
+                var orderflow = new OrderDeliveryFlow
+                {
+                    OrderModelDataId = user.Id,
+                    OrderStatus = user.OrderStatus,
+                    CurrentLatitude = user.CurrentLatitude,
+                    CurrentLongitude = user.CurrentLongitude,
+                    CurrentLocation = user.CurrentLocation,
+                    UpdatedAt = user.UpdatedAt,
+                };
+                var exist = await companyRepository.OrderDeliveryFlowExistAsync(user.OrderStatus!,user.Id,orderflow);
+                if (exist)
+                {
+                    var datra = await companyRepository.GetOrderAsync(user.Id);
+                    var contactsDto = mapper.Map<OrderModelDataDto>(datra);
+                    return Ok(contactsDto);
+                }
+                else
+                {
+                    await companyRepository.AddOrderDeliveryFlowAsync(orderflow);
+                    var datra = await companyRepository.GetOrderAsync(user.Id);
+                    var contactsDto = mapper.Map<OrderModelDataDto>(datra);
+                    return Ok(contactsDto);
+                }
             }
         }
 
@@ -1023,50 +1043,7 @@ namespace Genilog_WebApi.Controllers
         }
 
 
-        [HttpPut]
-        [Route("package-orders-image/{id:guid}")]
-        [Authorize(Roles = "Rider_User,Admin,Super_Admin")]
-        public async Task<IActionResult> UpdatePurchaseImageAsync([FromRoute] Guid id, UpdatesPurchaseImages request)
-        {
-            List<PackageImageList> ticketBonus = [];
-            var rtnlist = new List<string>();
-            DateTime localTime = DateTime.Now;
-            TimeZoneInfo nigeriaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("W. Central Africa Standard Time");
-            DateTime nigeriaTime = TimeZoneInfo.ConvertTimeFromUtc(localTime.ToUniversalTime(), nigeriaTimeZone);
-            // Update detials to repository
-            var user = await companyRepository.GetOrderAsync(id);
-
-            // check the null value
-            if (user == null)
-            {
-                return BadRequest("Order Does not Exist");
-            }
-            // convert back to dto
-            else
-            {
-                for (var i = 0; i < request.ImageURL!.Count; i++)
-                {
-                    rtnlist.Add(request.ImageURL[i]);
-                    var languageUpdate = new PackageImageList()
-                    {
-                        OrderModelDataId = user.Id,
-                        ImageUrlFile = rtnlist[i],
-                    };
-                    languageUpdate = await companyRepository.AddPackageImagesAsync(languageUpdate);
-                    ticketBonus.Add(languageUpdate);
-                }
-
-                var datra = await companyRepository.GetOrderAsync(user.Id);
-                var contactsDto = mapper.Map<OrderModelDataDto>(datra);
-                // await _hubContext.Clients.All.SendAsync("ReceiveMessage", user.RiderName, $"The Rider has the Order {user.OrderNum} on {user.OrderStatus} Status");
-                // var contactsDto = mapper.Map<GasOrderModelDataDto>(order);
-                // await _gasStationHubContext.Clients.Group(user.Id.ToString()).SendAsync("ORDER", contactsDto);
-                return Ok(contactsDto);
-            }
-
-        }
-
-
+   
         #region private methods
 
         private static string CreateRandomToken()

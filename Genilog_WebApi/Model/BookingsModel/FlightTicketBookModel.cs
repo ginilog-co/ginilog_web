@@ -6,6 +6,8 @@
         public Guid AirlineId { get; set; }
         public Guid AdminId { get; set; }
         public string? AirlineName { get; set; }
+        public string? DepartureAirpot { get; set; }
+        public string? ReturnAirpot { get; set; }
         public string? OperatedBy { get; set; }
         public string? FlightSpeed { get; set; }
         public string? TicketNum { get; set; }

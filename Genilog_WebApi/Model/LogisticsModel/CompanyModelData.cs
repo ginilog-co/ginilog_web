@@ -5,6 +5,7 @@ namespace Genilog_WebApi.Model.LogisticsModel
     public class CompanyModelData
     {
         public Guid Id { get; set; }
+        public Guid AdminId { get; set; }
         public string? CompanyEmail { get; set; }
         public string? CompanyName { get; set; }
         public string? PhoneNumber { get; set; }
@@ -25,6 +26,8 @@ namespace Genilog_WebApi.Model.LogisticsModel
         public string? BankName { get; set; }
         public string? AccountName { get; set; }
         public string? AccountNumber { get; set; }
+        public List<string>? DeliveryTypes { get; set; }
+        public List<string>? ServiceAreas { get; set; }
         public List<CompanyReviewModel>? CompanyReviewModels { get; set; }
         public DateTime? CreatedAt { get; set; }
     }
@@ -43,6 +46,7 @@ namespace Genilog_WebApi.Model.LogisticsModel
     public class CompanyModelDataDto
     {
         public Guid Id { get; set; }
+        public Guid AdminId { get; set; }
         public string? CompanyEmail { get; set; }
         public string? CompanyName { get; set; }
         public string? PhoneNumber { get; set; }
@@ -63,6 +67,8 @@ namespace Genilog_WebApi.Model.LogisticsModel
         public string? BankName { get; set; }
         public string? AccountName { get; set; }
         public string? AccountNumber { get; set; }
+        public List<string>? DeliveryTypes { get; set; }
+        public List<string>? ServiceAreas { get; set; }
         public List<CompanyReviewModelDto>? CompanyReviewModels { get; set; }
         public DateTime? CreatedAt { get; set; }
     }
@@ -79,13 +85,7 @@ namespace Genilog_WebApi.Model.LogisticsModel
     }
     public class AddCompany
     {
-        public string? LastName { get; set; }
-        public string? FirstName { get; set; }
         public string? CompanyEmail { get; set; }
-        [Required(AllowEmptyStrings = false, ErrorMessage = "Password is required")]
-        [StringLength(255, ErrorMessage = "Must be atleast 8 characters", MinimumLength = 8)]
-        [RegularExpression("^((?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])).{8,}$", ErrorMessage = "Passwords must contain uppercase,lowercase and number")]
-        public string? Password { get; set; }
         public string? CompanyName { get; set; }
         public string? PhoneNumber { get; set; }
         public string? CompanyLogo { get; set; }
@@ -104,11 +104,12 @@ namespace Genilog_WebApi.Model.LogisticsModel
         public string? BankName { get; set; }
         public string? AccountName { get; set; }
         public string? AccountNumber { get; set; }
+        public List<string>? DeliveryTypes { get; set; }
+        public List<string>? ServiceAreas { get; set; }
     }
     public class UpdateCompany
     {
-        public string? LastName { get; set; }
-        public string? FirstName { get; set; }
+        public string? CompanyEmail { get; set; }
         public string? CompanyName { get; set; }
         public string? PhoneNumber { get; set; }
         public string? CompanyLogo { get; set; }
@@ -128,5 +129,7 @@ namespace Genilog_WebApi.Model.LogisticsModel
         public string? AccountName { get; set; }
         public string? AccountNumber { get; set; }
         public bool? Available { get; set; }
+        public List<string>? DeliveryTypes { get; set; }
+        public List<string>? ServiceAreas { get; set; }
     }
 }

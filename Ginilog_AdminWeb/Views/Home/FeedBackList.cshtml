@@ -1,0 +1,109 @@
+﻿@model IEnumerable<Ginilog_AdminWeb.Models.InfoModel.FeedbackModel>
+
+@{
+    ViewData["Title"] = "FeedBack List";
+    Layout = "~/Views/Shared/_NewLayout.cshtml";
+}
+
+<!-- Blank Start -->
+<div class="row">
+   
+    <div class="col-12 grid-margin">
+
+        <div class="card">
+            <div class="card-body">
+
+                <div style="padding-top:20px"></div>
+                <h6 class="mb-4">Search Here</h6>
+                <form asp-controller="Home" asp-action="FeedBackList" method="get">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="id" placeholder="Search: Email, FirstName or LastName" aria-label="Recipient's username" aria-describedby="basic-addon2">
+                            <div class="input-group-append">
+                                <button class="btn btn-sm btn-primary" type="submit">Search</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <div style="padding-top:20px"></div>
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone Number</th>
+                                <th>Feedback</th>
+                                <th>Date</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr class="feedback-item">
+                                    <td>@item!.Name</td>
+                                    <td>@item!.Email</td>
+                                    <td>@item!.PhoneNo</td>
+                                    <td>@item!.Feedback</td>
+                                    <td>@item!.CreatedAt</td>
+                                    <!--
+                                         <td>
+                                        <form asp-action="DeleteFeedBack" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Are you sure you want to delete this user?');">
+                                            <button type="submit" class="btn btn-danger" >Delete</button>
+                                        </form>
+                                      </td>
+                                    -->
+
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+           </div>
+       </div>
+
+    </div>
+
+</div>
+<!-- Blank End -->
+<!-- Delete Confirmation Modal -->
+
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this user?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" action="/Home/DeleteFeedBack">
+                    <input type="hidden" name="UserId" id="userIdInput" />
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var deleteModal = document.getElementById('deleteModal');
+        deleteModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var userId = button.getAttribute('data-user-id');
+            var userIdInput = document.getElementById('userIdInput');
+            userIdInput.value = userId;
+            console.log(userId); // Debugging
+        });
+    });
+</script>

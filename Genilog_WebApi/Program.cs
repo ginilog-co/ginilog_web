@@ -1,6 +1,7 @@
 
 using FirebaseAdmin;
 using Genilog_WebApi.DataContext;
+using Genilog_WebApi.Repository;
 using Genilog_WebApi.Repository.AdminRepo;
 using Genilog_WebApi.Repository.AuthRepo;
 using Genilog_WebApi.Repository.BookingsRepo;
@@ -98,7 +99,7 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IRidersRepository, RidersRepository>();
 builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
 
-builder.Services.AddScoped<IHotelRepository, HotelRepository>();
+builder.Services.AddScoped<IAccomodationRepository, AccomodationRepository>();
 builder.Services.AddScoped<IAirlineRepository, AirlineRepository>();
 builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 
@@ -141,10 +142,17 @@ app.UseCors(MyAllowSpecificOrigins);
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.MapHub<AdminHubRepository>("/adminHub").RequireCors(MyAllowSpecificOrigins);
-app.MapHub<UserHubRepository>("/userHub").RequireCors(MyAllowSpecificOrigins);
-app.MapHub<LogisticsHubRepository>("/logisticsHub").RequireCors(MyAllowSpecificOrigins);
-app.MapHub<NotificationHub>("/notificationHub").RequireCors(MyAllowSpecificOrigins);
-app.MapHub<BookingsHubRepository>("/placesHub").RequireCors(MyAllowSpecificOrigins);
-app.MapHub<WalletHubRepository>("/walletHub").RequireCors(MyAllowSpecificOrigins);
+app.UseWebSockets();
+app.Map("/ws", async (HttpContext context) =>
+{
+    if (context.WebSockets.IsWebSocketRequest)
+    {
+        using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+        await WebSocketHandler.HandleConnection(webSocket, context);
+    }
+    else
+    {
+        context.Response.StatusCode = 400;
+    }
+});
 app.Run();

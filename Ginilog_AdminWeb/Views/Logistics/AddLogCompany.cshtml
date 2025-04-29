@@ -1,0 +1,185 @@
+﻿@model Ginilog_AdminWeb.Models.LogisticsModel.AddCompany
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Company - Ginilog Admin Panel</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+    <!-- plugins:css -->
+    <link rel="stylesheet" href="~/new/assets/vendors/mdi/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="~/new/assets/vendors/css/vendor.bundle.base.css">
+    <!-- endinject -->
+    <!-- Plugin css for this page -->
+    <link rel="stylesheet" href="~/new/assets/vendors/jvectormap/jquery-jvectormap.css">
+    <link rel="stylesheet" href="~/new/assets/vendors/flag-icon-css/css/flag-icon.min.css">
+    <link rel="stylesheet" href="~/new/assets/vendors/owl-carousel-2/owl.carousel.min.css">
+    <link rel="stylesheet" href="~/new/assets/vendors/owl-carousel-2/owl.theme.default.min.css">
+    <!-- End plugin css for this page -->
+    <!-- inject:css -->
+    <!-- endinject -->
+    <!-- Layout styles -->
+    <link rel="stylesheet" href="~/new/assets/css/style.css">
+    <!-- End layout styles -->
+    <link rel="shortcut icon" href="~/new/assets/images/favicon.png" />
+</head>
+<body>
+
+
+
+    <div class="content-wrapper">
+        <div style="padding-top:20px"></div>
+        <p>
+            <a asp-action="AllLogCompanyList" class="btn btn-outline-primarym-2">Back to List</a>
+        </p>
+        <h6 class="mb-4">Add An Admin</h6>
+        <hr />
+        <form asp-action="AddLogCompany" enctype="multipart/form-data" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label>Company Email</label>
+                <input asp-for="CompanyEmail" type="email" class="form-control" placeholder="Company Email" />
+                <span asp-validation-for="CompanyEmail" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Company Name</label>
+                <input asp-for="CompanyName" type="text" class="form-control p_input" placeholder="Company Name" />
+                <span asp-validation-for="CompanyName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Company Phone Number</label>
+                <input asp-for="PhoneNumber" type="tel" maxlength="11" pattern="\d{10,11}" class="form-control" placeholder="Company PhoneNo" />
+                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Company Logo</label>
+                <input id="LogoUpload" asp-for="LogoUpload" type="file" accept="image/*" class="form-control" placeholder="Company Logo" />
+                <span asp-validation-for="CompanyLogo" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Company Reg No</label>
+                <input asp-for="CompanyRegNo" type="text" class="form-control" placeholder="Company Reg No" />
+                <span asp-validation-for="CompanyRegNo" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Company Info</label>
+                <textarea asp-for="CompanyInfo" class="form-control" placeholder="Company Info"></textarea>
+                <span asp-validation-for="CompanyInfo" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Company Charge</label>
+                <input asp-for="ValueCharge" type="number" class="form-control" placeholder="Company Value Charge" />
+                <span asp-validation-for="ValueCharge" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Company No Of Trucks</label>
+                <input asp-for="NoOfTrucks" type="number" class="form-control" placeholder="Company No of trucks" />
+                <span asp-validation-for="NoOfTrucks" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Company No of Bikes</label>
+                <input asp-for="NofOfBikes" class="form-control" placeholder="Company No of trucks" />
+                <span asp-validation-for="NofOfBikes" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Company Address</label>
+                <input asp-for="CompanyAddress" class="form-control" placeholder="Company Adress" />
+                <span asp-validation-for="CompanyAddress" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Company Postcodes</label>
+                <input asp-for="PostCodes" class="form-control" placeholder="Company postcodes" />
+                <span asp-validation-for="PostCodes" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Company Locality</label>
+                <input asp-for="Locality" class="form-control" placeholder="Company Locality" />
+                <span asp-validation-for="Locality" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>State</label>
+                <input asp-for="State" class="form-control" placeholder="State" />
+                <span asp-validation-for="State" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Latitude</label>
+                <input asp-for="Latitude" class="form-control" placeholder="latitude" />
+                <span asp-validation-for="Latitude" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Longitude</label>
+                <input asp-for="Longitude" class="form-control" placeholder="Logitude" />
+                <span asp-validation-for="Longitude" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Bank Name</label>
+                <input asp-for="BankName" class="form-control" placeholder="Bank Name" />
+                <span asp-validation-for="BankName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Account Name</label>
+                <input asp-for="AccountName" class="form-control" placeholder="Account Name" />
+                <span asp-validation-for="AccountName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Account Number</label>
+                <input asp-for="AccountNumber" class="form-control" placeholder="Account Number" />
+                <span asp-validation-for="AccountNumber" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Delivery Type</label>
+                <select asp-for="DeliveryTypes" multiple class="form-control p_input" aria-label="Floating label select example">
+                    <option value="Same State">Same State</option>
+                    <option value="Inter state">Inter state</option>
+                    <option value="Charter">Charter</option>
+                    <option value="International">International</option>
+                </select>
+                <span asp-validation-for="DeliveryTypes" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Service Areas</label>
+                <input asp-for="ServiceArea" class="form-control" placeholder="engu,kano" />
+                <span asp-validation-for="ServiceArea" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+</div>
+
+    <!-- plugins:js -->
+    <script src="~/new/assets/vendors/js/vendor.bundle.base.js"></script>
+    <!-- endinject -->
+    <!-- Plugin js for this page -->
+    <script src="~/new/assets/vendors/chart.js/Chart.min.js"></script>
+    <script src="~/new/assets/vendors/progressbar.js/progressbar.min.js"></script>
+    <script src="~/new/assets/vendors/jvectormap/jquery-jvectormap.min.js"></script>
+    <script src="~/new/assets/vendors/jvectormap/jquery-jvectormap-world-mill-en.js"></script>
+    <script src="~/new/assets/vendors/owl-carousel-2/owl.carousel.min.js"></script>
+    <!-- End plugin js for this page -->
+    <!-- inject:js -->
+    <script src="~/new/assets/js/off-canvas.js"></script>
+    <script src="~/new/assets/js/hoverable-collapse.js"></script>
+    <script src="~/new/assets/js/misc.js"></script>
+    <script src="~/new/assets/js/settings.js"></script>
+    <script src="~/new/assets/js/todolist.js"></script>
+    <!-- endinject -->
+    <!-- Custom js for this page -->
+    <script src="~/new/assets/js/dashboard.js"></script>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+</body>
+</html>
