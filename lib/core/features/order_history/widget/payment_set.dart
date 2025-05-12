@@ -1,24 +1,21 @@
 // ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
 
-import 'package:ginilog_customer_app/core/components/helpers/endpoints.dart';
-import 'package:ginilog_customer_app/core/components/helpers/globals.dart';
+import 'dart:convert';
+
+import 'package:ginilog_customer_app/core/components/model/flutterwave_response_model.dart';
+import 'package:ginilog_customer_app/core/components/model/paystack_response_model.dart';
 import 'package:ginilog_customer_app/core/components/utils/app_buttons.dart';
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
-import 'package:ginilog_customer_app/core/components/utils/constants.dart';
 import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
-import 'package:ginilog_customer_app/core/features/home/widget/package_info_page.dart.dart';
+import 'package:ginilog_customer_app/core/components/widgets/payment_page_widget.dart';
 import 'package:ginilog_customer_app/core/features/order_history/model/package_orders_model.dart';
 import 'package:ginilog_customer_app/core/features/order_history/services/package_order_service.dart';
-import 'package:paystack_payment/paystack_payment.dart';
 
 class PaymentMethodBottomSheet extends StatefulWidget {
-  const PaymentMethodBottomSheet({
-    super.key,
-    required this.order,
-  });
+  const PaymentMethodBottomSheet({super.key, required this.order});
   final PackageOrderResponseModel order;
   @override
   _PaymentMethodBottomSheetState createState() =>
@@ -35,9 +32,9 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
     } else if (selected == 2) {
       handleFlutterWavePayment();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Please select a payment method")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Please select a payment method")));
     }
   }
 
@@ -59,21 +56,25 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               AppText(
-                  isBody: true,
-                  text: "Choose Payment Method",
-                  textAlign: TextAlign.start,
-                  fontSize: 70,
-                  color: AppColors.black,
-                  fontStyle: FontStyle.normal,
-                  fontWeight: FontWeight.w800),
+                isBody: true,
+                text: "Choose Payment Method",
+                textAlign: TextAlign.start,
+                fontSize: 70,
+                color: AppColors.black,
+                fontStyle: FontStyle.normal,
+                fontWeight: FontWeight.w800,
+              ),
               addHorizontalSpacing(10),
               const Divider(),
               addHorizontalSpacing(10),
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: const SizedBox(
-                    height: 30, width: 30, child: Icon(Icons.close)),
-              )
+                  height: 30,
+                  width: 30,
+                  child: Icon(Icons.close),
+                ),
+              ),
             ],
           ),
           addVerticalSpacing(context, 1.2),
@@ -85,8 +86,13 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
           SizedBox(height: 15),
           _buildPaymentOption("Pay with Flutterwave", 2),
           addVerticalSpacing(context, 10.2),
-          appButton("Continue", getScreenWidth(context), handlePayment,
-              AppColors.primary, isLoading),
+          appButton(
+            "Continue",
+            getScreenWidth(context),
+            handlePayment,
+            AppColors.primary,
+            isLoading,
+          ),
         ],
       ),
     );
@@ -119,151 +125,100 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
     );
   }
 
-// PAYSTACK
+  // PAYSTACK
 
-  void handlePaystackPayment() {
-    final paystack = PaystackPayment(secretKey: Endpoints.paystackSecretKey);
-    paystack.pay(
-      context: context,
-      email: "${globals.userEmail}",
-      amount: (widget.order.shippingCost! + widget.order.vatCost!.toDouble()),
-      currency: 'NGN',
-      onSuccess: (response) async {
-        setState(() {
-          isLoading = true;
-        });
-        final response2 = await PackageOrderService().makePayment(
-          orderId: widget.order.id.toString(),
-          trnxReference: response.reference!,
-          paymentStatus: true,
-          paymentChannel: "Paystack",
-        );
-        if (response2.statusCode == 200 || response2.statusCode == 201) {
-          // await sendNotifications(
-          //     "You have successfully placed an order of ${widget}Kg gas.");
-          setState(() {
-            isLoading = false;
-          });
-          navigateToRoute(
-              context,
-              PaymentConfirmationPage(
-                  isPackage: true,
-                  totalAmount: widget.order.shippingCost.toString(),
-                  cardNumber: "card Number"));
-          setState(() {
-            isLoading = false;
-          });
-        } else {
-          setState(() {
-            isLoading = false;
-          });
-          showCustomSnackbar(
-            context,
-            title: "Order Error",
-            content: "Order could not Completed because${response2.body}",
-            type: SnackbarType.error,
-            isTopPosition: false,
-          );
-        }
-      },
-      onError: (response) {
-        setState(() {
-          isLoading = false;
-        });
-        showCustomSnackbar(
-          context,
-          title: "${response.message}Payment Error",
-          content: "The payment could not be process",
-          type: SnackbarType.error,
-          isTopPosition: false,
-        );
-      },
-      onCancel: (response) {
-        setState(() {
-          isLoading = false;
-        });
-        showCustomSnackbar(
-          context,
-          title: "${response.message}Payment Error",
-          content: "The payment could not be process",
-          type: SnackbarType.error,
-          isTopPosition: false,
-        );
-      },
+  void handlePaystackPayment() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final response = await PackageOrderService().makePayment(
+      orderId: widget.order.id.toString(),
+      trnxReference: generateTransactionReference(),
+      paymentStatus: true,
+      paymentChannel: "Paystack",
+      paymentType: "paystack",
     );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      setState(() {
+        isLoading = false;
+      });
+      var data = json.decode(response.body);
+      var payment = PaystackResponseModel.fromJson(data);
+      navigateBack(context);
+      navigateToRoute(
+        context,
+        PaystackPaymentPage(
+          url: payment.data!.authorizationUrl!,
+          isPaystack: true,
+          isPackageOrder: true,
+        ),
+      );
+      setState(() {
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+      navigateBack(context);
+      showCustomSnackbar(
+        context,
+        title: "Payment Error",
+        content: "Payment could not Completed because${response.body}",
+        type: SnackbarType.error,
+        isTopPosition: false,
+      );
+    }
   }
 
   String generateTransactionReference() {
     return DateTime.now().millisecondsSinceEpoch.toString();
   }
 
-//FLUTTERWAVE
-  Future<void> handleFlutterWavePayment() async {
-    final Customer customer = Customer(
-      name: "${widget.order.senderName}",
-      phoneNumber: "${widget.order.senderPhoneNo}",
-      email: globals.userEmail ?? "guest@example.com",
-    );
+  //FLUTTERWAVE
+  void handleFlutterWavePayment() async {
+    setState(() {
+      isLoading = true;
+    });
 
-    final Flutterwave flutterwave = Flutterwave(
-      context: context,
-      publicKey: Endpoints.flutterWaveKey,
-      currency: "NGN",
-      txRef: generateTransactionReference(),
-      amount: (widget.order.shippingCost! + widget.order.vatCost!).toString(),
-      redirectUrl: 'https://www.ginilog.com/',
-      customer: customer,
-      paymentOptions: "Bank transfer",
-      customization: Customization(title: "Gas Payment"),
-      isTestMode: false,
+    final response = await PackageOrderService().makePayment(
+      orderId: widget.order.id.toString(),
+      trnxReference: generateTransactionReference(),
+      paymentStatus: true,
+      paymentChannel: "Flutterwave",
+      paymentType: "flutterwave",
     );
-
-    final ChargeResponse response = await flutterwave.charge();
-    printData("Payment Response", response);
-    if (response.status == "successful") {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       setState(() {
-        isLoading = true;
+        isLoading = false;
       });
-      final response2 = await PackageOrderService().makePayment(
-        orderId: widget.order.id.toString(),
-        trnxReference: response.txRef!,
-        paymentStatus: true,
-        paymentChannel: "Flutterwave",
+      var data = json.decode(response.body);
+      var payment = FlutterwaveResponseModel.fromJson(data);
+      navigateBack(context);
+      navigateToRoute(
+        context,
+        PaystackPaymentPage(
+          url: payment.data!.link!,
+          isPaystack: false,
+          isPackageOrder: true,
+        ),
       );
-      if (response2.statusCode == 200 || response2.statusCode == 201) {
-// await sendNotifications(
-        //     "You have successfully placed an order of ${widget}Kg gas.");
-        setState(() {
-          isLoading = false;
-        });
-        navigateToRoute(
-            context,
-            PaymentConfirmationPage(
-                isPackage: true,
-                totalAmount: widget.order.shippingCost.toString(),
-                cardNumber: "card Number"));
-        setState(() {
-          isLoading = false;
-        });
-      } else {
-        setState(() {
-          isLoading = false;
-        });
-        showCustomSnackbar(context,
-            title: "Order Error",
-            content: "Order could not Completed because${response2.body}",
-            type: SnackbarType.error,
-            isTopPosition: false);
-      }
+      setState(() {
+        isLoading = false;
+      });
     } else {
       setState(() {
         isLoading = false;
       });
-      showCustomSnackbar(context,
-          title: "Payment Error",
-          content: "The payment could not be process",
-          type: SnackbarType.error,
-          isTopPosition: false);
+      navigateBack(context);
+      showCustomSnackbar(
+        context,
+        title: "Payment Error",
+        content: "Payment could not Completed because${response.body}",
+        type: SnackbarType.error,
+        isTopPosition: false,
+      );
     }
   }
 }

@@ -1,5 +1,6 @@
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
 import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
+import 'package:ginilog_customer_app/core/components/utils/money_formatter.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/features/account/view/report/view_bookings_receipt.dart';
@@ -26,11 +27,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
       padding: const EdgeInsets.only(left: 5.0, right: 5.0, top: 5.0),
       child: GestureDetector(
         onTap: () {
-          navigateToRoute(
-              context,
-              ViewCustomerBookReceiptPage(
-                order: data3,
-              ));
+          navigateToRoute(context, ViewCustomerBookReceiptPage(order: data3));
         },
         child: Card(
           elevation: 4,
@@ -38,9 +35,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
             width: getScreenWidth(context),
             decoration: BoxDecoration(
               color: AppColors.white,
-              borderRadius: const BorderRadius.all(
-                Radius.circular(10),
-              ),
+              borderRadius: const BorderRadius.all(Radius.circular(10)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,13 +86,14 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                                   ),
                                 ),
                                 AppText(
-                                    isBody: true,
-                                    text: "Room: ${data3.roomNumber}",
-                                    textAlign: TextAlign.start,
-                                    fontSize: 35,
-                                    color: AppColors.black,
-                                    fontStyle: FontStyle.normal,
-                                    fontWeight: FontWeight.bold),
+                                  isBody: true,
+                                  text: "Room: ${data3.roomNumber}",
+                                  textAlign: TextAlign.start,
+                                  fontSize: 35,
+                                  color: AppColors.black,
+                                  fontStyle: FontStyle.normal,
+                                  fontWeight: FontWeight.bold,
+                                ),
                                 RichText(
                                   textAlign: TextAlign.start,
                                   text: TextSpan(
@@ -129,27 +125,37 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                           ),
                           Container(
                             margin: const EdgeInsets.only(
-                                left: 40, right: 5, top: 10, bottom: 10),
+                              left: 40,
+                              right: 5,
+                              top: 10,
+                              bottom: 10,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.primary,
                               borderRadius: BorderRadius.circular(15),
                               boxShadow: const [
                                 BoxShadow(
-                                    blurRadius: 15.0,
-                                    color: Color.fromRGBO(0, 0, 0, 0.2)),
+                                  blurRadius: 15.0,
+                                  color: Color.fromRGBO(0, 0, 0, 0.2),
+                                ),
                               ],
                             ),
                             child: Padding(
                               padding: EdgeInsets.only(
-                                  left: 10, right: 10, top: 10, bottom: 10),
+                                left: 10,
+                                right: 10,
+                                top: 10,
+                                bottom: 10,
+                              ),
                               child: AppText(
-                                  isBody: true,
-                                  text: "View",
-                                  textAlign: TextAlign.center,
-                                  fontSize: 32,
-                                  color: AppColors.white,
-                                  fontStyle: FontStyle.normal,
-                                  fontWeight: FontWeight.w900),
+                                isBody: true,
+                                text: "View",
+                                textAlign: TextAlign.center,
+                                fontSize: 32,
+                                color: AppColors.white,
+                                fontStyle: FontStyle.normal,
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
                           ),
                         ],
@@ -170,7 +176,8 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                               ),
                             ),
                             TextSpan(
-                              text: " ${data3.reservationStartDate} ",
+                              text:
+                                  " ${DateFormatter.formatDateTime(data3.reservationStartDate!)} ",
                               style: TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold,
@@ -188,7 +195,8 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                               ),
                             ),
                             TextSpan(
-                              text: " ${data3.reservationEndDate} ",
+                              text:
+                                  " ${DateFormatter.formatDateTime(data3.reservationEndDate!)} ",
                               style: TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold,

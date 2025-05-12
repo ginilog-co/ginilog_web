@@ -1,9 +1,25 @@
 {
     "cSpell.words": [
+        "Accomodation",
+        "Accomodations",
         "allprojects",
+        "androidx",
+        "dontwarn",
+        "ganatempire",
         "ginilog",
+        "gson",
         "imdex",
+        "keepattributes",
+        "multidex",
+        "prefs",
+        "proguard",
+        "reciever",
+        "resevation",
+        "Seperator",
         "Subproject",
-        "subprojects"
-    ]
+        "subprojects",
+        "trnx",
+        "updatedd"
+    ],
+    "cmake.ignoreCMakeListsMissing": true
 }

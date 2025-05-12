@@ -10,8 +10,8 @@ class FormUtils {
 
   static bool isValidEmail(String email) {
     final emailValid = RegExp(
-            r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
-        .hasMatch(email);
+      r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
+    ).hasMatch(email);
 
     return emailValid;
   }
@@ -38,8 +38,9 @@ class FormUtils {
   }
 
   static bool hasSpecialCharacters(String text) {
-    final hasSpecialCharacters =
-        text.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+    final hasSpecialCharacters = text.contains(
+      RegExp(r'[!@#$%^&*(),.?":{}|<>]'),
+    );
     return hasSpecialCharacters;
   }
 
@@ -77,9 +78,9 @@ class Constants {
 
   static const scrollerTransitionTime = 5;
 
-//   printData(identifier, data) {
-//   return log('===> $identifier <=== $data');
-// }
+  //   printData(identifier, data) {
+  //   return log('===> $identifier <=== $data');
+  // }
 }
 
 // setToLocalStorage() method will set data to the local storage
@@ -103,8 +104,10 @@ Future setBoolToLocalStorage({required String name, dynamic data}) async {
   await prefs.setBool(name, data);
 }
 
-Future setListToLocalStorage(
-    {required String name, required List<String> data}) async {
+Future setListToLocalStorage({
+  required String name,
+  required List<String> data,
+}) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   await prefs.setStringList(name, data);
 }
@@ -137,4 +140,15 @@ removeFromLocalStorage({required String name}) async {
 
 void finish(BuildContext context, [Object? result]) {
   if (Navigator.canPop(context)) Navigator.pop(context, result);
+}
+
+const String image =
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Placeholder_view_vector.svg/681px-Placeholder_view_vector.svg.png?20220519031949';
+String removeSpecialCharactersAndSpaces(String input) {
+  return input.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+}
+
+String removeSpecialCharactersAndLetters(String input) {
+  // This regex removes everything except digits (0-9)
+  return input.replaceAll(RegExp(r'[^0-9]'), '');
 }

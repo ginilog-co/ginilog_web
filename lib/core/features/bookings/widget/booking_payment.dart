@@ -1,31 +1,32 @@
 // ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
 
-import 'package:ginilog_customer_app/core/components/helpers/endpoints.dart';
-import 'package:ginilog_customer_app/core/components/helpers/globals.dart';
+import 'dart:convert';
+
+import 'package:ginilog_customer_app/core/components/model/flutterwave_response_model.dart';
+import 'package:ginilog_customer_app/core/components/model/paystack_response_model.dart';
 import 'package:ginilog_customer_app/core/components/utils/app_buttons.dart';
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
-import 'package:ginilog_customer_app/core/components/utils/constants.dart';
 import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
+import 'package:ginilog_customer_app/core/components/widgets/payment_page_widget.dart';
 import 'package:ginilog_customer_app/core/features/bookings/services/booking_services.dart';
-import 'package:ginilog_customer_app/core/features/home/widget/package_info_page.dart.dart';
-import 'package:paystack_payment/paystack_payment.dart';
 
 class BookingPaymentBottomSheet extends StatefulWidget {
-  const BookingPaymentBottomSheet(
-      {super.key,
-      required this.amount,
-      required this.reservationId,
-      required this.customerName,
-      required this.customerEmail,
-      required this.customerPhoneNumber,
-      required this.comment,
-      required this.noOfDays,
-      required this.numberOfGuests,
-      required this.reservationEndDate,
-      required this.reservationStartDate});
+  const BookingPaymentBottomSheet({
+    super.key,
+    required this.amount,
+    required this.reservationId,
+    required this.customerName,
+    required this.customerEmail,
+    required this.customerPhoneNumber,
+    required this.comment,
+    required this.noOfDays,
+    required this.numberOfGuests,
+    required this.reservationEndDate,
+    required this.reservationStartDate,
+  });
   final double amount;
 
   //Bookings Reservation Orders
@@ -55,9 +56,9 @@ class _BookingPaymentBottomSheetState extends State<BookingPaymentBottomSheet> {
       handleFlutterWavePayment(widget.noOfDays);
       // Navigator.pop(context);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Please select a payment method")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Please select a payment method")));
       Navigator.pop(context);
     }
   }
@@ -80,21 +81,25 @@ class _BookingPaymentBottomSheetState extends State<BookingPaymentBottomSheet> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               AppText(
-                  isBody: true,
-                  text: "Choose Payment Method",
-                  textAlign: TextAlign.start,
-                  fontSize: 70,
-                  color: AppColors.black,
-                  fontStyle: FontStyle.normal,
-                  fontWeight: FontWeight.w800),
+                isBody: true,
+                text: "Choose Payment Method",
+                textAlign: TextAlign.start,
+                fontSize: 70,
+                color: AppColors.black,
+                fontStyle: FontStyle.normal,
+                fontWeight: FontWeight.w800,
+              ),
               addHorizontalSpacing(10),
               const Divider(),
               addHorizontalSpacing(10),
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: const SizedBox(
-                    height: 30, width: 30, child: Icon(Icons.close)),
-              )
+                  height: 30,
+                  width: 30,
+                  child: Icon(Icons.close),
+                ),
+              ),
             ],
           ),
           addVerticalSpacing(context, 1.2),
@@ -106,8 +111,13 @@ class _BookingPaymentBottomSheetState extends State<BookingPaymentBottomSheet> {
           SizedBox(height: 15),
           _buildPaymentOption("Pay with Flutterwave", 2),
           addVerticalSpacing(context, 10.2),
-          appButton("Continue", getScreenWidth(context), handlePayment,
-              AppColors.primary, isLoading),
+          appButton(
+            "Continue",
+            getScreenWidth(context),
+            handlePayment,
+            AppColors.primary,
+            isLoading,
+          ),
         ],
       ),
     );
@@ -140,229 +150,42 @@ class _BookingPaymentBottomSheetState extends State<BookingPaymentBottomSheet> {
     );
   }
 
-// PAYSTACK
-//   void handlePaystackPayment(int days) {
-//     int fatNum = days == 0 ? 1 : days;
-//     PaystackFlutter().pay(
-//       context: context,
-//       secretKey: Endpoints
-//           .paystackSecretKey, // Your Paystack secret key gotten from your Paystack dashboard.
-//       amount: ((widget.amount * fatNum) *
-//           100), // The amount to be charged in the smallest currency unit. If amount is 600, multiply by 100(600*100)
-//       email: globals.userEmail ??
-//           widget.customerEmail, // The customer's email address.
-//       callbackUrl:
-//           'https://callback.com', // The URL to which Paystack will redirect the user after the transaction.
-//       showProgressBar:
-//           true, // If true, it shows progress bar to inform user an action is in progress when getting checkout link from Paystack.
-//       paymentOptions: [
-//         PaymentOption.card,
-//         PaymentOption.bankTransfer,
-//         PaymentOption.mobileMoney,
-//         PaymentOption.ussd,
-//         PaymentOption.eft,
-//         PaymentOption.bank
-//       ],
-//       currency: Currency.NGN,
-//       metaData: {
-//         "product_name": "Nike Sneakers",
-//         "product_quantity": 3,
-//         "product_price": 24000
-//       }, // Additional metadata to be associated with the transaction
-//       onSuccess: (paystackCallback) async {
-//         setState(() {
-//           isLoading = true;
-//         });
-//         final response2 = await BookingsService().bookAccomodationReservation(
-//             reservationId: widget.reservationId.toString(),
-//             customerName: widget.customerName,
-//             customerPhoneNumber: widget.customerPhoneNumber,
-//             customerEmail: widget.customerEmail,
-//             trnxReference: paystackCallback.reference,
-//             paymentStatus: true,
-//             numberOfGuests: widget.numberOfGuests,
-//             comment: widget.comment,
-//             paymentChannel: "Paystack",
-//             reservationStartDate: widget.reservationStartDate,
-//             reservationEndDate: widget.reservationEndDate,
-//             noOfDays: days);
-//         if (response2.statusCode == 200 || response2.statusCode == 201) {
-// // await sendNotifications(
-//           //     "You have successfully placed an order of ${widget}Kg gas.");
-//           setState(() {
-//             isLoading = false;
-//           });
-//           navigateToRoute(
-//               context,
-//               PaymentConfirmationPage(
-//                   isPackage: false,
-//                   totalAmount: widget.amount.toString(),
-//                   cardNumber: "card Number"));
-//           setState(() {
-//             isLoading = false;
-//           });
-//         } else {
-//           setState(() {
-//             isLoading = false;
-//           });
-//           showCustomSnackbar(context,
-//               title: "Order Error",
-//               content: "Order could not Completed because${response2.body}",
-//               type: SnackbarType.error,
-//               isTopPosition: false);
-//         }
-//         // generateOrderNumber();
-//       }, // A callback function to be called when the payment is successful.
-//       onCancelled: (paystackCallback) {
-//         setState(() {
-//           isLoading = false;
-//         });
-//         showCustomSnackbar(context,
-//             title: "Payment Error",
-//             content: "The payment could not be process",
-//             type: SnackbarType.error,
-//             isTopPosition: false);
-//       }, // A callback function to be called when the payment is canceled.
-//     );
-//   }
-
-  void handlePaystackPayment(int days) {
+  void handlePaystackPayment(int days) async {
     int fatNum = days == 0 ? 1 : days;
-    final paystack = PaystackPayment(secretKey: Endpoints.paystackSecretKey);
-    paystack.pay(
-      context: context,
-      email: "${globals.userEmail}",
-      amount: (widget.amount * fatNum),
-      currency: 'NGN',
-      onSuccess: (response) async {
-        setState(() {
-          isLoading = true;
-        });
-        final response2 = await BookingsService().bookAccomodationReservation(
-            reservationId: widget.reservationId.toString(),
-            customerName: widget.customerName,
-            customerPhoneNumber: widget.customerPhoneNumber,
-            customerEmail: widget.customerEmail,
-            trnxReference: response.reference!,
-            paymentStatus: true,
-            numberOfGuests: widget.numberOfGuests,
-            comment: widget.comment,
-            paymentChannel: "Paystack",
-            reservationStartDate: widget.reservationStartDate,
-            reservationEndDate: widget.reservationEndDate,
-            noOfDays: days);
-        if (response2.statusCode == 200 || response2.statusCode == 201) {
-          // await sendNotifications(
-          //     "You have successfully placed an order of ${widget}Kg gas.");
-          setState(() {
-            isLoading = false;
-          });
-          navigateToRoute(
-              context,
-              PaymentConfirmationPage(
-                  isPackage: false,
-                  totalAmount: widget.amount.toString(),
-                  cardNumber: "card Number"));
-          setState(() {
-            isLoading = false;
-          });
-        } else {
-          setState(() {
-            isLoading = false;
-          });
-          showCustomSnackbar(
-            context,
-            title: "Order Error",
-            content: "Order could not Completed because${response2.body}",
-            type: SnackbarType.error,
-            isTopPosition: false,
-          );
-        }
-      },
-      onError: (response) {
-        setState(() {
-          isLoading = false;
-        });
-        showCustomSnackbar(
-          context,
-          title: "${response.message}Payment Error",
-          content: "The payment could not be process",
-          type: SnackbarType.error,
-          isTopPosition: false,
-        );
-      },
-      onCancel: (response) {
-        setState(() {
-          isLoading = false;
-        });
-        showCustomSnackbar(
-          context,
-          title: "${response.message}Payment Error",
-          content: "The payment could not be process",
-          type: SnackbarType.error,
-          isTopPosition: false,
-        );
-      },
+    setState(() {
+      isLoading = true;
+    });
+
+    final response = await BookingsService().bookAccomodationReservation(
+      reservationId: widget.reservationId.toString(),
+      customerName: widget.customerName,
+      customerPhoneNumber: widget.customerPhoneNumber,
+      customerEmail: widget.customerEmail,
+      trnxReference: generateTransactionReference(),
+      paymentStatus: true,
+      numberOfGuests: widget.numberOfGuests,
+      comment: widget.comment,
+      paymentChannel: "Paystack",
+      reservationStartDate: widget.reservationStartDate,
+      reservationEndDate: widget.reservationEndDate,
+      noOfDays: fatNum,
+      paymentType: "paystack",
     );
-  }
-
-  String generateTransactionReference() {
-    return DateTime.now().millisecondsSinceEpoch.toString();
-  }
-
-// FLUTTERWAVE
-  Future<void> handleFlutterWavePayment(int days) async {
-    final Customer customer = Customer(
-      name: widget.customerName,
-      phoneNumber: widget.customerPhoneNumber,
-      email: globals.userEmail ?? widget.customerEmail,
-    );
-    int fatNum = days == 0 ? 1 : days;
-    printData("Days", fatNum);
-    final Flutterwave flutterwave = Flutterwave(
-      context: context,
-      publicKey: Endpoints.flutterWaveKey,
-      currency: "NGN",
-      txRef: generateTransactionReference(),
-      amount: (widget.amount * fatNum).toString(),
-      redirectUrl: 'https://www.ginilog.com/',
-      customer: customer,
-      paymentOptions: "Bank transfer",
-      customization: Customization(title: "Gas Payment"),
-      isTestMode: false,
-    );
-
-    final ChargeResponse response = await flutterwave.charge();
-    printData("Payment Response", response);
-    if (response.status == "successful") {
-      setState(() {
-        isLoading = true;
-      });
-      await BookingsService().bookAccomodationReservation(
-          reservationId: widget.reservationId.toString(),
-          customerName: widget.customerName,
-          customerPhoneNumber: widget.customerPhoneNumber,
-          customerEmail: widget.customerEmail,
-          trnxReference: response.txRef!,
-          paymentStatus: true,
-          numberOfGuests: widget.numberOfGuests,
-          comment: widget.comment,
-          paymentChannel: "Paystack",
-          reservationStartDate: widget.reservationStartDate,
-          reservationEndDate: widget.reservationEndDate,
-          noOfDays: days);
-
-      // await sendNotifications(
-      //     "You have successfully placed an order of ${widget}Kg gas.");
+    if (response.statusCode == 200 || response.statusCode == 201) {
       setState(() {
         isLoading = false;
       });
+      var data = json.decode(response.body);
+      var payment = PaystackResponseModel.fromJson(data);
+      navigateBack(context);
       navigateToRoute(
-          context,
-          PaymentConfirmationPage(
-              isPackage: false,
-              totalAmount: widget.amount.toString(),
-              cardNumber: "card Number"));
+        context,
+        PaystackPaymentPage(
+          url: payment.data!.authorizationUrl!,
+          isPaystack: true,
+          isPackageOrder: false,
+        ),
+      );
       setState(() {
         isLoading = false;
       });
@@ -370,11 +193,74 @@ class _BookingPaymentBottomSheetState extends State<BookingPaymentBottomSheet> {
       setState(() {
         isLoading = false;
       });
-      showCustomSnackbar(context,
-          title: "Payment Error",
-          content: "The payment could not be process",
-          type: SnackbarType.error,
-          isTopPosition: false);
+      navigateBack(context);
+      showCustomSnackbar(
+        context,
+        title: "Payment Error",
+        content: "Payment could not Completed because${response.body}",
+        type: SnackbarType.error,
+        isTopPosition: false,
+      );
+    }
+  }
+
+  String generateTransactionReference() {
+    return DateTime.now().millisecondsSinceEpoch.toString();
+  }
+
+  // FLUTTERWAVE
+
+  void handleFlutterWavePayment(int days) async {
+    int fatNum = days == 0 ? 1 : days;
+    setState(() {
+      isLoading = true;
+    });
+
+    final response = await BookingsService().bookAccomodationReservation(
+      reservationId: widget.reservationId.toString(),
+      customerName: widget.customerName,
+      customerPhoneNumber: widget.customerPhoneNumber,
+      customerEmail: widget.customerEmail,
+      trnxReference: generateTransactionReference(),
+      paymentStatus: true,
+      numberOfGuests: widget.numberOfGuests,
+      comment: widget.comment,
+      paymentChannel: "Flutterwave",
+      reservationStartDate: widget.reservationStartDate,
+      reservationEndDate: widget.reservationEndDate,
+      noOfDays: fatNum,
+      paymentType: "flutterwave",
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      setState(() {
+        isLoading = false;
+      });
+      var data = json.decode(response.body);
+      var payment = FlutterwaveResponseModel.fromJson(data);
+      navigateBack(context);
+      navigateToRoute(
+        context,
+        PaystackPaymentPage(
+          url: payment.data!.link!,
+          isPaystack: false,
+          isPackageOrder: false,
+        ),
+      );
+      setState(() {
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+      navigateBack(context);
+      showCustomSnackbar(
+        context,
+        title: "Payment Error",
+        content: "Payment could not Completed because${response.body}",
+        type: SnackbarType.error,
+        isTopPosition: false,
+      );
     }
   }
 }

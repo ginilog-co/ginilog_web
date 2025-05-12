@@ -35,20 +35,21 @@ class BookingNotifier extends StateNotifier<Bookings> {
   List<AccomodationResponseModel> allAccomodations = [];
   AccomodationResponseModel accomodationModel = AccomodationResponseModel();
 
-// ACCOMODATION RESERVATIONS
+  // ACCOMODATION RESERVATIONS
   List<AccomodationReservationResponseModel> allAccomodationReservations = [];
   List<CustomerBookResponseModel> allCustomerBooks = [];
   BookingNotifier({required this.booking}) : super(BookingInitial());
 
-// Accomodation
+  // Accomodation
   getAccomodationData({required String id}) async {
     try {
       if (!mounted) {
         state = BookingLoading();
         return;
       }
-      AccomodationResponseModel response2 =
-          await booking.getAccomodationData(accomodationId: id);
+      AccomodationResponseModel response2 = await booking.getAccomodationData(
+        accomodationId: id,
+      );
       accomodationModel = response2;
       state = BookingSuccess(message: "${response2.id} Notification Loaded");
     } on Exception catch (e) {
@@ -81,53 +82,61 @@ class BookingNotifier extends StateNotifier<Bookings> {
     return accomodation;
   }
 
-// ACCOMODATION RESERVATIONS
-  createBooking(
-      {required String reservationId,
-      required String customerName,
-      required String customerPhoneNumber,
-      required String customerEmail,
-      required String trnxReference,
-      required bool paymentStatus,
-      required int numberOfGuests,
-      required String comment,
-      required String paymentChannel,
-      required String reservationStartDate,
-      required String reservationEndDate,
-      required int noOfDays,
-      required BuildContext context}) async {
+  // ACCOMODATION RESERVATIONS
+  createBooking({
+    required String reservationId,
+    required String customerName,
+    required String customerPhoneNumber,
+    required String customerEmail,
+    required String trnxReference,
+    required bool paymentStatus,
+    required int numberOfGuests,
+    required String comment,
+    required String paymentChannel,
+    required String reservationStartDate,
+    required String reservationEndDate,
+    required int noOfDays,
+    required String paymentType,
+    required BuildContext context,
+  }) async {
     try {
       if (!mounted) {
         state = BookingLoading();
         return;
       }
       var response = await booking.bookAccomodationReservation(
-          reservationId: reservationId,
-          customerName: customerName,
-          customerPhoneNumber: customerPhoneNumber,
-          customerEmail: customerEmail,
-          trnxReference: trnxReference,
-          paymentStatus: paymentStatus,
-          numberOfGuests: numberOfGuests,
-          comment: comment,
-          paymentChannel: paymentChannel,
-          reservationStartDate: reservationStartDate,
-          reservationEndDate: reservationEndDate,
-          noOfDays: noOfDays);
+        reservationId: reservationId,
+        customerName: customerName,
+        customerPhoneNumber: customerPhoneNumber,
+        customerEmail: customerEmail,
+        trnxReference: trnxReference,
+        paymentStatus: paymentStatus,
+        numberOfGuests: numberOfGuests,
+        comment: comment,
+        paymentChannel: paymentChannel,
+        reservationStartDate: reservationStartDate,
+        reservationEndDate: reservationEndDate,
+        noOfDays: noOfDays,
+        paymentType: paymentType,
+      );
       if (response.statusCode == 200 || response.statusCode == 201) {
         state = BookingSuccess(message: "Booking Successfully");
-        showCustomSnackbar(context,
-            title: "Booking Addition",
-            content: "Booking Added Successfully",
-            type: SnackbarType.success,
-            isTopPosition: false);
+        showCustomSnackbar(
+          context,
+          title: "Booking Addition",
+          content: "Booking Added Successfully",
+          type: SnackbarType.success,
+          isTopPosition: false,
+        );
       } else {
         state = BookingFailure(error: response.body);
-        showCustomSnackbar(context,
-            title: "Booking Addition",
-            content: response.body,
-            type: SnackbarType.error,
-            isTopPosition: false);
+        showCustomSnackbar(
+          context,
+          title: "Booking Addition",
+          content: response.body,
+          type: SnackbarType.error,
+          isTopPosition: false,
+        );
       }
     } on Exception catch (e) {
       state = BookingFailure(error: e.toString());
@@ -165,8 +174,9 @@ class BookingNotifier extends StateNotifier<Bookings> {
   }
 }
 
-final streamRepositoryProvider =
-    Provider<BookingsService>((ref) => BookingsService());
+final streamRepositoryProvider = Provider<BookingsService>(
+  (ref) => BookingsService(),
+);
 final bookingProvider = StateNotifierProvider<BookingNotifier, Bookings>((ref) {
   final BookingsService booking = BookingsService();
   return BookingNotifier(booking: booking);

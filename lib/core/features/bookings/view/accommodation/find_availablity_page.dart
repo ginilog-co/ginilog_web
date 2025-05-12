@@ -33,64 +33,70 @@ class _FindReservationPageState extends ConsumerState<FindReservationPage> {
     bookingsProvider.getAllAccomodationReservationData();
     filteredTickets =
         bookingsProvider.allAccomodationReservations.where((test) {
-      return test.accomodationId == widget.accommodationId &&
-          test.isBooked == false;
-    }).toList();
+          return test.accomodationId == widget.accommodationId;
+        }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: AppColors.white,
-        appBar: PreferredSize(
-            preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(12)),
-            child: Padding(
-              padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-              child: GlobalBackButton(
-                  backText: '${widget.accommodationName} Available Rooms',
-                  showBackButton: true),
-            )),
-        body: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              filteredTickets.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          addVerticalSpacing(context, 55),
-                          const AppText(
-                              isBody: false,
-                              text: "Nothing to show here",
-                              textAlign: TextAlign.start,
-                              fontSize: 38,
-                              color: AppColors.black,
-                              fontStyle: FontStyle.normal,
-                              fontWeight: FontWeight.bold),
-                          const AppText(
-                              isBody: true,
-                              text:
-                                  "We don't have any Accomodation Reservations at the moment",
-                              textAlign: TextAlign.center,
-                              fontSize: 30,
-                              color: AppColors.black,
-                              fontStyle: FontStyle.normal,
-                              fontWeight: FontWeight.normal),
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: filteredTickets.length,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemBuilder: (context, index) => FindReservationWidget(
-                            accomodationReservation: filteredTickets[index],
-                          ))
-            ],
+      backgroundColor: AppColors.white,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(12)),
+        child: Padding(
+          padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
+          child: GlobalBackButton(
+            backText: '${widget.accommodationName} Available Rooms',
+            showBackButton: true,
           ),
-        ));
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            filteredTickets.isEmpty
+                ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      addVerticalSpacing(context, 55),
+                      const AppText(
+                        isBody: false,
+                        text: "Nothing to show here",
+                        textAlign: TextAlign.start,
+                        fontSize: 38,
+                        color: AppColors.black,
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      const AppText(
+                        isBody: true,
+                        text:
+                            "We don't have any Accomodation Reservations at the moment",
+                        textAlign: TextAlign.center,
+                        fontSize: 30,
+                        color: AppColors.black,
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ],
+                  ),
+                )
+                : ListView.builder(
+                  itemCount: filteredTickets.length,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemBuilder:
+                      (context, index) => FindReservationWidget(
+                        accomodationReservation: filteredTickets[index],
+                      ),
+                ),
+          ],
+        ),
+      ),
+    );
   }
 }

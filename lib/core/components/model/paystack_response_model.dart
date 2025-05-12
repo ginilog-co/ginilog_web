@@ -1,38 +1,30 @@
-// To parse this JSON data, do
-//
-//     final paystackResponseData = paystackResponseDataFromJson(jsonString);
-
 import 'dart:convert';
 
-PaystackResponseData paystackResponseDataFromJson(String str) =>
-    PaystackResponseData.fromJson(json.decode(str));
+PaystackResponseModel paystackResponseModelFromJson(String str) =>
+    PaystackResponseModel.fromJson(json.decode(str));
 
-String paystackResponseDataToJson(PaystackResponseData data) =>
+String paystackResponseModelToJson(PaystackResponseModel data) =>
     json.encode(data.toJson());
 
-class PaystackResponseData {
+class PaystackResponseModel {
   final bool? status;
   final String? message;
   final Data? data;
 
-  PaystackResponseData({
-    this.status,
-    this.message,
-    this.data,
-  });
+  PaystackResponseModel({this.status, this.message, this.data});
 
-  factory PaystackResponseData.fromJson(Map<String, dynamic> json) =>
-      PaystackResponseData(
+  factory PaystackResponseModel.fromJson(Map<String, dynamic> json) =>
+      PaystackResponseModel(
         status: json["status"],
         message: json["message"],
         data: json["data"] == null ? null : Data.fromJson(json["data"]),
       );
 
   Map<String, dynamic> toJson() => {
-        "status": status,
-        "message": message,
-        "data": data?.toJson(),
-      };
+    "status": status,
+    "message": message,
+    "data": data?.toJson(),
+  };
 }
 
 class Data {
@@ -40,21 +32,17 @@ class Data {
   final String? accessCode;
   final String? reference;
 
-  Data({
-    this.authorizationUrl,
-    this.accessCode,
-    this.reference,
-  });
+  Data({this.authorizationUrl, this.accessCode, this.reference});
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
-        authorizationUrl: json["authorization_url"],
-        accessCode: json["access_code"],
-        reference: json["reference"],
-      );
+    authorizationUrl: json["authorizationUrl"],
+    accessCode: json["accessCode"],
+    reference: json["reference"],
+  );
 
   Map<String, dynamic> toJson() => {
-        "authorization_url": authorizationUrl,
-        "access_code": accessCode,
-        "reference": reference,
-      };
+    "authorizationUrl": authorizationUrl,
+    "accessCode": accessCode,
+    "reference": reference,
+  };
 }
