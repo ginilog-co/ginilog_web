@@ -80,6 +80,10 @@ namespace Genilog_WebApi.Repository.UserRepo
                 existinguser.UserStatus = user.UserStatus!;
                 existinguser.LastSeenAt = user.LastSeenAt;
                 existinguser.LastLoginAt = user.LastLoginAt;
+                existinguser.MoneyBoxBalance = user.MoneyBoxBalance;
+                existinguser.BankName = user.BankName;
+                existinguser.AccountNumber = user.AccountNumber;
+                existinguser.AccountName = user.AccountName;
                 await maap_Context.SaveChangesAsync();
                 return existinguser;
             }

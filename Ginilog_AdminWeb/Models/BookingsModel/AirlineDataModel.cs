@@ -1,8 +1,6 @@
 ﻿namespace Ginilog_AdminWeb.Models.BookingsModel
 {
-
-    // Places Data DTO
-    public class AirlineDataModelDto
+    public class AirlineDataModel
     {
         public Guid Id { get; set; }
         public Guid AdminId { get; set; }
@@ -20,12 +18,12 @@
         public double Rating { get; set; }
         public bool Available { get; set; }
         public List<string>? AirlineImages { get; set; }
-        public List<AirCraftListDto>? AirCraftList { get; set; }
-        public List<AirLineServiceLocationDto>? AirLineServiceLocations { get; set; }
-        public List<AirlineReviewModelDto>? AirlineReviewModels { get; set; }
+        public List<AirCraftList>? AirCraftList { get; set; }
+        public List<AirLineServiceLocation>? AirLineServiceLocations { get; set; }
+        public List<AirlineReviewModel>? AirlineReviewModels { get; set; }
         public DateTime CreatedAt { get; set; }
     }
-    public class AirCraftListDto
+    public class AirCraftList
     {
         public Guid Id { get; set; }
         public string? Model { get; set; }
@@ -34,7 +32,7 @@
         public Guid AirlineDataModelId { get; set; }
     }
     // AirLine Service Location
-    public class AirLineServiceLocationDto
+    public class AirLineServiceLocation
     {
         public Guid Id { get; set; }
         public string? Name { get; set; }
@@ -43,7 +41,7 @@
         public string? Country { get; set; }
         public Guid AirlineDataModelId { get; set; }
     }
-    public class AirlineReviewModelDto
+    public class AirlineReviewModel
     {
         public Guid Id { get; set; }
         public string? UserName { get; set; }

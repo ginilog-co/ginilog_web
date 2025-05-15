@@ -19,6 +19,10 @@ namespace Genilog_WebApi.Model.UsersDataModel
         public string? State { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
+        public double MoneyBoxBalance { get; set; }
+        public string? BankName { get; set; }
+        public string? AccountName { get; set; }
+        public string? AccountNumber{ get; set; }
         public List<DeliveryAddress>? DeliveryAddresses { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }

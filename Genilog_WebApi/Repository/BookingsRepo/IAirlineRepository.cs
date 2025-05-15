@@ -9,7 +9,7 @@ namespace Genilog_WebApi.Repository.BookingsRepo
         Task<AirlineDataModel> AddAsync(AirlineDataModel region);
         Task<AirlineDataModel> DeleteAsync(Guid id);
         Task<AirlineDataModel> UpdateAsync(Guid id, AirlineDataModel region);
-
+        Task<bool> AdminIdExistAsync(Guid adminId);
         Task<AirCraftList> AddAirCraftListAsync(AirCraftList region);
         Task<AirCraftList> DeleteAirCraftListAsync(Guid id);
 

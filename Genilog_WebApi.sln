@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Genilog_landing_page", "Gen
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ginilog_AdminWeb", "Ginilog_AdminWeb\Ginilog_AdminWeb.csproj", "{140CA2EE-1AD7-446E-B1D7-0214B8C3132A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ginilog_Company_WebDasboard", "Ginilog_Company_WebDasboard\Ginilog_Company_WebDasboard.csproj", "{B7D5BBA6-3731-4865-84C6-F5D1F0E0FA06}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{140CA2EE-1AD7-446E-B1D7-0214B8C3132A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{140CA2EE-1AD7-446E-B1D7-0214B8C3132A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{140CA2EE-1AD7-446E-B1D7-0214B8C3132A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7D5BBA6-3731-4865-84C6-F5D1F0E0FA06}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7D5BBA6-3731-4865-84C6-F5D1F0E0FA06}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7D5BBA6-3731-4865-84C6-F5D1F0E0FA06}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7D5BBA6-3731-4865-84C6-F5D1F0E0FA06}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

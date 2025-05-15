@@ -63,6 +63,7 @@
         public Guid Id { get; set; }
         public Guid ResevationId { get; set; }
         public Guid AccomodationId { get; set; }
+        public Guid AdminId { get; set; }
         public string? AccomodationName { get; set; }
         public string? AccomodationType { get; set; }
         public string? AccomodationLocation { get; set; }
@@ -92,6 +93,7 @@
         public Guid Id { get; set; }
         public Guid ResevationId { get; set; } 
         public Guid AccomodationId { get; set; }
+        public Guid AdminId { get; set; }
         public string? AccomodationName { get; set; }
         public string? AccomodationType { get; set; }
         public string? AccomodationLocation { get; set; }
@@ -108,8 +110,8 @@
         public bool PaymentStatus { get; set; }
         public string? Comment { get; set; }
         public string? TicketNum { get; set; }
-        public string? ReservationStartDate { get; set; }
-        public string? ReservationEndDate { get; set; }
+        public DateTime ReservationStartDate { get; set; }
+        public DateTime ReservationEndDate { get; set; }
         public int? NoOfDays { get; set; }
         public bool TicketClosed { get; set; }
         public double? TotalCost { get; set; }

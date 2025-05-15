@@ -4,6 +4,31 @@ namespace Genilog_WebApi.Model.WalletModel
 {
     public class TransactionDataModel
     {
+        public Guid Id { get; set; }
+        public Guid UserId { get; set; }
+        public Guid AdminId { get; set; }
+        public string? Title { get; set; }
+        public string? TransactionType { get; set; }
+        public string? Reason { get; set; }
+        public string? Amount { get; set; }
+        public string? PhoneNo { get; set; }
+        public string? TrnxRef { get; set; }
+        public bool TrnxStatus { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+    public class TransactionDataModelDto
+    {
+        public Guid Id { get; set; }
+        public Guid UserId { get; set; }
+        public Guid AdminId { get; set; }
+        public string? Title { get; set; }
+        public string? TransactionType { get; set; }
+        public string? Reason { get; set; }
+        public string? Amount { get; set; }
+        public string? PhoneNo { get; set; }
+        public string? TrnxRef { get; set; }
+        public bool TrnxStatus { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 
 

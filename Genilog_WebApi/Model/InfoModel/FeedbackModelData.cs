@@ -9,6 +9,7 @@ namespace Genilog_WebApi.Model.InfoModel
         public string? Email { get; set; }
         public string? Feedback { get; set; }
         public string? PhoneNo { get; set; }
+        public string? CompanyName { get; set; }
         public string? DatePublished { get; set; }
         public DateTime CreatedAt { get; set; }
     }
@@ -19,6 +20,7 @@ namespace Genilog_WebApi.Model.InfoModel
         public string? Email { get; set; }
         public string? Feedback { get; set; }
         public string? PhoneNo { get; set; }
+        public string? CompanyName { get; set; }
         public string? DatePublished { get; set; }
         public DateTime CreatedAt { get; set; }
     }

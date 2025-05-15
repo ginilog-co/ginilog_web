@@ -4,10 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Genilog_WebApi.Repository.AdminRepo
 {
-    public class AdminRepository(Genilog_Data_Context maap_Context, IWebHostEnvironment environment) : IAdminRepository
+    public class AdminRepository(Genilog_Data_Context maap_Context) : IAdminRepository
     {
         private readonly Genilog_Data_Context maap_Context = maap_Context;
-        private readonly IWebHostEnvironment environment = environment;
 
         public async Task<AdminModelTable> AddAsync(AdminModelTable users)
         {
@@ -69,6 +68,9 @@ namespace Genilog_WebApi.Repository.AdminRepo
                 existinguser.Address = user.Address;
                 // Upload Image
                 existinguser.ImagePath = user.ImagePath;
+                existinguser.CompanyName = user.CompanyName;
+                existinguser.CompanyUserName = user.CompanyUserName;
+                existinguser.CompanyType = user.CompanyType;
                 await maap_Context.SaveChangesAsync();
                 return existinguser;
             }
@@ -134,6 +136,70 @@ namespace Genilog_WebApi.Repository.AdminRepo
                 existinguser.AdvertDays4 = user.AdvertDays4;
                 await maap_Context.SaveChangesAsync();
                 return existinguser;
+            }
+        }
+
+        // COMPANY Apply
+        public async Task<CompanyApplyDataModel> AddCompanyApplyAsync(CompanyApplyDataModel users)
+        {
+            users.Id = Guid.NewGuid();
+            await maap_Context.CompanyApplyDataModels!.AddAsync(users);
+            await maap_Context.SaveChangesAsync();
+            return users;
+        }
+
+        public async Task<CompanyApplyDataModel> DeleteCompanyApplyAsync(Guid id)
+        {
+            var users = await maap_Context.CompanyApplyDataModels!.FirstOrDefaultAsync(x => x.Id == id);
+            if (users == null)
+            {
+#pragma warning disable CS8603 // Possible null reference return.
+                return null;
+#pragma warning restore CS8603 // Possible null reference return.
+            }
+            else
+            {
+                // Delete Region
+                maap_Context.CompanyApplyDataModels!.Remove(users);
+                await maap_Context.SaveChangesAsync();
+                return users;
+            }
+        }
+
+        public async Task<IEnumerable<CompanyApplyDataModel>> GetAllCompanyApplyAsync()
+        {
+            return await maap_Context.CompanyApplyDataModels!.ToListAsync();
+        }
+
+        public async Task<CompanyApplyDataModel> GetCompanyApplyAsync(Guid id)
+        {
+#pragma warning disable CS8603 // Possible null reference return.
+            return await maap_Context.CompanyApplyDataModels!.FirstOrDefaultAsync(x => x.Id == id);
+#pragma warning restore CS8603 // Possible null reference return.
+        }
+
+        public async Task<CompanyApplyDataModel> UpdateCompanyApplyAsync(Guid id, CompanyApplyDataModel user)
+        {
+            var existinguser = await maap_Context.CompanyApplyDataModels!.FirstOrDefaultAsync(x => x.Id == id);
+            if (existinguser == null)
+            {
+#pragma warning disable CS8603 // Possible null reference return.
+                return null;
+#pragma warning restore CS8603 // Possible null reference return.
+            }
+            else
+            {
+                existinguser.Email = user.Email;
+                existinguser.SurName = user.SurName;
+                existinguser.FirstName = user.FirstName;
+                existinguser.PhoneNo = user.PhoneNo;
+                existinguser.CompanyName = user.CompanyName;
+                existinguser.CompanyUserName = user.CompanyUserName;
+                existinguser.CompanyAddress = user.CompanyAddress;
+                existinguser.CompanyType = user.CompanyType;
+                await maap_Context.SaveChangesAsync();
+                return existinguser;
+
             }
         }
     }

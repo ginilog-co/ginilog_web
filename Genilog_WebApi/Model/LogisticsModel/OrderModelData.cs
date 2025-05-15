@@ -4,6 +4,7 @@
     public class OrderModelData
     {
         public Guid Id { get; set; }
+        public Guid AdminId { get; set; }
         public string? TrackingNum { get; set; }
         public string? ItemName { get; set; }
         public string? ItemDescription { get; set; }
@@ -80,6 +81,7 @@
     public class OrderModelDataDto
     {
         public Guid Id { get; set; }
+        public Guid AdminId { get; set; }
         public string? TrackingNum { get; set; }
         public string? ItemName { get; set; }
         public string? ItemDescription { get; set; }

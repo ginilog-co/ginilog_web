@@ -9,6 +9,7 @@ namespace Genilog_WebApi.Repository.PlacesRepo
         Task<AccomodationDataModel> AddAsync(AccomodationDataModel region);
         Task<AccomodationDataModel> DeleteAsync(Guid id);
         Task<AccomodationDataModel> UpdateAsync(Guid id, AccomodationDataModel region);
+        Task<bool> AdminIdExistAsync(Guid adminId);
         Task<AccomodationReviewModel> AddAccomodationReviewAsync(AccomodationReviewModel region);
         Task<AccomodationReviewModel> DeleteAccomodationReviewAsync(Guid id);
 

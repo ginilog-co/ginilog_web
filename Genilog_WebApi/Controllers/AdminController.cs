@@ -1,23 +1,16 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Mail;
-using System.Net;
 using Genilog_WebApi.Repository.AdminRepo;
 using Genilog_WebApi.Repository.AuthRepo;
-using Genilog_WebApi.Key;
 using Genilog_WebApi.Model.AdminsModel;
 using Genilog_WebApi.Repository.UploadRepo;
 using Google.Cloud.Firestore;
-using Genilog_WebApi.Model.UploadModels;
 using Genilog_WebApi.Model.AuthModel;
 using Genilog_WebApi.Model;
 using System.Security.Claims;
 using Genilog_WebApi.EmailSender;
-using Genilog_WebApi.Repository.NotificationRepo;
-using Microsoft.AspNetCore.SignalR;
-using Genilog_WebApi.Model.BookingsModel;
-using Genilog_WebApi.Repository.BookingsRepo;
+using System.Data;
 
 
 namespace Genilog_WebApi.Controllers
@@ -183,6 +176,11 @@ namespace Genilog_WebApi.Controllers
                         Branch = request.Branch,
                         Locality = request.Locality,
                         State = request.State,
+                        CompanyName = request.CompanyName,
+                        CompanyUserName = request.CompanyUserName,
+                        CompanyType = request.CompanyType,
+                        AdminType = request.AdminType,
+                        ManagerId = admin.Id,
                         DatePublished = date,
                         CreatedAt = DateTime.UtcNow
 
@@ -217,6 +215,133 @@ namespace Genilog_WebApi.Controllers
                         State = users.State,
                         AdminType = admin.UserType,
                         PhoneNo = users.PhoneNo,
+                        CompanyName = users.CompanyName,
+                        CompanyUserName = users.CompanyUserName,
+                        CompanyType = users.CompanyType,
+                        ManagerId = users.ManagerId,
+                        DatePublished = users.DatePublished,
+                        CreatedAt = users.CreatedAt,
+                    };
+                    return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.Id }, userDto);
+                }
+                else
+                {
+                    var error = new ErrorModel()
+                    {
+                        Message = "Invalid Admin Type",
+                        Status = true
+                    };
+                    return BadRequest(error);
+                }
+            }
+        }
+
+        [HttpPost]
+        [Route("staff-admin")]
+        [Authorize(Roles = "Super_Admin,Manager,Admin")]
+        public async Task<IActionResult> AddStaffAdminAsync(AddAdminRequest request)
+        {
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userId, out Guid userGuid))
+            {
+                return BadRequest("Invalid User ID format.");
+            }
+            var user = await usersRepository.GetAsync(userGuid);
+            if (user == null)
+            {
+                return BadRequest("Admin Does not Exist");
+            }
+            else
+            {
+                if (request.AdminType == "Staff_Admin" || request.AdminType == "Staff")
+                {
+                    var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
+                    var timeStamp = Timestamp.GetCurrentTimestamp();
+                    var admin = new GeneralUsers()
+                    {
+                        FirstName = request.FirstName,
+                        LastName = request.SurName,
+                        Email = request.Email,
+                        UserType = request.AdminType,
+                        PhoneNo = request.PhoneNo,
+                        VerificationToken = CreateRandomToken(),
+                        EmailConfirmed = true,
+                        ImagePath = "",
+                        CreatedAt = DateTime.UtcNow,
+                        LockOutEndEnabled = false,
+                        AccessFailedCount = 0,
+                        TwoFactorEnabled = false,
+                        LockOutEnd = DateTime.UtcNow.AddDays(30),
+                        PhoneNoConfirmed = true,
+                        ResetTokenExpires = DateTime.UtcNow.AddMinutes(10),
+                        EmailTokenExpires = DateTime.UtcNow.AddMinutes(10),
+                        PhoneNoTokenExpires = DateTime.UtcNow.AddMinutes(10),
+                        RefreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(10),
+                        VerifiedAt = DateTime.UtcNow,
+                        PhoneVerificationToken = CreateRandomToken(),
+                        PhoneVerifiedAt = DateTime.UtcNow.AddMinutes(10),
+                        PasswordResetToken = "",
+                        RefreshToken = "",
+                    };
+                    admin = await generalUserRepository.AddAsync(admin, request.Password!);
+                    var users = new AdminModelTable()
+                    {
+                        Id = admin.Id,
+                        Sex = request.Sex,
+                        ImagePath = "",
+                        FirstName = request.FirstName,
+                        SurName = request.SurName,
+                        Email = request.Email,
+                        StaffCode = request.StaffCode,
+                        PhoneNo = request.PhoneNo,
+                        Address = request.Address,
+                        Branch = request.Branch,
+                        Locality = request.Locality,
+                        State = request.State,
+                        CompanyName = user.CompanyName,
+                        CompanyUserName = user.CompanyUserName,
+                        CompanyType = user.CompanyType,
+                        AdminType = request.AdminType,
+                        ManagerId = user.Id,
+                        DatePublished = date,
+                        CreatedAt = DateTime.UtcNow
+
+                    };
+                    // Pass detials to repository
+                    users = await usersRepository.AddAsync(users);
+
+                    var roles = new Roles()
+                    {
+                        Name = admin.UserType
+                    };
+                    roles = await rolesRepository.AddAsync(roles);
+                    var user_Roles = new User_Role()
+                    {
+                        GeneralUsersId = users.Id,
+                        RoleId = roles.Id,
+                    };
+                    await user_RoleRepository.AddAsync(user_Roles);
+                    // convert back to dto
+                    var userDto = new AdminModelTableDto()
+                    {
+                        Id = users.Id,
+                        SurName = users.SurName,
+                        FirstName = users.FirstName,
+                        Email = users.Email,
+                        Sex = users.Sex,
+                        ImagePath = users.ImagePath,
+                        StaffCode = users.StaffCode,
+                        Address = users.Address,
+                        Branch = users.Branch,
+                        Locality = users.Locality,
+                        State = users.State,
+                        AdminType = admin.UserType,
+                        PhoneNo = users.PhoneNo,
+                        CompanyName = users.CompanyName,
+                        CompanyUserName = users.CompanyUserName,
+                        CompanyType = users.CompanyType,
+                        ManagerId = users.ManagerId,
                         DatePublished = users.DatePublished,
                         CreatedAt = users.CreatedAt,
                     };
@@ -260,7 +385,16 @@ namespace Genilog_WebApi.Controllers
                 Locality = !string.IsNullOrWhiteSpace(request.Locality) ? request.Locality : userDto.Locality,
                 State = !string.IsNullOrWhiteSpace(request.State) ? request.State : userDto.State,
                 ImagePath=!string.IsNullOrWhiteSpace(request.ImagePath) ? request.ImagePath : userDto.ImagePath,
-                
+                CompanyName =  userDto.CompanyName,
+                CompanyUserName = userDto.CompanyUserName,
+                CompanyType = userDto.CompanyType,
+                ManagerId = userDto.ManagerId,
+                DatePublished = userDto.DatePublished,
+                CreatedAt = userDto.CreatedAt,
+                AdminType = userDto.AdminType,
+                Email = userDto.Email,
+                Sex = userDto.Sex,
+
            };
             // Update detials to repository
             user = await usersRepository.UpdateAsync(userDto.Id, user);
@@ -288,6 +422,10 @@ namespace Genilog_WebApi.Controllers
                 State = user.State,
                 AdminType = t.UserType,
                 PhoneNo = user.PhoneNo,
+                CompanyName = user.CompanyName,
+                CompanyUserName = user.CompanyUserName,
+                CompanyType = user.CompanyType,
+                ManagerId = user.ManagerId,
                 DatePublished = user.DatePublished,
                 CreatedAt = user.CreatedAt,
             };
@@ -527,6 +665,124 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
+        // Company Apply Data
+
+        [HttpGet]
+        [Route("company-apply")]
+        [Authorize(Roles = "Admin,Super_Admin")]
+        public async Task<IActionResult> GetAllCompanyApplyAsync()
+        {
+            var events = await usersRepository.GetAllCompanyApplyAsync();
+            events = [.. events.OrderByDescending(x => x.CreatedAt)];
+            var userDto = mapper.Map<List<CompanyApplyDataModelDto>>(events);
+            return Ok(userDto);
+        }
+
+        [HttpGet]
+        [Route("company-apply/{id:guid}")]
+        [ActionName("GetCompanyApplyAsync")]
+        [Authorize(Roles = "Admin,Super_Admin")]
+        public async Task<IActionResult> GetCompanyApplyAsync(Guid id)
+        {
+            var contacts = await usersRepository.GetCompanyApplyAsync(id);
+            if (contacts == null)
+            {
+                return BadRequest("Id Does not Exist");
+            }
+            else
+            {
+                var contactsDto = mapper.Map<CompanyApplyDataModelDto>(contacts);
+                return Ok(contactsDto);
+            }
+        }
+
+        [HttpDelete]
+        [Route("company-apply/{id:guid}")]
+        [Authorize(Roles = "Admin,Super_Admin")]
+        public async Task<IActionResult> DeleteCompanyApplyAsync(Guid id)
+        {
+            // Get the region from the database
+            var user = await usersRepository.DeleteCompanyApplyAsync(id);
+            // if null NotFound
+            if (user == null)
+            {
+                return BadRequest("Advert Does not Exist");
+            }
+
+            else
+            {
+                var userDto = mapper.Map<CompanyApplyDataModelDto>(user);
+                return Ok(userDto);
+            }
+        }
+
+        [HttpPut]
+        [Route("company-apply/{id:guid}")]
+        [Authorize(Roles = "Admin,Super_Admin")]
+        public async Task<IActionResult> UpdateCompanyApplyAsync([FromRoute] Guid id, [FromBody] AddCompanyApply request)
+        {
+            var userDto1 = await usersRepository.GetCompanyApplyAsync(id);
+            if (userDto1 == null)
+            {
+                return BadRequest("Id Does not Exist");
+            }
+
+            // convert back to dto
+            else
+            {
+                var user = new CompanyApplyDataModel()
+                {
+                    Email = !string.IsNullOrWhiteSpace(request.Email) ? request.Email : userDto1.Email,
+                    SurName = !string.IsNullOrWhiteSpace(request.SurName) ? request.SurName : userDto1.SurName,
+                    FirstName = !string.IsNullOrWhiteSpace(request.FirstName) ? request.FirstName : userDto1.FirstName,
+                    PhoneNo = !string.IsNullOrWhiteSpace(request.PhoneNo)?request.PhoneNo:userDto1.PhoneNo,
+                    CompanyName = !string.IsNullOrWhiteSpace(request.CompanyName) ? request.CompanyName : userDto1.CompanyName,
+                    CompanyUserName = !string.IsNullOrWhiteSpace(request.CompanyUserName) ? request.CompanyUserName : userDto1.CompanyUserName,
+                    CompanyAddress = !string.IsNullOrWhiteSpace(request.CompanyAddress) ? request.CompanyAddress : userDto1.CompanyAddress,
+                    CompanyType= request.CompanyType?? userDto1.CompanyType,
+                };
+                // Update detials to repository
+                user = await usersRepository.UpdateCompanyApplyAsync(id, user);
+                var contact = await usersRepository.GetCompanyApplyAsync(user.Id);
+                var userDto = mapper.Map<CompanyApplyDataModelDto>(contact);
+                return Ok(userDto);
+            }
+        }
+
+        [HttpPost("company-apply")]
+        public async Task<IActionResult> AddCompanyApplyAsync([FromBody] AddCompanyApply request)
+        {
+            var check = ValidateCompanyApply(request);
+
+
+            if (!check)
+            {
+                return BadRequest(ModelState);
+            }
+            else
+            {
+                var contacts = new CompanyApplyDataModel()
+                {
+                    Email = request.Email,
+                    SurName = request.SurName,
+                    FirstName = request.FirstName,
+                    PhoneNo = request.PhoneNo,
+                    CompanyName = request.CompanyName,
+                    CompanyUserName = request.CompanyUserName,
+                    CompanyAddress = request.CompanyAddress,
+                    CompanyType = request.CompanyType,
+                    CreatedAt = DateTime.Now,
+
+                };
+                // Pass detials to repository
+                contacts = await usersRepository.AddCompanyApplyAsync(contacts);
+
+                // convert back to dto
+                var contact = await usersRepository.GetCompanyApplyAsync(contacts.Id);
+                var contactsDto = mapper.Map<CompanyApplyDataModelDto>(contact);
+                return CreatedAtAction(nameof(GetCompanyApplyAsync), new { id = contactsDto.Id }, contactsDto);
+            }
+        }
 
         #region private methods
 
@@ -588,6 +844,21 @@ namespace Genilog_WebApi.Controllers
         }
 
         private bool ValidateAdvert(AddAdvert request)
+        {
+            if (request == null)
+            {
+                ModelState.AddModelError(nameof(request), $"Add  Data Is Required");
+                return false;
+            }
+
+            if (ModelState.ErrorCount > 0)
+            {
+                return false;
+            }
+            return true;
+
+        }
+        private bool ValidateCompanyApply(AddCompanyApply request)
         {
             if (request == null)
             {

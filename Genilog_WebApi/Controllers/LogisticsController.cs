@@ -7,15 +7,15 @@ using Genilog_WebApi.Model.BookingsModel;
 using Genilog_WebApi.Model.LogisticsModel;
 using Genilog_WebApi.Model.Notification_Model;
 using Genilog_WebApi.Model.WalletModel;
+using Genilog_WebApi.Repository.AdminRepo;
 using Genilog_WebApi.Repository.AuthRepo;
 using Genilog_WebApi.Repository.LogisticsRepo;
 using Genilog_WebApi.Repository.NotificationRepo;
-using Genilog_WebApi.Repository.PlacesRepo;
 using Genilog_WebApi.Repository.UploadRepo;
 using Genilog_WebApi.Repository.UserRepo;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Net;
 using System.Net.Http.Headers;
@@ -31,7 +31,7 @@ namespace Genilog_WebApi.Controllers
         , IGeneralUserRepository generalUserRepository, IUploadRepository uploadRepository, IRolesRepository rolesRepository, IUser_RoleRepository user_RoleRepository, 
         IRidersRepository ridersRepository, ICompanyRepository companyRepository
          , INotificationRepository notificationRepository,
-        IUserRepository newUsersRepository) : ControllerBase
+        IUserRepository newUsersRepository, IAdminRepository adminRepository) : ControllerBase
     {
         private readonly IHostEnvironment _env = _env;
         private readonly IMapper mapper = mapper;
@@ -44,6 +44,7 @@ namespace Genilog_WebApi.Controllers
         private readonly IRidersRepository ridersRepository = ridersRepository;
         readonly INotificationRepository notificationRepository = notificationRepository;
         private readonly IUserRepository newUsersRepository = newUsersRepository;
+        private readonly IAdminRepository adminRepository = adminRepository;
         //  readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
 
         // This Is Gas Station SECTION
@@ -171,7 +172,7 @@ namespace Genilog_WebApi.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Super_Admin")]
+        [Authorize(Roles = "Manager,Admin,Super_Admin")]
         public async Task<IActionResult> AddCompanyAsync(AddCompany request)
         {
             var check = ValidateCompany(request);
@@ -186,11 +187,12 @@ namespace Genilog_WebApi.Controllers
                 {
                     return BadRequest("Invalid User ID format.");
                 }
+                var admin = await adminRepository.GetAsync(userGuid);
 
                 var contacts = new CompanyModelData()
                 {
                     Id = Guid.NewGuid(),
-                    AdminId=userGuid,
+                    AdminId=admin.ManagerId,
                     CompanyName = request.CompanyName,
                     CompanyInfo = request.CompanyInfo,
                     CompanyEmail = request.CompanyEmail,
@@ -216,37 +218,77 @@ namespace Genilog_WebApi.Controllers
                     CreatedAt = DateTime.UtcNow,
                 };
                 // Pass detials to repository
-                contacts = await companyRepository.AddAsync(contacts);
-                // convert back to dto
-                var contactsDto = new CompanyModelDataDto()
+                var isExist= await companyRepository.AdminIdExistAsync(admin.ManagerId);
+                if (isExist)
                 {
-                    Id = contacts.Id,
-                    AdminId = contacts.AdminId,
-                    CompanyName = contacts.CompanyName,
-                    CompanyInfo = contacts.CompanyInfo,
-                    CompanyEmail = contacts.CompanyEmail,
-                    PhoneNumber = contacts.PhoneNumber,
-                    CompanyAddress = contacts.CompanyAddress,
-                    Rating = contacts.Rating,
-                    NofOfBikes = contacts.NofOfBikes,
-                    NoOfTrucks  = contacts.NoOfTrucks ,
-                    ValueCharge = contacts.ValueCharge,
-                    CompanyLogo = contacts.CompanyLogo,
-                    CompanyRegNo = contacts.CompanyRegNo,
-                    AccountName = contacts.AccountName,
-                    AccountNumber = contacts.AccountNumber,
-                    BankName = contacts.BankName,
-                    State = contacts.State,
-                    Latitude = contacts.Latitude,
-                    Longitude = contacts.Longitude,
-                    Locality = contacts.Locality,
-                    PostCodes = contacts.PostCodes,
-                    Available = contacts.Available,
-                    CreatedAt = contacts.CreatedAt,
-                    DeliveryTypes = contacts.DeliveryTypes,
-                    ServiceAreas = contacts.ServiceAreas,
-                };
-                return CreatedAtAction(nameof(GetCompanyAsync), new { id = contactsDto.Id }, contactsDto);
+                    contacts = await companyRepository.UpdateAsync(admin.ManagerId,contacts);
+                    // convert back to dto
+                    var contactsDto = new CompanyModelDataDto()
+                    {
+                        Id = contacts.Id,
+                        AdminId = contacts.AdminId,
+                        CompanyName = contacts.CompanyName,
+                        CompanyInfo = contacts.CompanyInfo,
+                        CompanyEmail = contacts.CompanyEmail,
+                        PhoneNumber = contacts.PhoneNumber,
+                        CompanyAddress = contacts.CompanyAddress,
+                        Rating = contacts.Rating,
+                        NofOfBikes = contacts.NofOfBikes,
+                        NoOfTrucks = contacts.NoOfTrucks,
+                        ValueCharge = contacts.ValueCharge,
+                        CompanyLogo = contacts.CompanyLogo,
+                        CompanyRegNo = contacts.CompanyRegNo,
+                        AccountName = contacts.AccountName,
+                        AccountNumber = contacts.AccountNumber,
+                        BankName = contacts.BankName,
+                        State = contacts.State,
+                        Latitude = contacts.Latitude,
+                        Longitude = contacts.Longitude,
+                        Locality = contacts.Locality,
+                        PostCodes = contacts.PostCodes,
+                        Available = contacts.Available,
+                        CreatedAt = contacts.CreatedAt,
+                        DeliveryTypes = contacts.DeliveryTypes,
+                        ServiceAreas = contacts.ServiceAreas,
+                    };
+                    return CreatedAtAction(nameof(GetCompanyAsync), new { id = contactsDto.Id }, contactsDto);
+                }
+                else 
+                {
+                    contacts = await companyRepository.AddAsync(contacts);
+                    // convert back to dto
+                    var contactsDto = new CompanyModelDataDto()
+                    {
+                        Id = contacts.Id,
+                        AdminId = contacts.AdminId,
+                        CompanyName = contacts.CompanyName,
+                        CompanyInfo = contacts.CompanyInfo,
+                        CompanyEmail = contacts.CompanyEmail,
+                        PhoneNumber = contacts.PhoneNumber,
+                        CompanyAddress = contacts.CompanyAddress,
+                        Rating = contacts.Rating,
+                        NofOfBikes = contacts.NofOfBikes,
+                        NoOfTrucks = contacts.NoOfTrucks,
+                        ValueCharge = contacts.ValueCharge,
+                        CompanyLogo = contacts.CompanyLogo,
+                        CompanyRegNo = contacts.CompanyRegNo,
+                        AccountName = contacts.AccountName,
+                        AccountNumber = contacts.AccountNumber,
+                        BankName = contacts.BankName,
+                        State = contacts.State,
+                        Latitude = contacts.Latitude,
+                        Longitude = contacts.Longitude,
+                        Locality = contacts.Locality,
+                        PostCodes = contacts.PostCodes,
+                        Available = contacts.Available,
+                        CreatedAt = contacts.CreatedAt,
+                        DeliveryTypes = contacts.DeliveryTypes,
+                        ServiceAreas = contacts.ServiceAreas,
+                    };
+                    return CreatedAtAction(nameof(GetCompanyAsync), new { id = contactsDto.Id }, contactsDto);
+                }
+
+             
             }
         }
 
@@ -338,8 +380,6 @@ namespace Genilog_WebApi.Controllers
         [Authorize(Roles = "Manager,Admin,Super_Admin")]
         public async Task<IActionResult> UpdateRidersAsync([FromRoute] Guid id, [FromBody] UpdateRiders request)
         {
-            
-            
             var userDto1 = await ridersRepository.GetAsync(id);
             if (userDto1 == null)
             {
@@ -516,6 +556,7 @@ namespace Genilog_WebApi.Controllers
         [Authorize]
         public async Task<IActionResult> GetAllPackageOrderAsync()
         {
+            var events = await companyRepository.GetAllOrderAsync();
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!Guid.TryParse(userId, out Guid userGuid))
             {
@@ -523,16 +564,22 @@ namespace Genilog_WebApi.Controllers
             }
             var user = await generalUserRepository.GetAsync(userGuid);
 
-            if (user.UserType=="Super_Admin"|| user.UserType=="Admin") 
+            if (user.UserType=="Super_Admin"|| user.UserType=="Admin")
             {
-                var events = await companyRepository.GetAllOrderAsync();
+              
                 events = [.. events.OrderByDescending(x => x.CreatedAt)];
                 var userDto = mapper.Map<List<OrderModelDataDto>>(events);
                 return Ok(userDto);
             }
-           else
+            else if (user.UserType == "Manager" || user.UserType == "Staff-Admin" || user.UserType == "Staff")
             {
-                var events = await companyRepository.GetAllOrderAsync();
+                var admin = await adminRepository.GetAsync(user.Id);
+                events = [.. events.Where(x => x.AdminId == admin.ManagerId)];
+                var userDto = mapper.Map<List<OrderModelDataDto>>(events);
+                return Ok(userDto);
+            }
+            else
+            {
                 events = [.. events.OrderByDescending(x => x.CreatedAt)];
                 events = events.Where(x => x.UserId == user.Id || x.CompanyId == user.Id || x.RiderId == user.Id).ToList();
                 var userDto = mapper.Map<List<OrderModelDataDto>>(events);
@@ -605,6 +652,7 @@ namespace Genilog_WebApi.Controllers
                 var contacts = new OrderModelData()
                 {
                     UserId = user.Id,
+                    AdminId = company.AdminId,
                     TrackingNum = $"{CreateRandomTokenSix()}-{CreateRandomTokenFour()}-{CreateRandomTokenThree()}",
                     OrderStatus = "Open",
                     ItemCost=request.ItemCost,
@@ -682,7 +730,7 @@ namespace Genilog_WebApi.Controllers
         }
 
         //paystack
-        [HttpPut("initialize-package-orders/{id:guid}")]
+        [HttpPut("initialize-paystack-package-orders/{id:guid}")]
         [Authorize(Roles = "User")]
         public async Task<IActionResult> InitializePayment([FromRoute] Guid id)
         {
@@ -700,7 +748,7 @@ namespace Genilog_WebApi.Controllers
                 {
                     email = events.SenderEmail,
                     amount = (events.ShippingCost + events.VatCost) * 100,  // Amount in Kobo (100 kobo = 1 Naira)
-                    callback_url = $"{Cls_Keys.ServerURL}/api/Logistics/verify-package-orders?orderId={events.Id}", // The URL to redirect after payment
+                    callback_url = $"{Cls_Keys.ServerURL}/api/Logistics/verify-paystack-package-orders?orderId={events.Id}", // The URL to redirect after payment
                     channels = new[] { "card", "bank", "ussd", "mobile_money", "bank_transfer" },
                     metadata = new
                     {
@@ -735,7 +783,7 @@ namespace Genilog_WebApi.Controllers
 
         }
 
-        [HttpGet("verify-package-orders")]
+        [HttpGet("verify-paystack-package-orders")]
         public async Task<IActionResult> VerifyPharmacyProductOrderPayment([FromQuery] Guid orderId, [FromQuery] string trxref, [FromQuery] string reference)
         {
 
@@ -758,6 +806,7 @@ namespace Genilog_WebApi.Controllers
                 var tronData = await companyRepository.GetOrderAsync(orderId);
                 var user = new OrderModelData()
                 {
+                    
                     OrderStatus = tronData.OrderStatus,
                     ExpectedDeliveryTime = tronData.ExpectedDeliveryTime,
                     ConfirmationImage = tronData.ConfirmationImage,
@@ -850,7 +899,7 @@ namespace Genilog_WebApi.Controllers
 
         }
 
-        [HttpGet("verify-flutterwave-accomodation-reservations-customer")]
+        [HttpGet("verify-flutterwave-package-orders")]
         public async Task<IActionResult> VerifyFlutterwavePayment([FromQuery] Guid orderId, [FromQuery] string status, [FromQuery] string tx_ref, [FromQuery] string transaction_id)
         {
             var url = $"https://api.flutterwave.com/v3/transactions/{transaction_id}/verify";
@@ -1033,9 +1082,6 @@ namespace Genilog_WebApi.Controllers
                     user2 = await companyRepository.UpdateOrderAsync(id, user2);
                     var datra = await companyRepository.GetOrderAsync(user2.Id);
                     var contactsDto = mapper.Map<OrderModelDataDto>(datra);
-                    // await _hubContext.Clients.All.SendAsync("ReceiveMessage", user.RiderName, $"The Rider has the Order {user.OrderNum} on {user.OrderStatus} Status");
-                    // var contactsDto = mapper.Map<GasOrderModelDataDto>(order);
-                    // await _gasStationHubContext.Clients.Group(user.Id.ToString()).SendAsync("ORDER", contactsDto);
                     return Ok(contactsDto);
 
                 }
@@ -1222,7 +1268,7 @@ namespace Genilog_WebApi.Controllers
             }
             return strrandom;
         }
-        private async Task<string> SendNotification(Guid userId,Guid managerId,Guid riderId, string deviceToken, string names, double gasInputkg, string gasStation, string gasStationImage)
+        private async Task<string> SendNotification(Guid userId, string deviceToken, string names, double gasInputkg, string gasStation, string gasStationImage)
         {
 
 
@@ -1243,21 +1289,20 @@ namespace Genilog_WebApi.Controllers
 
             var messaging = FirebaseMessaging.DefaultInstance;
             var result = await messaging.SendAsync(message);
-            var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
 
             var contacts = new NotificationModel()
             {
                 UserId = userId,
+                IsRead = false,
                 Title = message.Notification.Title,
                 Body = message.Notification.Body,
-                DeviceToken = message.Token,
                 UpdatedAt = DateTime.UtcNow,
                 CreatedAt = DateTime.UtcNow,
                 ImageUrl = message.Notification.ImageUrl,
                 NotificationType = "Orders",
             };
             // Pass detials to repository
-            contacts = await notificationRepository.AddAsync(contacts);
+           await notificationRepository.AddAsync(contacts);
             return result;
         }
 

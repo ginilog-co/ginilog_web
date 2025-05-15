@@ -74,7 +74,7 @@ namespace Genilog_WebApi.Repository.PlacesRepo
                 .Include(x => x.AccomodationSaturday)
                 .Include(x => x.AccomodationSunday)
                   .Include(x => x.AccomodationReviewModels).
-               FirstOrDefaultAsync(x => x.Id == id);
+               FirstOrDefaultAsync(x => x.Id == id|| x.AdminId==id);
 #pragma warning restore CS8603 // Possible null reference return.
         }
 
@@ -88,7 +88,7 @@ namespace Genilog_WebApi.Repository.PlacesRepo
                 .Include(x => x.AccomodationFriday)
                 .Include(x => x.AccomodationSaturday)
                 .Include(x => x.AccomodationSunday)
-                .FirstOrDefaultAsync(x => x.Id == id);
+                .FirstOrDefaultAsync(x => x.Id == id || x.AdminId == id);
 
             if (dataValue == null)
             {
@@ -147,6 +147,19 @@ namespace Genilog_WebApi.Repository.PlacesRepo
                 dataValue.AccomodationSunday.IsClosed = dataInfo.AccomodationSunday.IsClosed;
                 await mAAP_Context.SaveChangesAsync();
                 return dataValue;
+            }
+        }
+
+        public async Task<bool> AdminIdExistAsync(Guid adminId)
+        {
+            var dataValue = await mAAP_Context.AirlineDataModels!.FirstOrDefaultAsync(x => x.AdminId == adminId);
+            if (dataValue == null)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
             }
         }
 

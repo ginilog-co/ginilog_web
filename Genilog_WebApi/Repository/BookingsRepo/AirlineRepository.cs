@@ -54,13 +54,13 @@ namespace Genilog_WebApi.Repository.BookingsRepo
                   .Include(x => x.AirCraftList)
                    .Include(x => x.AirLineServiceLocations)
                   .Include(x => x.AirlineReviewModels).
-               FirstOrDefaultAsync(x => x.Id == id);
+               FirstOrDefaultAsync(x => x.Id == id || x.AdminId==id);
 #pragma warning restore CS8603 // Possible null reference return.
         }
 
         public async Task<AirlineDataModel> UpdateAsync(Guid id, AirlineDataModel dataInfo)
         {
-            var dataValue = await mAAP_Context.AirlineDataModels!.FirstOrDefaultAsync(x => x.Id == id);
+            var dataValue = await mAAP_Context.AirlineDataModels!.FirstOrDefaultAsync(x => x.Id == id || x.AdminId==id);
 
             if (dataValue == null)
             {
@@ -85,6 +85,18 @@ namespace Genilog_WebApi.Repository.BookingsRepo
                 dataValue.AirlineLogo = dataInfo.AirlineLogo;
                 await mAAP_Context.SaveChangesAsync();
                 return dataValue;
+            }
+        }
+        public async Task<bool> AdminIdExistAsync(Guid adminId)
+        {
+            var dataValue = await mAAP_Context.AirlineDataModels!.FirstOrDefaultAsync(x => x.AdminId == adminId);
+            if (dataValue == null)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
             }
         }
         public async Task<AirCraftList> AddAirCraftListAsync(AirCraftList dataInfo)

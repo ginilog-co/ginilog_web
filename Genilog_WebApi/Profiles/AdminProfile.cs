@@ -10,6 +10,8 @@ namespace Genilog_WebApi.Profiles
             CreateMap<AdminModelTable, AdminModelTableDto>()
                 .ReverseMap();
             CreateMap<AdvertHolderModel, AdvertHolderModelDto>()
+                .ReverseMap(); 
+            CreateMap<CompanyApplyDataModel, CompanyApplyDataModelDto>()
                 .ReverseMap();
 
         }

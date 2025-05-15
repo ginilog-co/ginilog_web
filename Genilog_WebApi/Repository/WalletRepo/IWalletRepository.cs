@@ -4,11 +4,11 @@ namespace Genilog_WebApi.Repository.WalletRepo
 {
     public interface IWalletRepository
     {
-        // Payout
-        Task<PayoutDataModel> AddPayoutAsync(PayoutDataModel region);
-        Task<IEnumerable<PayoutDataModel>> GetAllPayoutAsync();
-        Task<PayoutDataModel> GetPayoutAsync(Guid id);
-        Task<PayoutDataModel> DeletePayoutAsync(Guid id);
-        Task<PayoutDataModel> UpdatePayoutAsync(Guid id, PayoutDataModel region);
+        // Transaction
+        Task<TransactionDataModel> AddTransactionAsync(TransactionDataModel region);
+        Task<IEnumerable<TransactionDataModel>> GetAllTransactionAsync();
+        Task<TransactionDataModel> GetTransactionAsync(Guid id);
+        Task<TransactionDataModel> DeleteTransactionAsync(Guid id);
+        Task<TransactionDataModel> UpdateTransactionAsync(Guid id, TransactionDataModel region);
     }
 }

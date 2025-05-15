@@ -9,6 +9,7 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
         Task<CompanyModelData> AddAsync(CompanyModelData region);
         Task<CompanyModelData> DeleteAsync(Guid id);
         Task<CompanyModelData> UpdateAsync(Guid id, CompanyModelData region);
+        Task<bool> AdminIdExistAsync(Guid adminId);
 
         // Company Review
         Task<CompanyReviewModel> AddCompanyReviewAsync(CompanyReviewModel region);

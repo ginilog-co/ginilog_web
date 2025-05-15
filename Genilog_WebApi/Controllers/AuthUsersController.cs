@@ -139,7 +139,7 @@ namespace Genilog_WebApi.Controllers
                         ProfileImage = userD.ProfilePicture,
                         IdAuthPassword = ""
                     };
-                   var request  =await newUsersRepository.GetAsync(user.Id);
+                    var request = await newUsersRepository.GetAsync(user.Id);
                     var users = new UsersDataModelTable()
                     {
                         FirstName = request.FirstName,
@@ -157,10 +157,14 @@ namespace Genilog_WebApi.Controllers
                         PostCodes = request.PostCodes,
                         Latitude = request.Latitude,
                         Longitude = request.Longitude,
+                        MoneyBoxBalance = request.MoneyBoxBalance,
+                        AccountName = request.AccountName,
+                        AccountNumber = request.AccountNumber,
+                        BankName = request.BankName,
                         LastLoginAt = DateTime.UtcNow,
                         LastSeenAt = request.LastSeenAt,
                     };
-                    await newUsersRepository.UpdateAsync(user.Id,users);
+                    await newUsersRepository.UpdateAsync(user.Id, users);
                     return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.UserId }, userDto);
                 }
             }
@@ -175,192 +179,17 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
-        [HttpPost("apple")]
-        public async Task<IActionResult> AppleAuth([FromBody] LoginExternalRequset requvest)
-        {
-            try
-            {
-                // Decode the token
-                var handler = new JwtSecurityTokenHandler();
-                var tokenD = handler.ReadJwtToken(requvest.IdToken);
 
-                // Fetch Apple's public keys
-                var applePublicKeysUrl = "https://appleid.apple.com/auth/keys";
-                using var client = new HttpClient();
-                var keysResponse = client.GetStringAsync(applePublicKeysUrl).Result;
-                var keys = JsonDocument.Parse(keysResponse).RootElement.GetProperty("keys");
-
-                // Extract claims from the token
-                var userId = tokenD.Claims.FirstOrDefault(c => c.Type == "sub")?.Value; // Unique user ID
-                var email = tokenD.Claims.FirstOrDefault(c => c.Type == "email")?.Value; // User email
-                var emailVerified = tokenD.Claims.FirstOrDefault(c => c.Type == "email_verified")?.Value == "true"; // Email verification status
-                var givenName = tokenD.Claims.FirstOrDefault(c => c.Type == "given_name")?.Value; // User's given name
-                var familyName = tokenD.Claims.FirstOrDefault(c => c.Type == "family_name")?.Value; // User's family name
-
-                // Apple tokens do not include profile pictures directly
-
-                var userExist = await userRepository.UserExistAsync(email!);
-                if (userExist)
-                {
-                    var user = await userRepository.AuthenticateAsync(email!, userId!);
-                    var userD = await newUsersRepository.GetAsync(user.Id);
-                    //generate jwt token
-                    var token = tokenHandler.CreateTokenAsync(user);
-                    var refreshToken = tokenHandler.RefreshTokenAsync(user.Email!);
-
-                    var userDto = new LoginDto()
-                    {
-                        Token = await token,
-                        RefreshToken = await refreshToken,
-                        RefreshTokenExpiryTime = user.RefreshTokenExpiryTime,
-                        UserId = user.Id,
-                        Email = user.Email,
-                        UserType = user.UserType,
-                        EmailVerified = user.EmailConfirmed,
-                        PhoneVerified = user.PhoneNoConfirmed,
-                        FullName = $"{userD.FirstName} {userD.LastName}",
-                        ProfileImage = userD.ProfilePicture,
-                        IdAuthPassword = userId!
-                    };
-                    var request = await newUsersRepository.GetAsync(user.Id);
-                    var users = new UsersDataModelTable()
-                    {
-                        FirstName = request.FirstName,
-                        LastName = request.LastName,
-                        Email = request.Email,
-                        PhoneNo = request.PhoneNo,
-                        Sex = request.Sex,
-                        UserStatus = request.UserStatus,
-                        ProfilePicture = request.ProfilePicture,
-                        ReferralCode = request.ReferralCode,
-                        CreatedAt = request.CreatedAt,
-                        Address = request.Address,
-                        Locality = request.Locality,
-                        State = request.State,
-                        PostCodes = request.PostCodes,
-                        Latitude = request.Latitude,
-                        Longitude = request.Longitude,
-                        LastLoginAt = DateTime.UtcNow,
-                        LastSeenAt = request.LastSeenAt,
-                    };
-                    await newUsersRepository.UpdateAsync(user.Id, users);
-                    return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.UserId }, userDto);
-                }
-                else
-                {
-                    var generalUsers = new GeneralUsers()
-                    {
-                        FirstName = givenName,
-                        LastName = familyName,
-                        Email = email,
-                        UserType = "User",
-                        VerificationToken = CreateRandomToken(),
-                        EmailConfirmed = true,
-                        PhoneNo = "",
-                        ImagePath = "",
-                        CreatedAt = DateTime.UtcNow,
-                        LockOutEndEnabled = false,
-                        AccessFailedCount = 0,
-                        TwoFactorEnabled = false,
-                        LockOutEnd = DateTime.UtcNow.AddDays(30),
-                        PhoneNoConfirmed = false,
-                        ResetTokenExpires = DateTime.UtcNow.AddMinutes(10),
-                        EmailTokenExpires = DateTime.UtcNow.AddMinutes(10),
-                        PhoneNoTokenExpires = DateTime.UtcNow.AddMinutes(10),
-                        RefreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(10),
-                        VerifiedAt = DateTime.UtcNow,
-                        PhoneVerificationToken = CreateRandomToken(),
-                        PhoneVerifiedAt = DateTime.UtcNow.AddMinutes(10),
-                        PasswordResetToken = "",
-                        RefreshToken = "",
-                    };
-                    generalUsers = await userRepository.AddAsync(generalUsers, userId!);
-                    var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
-                    var timeStamp = Timestamp.GetCurrentTimestamp();
-
-                    var users = new UsersDataModelTable()
-                    {
-                        Id = generalUsers.Id,
-                        FirstName = generalUsers.FirstName,
-                        LastName = generalUsers.LastName,
-                        Email = generalUsers.Email,
-                        PhoneNo = generalUsers.PhoneNo,
-                        Sex = "",
-                        UserStatus = false,
-                        ProfilePicture = generalUsers.ImagePath,
-                        ReferralCode = CreateRandomToken11(),
-                        CreatedAt = DateTime.UtcNow,
-                        LastLoginAt = DateTime.UtcNow,
-                        LastSeenAt = DateTime.UtcNow,
-                        Address = "",
-                        Locality = "",
-                        State = "",
-                        PostCodes = "",
-                        Latitude = 1.11,
-                        Longitude = 1.11,
-                    };
-                    // Pass detials to repository
-                    users = await newUsersRepository.AddAsync(users);
-                    var roles = new Roles()
-                    {
-                        Name = "User"
-                    };
-                    roles = await rolesRepository.AddAsync(roles);
-                    var user_Roles = new User_Role()
-                    {
-                        GeneralUsersId = users.Id,
-                        RoleId = roles.Id,
-                    };
-                    await user_RoleRepository.AddAsync(user_Roles);
-
-                    //Now Login Here
-                    var loginUser = await userRepository.AuthenticateAsync(generalUsers.Email!, userId!);
-                    var userD = await newUsersRepository.GetAsync(loginUser.Id);
-                    //generate jwt token
-                    var token = tokenHandler.CreateTokenAsync(loginUser);
-                    var refreshToken = tokenHandler.RefreshTokenAsync(loginUser.Email!);
-
-                    var userDto = new LoginDto()
-                    {
-                        Token = await token,
-                        RefreshToken = await refreshToken,
-                        RefreshTokenExpiryTime = loginUser.RefreshTokenExpiryTime,
-                        UserId = loginUser.Id,
-                        Email = loginUser.Email,
-                        UserType = loginUser.UserType,
-                        EmailVerified = loginUser.EmailConfirmed,
-                        PhoneVerified = loginUser.PhoneNoConfirmed,
-                        FullName = $"{userD.FirstName} {userD.LastName}",
-                        ProfileImage = userD.ProfilePicture,
-                        IdAuthPassword = userId!
-                    };
-                    return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.UserId }, userDto);
-                }
-            }
-            catch (Exception ex)
-            {
-                return Unauthorized(new { Error = "Invalid Apple token", Details = ex.Message });
-            }
-        }
-
-
-
-        [HttpPost("google")]
+        [HttpPost("auth-login")]
         public async Task<IActionResult> GoogleAuth([FromBody] LoginExternalRequset requvest)
         {
             try
             {
-                // Verify Google ID token
-                var payload = await GoogleJsonWebSignature.ValidateAsync(requvest.IdToken, new GoogleJsonWebSignature.ValidationSettings
-                {
-                    Audience = [googleClientId]
-                });
-
                 // Token is valid, create or fetch the user in your database
-                var userExist = await userRepository.UserExistAsync(payload.Email!);
+                var userExist = await userRepository.UserExistAsync(requvest.Email!);
                 if (userExist)
                 {
-                    var user = await userRepository.AuthenticateAsync(payload.Email!, payload.Subject!);
+                    var user = await userRepository.AuthenticateAsync(requvest.Email!, requvest.ExternalId!);
                     var userD = await newUsersRepository.GetAsync(user.Id);
                     //generate jwt token
                     var token = tokenHandler.CreateTokenAsync(user);
@@ -378,7 +207,7 @@ namespace Genilog_WebApi.Controllers
                         PhoneVerified = user.PhoneNoConfirmed,
                         FullName = $"{userD.FirstName} {userD.LastName}",
                         ProfileImage = userD.ProfilePicture,
-                        IdAuthPassword = payload.Subject
+                        IdAuthPassword = requvest.ExternalId,
                     };
                     var request = await newUsersRepository.GetAsync(user.Id);
                     var users = new UsersDataModelTable()
@@ -400,6 +229,10 @@ namespace Genilog_WebApi.Controllers
                         Longitude = request.Longitude,
                         LastLoginAt = DateTime.UtcNow,
                         LastSeenAt = request.LastSeenAt,
+                        MoneyBoxBalance = request.MoneyBoxBalance,
+                        AccountName = request.AccountName,
+                        AccountNumber = request.AccountNumber,
+                        BankName = request.BankName,
                     };
                     await newUsersRepository.UpdateAsync(user.Id, users);
                     return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.UserId }, userDto);
@@ -408,14 +241,14 @@ namespace Genilog_WebApi.Controllers
                 {
                     var generalUsers = new GeneralUsers()
                     {
-                        FirstName = payload.GivenName,
-                        LastName = payload.FamilyName,
-                        Email = payload.Email,
+                        FirstName = requvest.FirstName,
+                        LastName = requvest.LastName,
+                        Email = requvest.Email,
                         UserType = "User",
                         VerificationToken = CreateRandomToken(),
                         EmailConfirmed = true,
                         PhoneNo = "",
-                        ImagePath = payload.Picture,
+                        ImagePath = requvest.ProfilePicture,
                         CreatedAt = DateTime.UtcNow,
                         LockOutEndEnabled = false,
                         AccessFailedCount = 0,
@@ -431,8 +264,9 @@ namespace Genilog_WebApi.Controllers
                         PhoneVerifiedAt = DateTime.UtcNow.AddMinutes(10),
                         PasswordResetToken = "",
                         RefreshToken = "",
+
                     };
-                    generalUsers = await userRepository.AddAsync(generalUsers, payload.Subject);
+                    generalUsers = await userRepository.AddAsync(generalUsers, requvest.ExternalId!);
                     var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
                     var timeStamp = Timestamp.GetCurrentTimestamp();
 
@@ -456,6 +290,10 @@ namespace Genilog_WebApi.Controllers
                         PostCodes = "",
                         Latitude = 1.11,
                         Longitude = 1.11,
+                        MoneyBoxBalance = 0,
+                        AccountName = "",
+                        AccountNumber = "",
+                        BankName = "",
                     };
                     // Pass detials to repository
                     users = await newUsersRepository.AddAsync(users);
@@ -472,7 +310,7 @@ namespace Genilog_WebApi.Controllers
                     await user_RoleRepository.AddAsync(user_Roles);
 
                     //Now Login Here
-                    var loginUser = await userRepository.AuthenticateAsync(generalUsers.Email!, payload.Subject);
+                    var loginUser = await userRepository.AuthenticateAsync(generalUsers.Email!, requvest.ExternalId!);
                     var userD = await newUsersRepository.GetAsync(loginUser.Id);
                     //generate jwt token
                     var token = tokenHandler.CreateTokenAsync(loginUser);
@@ -490,7 +328,8 @@ namespace Genilog_WebApi.Controllers
                         PhoneVerified = loginUser.PhoneNoConfirmed,
                         FullName = $"{userD.FirstName} {userD.LastName}",
                         ProfileImage = userD.ProfilePicture,
-                        IdAuthPassword = payload.Subject
+                        IdAuthPassword = requvest.ExternalId,
+                        
                     };
                     return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.UserId }, userDto);
                 }
@@ -500,7 +339,6 @@ namespace Genilog_WebApi.Controllers
                 return Unauthorized(new { Error = "Invalid Google token", Details = ex.Message });
             }
         }
-
 
         [HttpGet]
         [Authorize]
@@ -719,6 +557,10 @@ namespace Genilog_WebApi.Controllers
                     PostCodes = "",
                     Latitude = 1.11,
                     Longitude = 1.11,
+                    MoneyBoxBalance = 0,
+                    AccountName = "",
+                    AccountNumber = "",
+                    BankName = "",
                 };
                 // Pass detials to repository
                 users = await newUsersRepository.AddAsync(users);
@@ -812,6 +654,10 @@ namespace Genilog_WebApi.Controllers
                     Latitude = (double)(request.Latitude ?? userDto1.Latitude),
                     Longitude = (double)(request.Longitude ?? userDto1.Longitude),
                     UserStatus = (bool)(request.UserStatus ?? userDto1.UserStatus),
+                    MoneyBoxBalance = userDto1.MoneyBoxBalance,
+                    AccountName = userDto1.AccountName,
+                    AccountNumber = userDto1.AccountNumber,
+                    BankName = userDto1.BankName,
                 };
 
                 // Update detials to repository
@@ -834,6 +680,68 @@ namespace Genilog_WebApi.Controllers
             }
 
         }
+
+        [HttpPut]
+        [Route("update-user-money-box")]
+        [Authorize(Roles = "User")]
+        public async Task<IActionResult> UpdateUserMoneyBoxAsync([FromQuery] string method, [FromBody] UpdateMoneyBox request)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userId, out Guid userGuid))
+            {
+                return BadRequest("Invalid User ID format.");
+            }
+            var userDto1 = await newUsersRepository.GetAsync(userGuid);
+            if (userDto1 == null)
+            {
+                var error = new ErrorModel()
+                {
+                    Message = "User Does not Exist",
+                    Status = true
+                };
+                return BadRequest(error);
+            }
+            else
+            {
+                var user = new UsersDataModelTable()
+                {
+                    Sex =  userDto1.Sex,
+                    FirstName =  userDto1.FirstName,
+                    LastName =  userDto1.LastName,
+                    PhoneNo = userDto1.PhoneNo,
+                    Address = userDto1.Address,
+                    ProfilePicture = userDto1.ProfilePicture,
+                    PostCodes = userDto1.PostCodes,
+                    Locality = userDto1.Locality,
+                    State = userDto1.State,
+                    ReferralCode = userDto1.ReferralCode,
+                    LastLoginAt = userDto1.LastLoginAt,
+                    LastSeenAt = userDto1.LastSeenAt,
+                    CreatedAt = userDto1.CreatedAt,
+                    Latitude =  userDto1.Latitude,
+                    Longitude =  userDto1.Longitude,
+                    UserStatus =  userDto1.UserStatus,
+                    MoneyBoxBalance = method=="Adding"? userDto1.MoneyBoxBalance + request.MoneyBoxBalance:
+                    userDto1.MoneyBoxBalance-request.MoneyBoxBalance,
+                    AccountName = userDto1.AccountName,
+                    AccountNumber = userDto1.AccountNumber,
+                    BankName = userDto1.BankName,
+                };
+
+                // Update detials to repository
+                user = await newUsersRepository.UpdateAsync(userDto1.Id, user);
+         
+                // convert back to dto
+                var userDto12 = await newUsersRepository.GetAsync(user.Id);
+                var token = await userRepository.GetAllDeviceTokenAsync();
+                var userDto = mapper.Map<UsersDataModelTableDto>(userDto12);
+                userDto.DeviceTokenModels = token.Where(x => x.UserId == user.Id).ToList();
+                return Ok(userDto);
+
+            }
+
+        }
+
 
         [HttpGet]
         [Authorize]

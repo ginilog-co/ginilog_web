@@ -39,4 +39,9 @@ namespace Genilog_WebApi.Model.UsersDataModel
         public double? Longitude { get; set; }
 
     }
+
+    public class UpdateMoneyBox
+    {
+        public double MoneyBoxBalance { get; set; }
+    }
 }

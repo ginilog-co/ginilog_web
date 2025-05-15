@@ -6,7 +6,6 @@
         public Guid UserId { get; set; }
         public string? Title { get; set; }
         public string? Body { get; set; }
-        public string? DeviceToken { get; set; }
         public string? NotificationType { get; set; }
         public string? ImageUrl { get; set; }
         public bool? IsRead { get; set; }
@@ -19,7 +18,6 @@
         public Guid UserId { get; set; }
         public string? Title { get; set; }
         public string? Body { get; set; }
-        public string? DeviceToken { get; set; }
         public string? NotificationType { get; set; }
         public bool? IsRead { get; set; }
         public string? ImageUrl { get; set; }

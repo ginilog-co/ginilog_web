@@ -78,7 +78,6 @@ namespace Genilog_WebApi.Controllers
 
                 Title = !string.IsNullOrWhiteSpace(request.Title) ? request.Title : userDto1.Title,
                 Body = !string.IsNullOrWhiteSpace(request.Body) ? request.Body : userDto1.Body,
-                DeviceToken = !string.IsNullOrWhiteSpace(request.DeviceToken) ? request.DeviceToken : userDto1.DeviceToken,
                 IsRead = request.IsRead ?? userDto1.IsRead,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -100,7 +99,6 @@ namespace Genilog_WebApi.Controllers
                     UserId = user.UserId,
                     Title = user.Title,
                     Body = user.Body,
-                    DeviceToken = user.DeviceToken,
                     CreatedAt = user.CreatedAt,
                     UpdatedAt = user.UpdatedAt
                 };
@@ -181,7 +179,6 @@ namespace Genilog_WebApi.Controllers
                     UserId = userGuid,
                     Title = request.Title,
                     Body = request.Body,
-                    DeviceToken = "",
                     UpdatedAt = DateTime.UtcNow,
                     CreatedAt = DateTime.UtcNow,
                     ImageUrl = "",
@@ -239,7 +236,6 @@ namespace Genilog_WebApi.Controllers
                 UserId = userId,
                 Title = message.Notification.Title,
                 Body = message.Notification.Body,
-                DeviceToken = message.Token,
                 UpdatedAt = DateTime.UtcNow,
                 CreatedAt = DateTime.UtcNow,
                 ImageUrl = message.Notification.ImageUrl,

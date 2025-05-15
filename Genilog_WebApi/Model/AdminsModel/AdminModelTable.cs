@@ -17,6 +17,11 @@ namespace Genilog_WebApi.Model.AdminsModel
         public string? Locality { get; set; }
         public string? Address { get; set; }
         public string? Branch { get; set; }
+        public string? AdminType { get; set; }
+        public string? CompanyName { get; set; }
+        public string? CompanyUserName { get; set; }
+        public List<string>? CompanyType { get; set; }
+        public Guid ManagerId { get; set; }
         public string? DatePublished { get; set; }
         public DateTime? CreatedAt { get; set; }
     }
@@ -36,6 +41,10 @@ namespace Genilog_WebApi.Model.AdminsModel
         public string? Branch { get; set; }
         public string? DatePublished { get; set; }
         public string? AdminType { get; set; }
+        public string? CompanyName { get; set; }
+        public string? CompanyUserName { get; set; }
+        public List<string>? CompanyType { get; set; }
+        public Guid ManagerId { get; set; }
         public DateTime? CreatedAt { get; set; }
     }
 
@@ -66,6 +75,9 @@ namespace Genilog_WebApi.Model.AdminsModel
         public string? Address { get; set; }
         [Required(AllowEmptyStrings = false, ErrorMessage = "Branch Number required")]
         public string? Branch { get; set; }
+        public string? CompanyName { get; set; }
+        public string? CompanyUserName { get; set; }
+        public List<string>? CompanyType { get; set; }
     }
 
     public class UpdateAdminRequest

@@ -19,13 +19,15 @@ using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text;
 using Genilog_WebApi.Repository.UserRepo;
+using Genilog_WebApi.Repository.AdminRepo;
+using Genilog_WebApi.Repository.LogisticsRepo;
 
 namespace Genilog_WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class BookingsController(IHostEnvironment _env, IMapper mapper, IAccomodationRepository accomodationRepository
-        , IGeneralUserRepository generalUserRepository, IUploadRepository uploadRepository, IAirlineRepository airlineRepository) : ControllerBase
+        , IGeneralUserRepository generalUserRepository, IUploadRepository uploadRepository, IAirlineRepository airlineRepository, IAdminRepository adminRepository) : ControllerBase
     {
         private readonly IHostEnvironment _env = _env;
         private readonly IMapper mapper = mapper;
@@ -33,6 +35,7 @@ namespace Genilog_WebApi.Controllers
         private readonly IGeneralUserRepository generalUserRepository = generalUserRepository;
         private readonly IUploadRepository uploadRepository = uploadRepository;
         private readonly IAirlineRepository airlineRepository = airlineRepository;
+        private readonly IAdminRepository adminRepository = adminRepository;
         readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
 
 
@@ -557,24 +560,26 @@ namespace Genilog_WebApi.Controllers
                 var flight = await airlineRepository.GetAsync(request.AirlineId);
                 var contacts = new FlightTicketBookModel()
                 {
-                    AdminId = userGuid,
+                    AdminId = flight.AdminId,
                     AirlineId=flight.Id,
                     AirlineName = flight.AirlineName,
                     OperatedBy=request.OperatedBy,
                     SmallLuggageKg= request.SmallLuggageKg,
-                   Dapature = request.Dapature,
+                    Dapature = request.Dapature,
                     DapatureTime = request.DapatureTime,
                     Destination = request.Destination,
                     AvailabeTimeInterval = request.AvailabeTimeInterval,
                     TicketNum = CreateRandomTokenSix(),
                     FlightSpeed = request.FlightSpeed,
                     TicketPrice = request.TicketPrice,
-                  TicketType = request.TicketType,
+                   TicketType = request.TicketType,
                     Available = true,
                     BigLuggageKg = request.BigLuggageKg,
                    IsReturn = request.IsReturn,
                    StopPlaces = request.StopPlaces,
                    Stops = request.Stops,
+                   DepartureAirpot="",
+                   ReturnAirpot= "",
                     CreatedAt = DateTime.Now,
 
                 };
@@ -780,7 +785,7 @@ namespace Genilog_WebApi.Controllers
         }
 
         [HttpPost("accomodation")]
-        [Authorize(Roles = "User,Admin,Super_Admin")]
+        [Authorize(Roles = "Manager,Admin,Super_Admin")]
         public async Task<IActionResult> AddAccomodationAsync([FromBody] AddAccomodation request)
         {
             var check = ValidateAccomodation(request);
@@ -796,8 +801,8 @@ namespace Genilog_WebApi.Controllers
                 {
                     return BadRequest("Invalid User ID format.");
                 }
-          
-          
+
+                var admin = await adminRepository.GetAsync(userGuid);
                 var contacts = new AccomodationDataModel()
                 {
                     AccomodationMonday = new AccomodationMondayModel()
@@ -842,7 +847,7 @@ namespace Genilog_WebApi.Controllers
                         HourEnd = request.TimeSchedule!.Sunday!.End,
                         IsClosed = request.TimeSchedule!.Sunday!.IsClosed,
                     },
-                    AdminId = userGuid,
+                    AdminId = admin.ManagerId,
                     AccomodationName = request.AccomodationName,
                     AccomodationEmail = request.AccomodationEmail,
                     AccomodationDescription = request.AccomodationDescription,
@@ -870,11 +875,24 @@ namespace Genilog_WebApi.Controllers
 
                 };
                 // Pass detials to repository
-                contacts = await accomodationRepository.AddAsync(contacts);
-                // convert back to dto
-                var contact = await accomodationRepository.GetAsync(contacts.Id);
-                var contactsDto = mapper.Map<AccomodationDataModelDto>(contact);
-                return CreatedAtAction(nameof(GetAccomodationAsync), new { id = contactsDto.Id }, contactsDto);
+                var isExist = await accomodationRepository.AdminIdExistAsync(admin.ManagerId);
+                if (isExist)
+                {
+                    contacts = await accomodationRepository.UpdateAsync(admin.ManagerId, contacts);
+                    // convert back to dto
+                    var contact = await accomodationRepository.GetAsync(contacts.Id);
+                    var contactsDto = mapper.Map<AccomodationDataModelDto>(contact);
+                    return CreatedAtAction(nameof(GetAccomodationAsync), new { id = contactsDto.Id }, contactsDto);
+                }
+                else
+                {
+                    contacts = await accomodationRepository.AddAsync(contacts);
+                    // convert back to dto
+                    var contact = await accomodationRepository.GetAsync(contacts.Id);
+                    var contactsDto = mapper.Map<AccomodationDataModelDto>(contact);
+                    return CreatedAtAction(nameof(GetAccomodationAsync), new { id = contactsDto.Id }, contactsDto);
+                }
+              
             }
         }
 
@@ -924,7 +942,7 @@ namespace Genilog_WebApi.Controllers
         //Reservations Book
         [HttpGet]
         [Route("accomodation-reservations")]
-       [Authorize]
+        [Authorize]
         public async Task<IActionResult> GetAllBookAccomodationReservationAsync([FromQuery] FilterData data)
         {
             var events = await accomodationRepository.GetAllBookAccomodationReservationAsync();
@@ -1043,7 +1061,7 @@ namespace Genilog_WebApi.Controllers
                 var contacts = new BookAccomodationReservatioModel()
                 {
                     Id = dataInfo,
-                    AdminId = userGuid,
+                    AdminId = events.AdminId,
                     AccomodationId = events.Id,
                     AccomodationName = events.AccomodationName,
                     AccomodationImage = events.AccomodationImages!.Count==0?"": events.AccomodationImages![0],
@@ -1115,6 +1133,13 @@ namespace Genilog_WebApi.Controllers
                     var userDto = mapper.Map<List<CustomerBookedReservationDto>>(events);
                     return Ok(userDto);
                 }
+            }
+            else if (user.UserType == "Manager" || user.UserType == "Staff-Admin"|| user.UserType=="Staff")
+            {
+                var admin = await adminRepository.GetAsync(user.Id);
+                events = [.. events.Where(x => x.AdminId == admin.ManagerId)];
+                var userDto = mapper.Map<List<CustomerBookedReservationDto>>(events);
+                return Ok(userDto);
             }
 
             else
@@ -1255,6 +1280,7 @@ namespace Genilog_WebApi.Controllers
                 var contacts = new CustomerBookedReservation()
                 {
                     UserId = userGuid,
+                    AdminId=events.AdminId,
                     AccomodationId = events.AccomodationId,
                     AccomodationType = events.AccomodationType,
                     AccomodationImage = events.AccomodationImage,
@@ -1305,7 +1331,7 @@ namespace Genilog_WebApi.Controllers
 
 
         //paystack
-        [HttpPost("initialize-accomodation-reservations-customer")]
+        [HttpPost("initialize-paystack-accomodation-reservations-customer")]
         [Authorize(Roles = "User")]
         public async Task<IActionResult> InitializePayment([FromHeader] Guid reservationId, [FromBody] AddCustomerBookedReservation request)
 
@@ -1343,6 +1369,7 @@ namespace Genilog_WebApi.Controllers
                     var contacts = new CustomerBookedReservation()
                     {
                         UserId = userGuid,
+                        AdminId=events.AdminId,
                         AccomodationId = events.AccomodationId,
                         AccomodationType = events.AccomodationType,
                         AccomodationImage = events.AccomodationImage,
@@ -1376,7 +1403,7 @@ namespace Genilog_WebApi.Controllers
                     {
                         email = request.CustomerEmail,
                         amount = (events.RoomPrice * request.NoOfDays) * 100,  // Amount in Kobo (100 kobo = 1 Naira)
-                        callback_url = $"{Cls_Keys.ServerURL}/api/Bookings/verify-accomodation-reservations-customer?orderId={contacts.Id}", // The URL to redirect after payment
+                        callback_url = $"{Cls_Keys.ServerURL}/api/Bookings/verify-paystack-accomodation-reservations-customer?orderId={contacts.Id}", // The URL to redirect after payment
                         channels = new[] { "card", "bank", "ussd", "mobile_money", "bank_transfer" },
                         metadata = new
                         {
@@ -1413,7 +1440,7 @@ namespace Genilog_WebApi.Controllers
 
         }
 
-        [HttpGet("verify-accomodation-reservations-customer")]
+        [HttpGet("verify-paystack-accomodation-reservations-customer")]
         public async Task<IActionResult> VerifyPharmacyProductOrderPayment([FromQuery] Guid orderId,[FromQuery] string trxref, [FromQuery] string reference)
         {
 
@@ -1518,6 +1545,7 @@ namespace Genilog_WebApi.Controllers
                     var contacts = new CustomerBookedReservation()
                     {
                         UserId = userGuid,
+                        AdminId = events.AdminId,
                         AccomodationId = events.AccomodationId,
                         AccomodationType = events.AccomodationType,
                         AccomodationImage = events.AccomodationImage,

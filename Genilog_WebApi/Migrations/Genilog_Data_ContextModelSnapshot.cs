@@ -31,7 +31,19 @@ namespace Genilog_WebApi.Migrations
                     b.Property<string>("Address")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("AdminType")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Branch")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CompanyName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.PrimitiveCollection<string>("CompanyType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CompanyUserName")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("CreatedAt")
@@ -51,6 +63,9 @@ namespace Genilog_WebApi.Migrations
 
                     b.Property<string>("Locality")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("ManagerId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("PhoneNo")
                         .HasColumnType("nvarchar(max)");
@@ -108,6 +123,44 @@ namespace Genilog_WebApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("AdvertHolderModels");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.AdminsModel.CompanyApplyDataModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CompanyAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CompanyName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.PrimitiveCollection<string>("CompanyType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CompanyUserName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FirstName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SurName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CompanyApplyDataModels");
                 });
 
             modelBuilder.Entity("Genilog_WebApi.Model.AuthModel.DeviceTokenModel", b =>
@@ -852,6 +905,9 @@ namespace Genilog_WebApi.Migrations
                     b.Property<string>("AccomodationType")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid>("AdminId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Comment")
                         .HasColumnType("nvarchar(max)");
 
@@ -996,6 +1052,9 @@ namespace Genilog_WebApi.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CompanyName")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -1172,6 +1231,9 @@ namespace Genilog_WebApi.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AdminId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Comment")
@@ -1487,9 +1549,6 @@ namespace Genilog_WebApi.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("DeviceToken")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
 
@@ -1565,7 +1624,16 @@ namespace Genilog_WebApi.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AccountName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccountNumber")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Address")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BankName")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("CreatedAt")
@@ -1595,6 +1663,9 @@ namespace Genilog_WebApi.Migrations
                     b.Property<double>("Longitude")
                         .HasColumnType("float");
 
+                    b.Property<double>("MoneyBoxBalance")
+                        .HasColumnType("float");
+
                     b.Property<string>("PhoneNo")
                         .HasColumnType("nvarchar(max)");
 
@@ -1621,60 +1692,45 @@ namespace Genilog_WebApi.Migrations
                     b.ToTable("UsersDataModelTables");
                 });
 
-            modelBuilder.Entity("Genilog_WebApi.Model.WalletModel.PayoutDataModel", b =>
+            modelBuilder.Entity("Genilog_WebApi.Model.WalletModel.TransactionDataModel", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Address")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<Guid>("AdminId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<double>("Amount")
-                        .HasColumnType("float");
+                    b.Property<string>("Amount")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<double>("Latitude")
-                        .HasColumnType("float");
-
-                    b.Property<string>("Locality")
+                    b.Property<string>("PhoneNo")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("Longitude")
-                        .HasColumnType("float");
-
-                    b.Property<string>("Name")
+                    b.Property<string>("Reason")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("PayOutDateAt")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("Title")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("PayOutStatus")
+                    b.Property<string>("TransactionType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TrnxRef")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("TrnxStatus")
                         .HasColumnType("bit");
-
-                    b.Property<string>("PaymentTo")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PostCodes")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Remark")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("State")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TransactionReference")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
-                    b.ToTable("PayoutDataModels");
+                    b.ToTable("TransactionDataModels");
                 });
 
             modelBuilder.Entity("Genilog_WebApi.Model.AuthModel.User_Role", b =>

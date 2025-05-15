@@ -48,13 +48,13 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
 #pragma warning disable CS8603 // Possible null reference return.
             return await mAAP_Context.CompanyModelDatas!
                 .Include(x => x.CompanyReviewModels)
-                .FirstOrDefaultAsync(x => x.Id == id);
+                .FirstOrDefaultAsync(x => x.Id == id|| x.AdminId==id);
 #pragma warning restore CS8603 // Possible null reference return.
         }
 
         public async Task<CompanyModelData> UpdateAsync(Guid id, CompanyModelData dataInfo)
         {
-            var dataValue = await mAAP_Context.CompanyModelDatas!.FirstOrDefaultAsync(x => x.Id == id);
+            var dataValue = await mAAP_Context.CompanyModelDatas!.FirstOrDefaultAsync(x => x.Id == id || x.AdminId == id);
 
             if (dataValue == null)
             {
@@ -87,6 +87,19 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
                 dataValue.ServiceAreas = dataInfo.ServiceAreas;
                 await mAAP_Context.SaveChangesAsync();
                 return dataValue;
+            }
+        }
+
+        public async Task<bool> AdminIdExistAsync(Guid adminId)
+        {
+            var user = await mAAP_Context.CompanyModelDatas!.AnyAsync(x => x.AdminId == adminId);
+            if (user)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
 

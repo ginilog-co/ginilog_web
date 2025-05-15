@@ -108,6 +108,8 @@ namespace Genilog_WebApi.DataContext
         public DbSet<Roles>? Roles { get; set; }
         public DbSet<User_Role>? User_Roles { get; set; }
         public DbSet<AdminModelTable>? AdminModelTables { get; set; }
+        public DbSet<AdvertHolderModel>? AdvertHolderModels { get; set; }
+        public DbSet<CompanyApplyDataModel>? CompanyApplyDataModels { get; set; }
         public DbSet<FeedbackModelData>? FeedbackModelDatas { get; set; }
         public DbSet<NotificationModel>? NotificationModels { get; set; }
 
@@ -141,10 +143,8 @@ namespace Genilog_WebApi.DataContext
         public DbSet<AirLineServiceLocation>? AirLineServiceLocations { get; set; }
         public DbSet<AirlineChatModel>? AirlineChatModels { get; set; }
         public DbSet<FlightTicketBookModel>? FlightTicketBookModels { get; set; }
-
-        // Wallet System
-        public DbSet<PayoutDataModel>? PayoutDataModels { get; set; }
-        public DbSet<AdvertHolderModel>? AdvertHolderModels { get; set; }
+        // Wallet
+        public DbSet<TransactionDataModel>? TransactionDataModels { get; set; }
     }
 }
 

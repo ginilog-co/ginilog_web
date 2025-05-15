@@ -7,7 +7,7 @@ namespace Genilog_WebApi.Profiles
     {
         public WalletProfile()
         {
-            CreateMap<PayoutDataModel, PayoutDataModelDto>()
+            CreateMap<TransactionDataModel, TransactionDataModelDto>()
                 .ReverseMap();
         }
     }
