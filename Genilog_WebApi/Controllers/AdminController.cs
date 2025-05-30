@@ -39,7 +39,8 @@ namespace Genilog_WebApi.Controllers
             if (user != null)
             {
                 var userD = await usersRepository.GetAsync(user.Id);
-                if (user.UserType == "Super_Admin"|| user.UserType == "Admin")
+                if (user.UserType == "Super_Admin"|| user.UserType == "Admin" || user.UserType == "Manager" 
+                    || user.UserType == "StaffAdmin" || user.UserType == "Staff")
                 {
                     //generate jwt token
                     var token = tokenHandler.CreateTokenAsync(user);
@@ -66,12 +67,22 @@ namespace Genilog_WebApi.Controllers
                 }
                 else
                 {
-                    return BadRequest("Not An Admin Account");
+                    var error = new ErrorModel()
+                    {
+                        Message = "Not An Admin Account",
+                        Status = true
+                    };
+                    return BadRequest(error);
                 }
             }
             else
             {
-                return BadRequest("Admin Does not Exist");
+                var error = new ErrorModel()
+                {
+                    Message = "Admin Does not Exist",
+                    Status = true
+                };
+                return BadRequest(error);
             }
         }
 
@@ -79,16 +90,37 @@ namespace Genilog_WebApi.Controllers
         [Authorize(Roles = "Super_Admin")]
         public async Task<IActionResult> GetAllAdminAsync()
         {
-            List<AdminModelTableDto> dto = [];
             var users = await usersRepository.GetAllAsync();
+            users = users.Where(x => x.AdminType == "Super_Admin" || x.AdminType == "Admin" || x.AdminType == "Manager").ToList();
             var userDto = mapper.Map<List<AdminModelTableDto>>(users);
-            foreach (var item in userDto)
+            return Ok(userDto);
+        }
+        [HttpGet]
+        [Route("staff-users")]
+        [Authorize(Roles = "Super_Admin,Manager,Admin")]
+        public async Task<IActionResult> GetAllStaffAsync()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userId, out Guid userGuid))
             {
-                var t = await generalUserRepository.GetAsync(item.Id);
-                item.AdminType = t.UserType;
-                dto.Add(item);
+                return BadRequest("Invalid User ID format.");
             }
-            return Ok(dto);
+            var user = await generalUserRepository.GetAsync(userGuid);
+            if (user.UserType == "Super_Admin" || user.UserType == "Admin")
+            {
+                var users = await usersRepository.GetAllAsync();
+                users= users.Where(x=> x.AdminType== "Staff_Admin" || x.AdminType== "Staff").ToList();
+                var userDto = mapper.Map<List<AdminModelTableDto>>(users);
+                return Ok(userDto);
+            }
+            else
+            {
+                var users = await usersRepository.GetAllAsync();
+                users = users.Where(x => (x.ManagerId==user.Id)&&(x.AdminType == "Staff_Admin" || x.AdminType == "Staff")).ToList();
+                var userDto = mapper.Map<List<AdminModelTableDto>>(users);
+                return Ok(userDto);
+            }
+           
         }
 
         [HttpGet]
@@ -110,9 +142,26 @@ namespace Genilog_WebApi.Controllers
             else
             {
                 var userDto = mapper.Map<AdminModelTableDto>(user);
-                var t = await generalUserRepository.GetAsync(user.Id);
-                userDto.AdminType = t.UserType;
-               
+                return Ok(userDto);
+            }
+
+        }
+       
+        // For Admin and Manager
+        [HttpGet]
+        [Route("profile/{id:guid}")]
+        [ActionName("ProfileAsync")]
+        [Authorize(Roles = "Admin,Super_Admin,Manager")]
+        public async Task<IActionResult> ProfileAsync([FromRoute] Guid id)
+        {
+            var user = await usersRepository.GetAsync(id);
+            if (user == null)
+            {
+                return BadRequest("Admin Does not Exist");
+            }
+            else
+            {
+                var userDto = mapper.Map<AdminModelTableDto>(user);
                 return Ok(userDto);
             }
 
@@ -131,7 +180,7 @@ namespace Genilog_WebApi.Controllers
             }
             else
             {
-                if (request.AdminType == "Super_Admin" || request.AdminType == "Admin") 
+                if (request.AdminType == "Super_Admin" || request.AdminType == "Admin" || request.AdminType=="Manager") 
                 {
                     var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
                     var timeStamp = Timestamp.GetCurrentTimestamp();

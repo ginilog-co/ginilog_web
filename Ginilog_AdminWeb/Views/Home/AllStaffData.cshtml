@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Ginilog_AdminWeb.Models.StaffDataTable>
+﻿@model IEnumerable<Ginilog_AdminWeb.Models.AdminModelTable>
 
 @{
     ViewData["Title"] = "AllStaffData";
@@ -14,7 +14,7 @@
 
                 <div style="padding-top:20px"></div>
                 <p>
-                    <a asp-action="AddStaff" class="btn btn-link m-2">Add Staff</a>
+                    <a asp-action="AddStaff" class="btn btn-secondary create-new-button">Add Staff</a>
                 </p>
                 <h6 class="mb-4">Search Here</h6>
                 <form asp-controller="Home" asp-action="AllStaffData" method="get">
@@ -40,7 +40,7 @@
                                 <th>Staff Code</th>
                                 <th>Sex</th>
                                 <th>StaffType</th>
-                                <th>ReferalCode</th>
+                                <th>Company</th>
                                 <th>Date</th>
                                 <th>Delete</th>
                             </tr>
@@ -54,8 +54,8 @@
                                     <td>@item!.PhoneNo</td>
                                     <td>@item!.StaffCode</td>
                                     <td>@item!.Sex</td>
-                                    <td>@item!.StaffType</td>
-                                    <td>@item!.ReferalCode</td>
+                                    <td>@item!.AdminType</td>
+                                    <td>@item!.CompanyName</td>
                                     <td>@item!.CreatedAt</td>
                                     <td><a href="@Url.Action("DeleteStaff", "Home", new { id = item!.Id })" class="btn btn-danger">Delete</a></td>
                                 </tr>

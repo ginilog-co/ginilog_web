@@ -4,6 +4,7 @@ namespace Ginilog_AdminWeb.Models
 {
     public class AdminModelTable
     {
+
         public Guid Id { get; set; }
         public string? Email { get; set; }
         public string? SurName { get; set; }
@@ -13,11 +14,15 @@ namespace Ginilog_AdminWeb.Models
         public string? ImagePath { get; set; }
         public string? Sex { get; set; }
         public string? State { get; set; }
-        public string? City { get; set; }
+        public string? Locality { get; set; }
         public string? Address { get; set; }
         public string? Branch { get; set; }
-        public string? DatePublished { get; set; }
         public string? AdminType { get; set; }
+        public string? CompanyName { get; set; }
+        public string? CompanyUserName { get; set; }
+        public List<string>? CompanyType { get; set; }
+        public Guid ManagerId { get; set; }
+        public string? DatePublished { get; set; }
         public DateTime? CreatedAt { get; set; }
     }
 
@@ -43,11 +48,14 @@ namespace Ginilog_AdminWeb.Models
         [Required(AllowEmptyStrings = false, ErrorMessage = "Phone Number required")]
         public string? State { get; set; }
         [Required(AllowEmptyStrings = false, ErrorMessage = "State Number required")]
-        public string? City { get; set; }
+        public string? Locality { get; set; }
         [Required(AllowEmptyStrings = false, ErrorMessage = "City Number required")]
         public string? Address { get; set; }
         [Required(AllowEmptyStrings = false, ErrorMessage = "Branch Number required")]
         public string? Branch { get; set; }
+        public string? CompanyName { get; set; }
+        public string? CompanyUserName { get; set; }
+        public List<string>? CompanyType { get; set; }
     }
 
     public class UpdateAdminRequest

@@ -5,24 +5,20 @@
     Layout = "~/Views/Shared/_NewLayout.cshtml";
 }
 
-<!--Delete Modal-->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                Are you sure you want to delete this user?
-            </div>
-           
-            <div class="modal-footer">
-             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+<!-- Delete Modal -->
+<div id="deleteModal" class="custom-modal">
+    <div class="custom-modal-content">
+        <div class="custom-modal-header">
+            <h5 style="color:black" class="modal-title">Confirm Delete</h5>
+            <span style="color:black" class="custom-modal-close" onclick="closeModal()">&times;</span>
+        </div>
+        <div class="custom-modal-body">
+            <p style="color:black">   Are you sure you want to delete this Item?</p>
 
-                <a href="@Url.Action("DeleteLogCompanyConfirm", "Logistics", new { id = Model!.CompanyModelData!.Id })" class="btn btn-danger">Delete</a>
-
-            </div>
+        </div>
+        <div class="custom-modal-footer">
+            <button onclick="closeModal()" class="btn-secondary">Cancel</button>
+            <a href="@Url.Action("DeleteLogCompanyConfirm", "Logistics", new { id = Model!.CompanyModelData!.Id })" class="btn-danger">Delete</a>
         </div>
     </div>
 </div>
@@ -38,7 +34,13 @@
                         <div class="d-flex justify-content-end gap-2 px-0">
 
                             <div class="col-auto mb-2">
-                                <a class="nav-link btn btn-danger create-new-button" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</a>
+                                <button class="nav-link btn btn-danger create-new-button" onclick="openModal()">Delete</button>
+                            </div>
+                            <div class="col-auto mb-2">
+                                <a href="~/Home/ManagerDetails/@Model.CompanyModelData.AdminId" class="nav-link btn btn-primary create-new-button">View Manager</a>
+                            </div>
+                            <div class="col-auto mb-2">
+                                <a href="~/Logistics/AddOrder/@Model.CompanyModelData.Id" class="nav-link btn btn-secondary create-new-button">Create Order</a>
                             </div>
                             <div class="col-auto mb-2">
                                 @if (Model.CompanyModelData.CompanyLogo != "")
@@ -158,8 +160,6 @@
                 <div class="row">
                     <div class="col-md-6 grid-margin stretch-card">
                         <div style="padding-top:20px"></div>
-                        <h6>Delivery Types</h6>
-                        <div style="padding-top:20px"></div>
 
                         <div class="table-responsive">
                             <table class="table">
@@ -182,8 +182,7 @@
 
                     </div>
                     <div class="col-md-6 grid-margin stretch-card">
-                        <div style="padding-top:20px"></div>
-                        <h6>Service Areas</h6>
+  
                         <div style="padding-top:20px"></div>
 
                         <div class="table-responsive">
@@ -225,10 +224,11 @@
                                 <th> Order Status </th>
                                 <th> Date </th>
                                 <th> Details </th>
+                                <th> Delete </th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var item in Model.OrderModelData!)
+                            @foreach (var item in Model.OrderModelData!.Take(5))
                             {
                                 <tr>
                                     <td> @item.TrackingNum </td>
@@ -238,16 +238,17 @@
                                     <td> @item.CompanyName </td>
                                     <td> &#8358;@item.ShippingCost.ToString("N2") </td>
                                     <td> &#8358;@item.ItemCost.ToString("N2") </td>
-                                    <td>
-                                        <div class="badge badge-outline-success">@item.OrderStatus</div>
-                                    </td>
+                                    <td><div class="badge badge-outline-success">@item.OrderStatus</div></td>
                                     <th>@item.CreatedAt</th>
-                                    <td><a href="@Url.Action("OrderDetails", "Home", new { id = item!.Id })" class="btn btn-outline-info">View</a>
+                                    <td><a href="@Url.Action("OrderDetails", "Logistics", new { id = item!.Id })" class="btn btn-outline-info">View</a>
                                     <td>
+                                    <td><a href="@Url.Action("DeleteOrder", "Logistics", new { id = item!.Id })" class="btn btn-danger">Delete</a></td>
                                 </tr>
                             }
                         </tbody>
                     </table>
+                    <div style="padding-top:20px"></div>
+                    <p><a href="@Url.Action("OrderList", "Logistics", new { id = Model.CompanyModelData!.Id })" class="btn btn-danger">View All Order</a></p>
                 </div>
 
                 <div style="padding-top:20px"></div>
@@ -292,8 +293,6 @@
                         </tbody>
                     </table>
                 </div>
-
-           
             </div>
 
         </div>

@@ -4,6 +4,7 @@ using Ginilog_AdminWeb.Models.BookingsModel;
 using Ginilog_AdminWeb.Models.InfoModel;
 using Ginilog_AdminWeb.Models.LogisticsModel;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Net;
@@ -41,6 +42,34 @@ namespace Ginilog_AdminWeb.Controllers
                         surName = users.SurName!;
                         email = users.Email!;
                         sex = users.Sex!;
+                        return users!;
+                    }
+                    else
+                    {
+                        ViewBag.StatusCode = response.StatusCode;
+                    }
+                }
+                return users;
+            }
+#pragma warning disable CS8603 // Possible null reference return.
+            return null;
+#pragma warning restore CS8603 // Possible null reference return.
+        }
+
+        public async Task<AdminModelTable>? ManagerData(Guid id)
+        {
+            var token = HttpContext.Session.GetString("bt_token");
+            if (token != null)
+            {
+                AdminModelTable users = new();
+                using (var httpClient = new HttpClient())
+                {
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    using var response = await httpClient.GetAsync($"{GlobalConstant.BaseUrl}{GlobalConstant.AdminUrl}profile/{id}");
+                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        string apiResponse = await response.Content.ReadAsStringAsync();
+                        users = JsonConvert.DeserializeObject<AdminModelTable>(apiResponse)!; ;
                         return users!;
                     }
                     else
@@ -458,9 +487,12 @@ namespace Ginilog_AdminWeb.Controllers
                         StaffCode = requset.StaffCode,
                         AdminType = requset.AdminType,
                         State = requset.State,
-                        City = requset.City,
+                        Locality = requset.Locality,
                         Address = requset.Address,
                         Branch = requset.Branch,
+                        CompanyName = requset.CompanyName,
+                        CompanyType = requset.CompanyType,
+                        CompanyUserName = requset.CompanyUserName,
                     };
 
                     using var httpClient = new HttpClient();
@@ -513,6 +545,7 @@ namespace Ginilog_AdminWeb.Controllers
                 return RedirectToAction("AllAdminUser", "Home");
             }
         }
+
         // Staff Data
         [HttpGet]
         public async Task<IActionResult> AllStaffData(string id)
@@ -526,21 +559,21 @@ namespace Ginilog_AdminWeb.Controllers
                 ViewBag.ProfilePics = users.ImagePath!;
                 ViewBag.AdminName = $"{users.FirstName} {users.SurName}";
                 ViewBag.UseType = adminType;
-                List<StaffDataTable> adminUser = [];
+                List<AdminModelTable> adminUser = [];
                 using var httpClient = new HttpClient();
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                using var response = await httpClient.GetAsync($"{GlobalConstant.BaseUrl}{GlobalConstant.AdminUrl}staff");
+                using var response = await httpClient.GetAsync($"{GlobalConstant.BaseUrl}{GlobalConstant.AdminUrl}staff-users");
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
                     string apiResponse = await response.Content.ReadAsStringAsync();
-                    adminUser = JsonConvert.DeserializeObject<List<StaffDataTable>>(apiResponse)!;
+                    adminUser = JsonConvert.DeserializeObject<List<AdminModelTable>>(apiResponse)!;
                     adminUser = [.. adminUser!.OrderByDescending(x => x!.CreatedAt)];
                     var search = from m in adminUser select m;
                     if (!String.IsNullOrEmpty(id))
                     {
                         search = search.Where(s => s.FirstName!.Contains(id, StringComparison.CurrentCultureIgnoreCase) || s.SurName!.Contains(id, StringComparison.CurrentCultureIgnoreCase)
                         || s.Email!.Contains(id, StringComparison.CurrentCultureIgnoreCase)
-                        || s.ReferalCode!.Contains(id, StringComparison.CurrentCultureIgnoreCase)
+                        || s.CompanyName!.Contains(id, StringComparison.CurrentCultureIgnoreCase)
                         );
                         return View(search.ToList());
                     }
@@ -591,24 +624,28 @@ namespace Ginilog_AdminWeb.Controllers
                     AddStaffDataTable login = new()
                     {
                         Email = requset.Email,
+                        Password = requset.Password,
                         FirstName = requset.FirstName,
                         SurName = requset.SurName,
                         PhoneNo = requset.PhoneNo,
                         Sex = requset.Sex,
                         StaffCode = requset.StaffCode,
-                        StaffType = requset.StaffType,
-                        ReferalCode = requset.ReferalCode,
+                        AdminType = requset.AdminType,
+                       Address = requset.Address,
+                       Locality = requset.Locality,
+                       Branch = requset.Branch,
+                       State = requset.State,
                     };
 
                     using var httpClient = new HttpClient();
 
                     StringContent content = new(JsonConvert.SerializeObject(login), Encoding.UTF8, "application/json");
                     httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                    using var response = await httpClient.PostAsync($"{GlobalConstant.BaseUrl}{GlobalConstant.AdminUrl}staff", content);
+                    using var response = await httpClient.PostAsync($"{GlobalConstant.BaseUrl}{GlobalConstant.AdminUrl}staff-admin", content);
                     string apiResponse = await response.Content.ReadAsStringAsync();
                     if (response.StatusCode == HttpStatusCode.Created)
                     {
-                        var body = JsonConvert.DeserializeObject<StaffDataTable>(apiResponse)!;
+                        var body =apiResponse;
                         return RedirectToAction("AllStaffData", "Home");
                     }
                     else
@@ -651,12 +688,11 @@ namespace Ginilog_AdminWeb.Controllers
             }
         }
 
-        // Orders
         [HttpGet]
-        public IActionResult OrderList(string id, string date)
+        public IActionResult ManagerDetails(Guid id)
         {
             var userId = HttpContext.Session.GetString("bt_userId");
-            var token = HttpContext.Session.GetString("bt_token");
+            // var token = HttpContext.Session.GetString("bt_token");
             var adminType = HttpContext.Session.GetString("bt_userType");
             if (userId != null)
             {
@@ -664,231 +700,14 @@ namespace Ginilog_AdminWeb.Controllers
                 ViewBag.ProfilePics = users.ImagePath!;
                 ViewBag.AdminName = $"{users.FirstName} {users.SurName}";
                 ViewBag.UseType = adminType;
-                // orders
-                var stats = OrderStatistics()!.GetAwaiter().GetResult();
-                var orders = PackageOrderItems()!.GetAwaiter().GetResult();
-                orders = [.. orders!.OrderByDescending(x => x!.CreatedAt)];
-
-                var search = from m in orders select m;
-
-                if (!string.IsNullOrEmpty(id))
-                {
-                    search = search.Where(s => (s.SenderName?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
-                            (s.RiderName?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
-                            (s.CompanyName?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
-                            (s.RecieverName?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
-                            (s.OrderStatus?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
-                            (s.TrnxReference?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
-                            (s.ItemName?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
-                            (s.RecieverEmail?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false));
-                    var allOrdersData = new AllOrdersDataModel()
-                    {
-                        OrderStatistics = stats,
-                        OrderModelData = search.ToList(),
-
-                    };
-
-                    return View(allOrdersData);
-                }
-                else if (!String.IsNullOrEmpty(date))
-                {
-                    search = search.Where(s => s.CreatedAt.ToString("yyyy-MM-dd") == date);
-                    var allOrdersData = new AllOrdersDataModel()
-                    {
-                        OrderStatistics = stats,
-                        OrderModelData = search.ToList(),
-
-                    };
-
-                    return View(allOrdersData);
-                }
-                else
-                {
-                    var allOrdersData = new AllOrdersDataModel()
-                    {
-                        OrderStatistics = stats,
-                        OrderModelData = search.ToList(),
-                    };
-                    return View(allOrdersData);
-                }
+                var managers = ManagerData(id)!.GetAwaiter().GetResult();
+                return View(managers);
             }
             else
             {
                 return RedirectToAction("SignIn", "Auth");
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> OrderDetails(Guid id)
-        {
-            var userId = HttpContext.Session.GetString("bt_userId");
-            var token = HttpContext.Session.GetString("bt_token");
-            var adminType = HttpContext.Session.GetString("bt_userType");
-            if (userId != null)
-            {
-                var userDAta = Data()!.GetAwaiter().GetResult();
-                ViewBag.ProfilePics =userDAta.ImagePath!;
-                ViewBag.AdminName = $"{userDAta.FirstName} {userDAta.SurName}";
-                ViewBag.UseType = adminType;
-                using var httpClient = new HttpClient();
-                OrderModelData users = new();
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                using var response = await httpClient.GetAsync($"{GlobalConstant.BaseUrl}Logistics/package-orders/{id}");
-                if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    string apiResponse = await response.Content.ReadAsStringAsync();
-                    users = JsonConvert.DeserializeObject<OrderModelData>(apiResponse)!;
-                    string time = users.UpdatedAt.ToString("hh:mm tt");
-                    ViewBag.Time = time;
-                    return View(users);
-                }
-                else
-                {
-                    ViewBag.StatusCode = response.StatusCode;
-                    return RedirectToAction("OrderList", "Home");
-                }
-            }
-            else
-            {
-                return RedirectToAction("SignIn", "Auth");
-            }
-
-        }
-
-        [HttpGet]
-        public IActionResult ViewImages(string videoUrl, string imageUrl)
-        {
-            var model = new ImageViewModel
-            {
-                ImageUrl1 = videoUrl,
-                ImageUrl2 = imageUrl
-            };
-            return View(model);
-        }
-
-        [HttpGet]
-        public IActionResult DeleteOrder(Guid id)
-        {
-            ViewBag.Id = id;
-            return View();
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> DeleteOrderConfirm(Guid id)
-        {
-
-            var token = HttpContext.Session.GetString("bt_token");
-            using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            using var response = await httpClient.DeleteAsync($"{GlobalConstant.BaseUrl}Logistics/package-orders/{id}");
-            if (response.StatusCode == System.Net.HttpStatusCode.OK)
-            {
-                string apiResponse = await response.Content.ReadAsStringAsync();
-                return RedirectToAction("OrderList", "Home");
-            }
-            else
-            {
-                ViewBag.StatusCode = response.StatusCode;
-                return RedirectToAction("OrderList", "Home");
-            }
-        }
-
-        // Payout
-        [HttpGet]
-        public IActionResult CustomerReservationList(string id, string date)
-        {
-            var userId = HttpContext.Session.GetString("bt_userId");
-            var token = HttpContext.Session.GetString("bt_token");
-            var adminType = HttpContext.Session.GetString("bt_userType");
-            if (userId != null)
-            {
-                var users = Data()!.GetAwaiter().GetResult();
-                ViewBag.ProfilePics = users.ImagePath!;
-                ViewBag.AdminName = $"{users.FirstName} {users.SurName}";
-                ViewBag.UseType = adminType;
-                // orders
-
-                var orders = CustomerReservationItems()!.GetAwaiter().GetResult();
-                orders = [.. orders!.OrderByDescending(x => x!.CreatedAt)];
-
-                var search = from m in orders select m;
-
-
-                if (!String.IsNullOrEmpty(id) || !String.IsNullOrEmpty(date))
-                {
-                    search = search.Where(s => s.CustomerEmail!.Contains(id, StringComparison.CurrentCultureIgnoreCase)
-                    || s.CustomerName!.Contains(id, StringComparison.CurrentCultureIgnoreCase) || s.TrnxReference!.Contains(id, StringComparison.CurrentCultureIgnoreCase) ||
-                    s.AccomodationName!.Contains(id, StringComparison.CurrentCultureIgnoreCase) || s.TicketNum!.Contains(id, StringComparison.CurrentCultureIgnoreCase)
-                    || s.CreatedAt.ToString("yyyy-MM-dd")!.Contains(date));
-                    var allOrdersData = new AllCustomerBookedReservationModel()
-                    {
-                        CustomerBookedReservation = search.ToList(),
-
-                    };
-                    return View(allOrdersData);
-                }
-                else if (!String.IsNullOrEmpty(date))
-                {
-                    search = search.Where(s => s.CreatedAt.ToString("yyyy-MM-dd") == date);
-                    var allOrdersData = new AllCustomerBookedReservationModel()
-                    {
-                        CustomerBookedReservation = search.ToList(),
-
-                    };
-
-                    return View(allOrdersData);
-                }
-                else
-                {
-                    var allOrdersData = new AllCustomerBookedReservationModel()
-                    {
-                        CustomerBookedReservation = search.ToList(),
-
-                    };
-                    return View(allOrdersData);
-                }
 
             }
-            else
-            {
-                return RedirectToAction("SignIn", "Auth");
-            }
-
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> CustomerReservationDetails(Guid id)
-        {
-            var userId = HttpContext.Session.GetString("bt_userId");
-            var token = HttpContext.Session.GetString("bt_token");
-            var adminType = HttpContext.Session.GetString("bt_userType");
-            if (userId != null)
-            {
-                var userDAta = Data()!.GetAwaiter().GetResult();
-                ViewBag.ProfilePics = userDAta.ImagePath!;
-                ViewBag.AdminName = $"{userDAta.FirstName} {userDAta.SurName}";
-                ViewBag.UseType = adminType;
-                using var httpClient = new HttpClient();
-                CustomerBookedReservation users = new();
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                using var response = await httpClient.GetAsync($"{GlobalConstant.BaseUrl}Bookings/accomodation-reservations-customer/{id}");
-                if (response.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    string apiResponse = await response.Content.ReadAsStringAsync();
-                    users = JsonConvert.DeserializeObject<CustomerBookedReservation>(apiResponse)!;
-                    return View(users);
-                }
-                else
-                {
-                    ViewBag.StatusCode = response.StatusCode;
-                    return RedirectToAction("CustomerReservationList", "Home");
-                }
-            }
-            else
-            {
-                return RedirectToAction("SignIn", "Auth");
-            }
-
         }
 
         public IActionResult Privacy()

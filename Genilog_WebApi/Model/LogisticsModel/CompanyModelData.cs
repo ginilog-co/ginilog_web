@@ -85,6 +85,7 @@ namespace Genilog_WebApi.Model.LogisticsModel
     }
     public class AddCompany
     {
+        public Guid ManagerId { get; set; }
         public string? CompanyEmail { get; set; }
         public string? CompanyName { get; set; }
         public string? PhoneNumber { get; set; }

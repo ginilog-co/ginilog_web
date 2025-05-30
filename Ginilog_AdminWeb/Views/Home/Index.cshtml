@@ -5,88 +5,47 @@
 }
 
 
-<!-- Send Mail -->
-<div class="modal fade" id="sendMailModalW" tabindex="-1" role="dialog" aria-labelledby="sendMailModalLabelW" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="sendMailModalLabelW">Send Mail</h5>
-                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body text-center">
-                <div class="bg-secondary rounded h-100 p-4">
-                    <h6 class="mb-4">Send Email To User</h6>
-                    <form asp-action="SendEmail" method="post">
-                        <div class="form-floating mb-3">
-                            <input asp-for="SendMailModel!.Name!" type="text" class="form-control" id="floatingInput"
-                            placeholder="Name">
-                            <label for="floatingInput">Name</label>
-                        </div>
-                        <div class="form-floating mb-3">
-                            <input asp-for="SendMailModel!.Email" type="email" class="form-control" id="floatingPassword"
-                            placeholder="Number">
-                            <label for="floatingPassword">Email</label>
-                        </div>
-                        <div class="form-floating mb-3">
-                            <input asp-for="SendMailModel!.Title!" type="text" class="form-control" id="floatingInput"
-                            placeholder="Title">
-                            <label for="floatingInput">Title</label>
-                        </div>
-                        <div class="form-floating mb-3">
-                            <textarea asp-for="SendMailModel!.Message" class="form-control" id="floatingPassword"
-                            placeholder="Color"></textarea>
-                            <label for="floatingPassword">Message Here</label>
-                        </div>
 
-                        <button type="submit" class="btn btn-primary py-3 w-100 mb-4">Send</button>
-                    </form>
-                </div>
-            </div>
+
+<div id="deleteModal" class="custom-modal">
+    <div class="custom-modal-content">
+        <div class="custom-modal-header">
+            <h5 style="color:black" class="modal-title">Send Email To User</h5>
+            <span style="color:black" class="custom-modal-close" onclick="closeModal()">&times;</span>
+        </div>
+        <div class="custom-modal-body">
+          
+                <form asp-action="SendEmail" method="post">
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input asp-for="SendMailModel!.Name!" type="text" class="form-control p_input" placeholder="Name">
+                       
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input asp-for="SendMailModel!.Email" type="email" class="form-control p_input"  placeholder="Email">
+                       
+                    </div>
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input asp-for="SendMailModel!.Title!" type="text" class="form-control p_input" placeholder="Title">
+                       
+                    </div>
+                    <div class="form-group">
+                        <label>Message Here</label>
+                        <textarea asp-for="SendMailModel!.Message" class="form-control p_input" placeholder="Message"></textarea>
+                      
+                    </div>
+
+                    <button type="submit" class="btn btn-primary py-3 w-100 mb-4">Send</button>
+                </form>
+          
+        </div>
+        <div class="custom-modal-footer">
+            <button onclick="closeModal()" class="btn-secondary">Cancel</button>
         </div>
     </div>
 </div>
-
-<div class="modal fade" id="sendMailModalAll" tabindex="-1" role="dialog" aria-labelledby="sendMailModalLabelAll" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="sendMailModalLabelAll">Send Mail</h5>
-                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body text-center">
-                <div class="bg-secondary rounded h-100 p-4">
-                    <h6 class="mb-4">Send Email To All User</h6>
-                    <form asp-action="SendAllEmail" method="post">
-                        <div class="form-floating mb-3">
-                            <input asp-for="SendMailModel!.Title!" type="text" class="form-control" id="floatingInput"
-                            placeholder="Title">
-                            <label for="floatingInput">Title</label>
-                        </div>
-
-                        <div class="form-floating mb-3">
-                            <input asp-for="SendMailModel!.Link!" type="url" class="form-control" id="floatingInput"
-                            placeholder="Title">
-                            <label for="floatingInput">Link</label>
-                        </div>
-                        <div class="form-floating mb-3">
-                            <textarea asp-for="SendMailModel!.Message" class="form-control" id="floatingPassword"
-                            placeholder="Color"></textarea>
-                            <label for="floatingPassword">Message Here</label>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary py-3 w-100 mb-4">Send</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-
 
 
 <div class="content-wrapper">
@@ -96,11 +55,9 @@
         <div class="row px-0 mx-0">
             <div class="col-12 grid-margin px-0">
                 <div class="d-flex justify-content-end gap-2 px-0">
+                  
                     <div class="col-auto mb-2">
-                        <a class="nav-link btn btn-danger  create-new-button" data-bs-toggle="modal" data-bs-target="#sendMailModalAll">Send Email All User</a>
-                    </div>
-                    <div class="col-auto mb-2">
-                        <a class="nav-link btn btn-primary create-new-button" data-bs-toggle="modal" data-bs-target="#sendMailModalW">Send Email</a>
+                        <button class="nav-link btn btn-primary create-new-button" onclick="openModal()">Send Email</button>
                     </div>
                     <div class="col-auto mb-2">
                         <a class="nav-link btn btn-success create-new-button" href="~/Home/FeedBackList">Feedback</a>
@@ -112,10 +69,11 @@
                         <div class="col-auto mb-2">
                             <a class="nav-link btn btn-secondary create-new-button" href="~/Home/AllAdminUser">View Admin</a>
                         </div>
-                        <div class="col-auto mb-2">
-                            <a class="nav-link btn btn-success create-new-button" href="~/Home/AllStaffData">View Staff</a>
-                        </div>
+
                     }
+                    <div class="col-auto mb-2">
+                        <a class="nav-link btn btn-success create-new-button" href="~/Home/AllStaffData">View Staff</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -249,7 +207,7 @@
                                             <div class="badge badge-outline-success">@item.OrderStatus</div>
                                         </td>
                                         <th>@item.CreatedAt</th>
-                                        <td><a href="@Url.Action("OrderDetails", "Home", new { id = item!.Id })" class="btn btn-outline-info">View</a><td>
+                                        <td><a href="@Url.Action("OrderDetails", "Logistics", new { id = item!.Id })" class="btn btn-outline-info">View</a><td>
                                     </tr>
                                 }
                             </tbody>
@@ -268,7 +226,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h4 class="card-title mb-0">Customer Reservation List</h4>
                         <div class="nav-item dropdown">
-                            <a href="@Url.Action("CustomerReservationList", "Home")" class="btn btn-success">
+                            <a href="@Url.Action("CustomerReservationList", "Bookings")" class="btn btn-success">
                                 <span class="d-none d-lg-inline-flex">View All Customer Reservation</span>
                             </a>
                         </div>
@@ -304,7 +262,7 @@
                                             <div class="badge badge-outline-success">@item.RoomNumber</div>
                                         </td>
                                         <th>@item.CreatedAt</th>
-                                        <td><a href="@Url.Action("CustomerReservationDetails", "Home", new { id = item!.Id })" class="btn btn-outline-info">View</a>
+                                        <td><a href="@Url.Action("CustomerReservationDetails", "Bookings", new { id = item!.Id })" class="btn btn-outline-info">View</a>
                                         <td>
                                     </tr>
                                 }

@@ -44,6 +44,31 @@ namespace Ginilog_AdminWeb.Models.LogisticsModel
     }
     public class AddCompany
     {
+        public string? ManagerId { get; set; }
+        public string? CompanyEmail { get; set; }
+        public string? CompanyName { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? CompanyRegNo { get; set; }
+        public string? CompanyInfo { get; set; }
+        public double ValueCharge { get; set; }
+        public int NoOfTrucks { get; set; }
+        public int NofOfBikes { get; set; }
+        public string? CompanyAddress { get; set; }
+        public string? CompanyPostCodes { get; set; }
+        public string? CompanyLocality { get; set; }
+        public string? CompanyState { get; set; }
+        public double CompanyLatitude { get; set; }
+        public double CompanyLongitude { get; set; }
+        public string? BankName { get; set; }
+        public string? AccountName { get; set; }
+        public string? AccountNumber { get; set; }
+        public List<string>? DeliveryTypes { get; set; }
+        public string? ServiceArea { get; set; }
+        public IFormFile? LogoUpload { get; set; }
+    }
+    public class AddMainCompany
+    {
+        public string? ManagerId { get; set; }
         public string? CompanyEmail { get; set; }
         public string? CompanyName { get; set; }
         public string? PhoneNumber { get; set; }
@@ -65,8 +90,6 @@ namespace Ginilog_AdminWeb.Models.LogisticsModel
         public string? AccountNumber { get; set; }
         public List<string>? DeliveryTypes { get; set; }
         public List<string>? ServiceAreas { get; set; }
-        public string? ServiceArea { get; set; }
-        public IFormFile? LogoUpload { get; set; }
     }
 
     public class UpdateCompany

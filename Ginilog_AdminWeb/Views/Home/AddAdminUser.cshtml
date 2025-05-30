@@ -51,13 +51,25 @@
                     <select asp-for="AdminType" class="form-control p_input" aria-label="Floating label select example">
                         <option selected>Choose Admin Type</option>
                         <option value="Super_Admin">Super_Admin</option>
-                        <option value="Admin">Admin</option> 
-                        <option value="Admin">Manager</option>
+                        <option value="Admin">Admin</option>
+                    <option value="Manager">Manager</option>
                     </select>
                     <span asp-validation-for="AdminType" class="text-danger"></span>
                 </div>
 
                <div class="form-group">
+                    <label>Company Name</label>
+                <input asp-for="CompanyName" type="text" class="form-control p_input"
+                       placeholder="Company Name">
+                <span asp-validation-for="CompanyName" class="text-danger"></span>
+                </div> 
+                <div class="form-group">
+                    <label>UserName</label>
+                <input asp-for="CompanyUserName" type="text" class="form-control p_input"
+                       placeholder="UserName">
+                <span asp-validation-for="CompanyUserName" class="text-danger"></span>
+                </div> 
+                <div class="form-group">
                     <label>First Name</label>
                 <input asp-for="FirstName" type="text" class="form-control p_input" 
                    placeholder="First Name">
@@ -132,12 +144,23 @@
             </div>
             <div class="form-group">
                     <label>City</label>
-                <input asp-for="City" type="text" class="form-control p_input" 
+                <input asp-for="Locality" type="text" class="form-control p_input" 
                        placeholder="City">
-                <span asp-validation-for="City" class="text-danger"></span>
+                <span asp-validation-for="Locality" class="text-danger"></span>
             </div>
 
-                <button type="submit" class="btn btn-primary btn-block enter-btn">Add Now</button>
+            <div class="form-group">
+                <label>Company Type (You can Select Both)</label>
+                <select asp-for="CompanyType" multiple class="form-control p_input" aria-label="Floating label select example">
+                    
+                    <option value="Logistics">Logistics</option>
+                    <option value="Accommodation">Accommodation</option>
+                </select>
+
+                <span asp-validation-for="CompanyType" class="text-danger"></span>
+            </div>
+
+           <button type="submit" class="btn btn-primary btn-block enter-btn">Add Now</button>
     </form>
 </div>
 

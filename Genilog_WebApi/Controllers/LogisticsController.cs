@@ -188,105 +188,209 @@ namespace Genilog_WebApi.Controllers
                     return BadRequest("Invalid User ID format.");
                 }
                 var admin = await adminRepository.GetAsync(userGuid);
-
-                var contacts = new CompanyModelData()
+                if (admin.AdminType == "Manager")
                 {
-                    Id = Guid.NewGuid(),
-                    AdminId=admin.ManagerId,
-                    CompanyName = request.CompanyName,
-                    CompanyInfo = request.CompanyInfo,
-                    CompanyEmail = request.CompanyEmail,
-                    PhoneNumber = request.PhoneNumber,
-                    CompanyLogo = request.CompanyLogo,
-                    CompanyAddress = request.CompanyAddress,
-                    CompanyRegNo = request.CompanyRegNo,
-                    Rating = 0,
-                    Available= false,
-                    NofOfBikes = request.NofOfBikes,
-                    NoOfTrucks = request.NoOfTrucks ,
-                    ValueCharge = 0,
-                    BankName = request.BankName,
-                    AccountNumber = request.AccountNumber,
-                    AccountName = request.AccountName,
-                    Locality = request.Locality,
-                    State = request.State,
-                    PostCodes = request.PostCodes,
-                    Latitude = request.Latitude,
-                    Longitude = request.Longitude,
-                    ServiceAreas = request.ServiceAreas,
-                    DeliveryTypes = request.DeliveryTypes,
-                    CreatedAt = DateTime.UtcNow,
-                };
-                // Pass detials to repository
-                var isExist= await companyRepository.AdminIdExistAsync(admin.ManagerId);
-                if (isExist)
-                {
-                    contacts = await companyRepository.UpdateAsync(admin.ManagerId,contacts);
-                    // convert back to dto
-                    var contactsDto = new CompanyModelDataDto()
+                    var contacts = new CompanyModelData()
                     {
-                        Id = contacts.Id,
-                        AdminId = contacts.AdminId,
-                        CompanyName = contacts.CompanyName,
-                        CompanyInfo = contacts.CompanyInfo,
-                        CompanyEmail = contacts.CompanyEmail,
-                        PhoneNumber = contacts.PhoneNumber,
-                        CompanyAddress = contacts.CompanyAddress,
-                        Rating = contacts.Rating,
-                        NofOfBikes = contacts.NofOfBikes,
-                        NoOfTrucks = contacts.NoOfTrucks,
-                        ValueCharge = contacts.ValueCharge,
-                        CompanyLogo = contacts.CompanyLogo,
-                        CompanyRegNo = contacts.CompanyRegNo,
-                        AccountName = contacts.AccountName,
-                        AccountNumber = contacts.AccountNumber,
-                        BankName = contacts.BankName,
-                        State = contacts.State,
-                        Latitude = contacts.Latitude,
-                        Longitude = contacts.Longitude,
-                        Locality = contacts.Locality,
-                        PostCodes = contacts.PostCodes,
-                        Available = contacts.Available,
-                        CreatedAt = contacts.CreatedAt,
-                        DeliveryTypes = contacts.DeliveryTypes,
-                        ServiceAreas = contacts.ServiceAreas,
+                        Id = Guid.NewGuid(),
+                        AdminId = admin.ManagerId,
+                        CompanyName = request.CompanyName,
+                        CompanyInfo = request.CompanyInfo,
+                        CompanyEmail = request.CompanyEmail,
+                        PhoneNumber = request.PhoneNumber,
+                        CompanyLogo = request.CompanyLogo,
+                        CompanyAddress = request.CompanyAddress,
+                        CompanyRegNo = request.CompanyRegNo,
+                        Rating = 0,
+                        Available = false,
+                        NofOfBikes = request.NofOfBikes,
+                        NoOfTrucks = request.NoOfTrucks,
+                        ValueCharge = 0,
+                        BankName = request.BankName,
+                        AccountNumber = request.AccountNumber,
+                        AccountName = request.AccountName,
+                        Locality = request.Locality,
+                        State = request.State,
+                        PostCodes = request.PostCodes,
+                        Latitude = request.Latitude,
+                        Longitude = request.Longitude,
+                        ServiceAreas = request.ServiceAreas,
+                        DeliveryTypes = request.DeliveryTypes,
+                        CreatedAt = DateTime.UtcNow,
                     };
-                    return CreatedAtAction(nameof(GetCompanyAsync), new { id = contactsDto.Id }, contactsDto);
-                }
-                else 
-                {
-                    contacts = await companyRepository.AddAsync(contacts);
-                    // convert back to dto
-                    var contactsDto = new CompanyModelDataDto()
+                    // Pass detials to repository
+                    var isExist = await companyRepository.AdminIdExistAsync(admin.ManagerId);
+                    if (isExist)
                     {
-                        Id = contacts.Id,
-                        AdminId = contacts.AdminId,
-                        CompanyName = contacts.CompanyName,
-                        CompanyInfo = contacts.CompanyInfo,
-                        CompanyEmail = contacts.CompanyEmail,
-                        PhoneNumber = contacts.PhoneNumber,
-                        CompanyAddress = contacts.CompanyAddress,
-                        Rating = contacts.Rating,
-                        NofOfBikes = contacts.NofOfBikes,
-                        NoOfTrucks = contacts.NoOfTrucks,
-                        ValueCharge = contacts.ValueCharge,
-                        CompanyLogo = contacts.CompanyLogo,
-                        CompanyRegNo = contacts.CompanyRegNo,
-                        AccountName = contacts.AccountName,
-                        AccountNumber = contacts.AccountNumber,
-                        BankName = contacts.BankName,
-                        State = contacts.State,
-                        Latitude = contacts.Latitude,
-                        Longitude = contacts.Longitude,
-                        Locality = contacts.Locality,
-                        PostCodes = contacts.PostCodes,
-                        Available = contacts.Available,
-                        CreatedAt = contacts.CreatedAt,
-                        DeliveryTypes = contacts.DeliveryTypes,
-                        ServiceAreas = contacts.ServiceAreas,
-                    };
-                    return CreatedAtAction(nameof(GetCompanyAsync), new { id = contactsDto.Id }, contactsDto);
+                        contacts = await companyRepository.UpdateAsync(admin.ManagerId, contacts);
+                        // convert back to dto
+                        var contactsDto = new CompanyModelDataDto()
+                        {
+                            Id = contacts.Id,
+                            AdminId = contacts.AdminId,
+                            CompanyName = contacts.CompanyName,
+                            CompanyInfo = contacts.CompanyInfo,
+                            CompanyEmail = contacts.CompanyEmail,
+                            PhoneNumber = contacts.PhoneNumber,
+                            CompanyAddress = contacts.CompanyAddress,
+                            Rating = contacts.Rating,
+                            NofOfBikes = contacts.NofOfBikes,
+                            NoOfTrucks = contacts.NoOfTrucks,
+                            ValueCharge = contacts.ValueCharge,
+                            CompanyLogo = contacts.CompanyLogo,
+                            CompanyRegNo = contacts.CompanyRegNo,
+                            AccountName = contacts.AccountName,
+                            AccountNumber = contacts.AccountNumber,
+                            BankName = contacts.BankName,
+                            State = contacts.State,
+                            Latitude = contacts.Latitude,
+                            Longitude = contacts.Longitude,
+                            Locality = contacts.Locality,
+                            PostCodes = contacts.PostCodes,
+                            Available = contacts.Available,
+                            CreatedAt = contacts.CreatedAt,
+                            DeliveryTypes = contacts.DeliveryTypes,
+                            ServiceAreas = contacts.ServiceAreas,
+                        };
+                        return CreatedAtAction(nameof(GetCompanyAsync), new { id = contactsDto.Id }, contactsDto);
+                    }
+                    else
+                    {
+                        contacts = await companyRepository.AddAsync(contacts);
+                        // convert back to dto
+                        var contactsDto = new CompanyModelDataDto()
+                        {
+                            Id = contacts.Id,
+                            AdminId = contacts.AdminId,
+                            CompanyName = contacts.CompanyName,
+                            CompanyInfo = contacts.CompanyInfo,
+                            CompanyEmail = contacts.CompanyEmail,
+                            PhoneNumber = contacts.PhoneNumber,
+                            CompanyAddress = contacts.CompanyAddress,
+                            Rating = contacts.Rating,
+                            NofOfBikes = contacts.NofOfBikes,
+                            NoOfTrucks = contacts.NoOfTrucks,
+                            ValueCharge = contacts.ValueCharge,
+                            CompanyLogo = contacts.CompanyLogo,
+                            CompanyRegNo = contacts.CompanyRegNo,
+                            AccountName = contacts.AccountName,
+                            AccountNumber = contacts.AccountNumber,
+                            BankName = contacts.BankName,
+                            State = contacts.State,
+                            Latitude = contacts.Latitude,
+                            Longitude = contacts.Longitude,
+                            Locality = contacts.Locality,
+                            PostCodes = contacts.PostCodes,
+                            Available = contacts.Available,
+                            CreatedAt = contacts.CreatedAt,
+                            DeliveryTypes = contacts.DeliveryTypes,
+                            ServiceAreas = contacts.ServiceAreas,
+                        };
+                        return CreatedAtAction(nameof(GetCompanyAsync), new { id = contactsDto.Id }, contactsDto);
+                    }
                 }
+                else
+                {
+                    var contacts = new CompanyModelData()
+                    {
+                        Id = Guid.NewGuid(),
+                        AdminId = request.ManagerId,
+                        CompanyName = request.CompanyName,
+                        CompanyInfo = request.CompanyInfo,
+                        CompanyEmail = request.CompanyEmail,
+                        PhoneNumber = request.PhoneNumber,
+                        CompanyLogo = request.CompanyLogo,
+                        CompanyAddress = request.CompanyAddress,
+                        CompanyRegNo = request.CompanyRegNo,
+                        Rating = 0,
+                        Available = false,
+                        NofOfBikes = request.NofOfBikes,
+                        NoOfTrucks = request.NoOfTrucks,
+                        ValueCharge = 0,
+                        BankName = request.BankName,
+                        AccountNumber = request.AccountNumber,
+                        AccountName = request.AccountName,
+                        Locality = request.Locality,
+                        State = request.State,
+                        PostCodes = request.PostCodes,
+                        Latitude = request.Latitude,
+                        Longitude = request.Longitude,
+                        ServiceAreas = request.ServiceAreas,
+                        DeliveryTypes = request.DeliveryTypes,
+                        CreatedAt = DateTime.UtcNow,
+                    };
+                    // Pass detials to repository
+                    var isExist = await companyRepository.AdminIdExistAsync(request.ManagerId);
+                    if (isExist)
+                    {
+                        contacts = await companyRepository.UpdateAsync(request.ManagerId, contacts);
+                        // convert back to dto
+                        var contactsDto = new CompanyModelDataDto()
+                        {
+                            Id = contacts.Id,
+                            AdminId = contacts.AdminId,
+                            CompanyName = contacts.CompanyName,
+                            CompanyInfo = contacts.CompanyInfo,
+                            CompanyEmail = contacts.CompanyEmail,
+                            PhoneNumber = contacts.PhoneNumber,
+                            CompanyAddress = contacts.CompanyAddress,
+                            Rating = contacts.Rating,
+                            NofOfBikes = contacts.NofOfBikes,
+                            NoOfTrucks = contacts.NoOfTrucks,
+                            ValueCharge = contacts.ValueCharge,
+                            CompanyLogo = contacts.CompanyLogo,
+                            CompanyRegNo = contacts.CompanyRegNo,
+                            AccountName = contacts.AccountName,
+                            AccountNumber = contacts.AccountNumber,
+                            BankName = contacts.BankName,
+                            State = contacts.State,
+                            Latitude = contacts.Latitude,
+                            Longitude = contacts.Longitude,
+                            Locality = contacts.Locality,
+                            PostCodes = contacts.PostCodes,
+                            Available = contacts.Available,
+                            CreatedAt = contacts.CreatedAt,
+                            DeliveryTypes = contacts.DeliveryTypes,
+                            ServiceAreas = contacts.ServiceAreas,
+                        };
+                        return CreatedAtAction(nameof(GetCompanyAsync), new { id = contactsDto.Id }, contactsDto);
+                    }
+                    else
+                    {
+                        contacts = await companyRepository.AddAsync(contacts);
+                        // convert back to dto
+                        var contactsDto = new CompanyModelDataDto()
+                        {
+                            Id = contacts.Id,
+                            AdminId = contacts.AdminId,
+                            CompanyName = contacts.CompanyName,
+                            CompanyInfo = contacts.CompanyInfo,
+                            CompanyEmail = contacts.CompanyEmail,
+                            PhoneNumber = contacts.PhoneNumber,
+                            CompanyAddress = contacts.CompanyAddress,
+                            Rating = contacts.Rating,
+                            NofOfBikes = contacts.NofOfBikes,
+                            NoOfTrucks = contacts.NoOfTrucks,
+                            ValueCharge = contacts.ValueCharge,
+                            CompanyLogo = contacts.CompanyLogo,
+                            CompanyRegNo = contacts.CompanyRegNo,
+                            AccountName = contacts.AccountName,
+                            AccountNumber = contacts.AccountNumber,
+                            BankName = contacts.BankName,
+                            State = contacts.State,
+                            Latitude = contacts.Latitude,
+                            Longitude = contacts.Longitude,
+                            Locality = contacts.Locality,
+                            PostCodes = contacts.PostCodes,
+                            Available = contacts.Available,
+                            CreatedAt = contacts.CreatedAt,
+                            DeliveryTypes = contacts.DeliveryTypes,
+                            ServiceAreas = contacts.ServiceAreas,
+                        };
+                        return CreatedAtAction(nameof(GetCompanyAsync), new { id = contactsDto.Id }, contactsDto);
+                    }
+                }
+               
 
              
             }
@@ -643,9 +747,9 @@ namespace Genilog_WebApi.Controllers
                 {
                     return BadRequest("Invalid User ID format.");
                 }
-                var user = await newUsersRepository.GetAsync(userGuid);
+                var user = await generalUserRepository.GetAsync(userGuid);
                 var company = await companyRepository.GetAsync(companyId);
-               
+
                 DateTime localTime = DateTime.Now;
                 TimeZoneInfo nigeriaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("W. Central Africa Standard Time");
                 DateTime nigeriaTime = TimeZoneInfo.ConvertTimeFromUtc(localTime.ToUniversalTime(), nigeriaTimeZone);
@@ -655,26 +759,26 @@ namespace Genilog_WebApi.Controllers
                     AdminId = company.AdminId,
                     TrackingNum = $"{CreateRandomTokenSix()}-{CreateRandomTokenFour()}-{CreateRandomTokenThree()}",
                     OrderStatus = "Open",
-                    ItemCost=request.ItemCost,
-                    ItemDescription=request.ItemDescription,
-                    ItemModelNumber=request.ItemModelNumber,
-                    ItemName=request.ItemName,
-                    ItemQuantity=request.ItemQuantity,
-                    ItemWeight=request.ItemWeight,
-                    ConfirmationImage="",
-                    Comment="",
-                    QRCode="",
-                    PackageType=request.PackageType,
-                    ExpectedDeliveryTime="",
-                    CurrentLatitude= request.SenderLatitude,
-                    CurrentLongitude= request.SenderLongitude,
-                    CurrentLocation= request.SenderAddress,
+                    ItemCost = request.ItemCost,
+                    ItemDescription = request.ItemDescription,
+                    ItemModelNumber = request.ItemModelNumber,
+                    ItemName = request.ItemName,
+                    ItemQuantity = request.ItemQuantity,
+                    ItemWeight = request.ItemWeight,
+                    ConfirmationImage = "",
+                    Comment = "",
+                    QRCode = "",
+                    PackageType = request.PackageType,
+                    ExpectedDeliveryTime = "",
+                    CurrentLatitude = request.SenderLatitude,
+                    CurrentLongitude = request.SenderLongitude,
+                    CurrentLocation = request.SenderAddress,
                     // Company
                     CompanyId = company.Id,
-                    CompanyAddress=company.CompanyAddress,
-                    CompanyEmail=company.CompanyEmail,
-                    CompanyName=company.CompanyName,
-                    CompanyPhoneNo=company.PhoneNumber,
+                    CompanyAddress = company.CompanyAddress,
+                    CompanyEmail = company.CompanyEmail,
+                    CompanyName = company.CompanyName,
+                    CompanyPhoneNo = company.PhoneNumber,
                     // Sender
                     SenderName = request.SenderName,
                     SenderPhoneNo = request.SenderPhoneNo,
@@ -682,23 +786,23 @@ namespace Genilog_WebApi.Controllers
                     SenderAddress = request.SenderAddress,
                     SenderLocality = request.SenderState,
                     SenderState = request.SenderState,
-                    SenderCountry=request.SenderCountry,
+                    SenderCountry = request.SenderCountry,
                     SenderPostalCode = request.SenderPostalCode,
                     SenderLatitude = request.SenderLatitude,
                     SenderLongitude = request.SenderLongitude,
                     // Receiver
-                    RecieverAddress= request.RecieverAddress,
-                    RecieverEmail= request.RecieverEmail,
-                    RecieverLocality= request.RecieverLocality,
-                    RecieverName= request.RecieverName,
-                    RecieverState= request.RecieverState,
-                    RecieverCountry= request.RecieverCountry,
-                    RecieverPhoneNo= request.RecieverPhoneNo,
-                    RecieverPostalCode= request.RecieverPostalCode,
-                    RecieverLatitude= request.RecieverLatitude,
-                    RecieverLongitude= request.RecieverLongitude,
-                    ShippingCost=0,
-                    VatCost=0,
+                    RecieverAddress = request.RecieverAddress,
+                    RecieverEmail = request.RecieverEmail,
+                    RecieverLocality = request.RecieverLocality,
+                    RecieverName = request.RecieverName,
+                    RecieverState = request.RecieverState,
+                    RecieverCountry = request.RecieverCountry,
+                    RecieverPhoneNo = request.RecieverPhoneNo,
+                    RecieverPostalCode = request.RecieverPostalCode,
+                    RecieverLatitude = request.RecieverLatitude,
+                    RecieverLongitude = request.RecieverLongitude,
+                    ShippingCost = 0,
+                    VatCost = 0,
                     TrnxReference = "",
                     PaymentStatus = false,
                     PaymentChannel = "",
@@ -706,21 +810,21 @@ namespace Genilog_WebApi.Controllers
                     RiderName = "",
                     UpdatedAt = nigeriaTime,
                     CreatedAt = nigeriaTime,
-                    PackageImageLists=request.PackageImageLists,
-                    RiderType=request.RiderType,
-                    ShippingType=request.ShippingType,
-                   
+                    PackageImageLists = request.PackageImageLists,
+                    RiderType = request.RiderType,
+                    ShippingType = request.ShippingType,
+
                 };
                 // Pass detials to repository
                 contacts = await companyRepository.AddOrderAsync(contacts);
                 var orderflow = new OrderDeliveryFlow
                 {
                     OrderModelDataId = contacts.Id,
-                    OrderStatus=contacts.OrderStatus,
-                    CurrentLatitude= contacts.CurrentLatitude,
-                    CurrentLongitude= contacts.CurrentLongitude,
-                    CurrentLocation= contacts.CurrentLocation,
-                    UpdatedAt= contacts.UpdatedAt,
+                    OrderStatus = contacts.OrderStatus,
+                    CurrentLatitude = contacts.CurrentLatitude,
+                    CurrentLongitude = contacts.CurrentLongitude,
+                    CurrentLocation = contacts.CurrentLocation,
+                    UpdatedAt = contacts.UpdatedAt,
                 };
                 await companyRepository.AddOrderDeliveryFlowAsync(orderflow);
                 var datra = await companyRepository.GetOrderAsync(contacts.Id);
@@ -729,9 +833,193 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
+        [HttpPost("add-package-orders")]
+        [Authorize(Roles = "Admin,Super_Admin,Manager,Staff,StaffAdmin")]
+        public async Task<IActionResult> AddOrderAsync( [FromBody] AddModelOrder request)
+        {
+            var check = ValidateOrder(request);
+
+            if (!check)
+            {
+                return BadRequest(ModelState);
+            }
+            else
+            {
+                var user = await generalUserRepository.GetAsync(request.UserId);
+                var company = await companyRepository.GetAsync(request.CompanyId);
+                if (user == null)
+                {
+                    DateTime localTime = DateTime.Now;
+                    TimeZoneInfo nigeriaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("W. Central Africa Standard Time");
+                    DateTime nigeriaTime = TimeZoneInfo.ConvertTimeFromUtc(localTime.ToUniversalTime(), nigeriaTimeZone);
+                    var contacts = new OrderModelData()
+                    {
+                        UserId = Guid.NewGuid(),
+                        AdminId = company.AdminId,
+                        TrackingNum = $"{CreateRandomTokenSix()}-{CreateRandomTokenFour()}-{CreateRandomTokenThree()}",
+                        OrderStatus = "Open",
+                        ItemCost = request.ItemCost,
+                        ItemDescription = request.ItemDescription,
+                        ItemModelNumber = request.ItemModelNumber,
+                        ItemName = request.ItemName,
+                        ItemQuantity = request.ItemQuantity,
+                        ItemWeight = request.ItemWeight,
+                        ConfirmationImage = "",
+                        Comment = "",
+                        QRCode = "",
+                        PackageType = request.PackageType,
+                        ExpectedDeliveryTime =request.ExpectedDeliveryTime,
+                        CurrentLatitude = request.SenderLatitude,
+                        CurrentLongitude = request.SenderLongitude,
+                        CurrentLocation = request.SenderAddress,
+                        // Company
+                        CompanyId = company.Id,
+                        CompanyAddress = company.CompanyAddress,
+                        CompanyEmail = company.CompanyEmail,
+                        CompanyName = company.CompanyName,
+                        CompanyPhoneNo = company.PhoneNumber,
+                        // Sender
+                        SenderName = request.SenderName,
+                        SenderPhoneNo = request.SenderPhoneNo,
+                        SenderEmail = request.SenderEmail,
+                        SenderAddress = request.SenderAddress,
+                        SenderLocality = request.SenderState,
+                        SenderState = request.SenderState,
+                        SenderCountry = request.SenderCountry,
+                        SenderPostalCode = request.SenderPostalCode,
+                        SenderLatitude = request.SenderLatitude,
+                        SenderLongitude = request.SenderLongitude,
+                        // Receiver
+                        RecieverAddress = request.RecieverAddress,
+                        RecieverEmail = request.RecieverEmail,
+                        RecieverLocality = request.RecieverLocality,
+                        RecieverName = request.RecieverName,
+                        RecieverState = request.RecieverState,
+                        RecieverCountry = request.RecieverCountry,
+                        RecieverPhoneNo = request.RecieverPhoneNo,
+                        RecieverPostalCode = request.RecieverPostalCode,
+                        RecieverLatitude = request.RecieverLatitude,
+                        RecieverLongitude = request.RecieverLongitude,
+                        ShippingCost = request.ShippingCost,
+                        VatCost = request.VatCost,
+                        TrnxReference = "",
+                        PaymentStatus = false,
+                        PaymentChannel = "",
+                        RiderId = Guid.Empty,
+                        RiderName = "",
+                        UpdatedAt = nigeriaTime,
+                        CreatedAt = nigeriaTime,
+                        PackageImageLists = request.PackageImageLists,
+                        RiderType = request.RiderType,
+                        ShippingType = request.ShippingType,
+
+                    };
+                    // Pass detials to repository
+                    contacts = await companyRepository.AddOrderAsync(contacts);
+                    var orderflow = new OrderDeliveryFlow
+                    {
+                        OrderModelDataId = contacts.Id,
+                        OrderStatus = contacts.OrderStatus,
+                        CurrentLatitude = contacts.CurrentLatitude,
+                        CurrentLongitude = contacts.CurrentLongitude,
+                        CurrentLocation = contacts.CurrentLocation,
+                        UpdatedAt = contacts.UpdatedAt,
+                    };
+                    await companyRepository.AddOrderDeliveryFlowAsync(orderflow);
+                    var datra = await companyRepository.GetOrderAsync(contacts.Id);
+                    var contactsDto = mapper.Map<OrderModelDataDto>(datra);
+                    return Ok(contactsDto);
+                }
+                else
+                {
+                    DateTime localTime = DateTime.Now;
+                TimeZoneInfo nigeriaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("W. Central Africa Standard Time");
+                DateTime nigeriaTime = TimeZoneInfo.ConvertTimeFromUtc(localTime.ToUniversalTime(), nigeriaTimeZone);
+                var contacts = new OrderModelData()
+                {
+                    UserId = user.Id,
+                    AdminId = company.AdminId,
+                    TrackingNum = $"{CreateRandomTokenSix()}-{CreateRandomTokenFour()}-{CreateRandomTokenThree()}",
+                    OrderStatus = "Open",
+                    ItemCost = request.ItemCost,
+                    ItemDescription = request.ItemDescription,
+                    ItemModelNumber = request.ItemModelNumber,
+                    ItemName = request.ItemName,
+                    ItemQuantity = request.ItemQuantity,
+                    ItemWeight = request.ItemWeight,
+                    ConfirmationImage = "",
+                    Comment = "",
+                    QRCode = "",
+                    PackageType = request.PackageType,
+                    ExpectedDeliveryTime = "",
+                    CurrentLatitude = request.SenderLatitude,
+                    CurrentLongitude = request.SenderLongitude,
+                    CurrentLocation = request.SenderAddress,
+                    // Company
+                    CompanyId = company.Id,
+                    CompanyAddress = company.CompanyAddress,
+                    CompanyEmail = company.CompanyEmail,
+                    CompanyName = company.CompanyName,
+                    CompanyPhoneNo = company.PhoneNumber,
+                    // Sender
+                    SenderName = request.SenderName,
+                    SenderPhoneNo = request.SenderPhoneNo,
+                    SenderEmail = request.SenderEmail,
+                    SenderAddress = request.SenderAddress,
+                    SenderLocality = request.SenderState,
+                    SenderState = request.SenderState,
+                    SenderCountry = request.SenderCountry,
+                    SenderPostalCode = request.SenderPostalCode,
+                    SenderLatitude = request.SenderLatitude,
+                    SenderLongitude = request.SenderLongitude,
+                    // Receiver
+                    RecieverAddress = request.RecieverAddress,
+                    RecieverEmail = request.RecieverEmail,
+                    RecieverLocality = request.RecieverLocality,
+                    RecieverName = request.RecieverName,
+                    RecieverState = request.RecieverState,
+                    RecieverCountry = request.RecieverCountry,
+                    RecieverPhoneNo = request.RecieverPhoneNo,
+                    RecieverPostalCode = request.RecieverPostalCode,
+                    RecieverLatitude = request.RecieverLatitude,
+                    RecieverLongitude = request.RecieverLongitude,
+                    ShippingCost = 0,
+                    VatCost = 0,
+                    TrnxReference = "",
+                    PaymentStatus = false,
+                    PaymentChannel = "",
+                    RiderId = Guid.Empty,
+                    RiderName = "",
+                    UpdatedAt = nigeriaTime,
+                    CreatedAt = nigeriaTime,
+                    PackageImageLists = request.PackageImageLists,
+                    RiderType = request.RiderType,
+                    ShippingType = request.ShippingType,
+
+                };
+                // Pass detials to repository
+                contacts = await companyRepository.AddOrderAsync(contacts);
+                var orderflow = new OrderDeliveryFlow
+                {
+                    OrderModelDataId = contacts.Id,
+                    OrderStatus = contacts.OrderStatus,
+                    CurrentLatitude = contacts.CurrentLatitude,
+                    CurrentLongitude = contacts.CurrentLongitude,
+                    CurrentLocation = contacts.CurrentLocation,
+                    UpdatedAt = contacts.UpdatedAt,
+                };
+                await companyRepository.AddOrderDeliveryFlowAsync(orderflow);
+                var datra = await companyRepository.GetOrderAsync(contacts.Id);
+                var contactsDto = mapper.Map<OrderModelDataDto>(datra);
+                return Ok(contactsDto);
+
+                }
+            }
+        }
+
         //paystack
         [HttpPut("initialize-paystack-package-orders/{id:guid}")]
-        [Authorize(Roles = "User")]
+        [Authorize]
         public async Task<IActionResult> InitializePayment([FromRoute] Guid id)
         {
 
@@ -840,7 +1128,7 @@ namespace Genilog_WebApi.Controllers
 
         //flutterwave
         [HttpPut("initialize-flutterwave-package-orders/{id:guid}")]
-        [Authorize(Roles = "User")]
+        [Authorize]
         public async Task<IActionResult> InitializeFlutterwavePayment([FromRoute] Guid id)
         {
           
@@ -919,7 +1207,7 @@ namespace Genilog_WebApi.Controllers
                     PaymentStatus = status
                 };
 
-                if (paystackResponse.PaymentStatus == "successful")
+                if (paystackResponse.PaymentStatus == "completed")
                 {
 
                     var tronData = await companyRepository.GetOrderAsync(orderId);
@@ -967,7 +1255,7 @@ namespace Genilog_WebApi.Controllers
 
         [HttpPut]
         [Route("package-orders/{id:guid}")]
-        [Authorize(Roles = "Rider_User,User,Admin,Super_Admin")]
+        [Authorize]
         public async Task<IActionResult> UpdateGasOrderAsync([FromRoute] Guid id, [FromBody] UpdateOrder request)
         {
 
@@ -1212,6 +1500,21 @@ namespace Genilog_WebApi.Controllers
         }
 
         private bool ValidateOrder(AddOrder request)
+        {
+            if (request == null)
+            {
+                ModelState.AddModelError(nameof(request), $"Add  Data Is Required");
+                return false;
+            }
+
+            if (ModelState.ErrorCount > 0)
+            {
+                return false;
+            }
+            return true;
+
+        }
+        private bool ValidateOrder(AddModelOrder request)
         {
             if (request == null)
             {

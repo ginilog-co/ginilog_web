@@ -6,11 +6,6 @@
 }
 
 
-<!-- Send Mail -->
-
-
-<!-- Sales And Order Starts Start -->
-
 
 
    
@@ -21,9 +16,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-end">
                     <div class="nav-item dropdown ms-auto">
-                        <button type="button" data-bs-toggle="modal" data-bs-target="#sendMailModal" class="btn btn-primary m-2">
-                            <span class="d-none d-lg-inline-flex">Use Filter</span>
-                        </button>
+                       
                     </div>
                 </div>
                 <p>Order Statistics</p>
@@ -157,18 +150,15 @@
                 <div style="padding-top:20px"></div>
                 <h6>All Orders</h6>
                 <h6 class="mb-4">Search Here</h6>
-                <form asp-controller="Home" asp-action="OrderList" method="get">
+                <form asp-controller="Logistics" asp-action="OrderList" method="get">
                     <div class="d-none d-md-flex ms-4">
-
-                       
                             <div class="input-group">
                                 <input name="id" type="text" class="form-control" placeholder="Search: orders" aria-label="Username">
                                 <span  style="padding-left:10px;padding-right:10px"> </span>
                                 <input name="date" type="date" class="form-control" placeholder="Choose Date" aria-label="Server">
                             </div>
                             <div class="input-group-append">
-                                <button class="btn btn-sm btn-primary" type="submit">Search</button>
-                          
+                          <button class="btn btn-sm btn-primary" type="submit">Search</button>
                        </div>
                     </div>
                 </form>
@@ -188,6 +178,7 @@
                                 <th> Order Status </th>
                                 <th> Date </th>
                                 <th> Details </th>
+                                <th> Delete </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -201,12 +192,10 @@
                                     <td> @item.CompanyName </td>
                                     <td> &#8358;@item.ShippingCost.ToString("N2") </td>
                                     <td> &#8358;@item.ItemCost.ToString("N2") </td>
-                                    <td>
-                                        <div class="badge badge-outline-success">@item.OrderStatus</div>
-                                    </td>
-                                    <th>@item.CreatedAt</th>
-                                    <td><a href="@Url.Action("OrderDetails", "Home", new { id = item!.Id })" class="btn btn-outline-info">View</a>
-                                    <td>
+                                    <td><div class="badge badge-outline-success">@item.OrderStatus</div> </td>
+                                    <td>@item.CreatedAt</td>
+                                    <td><a href="@Url.Action("OrderDetails", "Logistics", new { id = item!.Id })" class="btn btn-outline-info">View</a><td>
+                                    <td><a href="@Url.Action("DeleteOrder", "Logistics", new { id = item!.Id })" class="btn btn-danger">Delete</a></td>
                                 </tr>
                             }
                         </tbody>

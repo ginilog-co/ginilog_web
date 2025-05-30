@@ -6,4 +6,9 @@ namespace Ginilog_AdminWeb.Models
 
         public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
     }
+    public class ResponseModel
+    {
+        public string? Message { get; set; }
+        public bool? Status { get; set; }
+    }
 }

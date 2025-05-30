@@ -47,14 +47,14 @@
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <div class="form-group">
                 <label>Choose Staff Type</label>
-                    <select asp-for="StaffType" class="form-control p_input"
+                    <select asp-for="AdminType" class="form-control p_input"
                             aria-label="Floating label select example">
                         <option selected>Choose Staff Type</option>
-                        <option value="Normal Staff">Normal Staff</option>
-                        <option value="Marketer">Marketer</option>
+                    <option value="Staff_Admin">Staff_Admin</option>
+                    <option value="Staff">Staff</option>
                     </select>
                   
-                    <span asp-validation-for="StaffType" class="text-danger"></span>
+                    <span asp-validation-for="AdminType" class="text-danger"></span>
                 </div>
 
                 <div class="form-group">
@@ -78,7 +78,16 @@
                     <span asp-validation-for="Email" class="text-danger"></span>
                     <span class="text-danger">@ViewBag.UserError</span>
                 </div>
-
+            <div class="form-group">
+                <label>Password</label>
+                <div class="input-group">
+                    <input asp-for="Password" type="password" class="form-control p_input" id="floatingPassword" placeholder="Password">
+                    <div class="input-group-append">
+                        <button onclick="togglePasswordVisibility()" class="btn btn-sm btn-primary" type="button" style="z-index: 1;"> <i id="visibilityIcon" class="bi bi-eye"></i></button>
+                    </div>
+                </div>
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
                 <div class="form-group">
                 <label>Phone Number</label>
                     <input asp-for="PhoneNo" type="tel" maxlength="11" pattern="\d{10,11}" class="form-control" id="floatingInput"
@@ -107,10 +116,28 @@
                     <span asp-validation-for="StaffCode" class="text-danger"></span>
                 </div>
                 <div class="form-group">
-                <label>Referral Code</label>
-                    <input asp-for="ReferalCode" type="text" class="form-control" id="floatingInput"
-                           placeholder="Referral Code">
-                    <span asp-validation-for="ReferalCode" class="text-danger"></span>
+                <label>Staff Address</label>
+                <input asp-for="Address" type="text" class="form-control" id="floatingInput"
+                       placeholder="Address">
+                <span asp-validation-for="Address" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                <label>Branch</label>
+                <input asp-for="Branch" type="text" class="form-control" id="floatingInput"
+                       placeholder="Branch">
+                <span asp-validation-for="Branch" class="text-danger"></span>
+                </div> 
+                <div class="form-group">
+                <label>City</label>
+                <input asp-for="Locality" type="text" class="form-control" id="floatingInput"
+                       placeholder="City">
+                <span asp-validation-for="Locality" class="text-danger"></span>
+                </div>
+                 <div class="form-group">
+                <label>State</label>
+                <input asp-for="State" type="text" class="form-control" id="floatingInput"
+                       placeholder="City">
+                <span asp-validation-for="State" class="text-danger"></span>
                 </div>
 
             <button type="submit" class="btn btn-primary btn-block enter-btn">Add Now</button>
@@ -142,6 +169,23 @@
 
     <!-- Template Javascript -->
     <script src="~/design/js/main.js"></script>
+
+
+    <script>
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById("floatingPassword");
+            const visibilityIcon = document.getElementById("visibilityIcon");
+
+            // Toggle the password visibility
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                visibilityIcon.classList.replace("bi-eye", "bi-eye-slash");
+            } else {
+                passwordInput.type = "password";
+                visibilityIcon.classList.replace("bi-eye-slash", "bi-eye");
+            }
+        }
+    </script>
 
     @section Scripts {
         @{

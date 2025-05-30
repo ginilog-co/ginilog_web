@@ -803,95 +803,191 @@ namespace Genilog_WebApi.Controllers
                 }
 
                 var admin = await adminRepository.GetAsync(userGuid);
-                var contacts = new AccomodationDataModel()
+                if (admin.AdminType == "Manager")
                 {
-                    AccomodationMonday = new AccomodationMondayModel()
+                    var contacts = new AccomodationDataModel()
                     {
-                        HourStart = request.TimeSchedule!.Monday!.Start,
-                        HourEnd = request.TimeSchedule!.Monday!.End,
-                        IsClosed = request.TimeSchedule!.Monday!.IsClosed,
-                    },
-                    AccomodationTuesday = new AccomodationTuesdayModel()
-                    {
-                        HourStart = request.TimeSchedule!.Tuesday!.Start,
-                        HourEnd = request.TimeSchedule!.Tuesday!.End,
-                        IsClosed = request.TimeSchedule!.Tuesday!.IsClosed,
-                    },
-                    AccomodationWednesday = new AccomodationWednesdayModel()
-                    {
-                        HourStart = request.TimeSchedule!.Wednesday!.Start,
-                        HourEnd = request.TimeSchedule!.Wednesday!.End,
-                        IsClosed = request.TimeSchedule!.Wednesday!.IsClosed,
-                    },
-                    AccomodationThursday = new AccomodationThursdayModel()
-                    {
-                        HourStart = request.TimeSchedule!.Thursday!.Start,
-                        HourEnd = request.TimeSchedule!.Thursday!.End,
-                        IsClosed = request.TimeSchedule!.Thursday!.IsClosed,
-                    },
-                    AccomodationFriday = new AccomodationFridayModel()
-                    {
-                        HourStart = request.TimeSchedule!.Friday!.Start,
-                        HourEnd = request.TimeSchedule!.Friday!.End,
-                        IsClosed = request.TimeSchedule!.Friday!.IsClosed,
-                    },
-                    AccomodationSaturday = new AccomodationSaturdayModel()
-                    {
-                        HourStart = request.TimeSchedule!.Saturday!.Start,
-                        HourEnd = request.TimeSchedule!.Saturday!.End,
-                        IsClosed = request.TimeSchedule!.Saturday!.IsClosed,
-                    },
-                    AccomodationSunday = new AccomodationSundayModel()
-                    {
-                        HourStart = request.TimeSchedule!.Sunday!.Start,
-                        HourEnd = request.TimeSchedule!.Sunday!.End,
-                        IsClosed = request.TimeSchedule!.Sunday!.IsClosed,
-                    },
-                    AdminId = admin.ManagerId,
-                    AccomodationName = request.AccomodationName,
-                    AccomodationEmail = request.AccomodationEmail,
-                    AccomodationDescription = request.AccomodationDescription,
-                    AccomodationType = request.AccomodationType,
-                    CheckInTime = request.CheckInTime,
-                    CheckOutTime = request.CheckOutTime,
-                    AccomodationWebsite = request.AccomodationWebsite,
-                    AccomodationPhoneNo = request.AccomodationPhoneNo,
-                    Location = request.Location,
-                    State = request.State,
-                    Country = request.Country,
-                    Locality = request.Locality,
-                    Postcode = request.Postcode,
-                    Latitude = (double)request.Latitude!,
-                    Longitude = (double)request.Longitude!,
-                    BookingAmount = (double)request.BookingAmount!,
-                    Rating = 0,
-                    NoOfRooms = (int)request.NoOfRooms!,
-                    AccomodationAdvertType = "",
-                    AccomodationLogo = request.AccomodationLogo,
-                    Available = true,
-                    CreatedAt = DateTime.Now,
-                    AccomodationImages = request.AccomodationImages,
-                    AccomodationFacilities = request.AccomodationFacilities,
+                        AccomodationMonday = new AccomodationMondayModel()
+                        {
+                            HourStart = request.TimeSchedule!.Monday!.Start,
+                            HourEnd = request.TimeSchedule!.Monday!.End,
+                            IsClosed = request.TimeSchedule!.Monday!.IsClosed,
+                        },
+                        AccomodationTuesday = new AccomodationTuesdayModel()
+                        {
+                            HourStart = request.TimeSchedule!.Tuesday!.Start,
+                            HourEnd = request.TimeSchedule!.Tuesday!.End,
+                            IsClosed = request.TimeSchedule!.Tuesday!.IsClosed,
+                        },
+                        AccomodationWednesday = new AccomodationWednesdayModel()
+                        {
+                            HourStart = request.TimeSchedule!.Wednesday!.Start,
+                            HourEnd = request.TimeSchedule!.Wednesday!.End,
+                            IsClosed = request.TimeSchedule!.Wednesday!.IsClosed,
+                        },
+                        AccomodationThursday = new AccomodationThursdayModel()
+                        {
+                            HourStart = request.TimeSchedule!.Thursday!.Start,
+                            HourEnd = request.TimeSchedule!.Thursday!.End,
+                            IsClosed = request.TimeSchedule!.Thursday!.IsClosed,
+                        },
+                        AccomodationFriday = new AccomodationFridayModel()
+                        {
+                            HourStart = request.TimeSchedule!.Friday!.Start,
+                            HourEnd = request.TimeSchedule!.Friday!.End,
+                            IsClosed = request.TimeSchedule!.Friday!.IsClosed,
+                        },
+                        AccomodationSaturday = new AccomodationSaturdayModel()
+                        {
+                            HourStart = request.TimeSchedule!.Saturday!.Start,
+                            HourEnd = request.TimeSchedule!.Saturday!.End,
+                            IsClosed = request.TimeSchedule!.Saturday!.IsClosed,
+                        },
+                        AccomodationSunday = new AccomodationSundayModel()
+                        {
+                            HourStart = request.TimeSchedule!.Sunday!.Start,
+                            HourEnd = request.TimeSchedule!.Sunday!.End,
+                            IsClosed = request.TimeSchedule!.Sunday!.IsClosed,
+                        },
+                        AdminId = admin.ManagerId,
+                        AccomodationName = request.AccomodationName,
+                        AccomodationEmail = request.AccomodationEmail,
+                        AccomodationDescription = request.AccomodationDescription,
+                        AccomodationType = request.AccomodationType,
+                        CheckInTime = request.CheckInTime,
+                        CheckOutTime = request.CheckOutTime,
+                        AccomodationWebsite = request.AccomodationWebsite,
+                        AccomodationPhoneNo = request.AccomodationPhoneNo,
+                        Location = request.Location,
+                        State = request.State,
+                        Country = request.Country,
+                        Locality = request.Locality,
+                        Postcode = request.Postcode,
+                        Latitude = (double)request.Latitude!,
+                        Longitude = (double)request.Longitude!,
+                        BookingAmount = (double)request.BookingAmount!,
+                        Rating = 0,
+                        NoOfRooms = (int)request.NoOfRooms!,
+                        AccomodationAdvertType = "",
+                        AccomodationLogo = request.AccomodationLogo,
+                        Available = true,
+                        CreatedAt = DateTime.Now,
+                        AccomodationImages = request.AccomodationImages,
+                        AccomodationFacilities = request.AccomodationFacilities,
 
-                };
-                // Pass detials to repository
-                var isExist = await accomodationRepository.AdminIdExistAsync(admin.ManagerId);
-                if (isExist)
-                {
-                    contacts = await accomodationRepository.UpdateAsync(admin.ManagerId, contacts);
-                    // convert back to dto
-                    var contact = await accomodationRepository.GetAsync(contacts.Id);
-                    var contactsDto = mapper.Map<AccomodationDataModelDto>(contact);
-                    return CreatedAtAction(nameof(GetAccomodationAsync), new { id = contactsDto.Id }, contactsDto);
+                    };
+                    // Pass detials to repository
+                    var isExist = await accomodationRepository.AdminIdExistAsync(admin.ManagerId);
+                    if (isExist)
+                    {
+                        contacts = await accomodationRepository.UpdateAsync(admin.ManagerId, contacts);
+                        // convert back to dto
+                        var contact = await accomodationRepository.GetAsync(contacts.Id);
+                        var contactsDto = mapper.Map<AccomodationDataModelDto>(contact);
+                        return CreatedAtAction(nameof(GetAccomodationAsync), new { id = contactsDto.Id }, contactsDto);
+                    }
+                    else
+                    {
+                        contacts = await accomodationRepository.AddAsync(contacts);
+                        // convert back to dto
+                        var contact = await accomodationRepository.GetAsync(contacts.Id);
+                        var contactsDto = mapper.Map<AccomodationDataModelDto>(contact);
+                        return CreatedAtAction(nameof(GetAccomodationAsync), new { id = contactsDto.Id }, contactsDto);
+                    }
                 }
                 else
                 {
-                    contacts = await accomodationRepository.AddAsync(contacts);
-                    // convert back to dto
-                    var contact = await accomodationRepository.GetAsync(contacts.Id);
-                    var contactsDto = mapper.Map<AccomodationDataModelDto>(contact);
-                    return CreatedAtAction(nameof(GetAccomodationAsync), new { id = contactsDto.Id }, contactsDto);
+                    var contacts = new AccomodationDataModel()
+                    {
+                        AccomodationMonday = new AccomodationMondayModel()
+                        {
+                            HourStart = request.TimeSchedule!.Monday!.Start,
+                            HourEnd = request.TimeSchedule!.Monday!.End,
+                            IsClosed = request.TimeSchedule!.Monday!.IsClosed,
+                        },
+                        AccomodationTuesday = new AccomodationTuesdayModel()
+                        {
+                            HourStart = request.TimeSchedule!.Tuesday!.Start,
+                            HourEnd = request.TimeSchedule!.Tuesday!.End,
+                            IsClosed = request.TimeSchedule!.Tuesday!.IsClosed,
+                        },
+                        AccomodationWednesday = new AccomodationWednesdayModel()
+                        {
+                            HourStart = request.TimeSchedule!.Wednesday!.Start,
+                            HourEnd = request.TimeSchedule!.Wednesday!.End,
+                            IsClosed = request.TimeSchedule!.Wednesday!.IsClosed,
+                        },
+                        AccomodationThursday = new AccomodationThursdayModel()
+                        {
+                            HourStart = request.TimeSchedule!.Thursday!.Start,
+                            HourEnd = request.TimeSchedule!.Thursday!.End,
+                            IsClosed = request.TimeSchedule!.Thursday!.IsClosed,
+                        },
+                        AccomodationFriday = new AccomodationFridayModel()
+                        {
+                            HourStart = request.TimeSchedule!.Friday!.Start,
+                            HourEnd = request.TimeSchedule!.Friday!.End,
+                            IsClosed = request.TimeSchedule!.Friday!.IsClosed,
+                        },
+                        AccomodationSaturday = new AccomodationSaturdayModel()
+                        {
+                            HourStart = request.TimeSchedule!.Saturday!.Start,
+                            HourEnd = request.TimeSchedule!.Saturday!.End,
+                            IsClosed = request.TimeSchedule!.Saturday!.IsClosed,
+                        },
+                        AccomodationSunday = new AccomodationSundayModel()
+                        {
+                            HourStart = request.TimeSchedule!.Sunday!.Start,
+                            HourEnd = request.TimeSchedule!.Sunday!.End,
+                            IsClosed = request.TimeSchedule!.Sunday!.IsClosed,
+                        },
+                        AdminId = request.ManagerId,
+                        AccomodationName = request.AccomodationName,
+                        AccomodationEmail = request.AccomodationEmail,
+                        AccomodationDescription = request.AccomodationDescription,
+                        AccomodationType = request.AccomodationType,
+                        CheckInTime = request.CheckInTime,
+                        CheckOutTime = request.CheckOutTime,
+                        AccomodationWebsite = request.AccomodationWebsite,
+                        AccomodationPhoneNo = request.AccomodationPhoneNo,
+                        Location = request.Location,
+                        State = request.State,
+                        Country = request.Country,
+                        Locality = request.Locality,
+                        Postcode = request.Postcode,
+                        Latitude = (double)request.Latitude!,
+                        Longitude = (double)request.Longitude!,
+                        BookingAmount = (double)request.BookingAmount!,
+                        Rating = 0,
+                        NoOfRooms = (int)request.NoOfRooms!,
+                        AccomodationAdvertType = "",
+                        AccomodationLogo = request.AccomodationLogo,
+                        Available = true,
+                        CreatedAt = DateTime.Now,
+                        AccomodationImages = request.AccomodationImages,
+                        AccomodationFacilities = request.AccomodationFacilities,
+
+                    };
+                    // Pass detials to repository
+                    var isExist = await accomodationRepository.AdminIdExistAsync(request.ManagerId);
+                    if (isExist)
+                    {
+                        contacts = await accomodationRepository.UpdateAsync(request.ManagerId, contacts);
+                        // convert back to dto
+                        var contact = await accomodationRepository.GetAsync(contacts.Id);
+                        var contactsDto = mapper.Map<AccomodationDataModelDto>(contact);
+                        return CreatedAtAction(nameof(GetAccomodationAsync), new { id = contactsDto.Id }, contactsDto);
+                    }
+                    else
+                    {
+                        contacts = await accomodationRepository.AddAsync(contacts);
+                        // convert back to dto
+                        var contact = await accomodationRepository.GetAsync(contacts.Id);
+                        var contactsDto = mapper.Map<AccomodationDataModelDto>(contact);
+                        return CreatedAtAction(nameof(GetAccomodationAsync), new { id = contactsDto.Id }, contactsDto);
+                    }
                 }
+               
               
             }
         }
@@ -1038,7 +1134,7 @@ namespace Genilog_WebApi.Controllers
 
 
         [HttpPost("accomodation-reservations")]
-        [Authorize(Roles = "User,Admin,Super_Admin")]
+        [Authorize(Roles = "Manager,Admin,Super_Admin,StaffAdmin,Staff")]
         public async Task<IActionResult> AddBookAccomodationReservationAsync([FromHeader] Guid accomodationId, [FromBody] AddBookAccomodationReservation request)
         {
             var check = ValidateBookAccomodationReservation(request);
@@ -1246,7 +1342,7 @@ namespace Genilog_WebApi.Controllers
 
 
         [HttpPost("accomodation-reservations-customer")]
-        [Authorize(Roles = "User")]
+        [Authorize]
         public async Task<IActionResult> AddCustomerBookedReservationAsync([FromHeader] Guid reservationId, [FromBody] AddCustomerBookedReservation request)
         {
             if (!DateTime.TryParse(request.ReservationStartDate, out var startDate) ||
@@ -1332,7 +1428,7 @@ namespace Genilog_WebApi.Controllers
 
         //paystack
         [HttpPost("initialize-paystack-accomodation-reservations-customer")]
-        [Authorize(Roles = "User")]
+        [Authorize]
         public async Task<IActionResult> InitializePayment([FromHeader] Guid reservationId, [FromBody] AddCustomerBookedReservation request)
 
         {
@@ -1509,7 +1605,7 @@ namespace Genilog_WebApi.Controllers
 
         //flutterwave
         [HttpPost("initialize-flutterwave-accomodation-reservations-customer")]
-        [Authorize(Roles = "User")]
+        [Authorize]
         public async Task<IActionResult> InitializeFlutterwavePayment([FromHeader] Guid reservationId, [FromBody] AddCustomerBookedReservation request)
         {
             if (!DateTime.TryParse(request.ReservationStartDate, out var startDate) ||
@@ -1642,7 +1738,7 @@ namespace Genilog_WebApi.Controllers
                     PaymentStatus = status
                 };
 
-                if (paystackResponse.PaymentStatus == "successful")
+                if (paystackResponse.PaymentStatus == "completed")
                 {
 
                     var tronData = await accomodationRepository.GetCustomerBookedReservationAsync(orderId);

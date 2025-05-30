@@ -76,8 +76,10 @@
     }
     public class HourModel
     {
+        public TimeSpan? HourStart { get; set; }
+        public TimeSpan? HourEnd { get; set; }
         public string? Start { get; set; }
         public string? End { get; set; }
-        public bool? IsClosed { get; set; }
+        public bool IsClosed { get; set; }
     }
 }

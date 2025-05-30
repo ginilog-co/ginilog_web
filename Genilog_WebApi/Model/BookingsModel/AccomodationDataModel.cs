@@ -111,6 +111,7 @@
     // Add Accomodations
     public class AddAccomodation
     {
+        public Guid ManagerId { get; set; }
         public string? AccomodationName { get; set; }
         public string? AccomodationLogo { get; set; }
         public string? AccomodationEmail { get; set; }
@@ -134,6 +135,8 @@
         public List<string>? AccomodationFacilities { get; set; }
         public bool? Available { get; set; }
         public AddTimeSchedule? TimeSchedule { get; set; }
+
+      
     }
 
     public class UpdateAccomodation

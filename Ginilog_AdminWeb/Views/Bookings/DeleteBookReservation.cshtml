@@ -7,7 +7,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Logout - Ginilog  Admin Dashboard</title>
+    <title>Delete - Ginilog  Admin Dashboard</title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <meta content="" name="keywords">
     <meta content="" name="description">
@@ -77,12 +77,12 @@
 <body>
 
     <div class="confirmation-box">
-        <h2>Confirm Logout</h2>
-        <p>Are you sure you want to logout of the Application? This action cannot be undone.</p>
+        <h2>Confirm Deletion</h2>
+        <p>Are you sure you want to delete this item? This action cannot be undone.</p>
 
         <div class="button-group">
-            <a style="text-decoration:none" href="~/Home/Index" class="button cancel">Cancel</a>
-            <a style="text-decoration:none" href="~/Auth/LogOutConfirm" class="button delete">Delete</a>
+            <a style="text-decoration:none" href="~/Bookings/AllAccomodationReservationList" class="button cancel">Cancel</a>
+            <a style="text-decoration:none" href="/Bookings/DeleteBookReservationConfirm/@ViewBag.Id" class="button delete">Delete</a>
         </div>
     </div>
 

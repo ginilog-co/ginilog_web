@@ -23,7 +23,7 @@
         public DateTime CreatedAt { get; set; }
     }
 
-    public class AddBookAccomodationReservation
+    public class MainBookAccomodationReservation
     {
         public int? RoomNumber { get; set; }
         public int? MaximumNoOfGuest { get; set; }
@@ -33,6 +33,22 @@
         public List<string>? RoomFeatures { get; set; }
         public bool? IsBooked { get; set; }
 
+    }
+    public class AddBookAccomodationReservation
+    {
+        public Guid AccommodationId { get; set; }
+        public int? RoomNumber { get; set; }
+        public int? MaximumNoOfGuest { get; set; }
+        public double? RoomPrice { get; set; }
+        public string? RoomType { get; set; }
+        public List<IFormFile>? RoomImages { get; set; }
+        public string? RoomFeatures { get; set; }
+    }
+
+    public class AllBookedReservationModel
+    {
+        public BookAccomodationReservatioModel? BookAccomodationReservatioModel { get; set; }
+        public List<CustomerBookedReservation>? CustomerBookedReservation { get; set; }
     }
 
     // Customer
@@ -81,6 +97,22 @@
         public string? ReservationStartDate { get; set; }
         public string? ReservationEndDate { get; set; }
         public int? NoOfDays { get; set; }
+    }
+
+    public class AddPaymentCustomerBookedReservation
+    {
+        public Guid ReservationId { get; set; }
+        public string? PaymentChannel { get; set; }
+        public string? CustomerName { get; set; }
+        public string? CustomerPhoneNumber { get; set; }
+        public string? CustomerEmail { get; set; }
+        public int? NumberOfGuests { get; set; }
+        public string? Comment { get; set; }
+        public string? ReservationStartDate { get; set; }
+        public string? ReservationEndDate { get; set; }
+        public int? NoOfDays { get; set; }
+        public string? TrnxReference { get; set; }
+        public bool PaymentStatus { get; set; }
     }
 
     public class AllCustomerBookedReservationModel

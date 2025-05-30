@@ -21132,4 +21132,34 @@ div.tagsinput {
   -webkit-flex-grow: 1;
   flex-grow: 1; }
 
+.readonly-white:hover,
+.readonly-white:focus {
+    background-color: white !important;
+    color: black;
+    cursor: default;
+}
+
+
+
+
+
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+
+
+
+
+
+
 /*# sourceMappingURL=maps/style.css.map */

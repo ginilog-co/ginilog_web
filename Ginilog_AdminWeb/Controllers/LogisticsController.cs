@@ -2,8 +2,13 @@
 using Ginilog_AdminWeb.Models;
 using Ginilog_AdminWeb.Models.BookingsModel;
 using Ginilog_AdminWeb.Models.LogisticsModel;
+using Ginilog_AdminWeb.Models.WalletModel;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 using Newtonsoft.Json;
+using NuGet.Packaging.Core;
+using NuGet.Protocol.Plugins;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -63,6 +68,35 @@ namespace Ginilog_AdminWeb.Controllers
                         surName = users.SurName!;
                         email = users.Email!;
                         sex = users.Sex!;
+                        return users!;
+                    }
+                    else
+                    {
+                        ViewBag.StatusCode = response.StatusCode;
+                    }
+                }
+                return users;
+            }
+#pragma warning disable CS8603 // Possible null reference return.
+            return null;
+#pragma warning restore CS8603 // Possible null reference return.
+        }
+
+        public async Task<List<AdminModelTable>>? ManagerDataList()
+        {
+            var token = HttpContext.Session.GetString("bt_token");
+            if (token != null)
+            {
+                List<AdminModelTable> users = [];
+                using (var httpClient = new HttpClient())
+                {
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    using var response = await httpClient.GetAsync($"{GlobalConstant.BaseUrl}{GlobalConstant.AdminUrl}");
+                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        string apiResponse = await response.Content.ReadAsStringAsync();
+                        users = JsonConvert.DeserializeObject<List<AdminModelTable>>(apiResponse)!;
+                        users = users.Where(x => x.AdminType == "Manager" && x.CompanyType!.Contains("Logistics")).ToList();
                         return users!;
                     }
                     else
@@ -154,13 +188,19 @@ namespace Ginilog_AdminWeb.Controllers
             return null;
 #pragma warning restore CS8603 // Possible null reference return.
         }
-        public async Task<OrderStatistics>? OrderStatistics(Guid id)
+        public async Task<OrderStatistics>? OrderStatistics(string id)
         {
             var datass = await PackageOrderItems()!;
+           
             DateTime localTime = DateTime.Now;
             TimeZoneInfo nigeriaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("W. Central Africa Standard Time");
             DateTime nigeriaTime = TimeZoneInfo.ConvertTimeFromUtc(localTime.ToUniversalTime(), nigeriaTimeZone);
             var userDto = datass.ToList();
+            // ✅ Filter by valid Guid if provided
+            if (Guid.TryParse(id, out Guid userGuid))
+            {
+                userDto = userDto.Where(x => x.UserId == userGuid|| x.CompanyId==userGuid).ToList();
+            }
             var totalRevenue = userDto.Sum(x => x.ShippingCost);
             var todaysOrder = userDto.Where(x => x.CreatedAt.ToString("yyyy-MM-dd") == nigeriaTime.ToString("yyyy-MM-dd")).ToList();
             var todaysAmountOrder = todaysOrder.Sum(x => x.ShippingCost);
@@ -193,6 +233,8 @@ namespace Ginilog_AdminWeb.Controllers
             };
             return dataModel;
         }
+
+        // Logistics
         [HttpGet]
         public IActionResult AllLogCompanyList(string id)
         {
@@ -227,86 +269,6 @@ namespace Ginilog_AdminWeb.Controllers
             {
                 return RedirectToAction("SignIn", "Auth");
             }
-        }
-
-        public IActionResult AddLogCompany()
-        {
-            var userId = HttpContext.Session.GetString("bt_userId");
-            // var token = HttpContext.Session.GetString("bt_token");
-            var adminType = HttpContext.Session.GetString("bt_userType");
-            if (userId != null)
-            {
-                var users = Data()!.GetAwaiter().GetResult();
-                ViewBag.ProfilePics = users.ImagePath!;
-                ViewBag.AdminName = $"{users.FirstName} {users.SurName}";
-                ViewBag.UseType = adminType;
-                return View();
-            }
-            else
-            {
-                return RedirectToAction("SignIn", "Auth");
-
-            }
-        }
-        [HttpPost]
-        public async Task<IActionResult> AddLogCompany(AddCompany requset)
-        {
-            var token = HttpContext.Session.GetString("bt_token");
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    var logo = await UploadFile(requset.LogoUpload!, token!);
-                   
-                    AddCompany login = new()
-                    {
-                        CompanyEmail = requset.CompanyEmail,
-                        CompanyName = requset.CompanyName,
-                        PhoneNumber = requset.PhoneNumber,
-                        CompanyRegNo = requset.CompanyRegNo,
-                        CompanyInfo = requset.CompanyInfo,
-                        Rating = 0,
-                        ValueCharge = requset.ValueCharge,
-                        NoOfTrucks = requset.NoOfTrucks,
-                        NofOfBikes = requset.NofOfBikes,
-                        AccountName = requset.AccountName,
-                        AccountNumber = requset.AccountNumber,
-                        BankName = requset.BankName,
-                        Locality = requset.Locality,
-                        CompanyAddress = requset.CompanyAddress,
-                        State = requset.State,
-                        Latitude = requset.Latitude,
-                        Longitude = requset.Longitude,
-                        PostCodes = requset.PostCodes,
-                        DeliveryTypes = requset.DeliveryTypes,
-                        ServiceAreas = requset.ServiceArea!.Split(',').Select(t => t.Trim()).Where(t => !string.IsNullOrEmpty(t)).ToList(),
-                        CompanyLogo = logo,
-                    };
-
-                    using var httpClient = new HttpClient();
-
-                    StringContent content = new(JsonConvert.SerializeObject(login), Encoding.UTF8, "application/json");
-                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                    using var response = await httpClient.PostAsync($"{GlobalConstant.BaseUrl}Logistics", content);
-                    string apiResponse = await response.Content.ReadAsStringAsync();
-                    if (response.StatusCode == HttpStatusCode.Created || response.StatusCode == HttpStatusCode.OK)
-                    {
-                        var body = JsonConvert.DeserializeObject<dynamic>(apiResponse)!;
-                        return RedirectToAction("AllLogCompanyList", "Logistics");
-                    }
-                    else
-                    {
-                        ViewBag.UserError = "Account Does Not Exist";
-                        return View(requset);
-                    }
-                }
-                catch (Exception e)
-                {
-                    ViewBag.UserError = e.Message;
-                    return View(requset);
-                }
-            }
-            return View(requset);
         }
 
         [HttpGet]
@@ -355,33 +317,93 @@ namespace Ginilog_AdminWeb.Controllers
 
         }
 
-        [HttpGet]
-        public IActionResult LogCompanyOrderList(Guid id)
+        public IActionResult AddLogCompany()
         {
             var userId = HttpContext.Session.GetString("bt_userId");
-            var token = HttpContext.Session.GetString("bt_token");
+            // var token = HttpContext.Session.GetString("bt_token");
+            var adminType = HttpContext.Session.GetString("bt_userType");
             if (userId != null)
             {
-                ViewBag.Id = id;
-                // orders
-                var stats = OrderStatistics(id)!.GetAwaiter().GetResult();
-                var orders = PackageOrderItems()!.GetAwaiter().GetResult();
-                orders = orders.Where(x => x.CompanyId == id).ToList();
-                var allOrdersData = new AllOrdersDataModel()
+                var users = Data()!.GetAwaiter().GetResult();
+                ViewBag.ProfilePics = users.ImagePath!;
+                ViewBag.AdminName = $"{users.FirstName} {users.SurName}";
+                ViewBag.UseType = adminType;
+                var managers = ManagerDataList()!.GetAwaiter().GetResult();
+                var manager = managers.Select(m => new SelectListItem
                 {
-                    OrderStatistics = stats,
-                    OrderModelData = orders,
-                };
-                return View(allOrdersData);
-
+                    Text = $"{m.FirstName} {m.SurName}",       // What the user sees
+                    Value = m.Id.ToString()  // What gets submitted
+                }).ToList();
+                ViewBag.Managers = manager;
+                return View();
             }
             else
             {
                 return RedirectToAction("SignIn", "Auth");
+
             }
-
         }
+        [HttpPost]
+        public async Task<IActionResult> AddLogCompany(AddCompany requset)
+        {
+            var token = HttpContext.Session.GetString("bt_token");
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var logo = await UploadFile(requset.LogoUpload!, token!);
 
+                    AddMainCompany login = new()
+                    {
+                        ManagerId = requset.ManagerId,
+                        CompanyEmail = requset.CompanyEmail,
+                        CompanyName = requset.CompanyName,
+                        PhoneNumber = requset.PhoneNumber,
+                        CompanyRegNo = requset.CompanyRegNo,
+                        CompanyInfo = requset.CompanyInfo,
+                        Rating = 0,
+                        ValueCharge = requset.ValueCharge,
+                        NoOfTrucks = requset.NoOfTrucks,
+                        NofOfBikes = requset.NofOfBikes,
+                        AccountName = requset.AccountName,
+                        AccountNumber = requset.AccountNumber,
+                        BankName = requset.BankName,
+                        Locality = requset.CompanyLocality,
+                        CompanyAddress = requset.CompanyAddress,
+                        State = requset.CompanyState,
+                        Latitude = requset.CompanyLatitude,
+                        Longitude = requset.CompanyLongitude,
+                        PostCodes = requset.CompanyPostCodes,
+                        DeliveryTypes = requset.DeliveryTypes,
+                        ServiceAreas = requset.ServiceArea!.Split(',').Select(t => t.Trim()).Where(t => !string.IsNullOrEmpty(t)).ToList(),
+                        CompanyLogo = logo,
+                    };
+
+                    using var httpClient = new HttpClient();
+
+                    StringContent content = new(JsonConvert.SerializeObject(login), Encoding.UTF8, "application/json");
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    using var response = await httpClient.PostAsync($"{GlobalConstant.BaseUrl}Logistics", content);
+                    string apiResponse = await response.Content.ReadAsStringAsync();
+                    if (response.StatusCode == HttpStatusCode.Created || response.StatusCode == HttpStatusCode.OK)
+                    {
+                        var body = JsonConvert.DeserializeObject<dynamic>(apiResponse)!;
+                        return RedirectToAction("AllLogCompanyList", "Logistics");
+                    }
+                    else
+                    {
+                        ViewBag.UserError = "Account Does Not Exist";
+                        return View(requset);
+                    }
+                }
+                catch (Exception e)
+                {
+                    ViewBag.UserError = e.Message;
+                    return View(requset);
+                }
+            }
+            return View(requset);
+        }
 
         [HttpGet]
         public IActionResult DeleteLogCompany(Guid id)
@@ -409,5 +431,464 @@ namespace Ginilog_AdminWeb.Controllers
                 return RedirectToAction("AllLogCompanyList", "Logistics");
             }
         }
+
+        // Orders Items
+
+        [HttpGet]
+        public IActionResult OrderList(string id, string date)
+        {
+            var userId = HttpContext.Session.GetString("bt_userId");
+            var token = HttpContext.Session.GetString("bt_token");
+            var adminType = HttpContext.Session.GetString("bt_userType");
+            if (userId != null)
+            {
+                var users = Data()!.GetAwaiter().GetResult();
+                ViewBag.ProfilePics = users.ImagePath!;
+                ViewBag.AdminName = $"{users.FirstName} {users.SurName}";
+                ViewBag.UseType = adminType;
+                // orders
+                var stats = OrderStatistics(id)!.GetAwaiter().GetResult();
+                var orders = PackageOrderItems()!.GetAwaiter().GetResult();
+                orders = [.. orders!.OrderByDescending(x => x!.CreatedAt)];
+
+                var search = from m in orders select m;
+
+                if (!string.IsNullOrEmpty(id))
+                {
+                    search = search.Where(s => 
+                            (s.SenderName?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                            (s.RiderName?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                            (s.CompanyName?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                            (s.RecieverName?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                            (s.OrderStatus?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                            (s.TrnxReference?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                            (s.ItemName?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                            (s.RecieverEmail?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                             s.UserId.ToString()== id|| s.CompanyId.ToString()== id
+                            );
+                    var allOrdersData = new AllOrdersDataModel()
+                    {
+                        OrderStatistics = stats,
+                        OrderModelData = search.ToList(),
+
+                    };
+
+                    return View(allOrdersData);
+                }
+                else if (!String.IsNullOrEmpty(date))
+                {
+                    search = search.Where(s => s.CreatedAt.ToString("yyyy-MM-dd") == date);
+                    var allOrdersData = new AllOrdersDataModel()
+                    {
+                        OrderStatistics = stats,
+                        OrderModelData = search.ToList(),
+
+                    };
+
+                    return View(allOrdersData);
+                }
+                else
+                {
+                    var allOrdersData = new AllOrdersDataModel()
+                    {
+                        OrderStatistics = stats,
+                        OrderModelData = search.ToList(),
+                    };
+                    return View(allOrdersData);
+                }
+            }
+            else
+            {
+                return RedirectToAction("SignIn", "Auth");
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> OrderDetails(Guid id)
+        {
+            var userId = HttpContext.Session.GetString("bt_userId");
+            var token = HttpContext.Session.GetString("bt_token");
+            var adminType = HttpContext.Session.GetString("bt_userType");
+            if (userId != null)
+            {
+                var userDAta = Data()!.GetAwaiter().GetResult();
+                ViewBag.ProfilePics = userDAta.ImagePath!;
+                ViewBag.AdminName = $"{userDAta.FirstName} {userDAta.SurName}";
+                ViewBag.UseType = adminType;
+                using var httpClient = new HttpClient();
+                OrderModelData users = new();
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                using var response = await httpClient.GetAsync($"{GlobalConstant.BaseUrl}Logistics/package-orders/{id}");
+                if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    string apiResponse = await response.Content.ReadAsStringAsync();
+                    users = JsonConvert.DeserializeObject<OrderModelData>(apiResponse)!;
+                    string time = users.UpdatedAt.ToString("hh:mm tt");
+                    ViewBag.Time = time;
+                    ViewBag.Id= id;
+                    var dataDetails = new OrdersDetailsDataModel
+                    {
+                        OrderModelData = users,
+                    };
+                    return View(dataDetails);
+                }
+                else
+                {
+                    ViewBag.StatusCode = response.StatusCode;
+                    return RedirectToAction("OrderList", "Logistics");
+                }
+            }
+            else
+            {
+                return RedirectToAction("SignIn", "Auth");
+            }
+
+        }
+
+        [HttpGet]
+        public IActionResult AddOrder(Guid id)
+        {
+            var userId = HttpContext.Session.GetString("bt_userId");
+            // var token = HttpContext.Session.GetString("bt_token");
+            var adminType = HttpContext.Session.GetString("bt_userType");
+            if (userId != null)
+            {
+                var users = Data()!.GetAwaiter().GetResult();
+                ViewBag.ProfilePics = users.ImagePath!;
+                ViewBag.AdminName = $"{users.FirstName} {users.SurName}";
+                ViewBag.UseType = adminType;
+
+                ViewBag.CompanyId = id;
+                return View();
+            }
+            else
+            {
+                return RedirectToAction("SignIn", "Auth");
+
+            }
+        }
+        [HttpPost]
+        public async Task<IActionResult> AddOrder(AddOrder requset)
+        {
+            var token = HttpContext.Session.GetString("bt_token");
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    List<string> packageImages = [];
+                    for (int i = 0; i < requset.ImageList!.Count; i++)
+                    {
+                        var image = await UploadFile(requset.ImageList![i], token!);
+                        packageImages.Add(image);
+                    }
+                    AddOrder login = new()
+                    {
+                        CompanyId = requset.CompanyId,
+                        UserId = requset.UserId,
+                        ExpectedDeliveryTime = requset.ExpectedDeliveryTime,
+                        ShippingCost = requset.ShippingCost,
+                        VatCost = requset.VatCost,
+                        ItemName = requset.ItemName,
+                        ItemDescription = requset.ItemDescription,
+                        ItemModelNumber = requset.ItemModelNumber,
+                        ItemCost = requset.ItemCost,
+                        ItemQuantity = requset.ItemQuantity,
+                        ItemWeight = requset.ItemWeight,
+                        PackageType=requset.PackageType,
+                        RecieverAddress=requset.RecieverAddress,
+                        RecieverCountry=requset.RecieverCountry,
+                        RecieverEmail=requset.RecieverEmail,
+                        RecieverLatitude=requset.RecieverLatitude,
+                        RecieverLocality=requset.RecieverLocality,
+                        RecieverLongitude=requset.RecieverLongitude,
+                        RecieverName=requset.RecieverName,
+                        RecieverPhoneNo=requset.RecieverPhoneNo,
+                        RecieverPostalCode=requset.RecieverPostalCode,
+                        RecieverState=requset.RecieverState,
+                        RiderType=requset.RiderType,
+                        SenderAddress=requset.SenderAddress,
+                        SenderCountry=requset.SenderCountry,
+                        SenderEmail=requset.SenderEmail,
+                        SenderLatitude=requset.SenderLatitude,
+                        SenderLocality=requset.SenderLocality,
+                        SenderLongitude=requset.SenderLongitude,
+                        SenderName=requset.SenderName,
+                        SenderPhoneNo=requset.SenderPhoneNo,
+                        SenderPostalCode=requset.SenderPostalCode,
+                        SenderState=requset.SenderState,
+                        ShippingType=requset.ShippingType,
+                        PackageImageLists=packageImages,
+                        PaymentChannel=requset.PaymentChannel,
+
+                    };
+
+                    using var httpClient = new HttpClient();
+                    StringContent content = new(JsonConvert.SerializeObject(login), Encoding.UTF8, "application/json");
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    using var response = await httpClient.PostAsync($"{GlobalConstant.BaseUrl}Logistics/add-package-orders", content);
+                    string apiResponse = await response.Content.ReadAsStringAsync();
+                    if (response.StatusCode == HttpStatusCode.Created || response.StatusCode == HttpStatusCode.OK)
+                    {
+                        var body = JsonConvert.DeserializeObject<OrderModelData>(apiResponse)!;
+                        return RedirectToAction("CompleteOrder", "Logistics", new { id = body.Id, paymentChannel=login.PaymentChannel });
+                    }
+                    else
+                    {
+                        ViewBag.UserError = apiResponse;
+                        return View(requset);
+                    }
+                }
+                catch
+                {
+                    return View(requset);
+                }
+            }
+            return View(requset);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CompleteOrder(string id,string paymentChannel)
+        {
+            var token = HttpContext.Session.GetString("bt_token");
+            if (ModelState.IsValid)
+            {
+                try
+                {
+
+                    UpdateOrder login = new()
+                    {
+                        PaymentChannel = paymentChannel,
+                        PaymentStatus = true,
+                        TrnxReference =  CreateRandomTokenSix() 
+                    };
+
+                    using var httpClient = new HttpClient();
+                    StringContent content = new(JsonConvert.SerializeObject(login), Encoding.UTF8, "application/json");
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                    if (paymentChannel == "Paystack")
+                    {
+                        StringContent content2 = new(JsonConvert.SerializeObject(""), Encoding.UTF8, "application/json");
+                        using var response = await httpClient.PutAsync($"{GlobalConstant.BaseUrl}Logistics/initialize-paystack-package-orders/{id}", content2);
+                        string apiResponse = await response.Content.ReadAsStringAsync();
+                        if (response.StatusCode == HttpStatusCode.Created || response.StatusCode == HttpStatusCode.OK)
+                        {
+                            var body = JsonConvert.DeserializeObject<PaystackResponse>(apiResponse)!;
+                            return Redirect(body.Data!.AuthorizationUrl!);
+                        }
+                        else
+                        {
+                            ViewBag.UserError = apiResponse;
+                            return RedirectToAction("OrderDetails", "Logistics", new { id });
+                        }
+                    }
+                    else if (paymentChannel == "Flutterwave")
+                    {
+                        StringContent content2 = new(JsonConvert.SerializeObject(""), Encoding.UTF8, "application/json");
+                        using var response = await httpClient.PostAsync($"{GlobalConstant.BaseUrl}Logistics/initialize-flutterwave-package-orders/{id}", content2);
+                        string apiResponse = await response.Content.ReadAsStringAsync();
+                        if (response.StatusCode == HttpStatusCode.Created || response.StatusCode == HttpStatusCode.OK)
+                        {
+                            var body = JsonConvert.DeserializeObject<FlutterwaveResponse>(apiResponse)!;
+                            return Redirect(body.Data!.Link!);
+                        }
+                        else
+                        {
+                            ViewBag.UserError = apiResponse;
+                            return RedirectToAction("OrderDetails", "Logistics", new { id });
+                        }
+                    }
+                    else
+                    {
+
+                        using var response = await httpClient.PostAsync($"{GlobalConstant.BaseUrl}Logistics/package-orders/{id}", content);
+                        string apiResponse = await response.Content.ReadAsStringAsync();
+                        if (response.StatusCode == HttpStatusCode.Created || response.StatusCode == HttpStatusCode.OK)
+                        {
+                            var body = JsonConvert.DeserializeObject<OrderModelData>(apiResponse)!;
+                            return RedirectToAction("OrderDetails", "Logistics", new { id = body.Id });
+                        }
+                        else
+                        {
+                            ViewBag.UserError = apiResponse;
+                            return RedirectToAction("OrderDetails", "Logistics", new { id });
+                        }
+                    }
+                }
+                catch
+                {
+                    return RedirectToAction("OrderDetails", "Logistics", new { id });
+                }
+            }
+            return RedirectToAction("OrderDetails", "Logistics", new { id });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateShippingCost(OrdersDetailsDataModel requset)
+
+        {
+            var token = HttpContext.Session.GetString("bt_token");
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    UpdateShippingCost login = new()
+                    {
+                        ShippingCost = requset.UpdateShippingCost!.ShippingCost,
+                        VatCost = requset.UpdateShippingCost.VatCost,
+                        Id=requset.UpdateShippingCost.Id
+                    };
+
+                    using var httpClient = new HttpClient();
+
+                    StringContent content = new(JsonConvert.SerializeObject(login), Encoding.UTF8, "application/json");
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    using var response = await httpClient.PutAsync($"{GlobalConstant.BaseUrl}Logistics/package-orders/{login.Id}", content);
+                    string apiResponse = await response.Content.ReadAsStringAsync();
+                    if (response.StatusCode == HttpStatusCode.OK)
+                    {
+
+                        var body = JsonConvert.DeserializeObject<OrderModelData>(apiResponse)!;
+                        return RedirectToAction("OrderDetails", "Logistics", new { id = body.Id });
+                    }
+                    else
+                    {
+                        ViewBag.UserError = apiResponse;
+                        return RedirectToAction("OrderDetails", "Logistics", new { id = login.Id });
+                    }
+                }
+                catch
+                {
+                    return RedirectToAction("OrderDetails", "Logistics", new { id = requset.UpdateShippingCost!.Id });
+                }
+            }
+            return RedirectToAction("OrderDetails", "Logistics", new { id = requset.UpdateShippingCost!.Id });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateExpectedDeliveryTime(OrdersDetailsDataModel requset)
+
+        {
+            var token = HttpContext.Session.GetString("bt_token");
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    UpdateExpectedDeliveryTime login = new()
+                    {
+                        ExpectedDeliveryTime = requset.UpdateExpectedDeliveryTime!.ExpectedDeliveryTime,
+                        Id = requset.UpdateExpectedDeliveryTime!.Id
+                    };
+
+                    using var httpClient = new HttpClient();
+
+                    StringContent content = new(JsonConvert.SerializeObject(login), Encoding.UTF8, "application/json");
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    using var response = await httpClient.PutAsync($"{GlobalConstant.BaseUrl}Logistics/package-orders/{login.Id}", content);
+                    string apiResponse = await response.Content.ReadAsStringAsync();
+                    if (response.StatusCode == HttpStatusCode.OK)
+                    {
+
+                        var body = JsonConvert.DeserializeObject<OrderModelData>(apiResponse)!;
+                        return RedirectToAction("OrderDetails", "Logistics", new { id = body.Id });
+                    }
+                    else
+                    {
+                        ViewBag.UserError = apiResponse;
+                        return RedirectToAction("OrderDetails", "Logistics", new { id = login.Id });
+                    }
+                }
+                catch
+                {
+                    return RedirectToAction("OrderDetails", "Logistics", new { id = requset.UpdateExpectedDeliveryTime!.Id });
+                }
+            }
+            return RedirectToAction("OrderDetails", "Logistics", new { id = requset.UpdateExpectedDeliveryTime!.Id });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateOrderStatus(OrdersDetailsDataModel requset)
+
+        {
+            var token = HttpContext.Session.GetString("bt_token");
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    UpdateOrderStatus login = new()
+                    {
+                        OrderStatus = requset.UpdateOrderStatus!.OrderStatus,
+                        Id = requset.UpdateOrderStatus!.Id
+                    };
+
+                    using var httpClient = new HttpClient();
+
+                    StringContent content = new(JsonConvert.SerializeObject(login), Encoding.UTF8, "application/json");
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    using var response = await httpClient.PutAsync($"{GlobalConstant.BaseUrl}Logistics/package-orders/{login.Id}", content);
+                    string apiResponse = await response.Content.ReadAsStringAsync();
+                    if (response.StatusCode == HttpStatusCode.OK)
+                    {
+
+                        var body = JsonConvert.DeserializeObject<OrderModelData>(apiResponse)!;
+                        return RedirectToAction("OrderDetails", "Logistics", new { id = body.Id });
+                    }
+                    else
+                    {
+                        ViewBag.UserError = apiResponse;
+                        return RedirectToAction("OrderDetails", "Logistics", new { id = login.Id });
+                    }
+                }
+                catch
+                {
+                    return RedirectToAction("OrderDetails", "Logistics", new { id = requset.UpdateOrderStatus!.Id });
+                }
+            }
+            return RedirectToAction("OrderDetails", "Logistics", new { id = requset.UpdateOrderStatus!.Id });
+        }
+
+
+        [HttpGet]
+        public IActionResult DeleteOrder(Guid id)
+        {
+            ViewBag.Id = id;
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DeleteOrderConfirm(Guid id)
+        {
+
+            var token = HttpContext.Session.GetString("bt_token");
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            using var response = await httpClient.DeleteAsync($"{GlobalConstant.BaseUrl}Logistics/package-orders/{id}");
+            if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                string apiResponse = await response.Content.ReadAsStringAsync();
+                return RedirectToAction("OrderList", "Logistics");
+            }
+            else
+            {
+                ViewBag.StatusCode = response.StatusCode;
+                return RedirectToAction("OrderList", "Home");
+            }
+        }
+
+        private static string CreateRandomTokenSix()
+        {
+            char[] charArr = "ABCDEFGHIJKLMNOPQLSTUVWXYZ0123456789".ToCharArray();
+            string strrandom = string.Empty;
+            Random objran = new();
+            for (int i = 0; i < 6; i++)
+            {
+                //It will not allow Repetation of Characters
+                int pos = objran.Next(1, charArr.Length);
+                if (!strrandom.Contains(charArr.GetValue(pos)!.ToString()!)) strrandom += charArr.GetValue(pos);
+                else i--;
+            }
+            return strrandom;
+        }
+
     }
 }

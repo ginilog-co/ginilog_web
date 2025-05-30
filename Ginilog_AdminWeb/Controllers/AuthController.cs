@@ -92,14 +92,15 @@ namespace Ginilog_AdminWeb.Controllers
                     }
                     else
                     {
-                        if (apiResponse == "Not An Admin Account")
+                        var body = JsonConvert.DeserializeObject<ResponseModel>(apiResponse)!;
+                        if (body.Message == "Not An Admin Account")
                         {
-                            ViewBag.UserError = "Account Does Not Exist";
+                            ViewBag.UserError = apiResponse;
                             return View(requset);
                         }
                         else
                         {
-                            ViewBag.UserError = "Account Does Not Exist";
+                            ViewBag.UserError = apiResponse;
                             return View(requset);
                         }
                     }

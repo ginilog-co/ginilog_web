@@ -21,6 +21,10 @@
     <link rel="stylesheet" href="~/new/assets/css/style.css">
     <!-- End layout styles -->
     <link rel="shortcut icon" href="~/new/assets/images/favicon.png" />
+    <!-- In <head> -->
+
+
+
     <style>
         .readonly-white:hover,
         .readonly-white:focus {
@@ -28,6 +32,130 @@
             color: black;
             cursor: default;
         }
+
+        .custom-carousel {
+            position: relative;
+            width: 250px;
+            height: 150px;
+            margin: auto;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+
+        .carousel-images {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .carousel-image {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+            border-radius: 10px;
+        }
+
+            .carousel-image.active {
+                display: block;
+            }
+
+        .navCarousel {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.4);
+            color: white;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            z-index: 10;
+            font-size: 18px;
+            border-radius: 50%;
+        }
+
+            .navCarousel.prev {
+                left: 10px;
+            }
+
+            .navCarousel.next {
+                right: 10px;
+            }
+
+        .custom-modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .custom-modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 0;
+            border-radius: 8px;
+            width: 400px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: slideDown 0.3s ease-out;
+        }
+
+       
+
+        .custom-modal-header, .custom-modal-footer {
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .custom-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .custom-modal-body {
+            padding: 15px;
+        }
+
+        .custom-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+        .custom-modal-close {
+            font-size: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-secondary {
+            background-color: #ccc;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+        }
+
+            .btn-secondary:hover,
+            .btn-danger:hover {
+                opacity: 0.9;
+            }
+
     </style>
 </head>
 <body>
@@ -91,7 +219,7 @@
                     
                 </li>
                 <li class="nav-item menu-items">
-                    <a class="nav-link" href="@Url.Action("OrderList", "Home")">
+                    <a class="nav-link" href="@Url.Action("OrderList", "Logistics")">
                         <span class="menu-icon">
                             <i class="mdi mdi-table-large"></i>
                         </span>
@@ -99,27 +227,28 @@
                     </a>
                 </li>
                 <li class="nav-item menu-items">
-                    <a class="nav-link" href="pages/forms/basic_elements.html">
+                    <a class="nav-link" href="@Url.Action("AllAccommodationList", "Bookings")">
                         <span class="menu-icon">
                             <i class="mdi mdi-playlist-play"></i>
                         </span>
                         <span class="menu-title">Accommodation List</span>
                     </a>
                 </li>
+              
                 <li class="nav-item menu-items">
-                    <a class="nav-link" href="pages/forms/basic_elements.html">
-                        <span class="menu-icon">
-                            <i class="mdi mdi-playlist-play"></i>
-                        </span>
-                        <span class="menu-title">Bookings List</span>
-                    </a>
-                </li>
-                <li class="nav-item menu-items">
-                    <a class="nav-link" href="pages/forms/basic_elements.html">
+                    <a class="nav-link" href="@Url.Action("AllAccomodationReservationList", "Bookings")">
                         <span class="menu-icon">
                             <i class="mdi mdi-playlist-play"></i>
                         </span>
                         <span class="menu-title">Reservation List</span>
+                    </a>
+                </li>
+                <li class="nav-item menu-items">
+                    <a class="nav-link" href="@Url.Action("CustomerReservationList", "Bookings")">
+                        <span class="menu-icon">
+                            <i class="mdi mdi-playlist-play"></i>
+                        </span>
+                        <span class="menu-title">Bookings List</span>
                     </a>
                 </li>
                 <li class="nav-item menu-items">
@@ -248,5 +377,75 @@
     <!-- Custom js for this page -->
     <script src="~/new/assets/js/dashboard.js"></script>
     <!-- End custom js for this page -->
+    <!-- Before </body> -->
+
+    <script>
+        let currentIndex = 0;
+        const slides = document.querySelectorAll('.carousel-image');
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.remove('active');
+                if (i === index) {
+                    slide.classList.add('active');
+                }
+            });
+        }
+
+        function moveSlide(step) {
+            currentIndex = (currentIndex + step + slides.length) % slides.length;
+            showSlide(currentIndex);
+        }
+
+        // Optional: auto-play
+        setInterval(() => moveSlide(1), 5000); // every 5 seconds##
+
+
+          function openModal() {
+            document.getElementById('deleteModal').style.display = 'block';
+        } 
+
+        function openSecondModal() {
+            document.getElementById('secondModal').style.display = 'block';
+        }
+
+        function openThirdModal() {
+            document.getElementById('thirdModal').style.display = 'block';
+        }
+
+        function openFourthModal() {
+            document.getElementById('fourthModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+        function closeSecondModal() {
+            document.getElementById('secondModal').style.display = 'none';
+        }
+
+         function closeThirdModal() {
+            document.getElementById('thirdModal').style.display = 'none';
+        }
+
+         function closeFourthModal() {
+            document.getElementById('fourthModal').style.display = 'none';
+        }
+
+        // Optional: Close when clicking outside the modal
+        window.onclick = function(event) {
+            const modal = document.getElementById('deleteModal');
+            const modal2 = document.getElementById('secondModal');
+            const modal3 = document.getElementById('secondModal');
+            const modal4 = document.getElementById('secondModal');
+            if (event.target === modal|| event.target === modal2 || event.target === modal3 || event.target === modal4) {
+                closeModal();
+                closeSecondModal();
+                closeFourthModal();
+                closeThirdModal();
+            }
+        };
+    
+    </script>
 </body>
 </html>

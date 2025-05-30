@@ -79,6 +79,11 @@
 
     public class AddOrder
     {
+        public Guid CompanyId { get; set; }
+        public Guid UserId { get; set; }
+        public string? ExpectedDeliveryTime { get; set; }
+        public double ShippingCost { get; set; }
+        public double VatCost { get; set; }
         public string? ItemName { get; set; }
         public string? ItemDescription { get; set; }
         public string? ItemModelNumber { get; set; }
@@ -111,6 +116,8 @@
         public List<string>? PackageImageLists { get; set; }
         public string? RiderType { get; set; }
         public string? ShippingType { get; set; }
+        public List<IFormFile>? ImageList { get; set; }
+        public string? PaymentChannel { get; set; }
 
     }
 
@@ -130,9 +137,36 @@
         public string? CurrentLocation { get; set; }
     }
 
+    public class UpdateShippingCost
+    {
+        public Guid Id { get; set; }
+        public double? ShippingCost { get; set; }
+        public double? VatCost { get; set; }
+    }
+
+    public class UpdateExpectedDeliveryTime
+    {
+        public Guid Id { get; set; }
+        public string? ExpectedDeliveryTime { get; set; }
+    }
+
+    public class UpdateOrderStatus
+    {
+        public Guid Id { get; set; }
+        public string? OrderStatus { get; set; }
+    }
+
     public class AllOrdersDataModel
     {
         public List<OrderModelData>? OrderModelData { get; set; }
         public OrderStatistics? OrderStatistics { get; set; }
+    } 
+    public class OrdersDetailsDataModel
+    {
+        public OrderModelData? OrderModelData { get; set; }
+       public UpdateShippingCost? UpdateShippingCost { get; set; }
+       public UpdateExpectedDeliveryTime? UpdateExpectedDeliveryTime { get; set; }
+       public UpdateOrderStatus? UpdateOrderStatus { get; set; }
     }
+
 }
