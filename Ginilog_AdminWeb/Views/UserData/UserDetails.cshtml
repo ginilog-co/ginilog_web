@@ -1,0 +1,391 @@
+﻿@model Ginilog_AdminWeb.Models.UsersDataModel.UserDetailsModel
+
+@{
+    ViewData["Title"] = "UserDetails";
+    Layout = "~/Views/Shared/_NewLayout.cshtml";
+}
+
+<!-- Send Email Modal -->
+<div id="thirdModal" class="custom-modal">
+    <div class="custom-modal-content">
+        <div class="custom-modal-header">
+            <h5 style="color:black" class="modal-title">Send Email To User</h5>
+            <span style="color:black" class="custom-modal-close" onclick="closeThirdModal()">&times;</span>
+        </div>
+        <div class="custom-modal-body">
+
+            <form asp-action="SendEmail" method="post">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input asp-for="SendMailModel!.Name!" value="@Model.UserModelTable!.FirstName @Model.UserModelTable.LastName" readonly type="text" class="form-control p_input" placeholder="Name">
+                    <input hidden asp-for="SendMailModel!.UserId!" value="@ViewBag.Id" type="text" class="form-control p_input" placeholder="Name">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input asp-for="SendMailModel!.Email" value="@Model.UserModelTable!.Email" readonly type="email" class="form-control p_input" placeholder="Email">
+
+                </div>
+                <div class="form-group">
+                    <label>Title</label>
+                    <input asp-for="SendMailModel!.Title!" type="text" class="form-control p_input" placeholder="Title">
+
+                </div>
+                <div class="form-group">
+                    <label>Message Here</label>
+                    <textarea asp-for="SendMailModel!.Message" class="form-control p_input" placeholder="Message"></textarea>
+
+                </div>
+
+                <button type="submit" class="btn btn-primary py-3 w-100 mb-4">Send</button>
+            </form>
+
+        </div>
+        <div class="custom-modal-footer">
+            <button onclick="closeThirdModal()" class="btn-secondary">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Send Notification Modal -->
+<div id="secondModal" class="custom-modal">
+    <div class="custom-modal-content">
+        <div class="custom-modal-header">
+            <h5 style="color:black" class="modal-title">Send Email To User</h5>
+            <span style="color:black" class="custom-modal-close" onclick="closeSecondModal()">&times;</span>
+        </div>
+        <div class="custom-modal-body">
+
+            <form asp-action="SendNotification" method="post">
+              
+                <div class="form-group">
+                    <label>Title</label>
+                    <input asp-for="AddNotification!.Title!" type="text" class="form-control p_input" placeholder="Title">
+                    <input hidden asp-for="AddNotification!.UserId!" value="@ViewBag.Id" type="text" class="form-control p_input" placeholder="Name">
+                </div>
+                <div class="form-group">
+                    <label>Message Here</label>
+                    <textarea asp-for="AddNotification!.Body" class="form-control p_input" placeholder="Message"></textarea>
+
+                </div>
+
+                <button type="submit" class="btn btn-primary py-3 w-100 mb-4">Send</button>
+            </form>
+
+        </div>
+        <div class="custom-modal-footer">
+            <button onclick="closeSecondModal()" class="btn-secondary">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div id="deleteModal" class="custom-modal">
+    <div class="custom-modal-content">
+        <div class="custom-modal-header">
+            <h5 style="color:black" class="modal-title">Confirm Delete</h5>
+            <span style="color:black" class="custom-modal-close" onclick="closeModal()">&times;</span>
+        </div>
+        <div class="custom-modal-body">
+            <p style="color:black">   Are you sure you want to delete this Item?</p>
+
+        </div>
+        <div class="custom-modal-footer">
+            <button onclick="closeModal()" class="btn-secondary">Cancel</button>
+            <a href="@Url.Action("DeleteLogCompanyConfirm", "Logistics", new { id = Model!.UserModelTable!.Id })" class="btn-danger">Delete</a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 grid-margin">
+        <div class="card">
+            <div class="card-body">
+
+
+                <div class="row px-0 mx-0">
+                    <div class="col-12 grid-margin px-0">
+                        <div class="d-flex justify-content-end gap-2 px-0">
+
+                            <div class="col-auto mb-2">
+                                <button class="nav-link btn btn-danger create-new-button" onclick="openModal()">Delete</button>
+                            </div>
+                            <div class="col-auto mb-2">
+
+
+                                @if (Model.UserModelTable.UserStatus == false)
+                                {
+                                    <button type="button" class="nav-link btn btn-outline-primary create-new-button2"> <span class="d-none d-lg-inline-flex">Offline</span></button>
+
+                                }
+                                @if (Model.UserModelTable.UserStatus == true)
+                                {
+                                    <button type="button" class="nav-link btn btn-outline-secondary create-new-button"> <span class="d-none d-lg-inline-flex">Online</span></button>
+                                }
+                            </div>
+                            <div class="col-auto mb-2">
+                                <a href="~/UserData/AddCustomerReservation/@Model.UserModelTable.Id" class="nav-link btn btn-primary create-new-button">Create Reservation</a>
+                            </div>
+                            <div class="col-auto mb-2">
+                                <a href="~/UserData/AddOrder/@Model.UserModelTable.Id" class="nav-link btn btn-secondary create-new-button">Create Order</a>
+                            </div>
+                            <div class="col-auto mb-2">
+                                <button type="button" onclick="openThirdModal()" class="btn btn-primary create-new-button"><span class="d-none d-lg-inline-flex">Send Email</span> </button>
+                            </div>
+                            <div class="col-auto mb-2">
+                                <button type="button" onclick="openSecondModal()" class="btn btn-secondary create-new-button"> <span class="d-none d-lg-inline-flex">Send Notification</span></button>
+                            </div>
+                            <div class="col-auto mb-2">
+                                @if (Model.UserModelTable.ProfilePicture != "")
+                                {
+                                    <img class="rounded-circle" style="width: 40px; height: 40px;" src="@Model.UserModelTable.ProfilePicture" alt="profile">
+                                }
+                                @if (Model.UserModelTable.ProfilePicture == "")
+                                {
+                                    <img class="rounded-circle" style="width: 40px; height: 40px;" alt="profile" src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp">
+                                }
+                                @if (Model.UserModelTable.ProfilePicture == null)
+                                {
+                                    <img class="rounded-circle" style="width: 40px; height: 40px;" alt="profile" src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp">
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <!-- Sales Chart Start -->
+
+                <div class="row g-4">
+                    <div class="col-sm-12 col-xl-4">
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input style="color: black; background-color: white;" value="@Model.UserModelTable.Email" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Names</label>
+                                <input style="color: black; background-color: white;" value="@Model.UserModelTable.FirstName @Model.UserModelTable.LastName" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <input style="color: black; background-color: white;" value="@Model.UserModelTable.PhoneNo" readonly type="text" class="form-control readonly-white" />
+                            </div>
+                            <div class="form-group">
+                                <label>Sex</label>
+                                <input style="color: black; background-color: white;" value="@Model.UserModelTable.Sex" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Referral Code</label>
+                                <input style="color: black; background-color: white;" value="@Model.UserModelTable.ReferralCode" readonly type="text" class="form-control readonly-white">
+
+                            </div>
+                            <div class="form-group">
+                                <label>Address</label>
+                                <input style="color: black; background-color: white;" value="@Model.UserModelTable.Address" readonly type="text" class="form-control readonly-white">
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="col-sm-12 col-xl-4">
+                        <div class="card-body">
+
+                            <div class="form-group">
+                                <label>PostCodes</label>
+                                <input style="color: black; background-color: white;" value="@Model.UserModelTable.PostCodes" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>City</label>
+                                <input style="color: black; background-color: white;" value="@Model.UserModelTable.Locality" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>State</label>
+                                <input style="color: black; background-color: white;" value="@Model.UserModelTable.State" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Latitude</label>
+                                <input style="color: black; background-color: white;" value="@Model.UserModelTable.Latitude" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Longitude</label>
+                                <input style="color: black; background-color: white;" value="@Model.UserModelTable.Longitude" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Money Box Balance</label>
+                                <input style="color: black; background-color: white;" value="&#8358;@Model.UserModelTable!.MoneyBoxBalance.ToString("N2")" readonly type="text" class="form-control readonly-white">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-12 col-xl-4">
+                        <div class="card-body">
+
+                            <div class="form-group">
+                                <label>Bank Name</label>
+                                <input style="color: black; background-color: white;" value="@Model.UserModelTable.BankName" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Account Name</label>
+                                <input style="color: black; background-color: white;" value="@Model.UserModelTable.AccountName" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Account Number</label>
+                                <input style="color: black; background-color: white;" value="@Model.UserModelTable.AccountNumber" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>CreatedAt</label>
+                                <input style="color: black; background-color: white;" value="@Model.UserModelTable.CreatedAt" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>LastLoginAt</label>
+                                <input style="color: black; background-color: white;" value="@Model.UserModelTable.LastLoginAt" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>LastSeenAtt</label>
+                                <input style="color: black; background-color: white;" value="@Model.UserModelTable.LastSeenAt" readonly type="text" class="form-control readonly-white">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+               
+
+                        <div style="padding-top:20px"></div>
+                        <h6>User Address</h6>
+                        <div style="padding-top:20px"></div>
+
+                        <div class="table-responsive">
+                            <table  class="table">
+                                <thead>
+                                    <tr class="text-white">
+                                        <th scope="col">Name</th>
+                                        <th scope="col">Phone Number</th>
+                                        <th scope="col">House Address</th>
+                                        <th scope="col">Location</th>
+                                        <th scope="col">City</th>
+                                        <th scope="col">State</th>
+                                        <th scope="col">Zip Code</th>
+                                        <th scope="col">Lat/Long</th>
+                                        <th scope="col">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.UserModelTable!.DeliveryAddresses!)
+                                    {
+                                        <tr>
+
+                                            <td>@item!.UserName</td>
+                                            <td>@item!.PhoneNo</td>
+                                            <td>@item!.HouseNo</td>
+                                            <td>@item!.Address</td>
+                                            <td>@item!.Locality</td>
+                                            <td>@item!.State</td>
+                                            <td>@item!.AddressPostCodes</td>
+                                            <td>@item!.Latitude\n @item.Longitude</td>
+                                            <td>@item!.CreatedAt</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                  
+
+                <div style="padding-top:20px"></div>
+                <h6>User Orders</h6>
+                <div style="padding-top:20px"></div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th> Tracking Num </th>
+                                <th> Item Name </th>
+                                <th> Sender Name </th>
+                                <th> Reciever Name </th>
+                                <th> Company Name </th>
+                                <th> Shipping Cost </th>
+                                <th> Item Cost </th>
+                                <th> Order Status </th>
+                                <th> Date </th>
+                                <th> Details </th>
+                                <th> Delete </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.OrderModelDatas!.Take(5))
+                            {
+                                <tr>
+                                    <td> @item.TrackingNum </td>
+                                    <td> @item.ItemName </td>
+                                    <td> @item.SenderName </td>
+                                    <td> @item.RecieverName </td>
+                                    <td> @item.CompanyName </td>
+                                    <td> &#8358;@item.ShippingCost.ToString("N2") </td>
+                                    <td> &#8358;@item.ItemCost.ToString("N2") </td>
+                                    <td><div class="badge badge-outline-success">@item.OrderStatus</div></td>
+                                    <th>@item.CreatedAt</th>
+                                    <td><a href="@Url.Action("OrderDetails", "Logistics", new { id = item!.Id })" class="btn btn-outline-info">View</a>
+                                    <td>
+                                    <td><a href="@Url.Action("DeleteOrder", "Logistics", new { id = item!.Id })" class="btn btn-danger">Delete</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <div style="padding-top:20px"></div>
+                    <p><a href="@Url.Action("OrderList", "Logistics", new { id = Model.UserModelTable!.Id })" class="btn btn-danger">View All Order</a></p>
+                </div>
+
+
+                <div style="padding-top:20px"></div>
+                <h6>User Reservations</h6>
+                <div style="padding-top:20px"></div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th> Accomodation Name </th>
+                                <th> Customer Name </th>
+                                <th> Ticket Num </th>
+                                <th> Reservation Start Date </th>
+                                <th> Reservation End Date  </th>
+                                <th> Total Cost </th>
+                                <th> No Of Days </th>
+                                <th> Room Number </th>
+                                <th> Date </th>
+                                <th> Details </th>
+                                <th> Delete </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.CustomerBookedReservations!.Take(5))
+                            {
+                                <tr>
+                                    <td> @item.AccomodationName </td>
+                                    <td> @item.CustomerName </td>
+                                    <td> @item.TicketNum </td>
+                                    <td> @item.ReservationStartDate </td>
+                                    <td> @item.ReservationEndDate  </td>
+                                    <td> &#8358;@item.TotalCost.ToString("N2") </td>
+                                    <td> @item.NoOfDays </td>
+                                    <td>
+                                        <div class="badge badge-outline-success">@item.RoomNumber</div>
+                                    </td>
+                                    <td>@item.CreatedAt</td>
+                                    <td><a href="@Url.Action("CustomerReservationDetails", "Bookings", new { id = item!.Id })" class="btn btn-outline-info">View</a>
+                                    <td>
+                                    <td><a href="@Url.Action("DeleteCustomerReservation", "Bookings", new { id = item!.Id })" class="btn btn-danger">Delete</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <div style="padding-top:20px"></div>
+                    <p><a href="@Url.Action("CustomerReservationList", "Bookings", new { id = Model.UserModelTable!.Id })" class="btn btn-danger">View All Customers</a></p>
+                </div>
+               
+            </div>
+
+        </div>
+    </div>
+
+</div>

@@ -1230,7 +1230,7 @@ namespace Genilog_WebApi.Controllers
                     return Ok(userDto);
                 }
             }
-            else if (user.UserType == "Manager" || user.UserType == "Staff-Admin"|| user.UserType=="Staff")
+            else if (user.UserType == "Manager" || user.UserType == "Staff_Admin"|| user.UserType=="Staff")
             {
                 var admin = await adminRepository.GetAsync(user.Id);
                 events = [.. events.Where(x => x.AdminId == admin.ManagerId)];
@@ -1361,67 +1361,123 @@ namespace Genilog_WebApi.Controllers
             else
             {
 
-                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (!Guid.TryParse(userId, out Guid userGuid))
+                var userD = await generalUserRepository.GetAsync(request.UserId);
+                if (userD == null)
                 {
-                    return BadRequest("Invalid User ID format.");
+                    var events = await accomodationRepository.GetBookAccomodationReservationAsync(reservationId);
+                    var acc = await accomodationRepository.GetAsync(events.AccomodationId);
+                    var td = CreateRandomTokenSix();
+                    var cD1 = GenerateQRCode($"\nTicketNum:{td} \nName:{request.CustomerName} \nRoom:{events.RoomNumber}");
+
+                    var contacts = new CustomerBookedReservation()
+                    {
+                        UserId = Guid.NewGuid(),
+                        AdminId = events.AdminId,
+                        AccomodationId = events.AccomodationId,
+                        AccomodationType = events.AccomodationType,
+                        AccomodationImage = events.AccomodationImage,
+                        AccomodationName = events.AccomodationName,
+                        AccomodationLocation = acc.Location,
+                        ResevationId = events.Id,
+                        CustomerName = request.CustomerName,
+                        CustomerEmail = request.CustomerEmail,
+                        CustomerPhoneNumber = request.CustomerPhoneNumber,
+                        QRCode = cD1,
+                        Comment = request.Comment,
+                        PaymentChannel = request.PaymentChannel,
+                        NumberOfGuests = (int)request.NumberOfGuests!,
+                        PaymentStatus = (bool)request.PaymentStatus!,
+                        TicketClosed = false,
+                        RoomNumber = events.RoomNumber,
+                        TrnxReference = request.TrnxReference,
+                        TicketNum = td,
+                        ReservationEndDate = endDate,
+                        ReservationStartDate = startDate,
+                        NoOfDays = request.NoOfDays,
+                        TotalCost = events.RoomPrice * request.NoOfDays,
+                        CreatedAt = DateTime.Now,
+                        UpdateddAt = DateTime.Now,
+                    };
+                    // Pass detials to repository
+                    contacts = await accomodationRepository.AddCustomerBookedReservationAsync(contacts);
+                    var userDto1 = await accomodationRepository.GetBookAccomodationReservationAsync(contacts.ResevationId);
+                    var user = new BookAccomodationReservatioModel()
+                    {
+                        RoomType = userDto1.RoomType,
+                        QRCode = userDto1.QRCode,
+                        RoomNumber = (userDto1.RoomNumber),
+                        RoomPrice = (userDto1.RoomPrice),
+                        RoomFeatures = (userDto1.RoomFeatures),
+                        IsBooked = true,
+                        RoomImages = (userDto1.RoomImages),
+                    };
+
+                    // Update detials to repository
+                    await accomodationRepository.UpdateBookAccomodationReservationAsync(contacts.ResevationId, user);
+                    // convert back to dto
+                    var contact = await accomodationRepository.GetCustomerBookedReservationAsync(contacts.Id);
+                    var contactsDto = mapper.Map<CustomerBookedReservationDto>(contact);
+                    return CreatedAtAction(nameof(GetCustomerBookedReservationAsync), new { id = contactsDto.Id }, contactsDto);
                 }
-                var events = await accomodationRepository.GetBookAccomodationReservationAsync(reservationId);
-                var acc = await accomodationRepository.GetAsync(events.AccomodationId);
-                var td = CreateRandomTokenSix();
-                var cD1 = GenerateQRCode($"\nTicketNum:{td} \nName:{request.CustomerName} \nRoom:{events.RoomNumber}");
-
-               
-
-                var contacts = new CustomerBookedReservation()
+                else
                 {
-                    UserId = userGuid,
-                    AdminId=events.AdminId,
-                    AccomodationId = events.AccomodationId,
-                    AccomodationType = events.AccomodationType,
-                    AccomodationImage = events.AccomodationImage,
-                    AccomodationName = events.AccomodationName,
-                    AccomodationLocation = acc.Location,
-                    ResevationId = events.Id,
-                    CustomerName = request.CustomerName,
-                    CustomerEmail = request.CustomerEmail,
-                    CustomerPhoneNumber = request.CustomerPhoneNumber,
-                    QRCode = cD1,
-                    Comment = request.Comment,
-                    PaymentChannel = request.PaymentChannel,
-                    NumberOfGuests = (int)request.NumberOfGuests!,
-                    PaymentStatus = (bool)request.PaymentStatus!,
-                    TicketClosed = false,
-                    RoomNumber = events.RoomNumber,
-                    TrnxReference = request.TrnxReference,
-                    TicketNum = td,
-                    ReservationEndDate = endDate,
-                    ReservationStartDate = startDate,
-                    NoOfDays = request.NoOfDays,
-                    TotalCost = events.RoomPrice * request.NoOfDays,
-                    CreatedAt = DateTime.Now,
-                    UpdateddAt = DateTime.Now,
-                };
-                // Pass detials to repository
-                contacts = await accomodationRepository.AddCustomerBookedReservationAsync(contacts);
-                var userDto1 = await accomodationRepository.GetBookAccomodationReservationAsync(contacts.ResevationId);
-                var user = new BookAccomodationReservatioModel()
-                {
-                    RoomType = userDto1.RoomType,
-                    QRCode = userDto1.QRCode,
-                    RoomNumber = (userDto1.RoomNumber),
-                    RoomPrice = (userDto1.RoomPrice),
-                    RoomFeatures = (userDto1.RoomFeatures),
-                    IsBooked = true,
-                    RoomImages = (userDto1.RoomImages),
-                };
+                    var events = await accomodationRepository.GetBookAccomodationReservationAsync(reservationId);
+                    var acc = await accomodationRepository.GetAsync(events.AccomodationId);
+                    var td = CreateRandomTokenSix();
+                    var cD1 = GenerateQRCode($"\nTicketNum:{td} \nName:{request.CustomerName} \nRoom:{events.RoomNumber}");
 
-                // Update detials to repository
-                await accomodationRepository.UpdateBookAccomodationReservationAsync(contacts.ResevationId, user);
-                // convert back to dto
-                var contact = await accomodationRepository.GetCustomerBookedReservationAsync(contacts.Id);
-                var contactsDto = mapper.Map<CustomerBookedReservationDto>(contact);
-                return CreatedAtAction(nameof(GetCustomerBookedReservationAsync), new { id = contactsDto.Id }, contactsDto);
+                    var contacts = new CustomerBookedReservation()
+                    {
+                        UserId = userD.Id,
+                        AdminId = events.AdminId,
+                        AccomodationId = events.AccomodationId,
+                        AccomodationType = events.AccomodationType,
+                        AccomodationImage = events.AccomodationImage,
+                        AccomodationName = events.AccomodationName,
+                        AccomodationLocation = acc.Location,
+                        ResevationId = events.Id,
+                        CustomerName = request.CustomerName,
+                        CustomerEmail = request.CustomerEmail,
+                        CustomerPhoneNumber = request.CustomerPhoneNumber,
+                        QRCode = cD1,
+                        Comment = request.Comment,
+                        PaymentChannel = request.PaymentChannel,
+                        NumberOfGuests = (int)request.NumberOfGuests!,
+                        PaymentStatus = (bool)request.PaymentStatus!,
+                        TicketClosed = false,
+                        RoomNumber = events.RoomNumber,
+                        TrnxReference = request.TrnxReference,
+                        TicketNum = td,
+                        ReservationEndDate = endDate,
+                        ReservationStartDate = startDate,
+                        NoOfDays = request.NoOfDays,
+                        TotalCost = events.RoomPrice * request.NoOfDays,
+                        CreatedAt = DateTime.Now,
+                        UpdateddAt = DateTime.Now,
+                    };
+                    // Pass detials to repository
+                    contacts = await accomodationRepository.AddCustomerBookedReservationAsync(contacts);
+                    var userDto1 = await accomodationRepository.GetBookAccomodationReservationAsync(contacts.ResevationId);
+                    var user = new BookAccomodationReservatioModel()
+                    {
+                        RoomType = userDto1.RoomType,
+                        QRCode = userDto1.QRCode,
+                        RoomNumber = (userDto1.RoomNumber),
+                        RoomPrice = (userDto1.RoomPrice),
+                        RoomFeatures = (userDto1.RoomFeatures),
+                        IsBooked = true,
+                        RoomImages = (userDto1.RoomImages),
+                    };
+
+                    // Update detials to repository
+                    await accomodationRepository.UpdateBookAccomodationReservationAsync(contacts.ResevationId, user);
+                    // convert back to dto
+                    var contact = await accomodationRepository.GetCustomerBookedReservationAsync(contacts.Id);
+                    var contactsDto = mapper.Map<CustomerBookedReservationDto>(contact);
+                    return CreatedAtAction(nameof(GetCustomerBookedReservationAsync), new { id = contactsDto.Id }, contactsDto);
+                }
+
+                  
             }
         }
 
@@ -1447,91 +1503,176 @@ namespace Genilog_WebApi.Controllers
             }
             else
             {
-                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (!Guid.TryParse(userId, out Guid userGuid))
+                var userD = await generalUserRepository.GetAsync(request.UserId);
+
+                if (userD == null)
                 {
-                    return BadRequest("Invalid User ID format.");
-                }
-                var events = await accomodationRepository.GetBookAccomodationReservationAsync(reservationId);
-                var acc = await accomodationRepository.GetAsync(events.AccomodationId);
-                var td = CreateRandomTokenSix();
-                var cD1 = GenerateQRCode($"\nTicketNum:{td} \nName:{request.CustomerName} \nRoom:{events.RoomNumber}");
-                if (events == null)
-                {
-                    return BadRequest("Accommodation Does not Exist");
-                }
-                else
-                {
-                    var contacts = new CustomerBookedReservation()
+                    var events = await accomodationRepository.GetBookAccomodationReservationAsync(reservationId);
+                    var acc = await accomodationRepository.GetAsync(events.AccomodationId);
+                    var td = CreateRandomTokenSix();
+                    var cD1 = GenerateQRCode($"\nTicketNum:{td} \nName:{request.CustomerName} \nRoom:{events.RoomNumber}");
+                    if (events == null)
                     {
-                        UserId = userGuid,
-                        AdminId=events.AdminId,
-                        AccomodationId = events.AccomodationId,
-                        AccomodationType = events.AccomodationType,
-                        AccomodationImage = events.AccomodationImage,
-                        AccomodationName = events.AccomodationName,
-                        AccomodationLocation = acc.Location,
-                        ResevationId = events.Id,
-                        CustomerName = request.CustomerName,
-                        CustomerEmail = request.CustomerEmail,
-                        CustomerPhoneNumber = request.CustomerPhoneNumber,
-                        QRCode = cD1,
-                        Comment = request.Comment,
-                        PaymentChannel = "Paystack",
-                        NumberOfGuests = (int)request.NumberOfGuests!,
-                        PaymentStatus = false,
-                        TicketClosed = false,
-                        RoomNumber = events.RoomNumber,
-                        TrnxReference = "",
-                        TicketNum = td,
-                        ReservationEndDate = endDate,
-                        ReservationStartDate = startDate,
-                        NoOfDays = request.NoOfDays,
-                        TotalCost = events.RoomPrice * request.NoOfDays,
-                        CreatedAt = DateTime.Now,
-                        UpdateddAt = DateTime.Now,
-                    };
-                    contacts = await accomodationRepository.AddCustomerBookedReservationAsync(contacts);
-
-
-                    var url = "https://api.paystack.co/transaction/initialize";
-                    var data = new
-                    {
-                        email = request.CustomerEmail,
-                        amount = (events.RoomPrice * request.NoOfDays) * 100,  // Amount in Kobo (100 kobo = 1 Naira)
-                        callback_url = $"{Cls_Keys.ServerURL}/api/Bookings/verify-paystack-accomodation-reservations-customer?orderId={contacts.Id}", // The URL to redirect after payment
-                        channels = new[] { "card", "bank", "ussd", "mobile_money", "bank_transfer" },
-                        metadata = new
-                        {
-                            cancel_action = $"{Cls_Keys.ServerURL}/api/Bookings/delete-accomodation-reservations-customer?orderId={contacts.Id}"
-                        }
-                    };
-
-                    using var httpClient = new HttpClient();
-
-                    StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
-                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.PaystackSecretKey);
-                    using var response = await httpClient.PostAsync($"{url}", content);
-                    string apiResponse = await response.Content.ReadAsStringAsync();
-                    if (response.StatusCode == HttpStatusCode.OK)
-                    {
-                        var paystackResponse = JsonConvert.DeserializeObject<PaystackResponse>(apiResponse);
-
-
-                        return Ok(paystackResponse);
+                        return BadRequest("Accommodation Does not Exist");
                     }
                     else
                     {
-                        await accomodationRepository.DeleteCustomerBookedReservationAsync(contacts.Id);
-                        var error = new ErrorModel()
+                        var contacts = new CustomerBookedReservation()
                         {
-                            Message = $"{apiResponse}",
-                            Status = true
+                            UserId = Guid.NewGuid(),
+                            AdminId = events.AdminId,
+                            AccomodationId = events.AccomodationId,
+                            AccomodationType = events.AccomodationType,
+                            AccomodationImage = events.AccomodationImage,
+                            AccomodationName = events.AccomodationName,
+                            AccomodationLocation = acc.Location,
+                            ResevationId = events.Id,
+                            CustomerName = request.CustomerName,
+                            CustomerEmail = request.CustomerEmail,
+                            CustomerPhoneNumber = request.CustomerPhoneNumber,
+                            QRCode = cD1,
+                            Comment = request.Comment,
+                            PaymentChannel = "Paystack",
+                            NumberOfGuests = (int)request.NumberOfGuests!,
+                            PaymentStatus = false,
+                            TicketClosed = false,
+                            RoomNumber = events.RoomNumber,
+                            TrnxReference = "",
+                            TicketNum = td,
+                            ReservationEndDate = endDate,
+                            ReservationStartDate = startDate,
+                            NoOfDays = request.NoOfDays,
+                            TotalCost = events.RoomPrice * request.NoOfDays,
+                            CreatedAt = DateTime.Now,
+                            UpdateddAt = DateTime.Now,
                         };
-                        return BadRequest(error);
-                    }
+                        contacts = await accomodationRepository.AddCustomerBookedReservationAsync(contacts);
 
+
+                        var url = "https://api.paystack.co/transaction/initialize";
+                        var data = new
+                        {
+                            email = request.CustomerEmail,
+                            amount = (events.RoomPrice * request.NoOfDays) * 100,  // Amount in Kobo (100 kobo = 1 Naira)
+                            callback_url = $"{Cls_Keys.ServerURL}/api/Bookings/verify-paystack-accomodation-reservations-customer?orderId={contacts.Id}", // The URL to redirect after payment
+                            channels = new[] { "card", "bank", "ussd", "mobile_money", "bank_transfer" },
+                            metadata = new
+                            {
+                                cancel_action = $"{Cls_Keys.ServerURL}/api/Bookings/delete-accomodation-reservations-customer?orderId={contacts.Id}"
+                            }
+                        };
+
+                        using var httpClient = new HttpClient();
+
+                        StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
+                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.PaystackSecretKey);
+                        using var response = await httpClient.PostAsync($"{url}", content);
+                        string apiResponse = await response.Content.ReadAsStringAsync();
+                        if (response.StatusCode == HttpStatusCode.OK)
+                        {
+                            var paystackResponse = JsonConvert.DeserializeObject<PaystackResponse>(apiResponse);
+
+
+                            return Ok(paystackResponse);
+                        }
+                        else
+                        {
+                            await accomodationRepository.DeleteCustomerBookedReservationAsync(contacts.Id);
+                            var error = new ErrorModel()
+                            {
+                                Message = $"{apiResponse}",
+                                Status = true
+                            };
+                            return BadRequest(error);
+                        }
+
+                    }
                 }
+                else
+                {
+                    var events = await accomodationRepository.GetBookAccomodationReservationAsync(reservationId);
+                    var acc = await accomodationRepository.GetAsync(events.AccomodationId);
+                    var td = CreateRandomTokenSix();
+                    var cD1 = GenerateQRCode($"\nTicketNum:{td} \nName:{request.CustomerName} \nRoom:{events.RoomNumber}");
+                    if (events == null)
+                    {
+                        return BadRequest("Accommodation Does not Exist");
+                    }
+                    else
+                    {
+                        var contacts = new CustomerBookedReservation()
+                        {
+                            UserId = userD.Id,
+                            AdminId = events.AdminId,
+                            AccomodationId = events.AccomodationId,
+                            AccomodationType = events.AccomodationType,
+                            AccomodationImage = events.AccomodationImage,
+                            AccomodationName = events.AccomodationName,
+                            AccomodationLocation = acc.Location,
+                            ResevationId = events.Id,
+                            CustomerName = request.CustomerName,
+                            CustomerEmail = request.CustomerEmail,
+                            CustomerPhoneNumber = request.CustomerPhoneNumber,
+                            QRCode = cD1,
+                            Comment = request.Comment,
+                            PaymentChannel = "Paystack",
+                            NumberOfGuests = (int)request.NumberOfGuests!,
+                            PaymentStatus = false,
+                            TicketClosed = false,
+                            RoomNumber = events.RoomNumber,
+                            TrnxReference = "",
+                            TicketNum = td,
+                            ReservationEndDate = endDate,
+                            ReservationStartDate = startDate,
+                            NoOfDays = request.NoOfDays,
+                            TotalCost = events.RoomPrice * request.NoOfDays,
+                            CreatedAt = DateTime.Now,
+                            UpdateddAt = DateTime.Now,
+                        };
+                        contacts = await accomodationRepository.AddCustomerBookedReservationAsync(contacts);
+
+
+                        var url = "https://api.paystack.co/transaction/initialize";
+                        var data = new
+                        {
+                            email = request.CustomerEmail,
+                            amount = (events.RoomPrice * request.NoOfDays) * 100,  // Amount in Kobo (100 kobo = 1 Naira)
+                            callback_url = $"{Cls_Keys.ServerURL}/api/Bookings/verify-paystack-accomodation-reservations-customer?orderId={contacts.Id}", // The URL to redirect after payment
+                            channels = new[] { "card", "bank", "ussd", "mobile_money", "bank_transfer" },
+                            metadata = new
+                            {
+                                cancel_action = $"{Cls_Keys.ServerURL}/api/Bookings/delete-accomodation-reservations-customer?orderId={contacts.Id}"
+                            }
+                        };
+
+                        using var httpClient = new HttpClient();
+
+                        StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
+                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.PaystackSecretKey);
+                        using var response = await httpClient.PostAsync($"{url}", content);
+                        string apiResponse = await response.Content.ReadAsStringAsync();
+                        if (response.StatusCode == HttpStatusCode.OK)
+                        {
+                            var paystackResponse = JsonConvert.DeserializeObject<PaystackResponse>(apiResponse);
+
+
+                            return Ok(paystackResponse);
+                        }
+                        else
+                        {
+                            await accomodationRepository.DeleteCustomerBookedReservationAsync(contacts.Id);
+                            var error = new ErrorModel()
+                            {
+                                Message = $"{apiResponse}",
+                                Status = true
+                            };
+                            return BadRequest(error);
+                        }
+
+                    }
+                }
+
+                 
             }
 
         }
@@ -1623,96 +1764,185 @@ namespace Genilog_WebApi.Controllers
             }
             else
             {
-                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (!Guid.TryParse(userId, out Guid userGuid))
+                var userD = await generalUserRepository.GetAsync(request.UserId);
+
+                if (userD == null)
                 {
-                    return BadRequest("Invalid User ID format.");
-                }
-                var events = await accomodationRepository.GetBookAccomodationReservationAsync(reservationId);
-                var acc = await accomodationRepository.GetAsync(events.AccomodationId);
-                var td = CreateRandomTokenSix();
-                var cD1 = GenerateQRCode($"\nTicketNum:{td} \nName:{request.CustomerName} \nRoom:{events.RoomNumber}");
-                if (acc == null)
-                {
-                    return BadRequest("Accommodation Does not Exist");
-                }
-                else
-                {
-                    var contacts = new CustomerBookedReservation()
+                    var events = await accomodationRepository.GetBookAccomodationReservationAsync(reservationId);
+                    var acc = await accomodationRepository.GetAsync(events.AccomodationId);
+                    var td = CreateRandomTokenSix();
+                    var cD1 = GenerateQRCode($"\nTicketNum:{td} \nName:{request.CustomerName} \nRoom:{events.RoomNumber}");
+                    if (acc == null)
                     {
-                        UserId = userGuid,
-                        AdminId = events.AdminId,
-                        AccomodationId = events.AccomodationId,
-                        AccomodationType = events.AccomodationType,
-                        AccomodationImage = events.AccomodationImage,
-                        AccomodationName = events.AccomodationName,
-                        AccomodationLocation = acc.Location,
-                        ResevationId = events.Id,
-                        CustomerName = request.CustomerName,
-                        CustomerEmail = request.CustomerEmail,
-                        CustomerPhoneNumber = request.CustomerPhoneNumber,
-                        QRCode = cD1,
-                        Comment = request.Comment,
-                        PaymentChannel = "Flutterwave",
-                        NumberOfGuests = (int)request.NumberOfGuests!,
-                        PaymentStatus = false,
-                        TicketClosed = false,
-                        RoomNumber = events.RoomNumber,
-                        TrnxReference = "",
-                        TicketNum = td,
-                        ReservationEndDate = endDate,
-                        ReservationStartDate = startDate,
-                        NoOfDays = request.NoOfDays,
-                        TotalCost = events.RoomPrice * request.NoOfDays,
-                        CreatedAt = DateTime.Now,
-                        UpdateddAt = DateTime.Now,
-                    };
-                    contacts = await accomodationRepository.AddCustomerBookedReservationAsync(contacts);
-
-
-                    var url = "https://api.flutterwave.com/v3/payments";
-                    var data = new
-                    {
-                        tx_ref = CreateRandomTokenSix(),
-                        amount = events.RoomPrice * request.NoOfDays,  // Amount in Kobo (100 kobo = 1 Naira)
-                        customer = new
-                        {
-                            email = request.CustomerEmail,
-                            name = request.CustomerName
-                        },
-                        currency = "NGN",
-                        redirect_url = $"{Cls_Keys.ServerURL}/api/Bookings/verify-flutterwave-accomodation-reservations-customer?orderId={contacts.Id}", // The URL to redirect after payment
-                        customizations = new
-                        {
-                            title = "My App Payment",
-                            description = "Payment for items in cart"
-                        }
-                    };
-
-
-                    using var httpClient = new HttpClient();
-
-                    StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
-                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.FlutterwaveSecretKey);
-                    using var response = await httpClient.PostAsync($"{url}", content);
-                    string apiResponse = await response.Content.ReadAsStringAsync();
-                    if (response.StatusCode == HttpStatusCode.OK)
-                    {
-                        var paystackResponse = JsonConvert.DeserializeObject<FlutterwaveResponse>(apiResponse);
-                        return Ok(paystackResponse);
+                        return BadRequest("Accommodation Does not Exist");
                     }
                     else
                     {
-                        await accomodationRepository.DeleteCustomerBookedReservationAsync(contacts.Id);
-                        var error = new ErrorModel()
+                        var contacts = new CustomerBookedReservation()
                         {
-                            Message = $"{apiResponse}",
-                            Status = true
+                            UserId = Guid.NewGuid(),
+                            AdminId = events.AdminId,
+                            AccomodationId = events.AccomodationId,
+                            AccomodationType = events.AccomodationType,
+                            AccomodationImage = events.AccomodationImage,
+                            AccomodationName = events.AccomodationName,
+                            AccomodationLocation = acc.Location,
+                            ResevationId = events.Id,
+                            CustomerName = request.CustomerName,
+                            CustomerEmail = request.CustomerEmail,
+                            CustomerPhoneNumber = request.CustomerPhoneNumber,
+                            QRCode = cD1,
+                            Comment = request.Comment,
+                            PaymentChannel = "Flutterwave",
+                            NumberOfGuests = (int)request.NumberOfGuests!,
+                            PaymentStatus = false,
+                            TicketClosed = false,
+                            RoomNumber = events.RoomNumber,
+                            TrnxReference = "",
+                            TicketNum = td,
+                            ReservationEndDate = endDate,
+                            ReservationStartDate = startDate,
+                            NoOfDays = request.NoOfDays,
+                            TotalCost = events.RoomPrice * request.NoOfDays,
+                            CreatedAt = DateTime.Now,
+                            UpdateddAt = DateTime.Now,
                         };
-                        return BadRequest(error);
-                    }
+                        contacts = await accomodationRepository.AddCustomerBookedReservationAsync(contacts);
 
+
+                        var url = "https://api.flutterwave.com/v3/payments";
+                        var data = new
+                        {
+                            tx_ref = CreateRandomTokenSix(),
+                            amount = events.RoomPrice * request.NoOfDays,  // Amount in Kobo (100 kobo = 1 Naira)
+                            customer = new
+                            {
+                                email = request.CustomerEmail,
+                                name = request.CustomerName
+                            },
+                            currency = "NGN",
+                            redirect_url = $"{Cls_Keys.ServerURL}/api/Bookings/verify-flutterwave-accomodation-reservations-customer?orderId={contacts.Id}", // The URL to redirect after payment
+                            customizations = new
+                            {
+                                title = "My App Payment",
+                                description = "Payment for items in cart"
+                            }
+                        };
+
+
+                        using var httpClient = new HttpClient();
+
+                        StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
+                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.FlutterwaveSecretKey);
+                        using var response = await httpClient.PostAsync($"{url}", content);
+                        string apiResponse = await response.Content.ReadAsStringAsync();
+                        if (response.StatusCode == HttpStatusCode.OK)
+                        {
+                            var paystackResponse = JsonConvert.DeserializeObject<FlutterwaveResponse>(apiResponse);
+                            return Ok(paystackResponse);
+                        }
+                        else
+                        {
+                            await accomodationRepository.DeleteCustomerBookedReservationAsync(contacts.Id);
+                            var error = new ErrorModel()
+                            {
+                                Message = $"{apiResponse}",
+                                Status = true
+                            };
+                            return BadRequest(error);
+                        }
+
+                    }
                 }
+                else
+                {
+                    var events = await accomodationRepository.GetBookAccomodationReservationAsync(reservationId);
+                    var acc = await accomodationRepository.GetAsync(events.AccomodationId);
+                    var td = CreateRandomTokenSix();
+                    var cD1 = GenerateQRCode($"\nTicketNum:{td} \nName:{request.CustomerName} \nRoom:{events.RoomNumber}");
+                    if (acc == null)
+                    {
+                        return BadRequest("Accommodation Does not Exist");
+                    }
+                    else
+                    {
+                        var contacts = new CustomerBookedReservation()
+                        {
+                            UserId = userD.Id,
+                            AdminId = events.AdminId,
+                            AccomodationId = events.AccomodationId,
+                            AccomodationType = events.AccomodationType,
+                            AccomodationImage = events.AccomodationImage,
+                            AccomodationName = events.AccomodationName,
+                            AccomodationLocation = acc.Location,
+                            ResevationId = events.Id,
+                            CustomerName = request.CustomerName,
+                            CustomerEmail = request.CustomerEmail,
+                            CustomerPhoneNumber = request.CustomerPhoneNumber,
+                            QRCode = cD1,
+                            Comment = request.Comment,
+                            PaymentChannel = "Flutterwave",
+                            NumberOfGuests = (int)request.NumberOfGuests!,
+                            PaymentStatus = false,
+                            TicketClosed = false,
+                            RoomNumber = events.RoomNumber,
+                            TrnxReference = "",
+                            TicketNum = td,
+                            ReservationEndDate = endDate,
+                            ReservationStartDate = startDate,
+                            NoOfDays = request.NoOfDays,
+                            TotalCost = events.RoomPrice * request.NoOfDays,
+                            CreatedAt = DateTime.Now,
+                            UpdateddAt = DateTime.Now,
+                        };
+                        contacts = await accomodationRepository.AddCustomerBookedReservationAsync(contacts);
+
+
+                        var url = "https://api.flutterwave.com/v3/payments";
+                        var data = new
+                        {
+                            tx_ref = CreateRandomTokenSix(),
+                            amount = events.RoomPrice * request.NoOfDays,  // Amount in Kobo (100 kobo = 1 Naira)
+                            customer = new
+                            {
+                                email = request.CustomerEmail,
+                                name = request.CustomerName
+                            },
+                            currency = "NGN",
+                            redirect_url = $"{Cls_Keys.ServerURL}/api/Bookings/verify-flutterwave-accomodation-reservations-customer?orderId={contacts.Id}", // The URL to redirect after payment
+                            customizations = new
+                            {
+                                title = "My App Payment",
+                                description = "Payment for items in cart"
+                            }
+                        };
+
+
+                        using var httpClient = new HttpClient();
+
+                        StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
+                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.FlutterwaveSecretKey);
+                        using var response = await httpClient.PostAsync($"{url}", content);
+                        string apiResponse = await response.Content.ReadAsStringAsync();
+                        if (response.StatusCode == HttpStatusCode.OK)
+                        {
+                            var paystackResponse = JsonConvert.DeserializeObject<FlutterwaveResponse>(apiResponse);
+                            return Ok(paystackResponse);
+                        }
+                        else
+                        {
+                            await accomodationRepository.DeleteCustomerBookedReservationAsync(contacts.Id);
+                            var error = new ErrorModel()
+                            {
+                                Message = $"{apiResponse}",
+                                Status = true
+                            };
+                            return BadRequest(error);
+                        }
+
+                    }
+                }
+              
             }
 
         }
@@ -1738,7 +1968,7 @@ namespace Genilog_WebApi.Controllers
                     PaymentStatus = status
                 };
 
-                if (paystackResponse.PaymentStatus == "completed")
+                if (paystackResponse.PaymentStatus == "completed"|| paystackResponse.PaymentStatus== "successful")
                 {
 
                     var tronData = await accomodationRepository.GetCustomerBookedReservationAsync(orderId);

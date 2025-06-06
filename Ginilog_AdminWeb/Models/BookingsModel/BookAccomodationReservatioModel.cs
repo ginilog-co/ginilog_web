@@ -101,6 +101,7 @@
 
     public class AddPaymentCustomerBookedReservation
     {
+        public Guid UserId { get; set; }
         public Guid ReservationId { get; set; }
         public string? PaymentChannel { get; set; }
         public string? CustomerName { get; set; }

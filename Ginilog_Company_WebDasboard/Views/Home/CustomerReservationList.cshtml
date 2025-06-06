@@ -1,0 +1,76 @@
+﻿@model IEnumerable<Ginilog_Company_WebDasboard.Models.BookingsModel.CustomerBookedReservation>
+
+@{
+    ViewData["Title"] = "CustomerReservationList";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!-- Blank Start -->
+<div class="content-wrapper">
+<div class="row">
+    <div class="col-12 grid-margin">
+        <div class="card">
+
+            <div class="card-body">
+
+                <div style="padding-top:20px"></div>
+
+                <h6 class="mb-4">Search Here</h6>
+                <form asp-controller="Home" asp-action="CustomerReservationList" method="get">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="id" placeholder="Search: Email, Name" aria-label="Recipient's username" aria-describedby="basic-addon2">
+                            <div class="input-group-append">
+                                <button class="btn btn-sm btn-primary" type="submit">Search</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <div style="padding-top:20px"></div>
+
+                <div class="table-responsive pt-3">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th> Customer Name </th>
+                                <th> Ticket Num </th>
+                                <th> Reservation Start Date </th>
+                                <th> Reservation End Date  </th>
+                                <th> Total Cost </th>
+                                <th> No Of Days </th>
+                                <th> Room Number </th>
+                                <th> Date </th>
+                                <th> Details </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td> @item.CustomerName </td>
+                                    <td> @item.TicketNum </td>
+                                    <td> @item.ReservationStartDate </td>
+                                    <td> @item.ReservationEndDate  </td>
+                                    <td> &#8358;@item.TotalCost.ToString("N2") </td>
+                                    <td> @item.NoOfDays </td>
+                                    <td>
+                                        <div class="badge badge-outline-success">@item.RoomNumber</div>
+                                    </td>
+                                    <td>@item.CreatedAt</td>
+                                    <td><a href="@Url.Action("CustomerReservationDetails", "Home", new { id = item!.Id })" class="btn btn-outline-info">View</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Blank End -->

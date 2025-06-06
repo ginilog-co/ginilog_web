@@ -83,7 +83,34 @@ namespace Ginilog_AdminWeb.Controllers
             return null;
 #pragma warning restore CS8603 // Possible null reference return.
         }
-
+        public async Task<List<AdminModelTable>>? ManagerDataList()
+        {
+            var token = HttpContext.Session.GetString("bt_token");
+            if (token != null)
+            {
+                List<AdminModelTable> users = [];
+                using (var httpClient = new HttpClient())
+                {
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    using var response = await httpClient.GetAsync($"{GlobalConstant.BaseUrl}{GlobalConstant.AdminUrl}");
+                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        string apiResponse = await response.Content.ReadAsStringAsync();
+                        users = JsonConvert.DeserializeObject<List<AdminModelTable>>(apiResponse)!;
+                        users = users.Where(x => x.AdminType == "Manager" && x.CompanyType!.Contains("Logistics")).ToList();
+                        return users!;
+                    }
+                    else
+                    {
+                        ViewBag.StatusCode = response.StatusCode;
+                    }
+                }
+                return users;
+            }
+#pragma warning disable CS8603 // Possible null reference return.
+            return null;
+#pragma warning restore CS8603 // Possible null reference return.
+        }
         // Feedback list
 
         public async Task<List<FeedbackModel>>? FeedbackModelItems()
@@ -685,6 +712,44 @@ namespace Ginilog_AdminWeb.Controllers
             {
                 ViewBag.StatusCode = response.StatusCode;
                 return RedirectToAction("AllStaffData", "Home");
+            }
+        }
+
+        [HttpGet]
+        public IActionResult AllManagerList(string id)
+        {
+            var userId = HttpContext.Session.GetString("bt_userId");
+            var token = HttpContext.Session.GetString("bt_token");
+            if (userId != null)
+            {
+                var users = Data()!.GetAwaiter().GetResult();
+                ViewBag.ProfilePics = users.ImagePath!;
+                ViewBag.AdminName = $"{users.FirstName} {users.SurName}";
+                ViewBag.UseType = users.AdminType;
+                var adminUser = ManagerDataList()!.GetAwaiter().GetResult();
+                adminUser = [.. adminUser!.OrderByDescending(x => x!.CreatedAt)];
+                var search = from m in adminUser select m;
+                if (!string.IsNullOrEmpty(id))
+                {
+                    search = search.Where(s => (s.FirstName?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                             (s.SurName?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                             (s.PhoneNo?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                             (s.Locality?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                             (s.State?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                             (s.CompanyName?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                             (s.CompanyUserName?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                             (s.Email?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false));
+
+                    return View(search.ToList());
+                }
+                else
+                {
+                    return View(adminUser);
+                }
+            }
+            else
+            {
+                return RedirectToAction("SignIn", "Auth");
             }
         }
 

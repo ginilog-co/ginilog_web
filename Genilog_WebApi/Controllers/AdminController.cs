@@ -86,6 +86,60 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
+        [Route("login-manager")]
+        public async Task<IActionResult> LoginManagerAsync(LoginRequset requset)
+        {
+
+            var user = await generalUserRepository.AuthenticateAsync(requset.Email_PhoneNo!, requset.Password!);
+            if (user != null)
+            {
+                var userD = await usersRepository.GetAsync(user.Id);
+                if (user.UserType == "Manager" || user.UserType == "Staff_Admin" || user.UserType == "Staff")
+                {
+                    //generate jwt token
+                    var token = tokenHandler.CreateTokenAsync(user);
+                    var refreshToken = tokenHandler.RefreshTokenAsync(user.Email!);
+                    // var userId = usersRepository.Userd;
+                    var userDto = new AdminLoginDto()
+                    {
+                        Token = await token,
+                        RefreshToken = await refreshToken,
+                        RefreshTokenExpiryTime = user.RefreshTokenExpiryTime,
+                        UserId = user.Id,
+                        Email = user.Email,
+                        UserType = user.UserType,
+                        EmailVerified = user.EmailConfirmed,
+                        PhoneVerified = user.PhoneNoConfirmed,
+                        FullName = $"{user.FirstName} {user.LastName}",
+                        State = userD.State,
+                        Locality = userD.Locality,
+                        Address = userD.Address,
+                        Branch = userD.Branch,
+                    };
+                    return Ok(userDto);
+
+                }
+                else
+                {
+                    var error = new ErrorModel()
+                    {
+                        Message = "Not An Company Account",
+                        Status = true
+                    };
+                    return BadRequest(error);
+                }
+            }
+            else
+            {
+                var error = new ErrorModel()
+                {
+                    Message = "Admin Does not Exist",
+                    Status = true
+                };
+                return BadRequest(error);
+            }
+        }
+
         [HttpGet]
         [Authorize(Roles = "Super_Admin")]
         public async Task<IActionResult> GetAllAdminAsync()
@@ -95,6 +149,8 @@ namespace Genilog_WebApi.Controllers
             var userDto = mapper.Map<List<AdminModelTableDto>>(users);
             return Ok(userDto);
         }
+
+
         [HttpGet]
         [Route("staff-users")]
         [Authorize(Roles = "Super_Admin,Manager,Admin")]
@@ -109,14 +165,14 @@ namespace Genilog_WebApi.Controllers
             if (user.UserType == "Super_Admin" || user.UserType == "Admin")
             {
                 var users = await usersRepository.GetAllAsync();
-                users= users.Where(x=> x.AdminType== "Staff_Admin" || x.AdminType== "Staff").ToList();
+                users= [.. users.Where(x=> x.AdminType== "Staff_Admin" || x.AdminType== "Staff")];
                 var userDto = mapper.Map<List<AdminModelTableDto>>(users);
                 return Ok(userDto);
             }
             else
             {
                 var users = await usersRepository.GetAllAsync();
-                users = users.Where(x => (x.ManagerId==user.Id)&&(x.AdminType == "Staff_Admin" || x.AdminType == "Staff")).ToList();
+                users = [.. users.Where(x => (x.ManagerId==user.Id)&&(x.AdminType == "Staff_Admin" || x.AdminType == "Staff"))];
                 var userDto = mapper.Map<List<AdminModelTableDto>>(users);
                 return Ok(userDto);
             }
@@ -151,7 +207,7 @@ namespace Genilog_WebApi.Controllers
         [HttpGet]
         [Route("profile/{id:guid}")]
         [ActionName("ProfileAsync")]
-        [Authorize(Roles = "Admin,Super_Admin,Manager")]
+        [Authorize(Roles = "Admin,Super_Admin,Manager,Staff_Admin,Staff")]
         public async Task<IActionResult> ProfileAsync([FromRoute] Guid id)
         {
             var user = await usersRepository.GetAsync(id);
@@ -181,6 +237,124 @@ namespace Genilog_WebApi.Controllers
             else
             {
                 if (request.AdminType == "Super_Admin" || request.AdminType == "Admin" || request.AdminType=="Manager") 
+                {
+                    var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
+                    var timeStamp = Timestamp.GetCurrentTimestamp();
+                    var admin = new GeneralUsers()
+                    {
+                        FirstName = request.FirstName,
+                        LastName = request.SurName,
+                        Email = request.Email,
+                        UserType = request.AdminType,
+                        PhoneNo = request.PhoneNo,
+                        VerificationToken = CreateRandomToken(),
+                        EmailConfirmed = true,
+                        ImagePath = "",
+                        CreatedAt = DateTime.UtcNow,
+                        LockOutEndEnabled = false,
+                        AccessFailedCount = 0,
+                        TwoFactorEnabled = false,
+                        LockOutEnd = DateTime.UtcNow.AddDays(30),
+                        PhoneNoConfirmed = true,
+                        ResetTokenExpires = DateTime.UtcNow.AddMinutes(10),
+                        EmailTokenExpires = DateTime.UtcNow.AddMinutes(10),
+                        PhoneNoTokenExpires = DateTime.UtcNow.AddMinutes(10),
+                        RefreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(10),
+                        VerifiedAt = DateTime.UtcNow,
+                        PhoneVerificationToken = CreateRandomToken(),
+                        PhoneVerifiedAt = DateTime.UtcNow.AddMinutes(10),
+                        PasswordResetToken = "",
+                        RefreshToken = "",
+                    };
+                    admin = await generalUserRepository.AddAsync(admin, request.Password!);
+                    var users = new AdminModelTable()
+                    {
+                        Id = admin.Id,
+                        Sex = request.Sex,
+                        ImagePath = "",
+                        FirstName = request.FirstName,
+                        SurName = request.SurName,
+                        Email = request.Email,
+                        StaffCode = request.StaffCode,
+                        PhoneNo = request.PhoneNo,
+                        Address = request.Address,
+                        Branch = request.Branch,
+                        Locality = request.Locality,
+                        State = request.State,
+                        CompanyName = request.CompanyName,
+                        CompanyUserName = request.CompanyUserName,
+                        CompanyType = request.CompanyType,
+                        AdminType = request.AdminType,
+                        ManagerId = admin.Id,
+                        DatePublished = date,
+                        CreatedAt = DateTime.UtcNow
+
+                    };
+                    // Pass detials to repository
+                    users = await usersRepository.AddAsync(users);
+
+                    var roles = new Roles()
+                    {
+                        Name = admin.UserType
+                    };
+                    roles = await rolesRepository.AddAsync(roles);
+                    var user_Roles = new User_Role()
+                    {
+                        GeneralUsersId = users.Id,
+                        RoleId = roles.Id,
+                    };
+                    await user_RoleRepository.AddAsync(user_Roles);
+                    // convert back to dto
+                    var userDto = new AdminModelTableDto()
+                    {
+                        Id = users.Id,
+                        SurName = users.SurName,
+                        FirstName = users.FirstName,
+                        Email = users.Email,
+                        Sex = users.Sex,
+                        ImagePath = users.ImagePath,
+                        StaffCode = users.StaffCode,
+                        Address = users.Address,
+                        Branch = users.Branch,
+                        Locality = users.Locality,
+                        State = users.State,
+                        AdminType = admin.UserType,
+                        PhoneNo = users.PhoneNo,
+                        CompanyName = users.CompanyName,
+                        CompanyUserName = users.CompanyUserName,
+                        CompanyType = users.CompanyType,
+                        ManagerId = users.ManagerId,
+                        DatePublished = users.DatePublished,
+                        CreatedAt = users.CreatedAt,
+                    };
+                    return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.Id }, userDto);
+                }
+                else
+                {
+                    var error = new ErrorModel()
+                    {
+                        Message = "Invalid Admin Type",
+                        Status = true
+                    };
+                    return BadRequest(error);
+                }
+            }
+        }
+
+        [HttpPost]
+        [Route("add-manager")]
+        public async Task<IActionResult> AddManagernAsync(AddAdminRequest request)
+        {
+            // Validate the request
+            var check = await ValidateAddUserAsync(request);
+
+            if (!check)
+            {
+                return BadRequest(ModelState);
+            }
+            else
+            {
+                if (request.AdminType == "Manager")
                 {
                     var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
                     var timeStamp = Timestamp.GetCurrentTimestamp();

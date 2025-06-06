@@ -1,5 +1,7 @@
 ﻿using BMG_Admin_Panel.Models;
+using Ginilog_AdminWeb.Models.BookingsModel;
 using Ginilog_AdminWeb.Models.InfoModel;
+using Ginilog_AdminWeb.Models.LogisticsModel;
 
 namespace Ginilog_AdminWeb.Models.UsersDataModel
 {
@@ -21,7 +23,11 @@ namespace Ginilog_AdminWeb.Models.UsersDataModel
         public string? State { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
-        public List<DeliveryAddressDto>? DeliveryAddresses { get; set; }
+        public double MoneyBoxBalance { get; set; }
+        public string? BankName { get; set; }
+        public string? AccountName { get; set; }
+        public string? AccountNumber { get; set; }
+        public List<DeliveryAddress>? DeliveryAddresses { get; set; }
         public List<DeviceTokenModel>? DeviceTokenModels { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }
@@ -29,7 +35,7 @@ namespace Ginilog_AdminWeb.Models.UsersDataModel
     }
 
 
-    public class DeliveryAddressDto
+    public class DeliveryAddress
     {
         public Guid Id { get; set; }
         public string? Address { get; set; }
@@ -63,6 +69,8 @@ namespace Ginilog_AdminWeb.Models.UsersDataModel
         public UserModelTable? UserModelTable { get; set; }
         public AddNotification? AddNotification { get; set; }
         public SendMailModel? SendMailModel { get; set; }
+        public List<CustomerBookedReservation>? CustomerBookedReservations { get; set; }
+        public List<OrderModelData>? OrderModelDatas { get; set; }
     }
 
 }

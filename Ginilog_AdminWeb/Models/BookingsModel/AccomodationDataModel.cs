@@ -92,15 +92,15 @@ namespace Ginilog_AdminWeb.Models.BookingsModel
         public TimeSpan? HourEnd { get; set; }
         public string? AccomodationWebsite { get; set; }
         public string? AccomodationPhoneNo { get; set; }
-        public string? Location { get; set; }
-        public string? State { get; set; }
-        public string? Country { get; set; }
         public double? BookingAmount { get; set; }
         public int? NoOfRooms { get; set; }
-        public string? Locality { get; set; }
-        public string? Postcode { get; set; }
-        public double? Latitude { get; set; }
-        public double? Longitude { get; set; }
+        public string? Location { get; set; }
+       // public string? State { get; set; }
+       // public string? Country { get; set; }
+      //  public string? Locality { get; set; }
+     //   public string? Postcode { get; set; }
+       // public double? Latitude { get; set; }
+      //  public double? Longitude { get; set; }
         public AddTimeSchedule? TimeSchedule { get; set; }
         public List<IFormFile>? ImageList { get; set; }
         public IFormFile? LogoUpload { get; set; }

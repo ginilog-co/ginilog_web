@@ -1,17 +1,12 @@
 ﻿using Ginilog_AdminWeb.GlobalConst;
 using Ginilog_AdminWeb.Models;
-using Ginilog_AdminWeb.Models.BookingsModel;
 using Ginilog_AdminWeb.Models.LogisticsModel;
 using Ginilog_AdminWeb.Models.WalletModel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 using Newtonsoft.Json;
-using NuGet.Packaging.Core;
-using NuGet.Protocol.Plugins;
 using System.Net;
 using System.Net.Http.Headers;
-using System.Reflection;
 using System.Text;
 
 namespace Ginilog_AdminWeb.Controllers
@@ -49,6 +44,69 @@ namespace Ginilog_AdminWeb.Controllers
             string fileUrl = responseObj?.imageUrl!;
             return fileUrl!;
         }
+
+        public async Task<LocationDataDetail>? LocationData(string id)
+        {
+            LocationDataDetail data = new();
+            using var httpClient = new HttpClient();
+            using var response = await httpClient.GetAsync($"https://maps.googleapis.com/maps/api/place/details/json?placeid={id}&key=AIzaSyCuU7j9XnHs31-I6NE7cz_SxOw3lzScFuo");
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                string apiResponse = await response.Content.ReadAsStringAsync();
+                var googlePlaceResponse = JsonConvert.DeserializeObject<GooglePlaceDetailsResponse>(apiResponse)!;
+
+                if (googlePlaceResponse?.Result != null)
+                {
+                    var place = googlePlaceResponse.Result;
+                    string address = place.FormattedAddress!;
+                    string postcode = "";
+                    string country = "";
+                    string state = "";
+                    string city = "";
+
+                    foreach (var component in place.AddressComponents!)
+                    {
+                        var types = component.Types;
+
+                        if (types!.Contains("postal_code"))
+                            postcode = component.LongName!;
+                        if (types.Contains("country"))
+                            country = component.LongName!;
+                        if (types.Contains("administrative_area_level_1"))
+                            state = component.LongName!;
+                        if (types.Contains("locality"))
+                            city = component.LongName!;
+                        if (string.IsNullOrEmpty(city) && types.Contains("administrative_area_level_2"))
+                            city = component.LongName!; // fallback
+                    }
+
+                    double lat = place.Geometry!.Location!.Lat;
+                    double lng = place.Geometry.Location.Lng;
+
+                    // Use address, city, state, etc. as needed
+                    data = new LocationDataDetail()
+                    {
+                        Address = address,
+                        Locality=city,
+                        Postcode = postcode,
+                        Country = country,
+                        State = state,
+                        Latitude = lat,
+                        Longitude = lng,
+                    };
+                }
+                return data!;
+            }
+            else
+            {
+                ViewBag.StatusCode = response.StatusCode;
+#pragma warning disable CS8603 // Possible null reference return.
+                return null;
+#pragma warning restore CS8603 // Possible null reference return.
+            }
+
+        }
+
         public async Task<AdminModelTable>? Data()
         {
             var userId = HttpContext.Session.GetString("bt_userId");
@@ -347,10 +405,18 @@ namespace Ginilog_AdminWeb.Controllers
         public async Task<IActionResult> AddLogCompany(AddCompany requset)
         {
             var token = HttpContext.Session.GetString("bt_token");
+            var managers = ManagerDataList()!.GetAwaiter().GetResult();
+            var manager = managers.Select(m => new SelectListItem
+            {
+                Text = $"{m.FirstName} {m.SurName}",       // What the user sees
+                Value = m.Id.ToString()  // What gets submitted
+            }).ToList();
+            ViewBag.Managers = manager;
             if (ModelState.IsValid)
             {
                 try
                 {
+                    var place = await LocationData(requset.CompanyAddress!)!;
                     var logo = await UploadFile(requset.LogoUpload!, token!);
 
                     AddMainCompany login = new()
@@ -368,12 +434,12 @@ namespace Ginilog_AdminWeb.Controllers
                         AccountName = requset.AccountName,
                         AccountNumber = requset.AccountNumber,
                         BankName = requset.BankName,
-                        Locality = requset.CompanyLocality,
-                        CompanyAddress = requset.CompanyAddress,
-                        State = requset.CompanyState,
-                        Latitude = requset.CompanyLatitude,
-                        Longitude = requset.CompanyLongitude,
-                        PostCodes = requset.CompanyPostCodes,
+                        Locality = place.Locality,
+                        CompanyAddress =place.Address,
+                        State = place.State,
+                        Latitude = place.Latitude,
+                        Longitude = place.Longitude,
+                        PostCodes = place.Postcode,
                         DeliveryTypes = requset.DeliveryTypes,
                         ServiceAreas = requset.ServiceArea!.Split(',').Select(t => t.Trim()).Where(t => !string.IsNullOrEmpty(t)).ToList(),
                         CompanyLogo = logo,
@@ -571,17 +637,20 @@ namespace Ginilog_AdminWeb.Controllers
         public async Task<IActionResult> AddOrder(AddOrder requset)
         {
             var token = HttpContext.Session.GetString("bt_token");
+            ViewBag.CompanyId = requset.CompanyId;
             if (ModelState.IsValid)
             {
                 try
                 {
+                    var senderAddress = await LocationData(requset.SenderAddress!)!;
+                    var recieverAddress = await LocationData(requset.RecieverAddress!)!;
                     List<string> packageImages = [];
                     for (int i = 0; i < requset.ImageList!.Count; i++)
                     {
                         var image = await UploadFile(requset.ImageList![i], token!);
                         packageImages.Add(image);
                     }
-                    AddOrder login = new()
+                    AddMainOrder login = new()
                     {
                         CompanyId = requset.CompanyId,
                         UserId = requset.UserId,
@@ -595,27 +664,27 @@ namespace Ginilog_AdminWeb.Controllers
                         ItemQuantity = requset.ItemQuantity,
                         ItemWeight = requset.ItemWeight,
                         PackageType=requset.PackageType,
-                        RecieverAddress=requset.RecieverAddress,
-                        RecieverCountry=requset.RecieverCountry,
-                        RecieverEmail=requset.RecieverEmail,
-                        RecieverLatitude=requset.RecieverLatitude,
-                        RecieverLocality=requset.RecieverLocality,
-                        RecieverLongitude=requset.RecieverLongitude,
-                        RecieverName=requset.RecieverName,
+                        RecieverAddress= recieverAddress.Address,
+                        RecieverCountry= recieverAddress.Country,
+                        RecieverLatitude= recieverAddress.Latitude,
+                        RecieverLocality= recieverAddress.Locality,
+                        RecieverLongitude= recieverAddress.Longitude,
+                        RecieverPostalCode = recieverAddress.Postcode,
+                        RecieverState = recieverAddress.State,
+                        RecieverEmail = requset.RecieverEmail,
+                        RecieverName =requset.RecieverName,
                         RecieverPhoneNo=requset.RecieverPhoneNo,
-                        RecieverPostalCode=requset.RecieverPostalCode,
-                        RecieverState=requset.RecieverState,
                         RiderType=requset.RiderType,
-                        SenderAddress=requset.SenderAddress,
-                        SenderCountry=requset.SenderCountry,
-                        SenderEmail=requset.SenderEmail,
-                        SenderLatitude=requset.SenderLatitude,
-                        SenderLocality=requset.SenderLocality,
-                        SenderLongitude=requset.SenderLongitude,
-                        SenderName=requset.SenderName,
+                        SenderAddress= senderAddress.Address,
+                        SenderCountry= senderAddress.Country,
+                        SenderState = senderAddress.State,
+                        SenderLatitude = senderAddress.Latitude,
+                        SenderLocality= senderAddress.Locality,
+                        SenderLongitude= senderAddress.Longitude,
+                        SenderPostalCode = senderAddress.Postcode,
+                        SenderName =requset.SenderName,
                         SenderPhoneNo=requset.SenderPhoneNo,
-                        SenderPostalCode=requset.SenderPostalCode,
-                        SenderState=requset.SenderState,
+                        SenderEmail = requset.SenderEmail,
                         ShippingType=requset.ShippingType,
                         PackageImageLists=packageImages,
                         PaymentChannel=requset.PaymentChannel,
@@ -685,7 +754,7 @@ namespace Ginilog_AdminWeb.Controllers
                     else if (paymentChannel == "Flutterwave")
                     {
                         StringContent content2 = new(JsonConvert.SerializeObject(""), Encoding.UTF8, "application/json");
-                        using var response = await httpClient.PostAsync($"{GlobalConstant.BaseUrl}Logistics/initialize-flutterwave-package-orders/{id}", content2);
+                        using var response = await httpClient.PutAsync($"{GlobalConstant.BaseUrl}Logistics/initialize-flutterwave-package-orders/{id}", content2);
                         string apiResponse = await response.Content.ReadAsStringAsync();
                         if (response.StatusCode == HttpStatusCode.Created || response.StatusCode == HttpStatusCode.OK)
                         {
@@ -701,7 +770,7 @@ namespace Ginilog_AdminWeb.Controllers
                     else
                     {
 
-                        using var response = await httpClient.PostAsync($"{GlobalConstant.BaseUrl}Logistics/package-orders/{id}", content);
+                        using var response = await httpClient.PutAsync($"{GlobalConstant.BaseUrl}Logistics/package-orders/{id}", content);
                         string apiResponse = await response.Content.ReadAsStringAsync();
                         if (response.StatusCode == HttpStatusCode.Created || response.StatusCode == HttpStatusCode.OK)
                         {

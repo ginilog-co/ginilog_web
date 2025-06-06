@@ -1,0 +1,209 @@
+﻿@model Ginilog_Company_WebDasboard.Models.LogisticsModel.AllOrdersDataModel
+
+@{
+    ViewData["Title"] = "OrderList";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!--Order here-->
+<div class="content-wrapper">
+<div class="row">
+    <div class="col-12 grid-margin">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-end">
+                    <div class="nav-item dropdown ms-auto">
+                    </div>
+                </div>
+                       @if(ViewBag.UseType == "Manager")
+                 {
+                <p>Order Statistics</p>
+
+                <div style="padding-top:20px"></div>
+
+                <div class="row">
+                    <div class="col-xl-3 col-sm-6 grid-margin stretch-card">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-9">
+                                        <div class="d-flex align-items-center align-self-start">
+                                            <h3 class="mb-0">&#8358;@Model.OrderStatistics!.TotalAmountOrders.ToString("N2")</h3>
+                                            <p class="text-success ml-2 mb-0 font-weight-medium">@Model.OrderStatistics.TotalOrders</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="icon icon-box-success ">
+                                            <span class="mdi mdi-arrow-top-right icon-item"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h6 class="text-muted font-weight-normal">REVENUE</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-sm-6 grid-margin stretch-card">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-9">
+                                        <div class="d-flex align-items-center align-self-start">
+                                            <h3 class="mb-0">&#8358;@Model.OrderStatistics!.TodayAmountOrders.ToString("N2")</h3>
+                                            <p class="text-success ml-2 mb-0 font-weight-medium">@Model.OrderStatistics.TodaysOrder</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="icon icon-box-success">
+                                            <span class="mdi mdi-arrow-top-right icon-item"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h6 class="text-muted font-weight-normal">Today's Revenue</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-sm-6 grid-margin stretch-card">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-9">
+                                        <div class="d-flex align-items-center align-self-start">
+                                            <h3 class="mb-0">&#8358;@Model.OrderStatistics!.CompletedAmountOrders.ToString("N2")</h3>
+                                            <p class="text-danger ml-2 mb-0 font-weight-medium">@Model.OrderStatistics.CompletedOrders</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="icon icon-box-danger">
+                                            <span class="mdi mdi-arrow-bottom-left icon-item"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h6 class="text-muted font-weight-normal">Completed Package</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-sm-6 grid-margin stretch-card">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-9">
+                                        <div class="d-flex align-items-center align-self-start">
+                                            <h3 class="mb-0">&#8358;@Model.OrderStatistics!.PendingAmountOrders.ToString("N2")</h3>
+                                            <p class="text-success ml-2 mb-0 font-weight-medium">@Model.OrderStatistics.PendingOrders</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="icon icon-box-success ">
+                                            <span class="mdi mdi-arrow-top-right icon-item"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h6 class="text-muted font-weight-normal">Pending Orders</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-sm-6 grid-margin stretch-card">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-9">
+                                        <div class="d-flex align-items-center align-self-start">
+                                            <h3 class="mb-0">&#8358;@Model.OrderStatistics!.OpenAmountOrders.ToString("N2")</h3>
+                                            <p class="text-success ml-2 mb-0 font-weight-medium">@Model.OrderStatistics.OpenOrders</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="icon icon-box-success ">
+                                            <span class="mdi mdi-arrow-top-right icon-item"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h6 class="text-muted font-weight-normal">Open Orders</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-sm-6 grid-margin stretch-card">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-9">
+                                        <div class="d-flex align-items-center align-self-start">
+                                            <h3 class="mb-0">&#8358;@Model.OrderStatistics!.RejectedAmountOrders.ToString("N2")</h3>
+                                            <p class="text-success ml-2 mb-0 font-weight-medium">@Model.OrderStatistics.RejectedOrders</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="icon icon-box-success ">
+                                            <span class="mdi mdi-arrow-top-right icon-item"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h6 class="text-muted font-weight-normal">Cancelled Orders</h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                }
+                <div style="padding-top:20px"></div>
+                <div style="padding-top:20px"></div>
+                <h6>All Orders</h6>
+                <h6 class="mb-4">Search Here</h6>
+                <form asp-controller="Home" asp-action="OrderList" method="get">
+                    <div class="d-none d-md-flex ms-4">
+                        <div class="input-group">
+                            <input name="id" type="text" class="form-control" placeholder="Search: orders" aria-label="Username">
+                            <span style="padding-left:10px;padding-right:10px"> </span>
+                            <input name="date" type="date" class="form-control" placeholder="Choose Date" aria-label="Server">
+                        </div>
+                        <div class="input-group-append">
+                            <button class="btn btn-sm btn-primary" type="submit">Search</button>
+                        </div>
+                    </div>
+                </form>
+                <div style="padding-top:20px"></div>
+
+                <div class="table-responsive pt-3">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th> Tracking Num </th>
+                                <th> Item Name </th>
+                                <th> Sender Name </th>
+                                <th> Reciever Name </th>
+                                <th> Company Name </th>
+                                <th> Shipping Cost </th>
+                                <th> Item Cost </th>
+                                <th> Order Status </th>
+                                <th> Date </th>
+                                <th> Details </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.OrderModelData!)
+                            {
+                                <tr>
+                                    <td> @item.TrackingNum </td>
+                                    <td> @item.ItemName </td>
+                                    <td> @item.SenderName </td>
+                                    <td> @item.RecieverName </td>
+                                    <td> @item.CompanyName </td>
+                                    <td> &#8358;@item.ShippingCost.ToString("N2") </td>
+                                    <td> &#8358;@item.ItemCost.ToString("N2") </td>
+                                    <td><div class="badge badge-outline-success">@item.OrderStatus</div> </td>
+                                    <td>@item.CreatedAt</td>
+                                    <td><a href="@Url.Action("OrderDetails", "Home", new { id = item!.Id })" class="btn btn-outline-info">View</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+</div>
+

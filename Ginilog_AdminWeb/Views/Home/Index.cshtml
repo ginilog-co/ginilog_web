@@ -171,7 +171,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h4 class="card-title mb-0">Order List</h4>
                         <div class="nav-item dropdown">
-                            <a href="@Url.Action("OrderList", "Home")" class="btn btn-success">
+                            <a href="@Url.Action("OrderList", "Logistics")" class="btn btn-success">
                                 <span class="d-none d-lg-inline-flex">View All Orders</span>
                             </a>
                         </div>
@@ -190,6 +190,7 @@
                                     <th> Order Status </th>
                                     <th> Date </th>
                                     <th> Details </th>
+                                    <th> Delete </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -206,8 +207,9 @@
                                         <td>
                                             <div class="badge badge-outline-success">@item.OrderStatus</div>
                                         </td>
-                                        <th>@item.CreatedAt</th>
+                                        <td>@item.CreatedAt</td>
                                         <td><a href="@Url.Action("OrderDetails", "Logistics", new { id = item!.Id })" class="btn btn-outline-info">View</a><td>
+                                        <td><a href="@Url.Action("DeleteOrder", "Logistics", new { id = item!.Id })" class="btn btn-danger">Delete</a></td>
                                     </tr>
                                 }
                             </tbody>

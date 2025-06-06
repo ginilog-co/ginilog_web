@@ -122,6 +122,7 @@
 
     public class AddCustomerBookedReservation
     {
+        public Guid UserId { get; set; }
         public string? CustomerName { get; set; }
         public string? CustomerPhoneNumber { get; set; }
         public string? CustomerEmail { get; set; }

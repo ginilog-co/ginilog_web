@@ -45,7 +45,67 @@ namespace Ginilog_AdminWeb.Controllers
             string fileUrl = responseObj?.imageUrl!;
             return fileUrl!;
         }
+        public async Task<LocationDataDetail>? LocationData(string id)
+        {
+            LocationDataDetail data = new();
+            using var httpClient = new HttpClient();
+            using var response = await httpClient.GetAsync($"https://maps.googleapis.com/maps/api/place/details/json?placeid={id}&key=AIzaSyCuU7j9XnHs31-I6NE7cz_SxOw3lzScFuo");
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                string apiResponse = await response.Content.ReadAsStringAsync();
+                var googlePlaceResponse = JsonConvert.DeserializeObject<GooglePlaceDetailsResponse>(apiResponse)!;
 
+                if (googlePlaceResponse?.Result != null)
+                {
+                    var place = googlePlaceResponse.Result;
+                    string address = place.FormattedAddress!;
+                    string postcode = "";
+                    string country = "";
+                    string state = "";
+                    string city = "";
+
+                    foreach (var component in place.AddressComponents!)
+                    {
+                        var types = component.Types;
+
+                        if (types!.Contains("postal_code"))
+                            postcode = component.LongName!;
+                        if (types.Contains("country"))
+                            country = component.LongName!;
+                        if (types.Contains("administrative_area_level_1"))
+                            state = component.LongName!;
+                        if (types.Contains("locality"))
+                            city = component.LongName!;
+                        if (string.IsNullOrEmpty(city) && types.Contains("administrative_area_level_2"))
+                            city = component.LongName!; // fallback
+                    }
+
+                    double lat = place.Geometry!.Location!.Lat;
+                    double lng = place.Geometry.Location.Lng;
+
+                    // Use address, city, state, etc. as needed
+                    data = new LocationDataDetail()
+                    {
+                        Address = address,
+                        Locality = city,
+                        Postcode = postcode,
+                        Country = country,
+                        State = state,
+                        Latitude = lat,
+                        Longitude = lng,
+                    };
+                }
+                return data!;
+            }
+            else
+            {
+                ViewBag.StatusCode = response.StatusCode;
+#pragma warning disable CS8603 // Possible null reference return.
+                return null;
+#pragma warning restore CS8603 // Possible null reference return.
+            }
+
+        }
         public async Task<AdminModelTable>? Data()
         {
             var userId = HttpContext.Session.GetString("bt_userId");
@@ -312,7 +372,7 @@ namespace Ginilog_AdminWeb.Controllers
             {
                 try
                 {
-                   
+                    var place = await LocationData(requset.Location!)!;
                     var logo = await UploadFile(requset.LogoUpload!, token!);
                     List<string> accomodationImages = [];   
                     for(int i = 0; i < requset.ImageList!.Count; i++)
@@ -352,13 +412,13 @@ namespace Ginilog_AdminWeb.Controllers
                         AccomodationDescription = requset.AccomodationDescription,
                         AccomodationType = requset.AccomodationType,
                         AccomodationAdvertType ="Normal",
-                        Location = requset.Location,
-                        Country = requset.Country,
-                        Locality = requset.Locality,
-                        Postcode = requset.Postcode,
-                        State = requset.State,
-                        Latitude= requset.Latitude,
-                        Longitude = requset.Longitude,
+                        Location = place.Address,
+                        Country = place.Country,
+                        Locality = place.Locality,
+                        Postcode = place.Postcode,
+                        State = place.State,
+                        Latitude= place.Latitude,
+                        Longitude = place.Longitude,
                         AccomodationWebsite = requset.AccomodationWebsite,
                         BookingAmount = requset.BookingAmount,
                         NoOfRooms = requset.NoOfRooms,
@@ -787,7 +847,7 @@ namespace Ginilog_AdminWeb.Controllers
                 ViewBag.AdminName = $"{users.FirstName} {users.SurName}";
                 ViewBag.UseType = adminType;
 
-                ViewBag.reservationId = id;
+                ViewBag.ReservationId = id;
                 return View();
             }
             else
@@ -800,6 +860,8 @@ namespace Ginilog_AdminWeb.Controllers
         public async Task<IActionResult> AddCustomerReservation(AddPaymentCustomerBookedReservation requset)
         {
             var token = HttpContext.Session.GetString("bt_token");
+
+            ViewBag.ReservationId = requset.ReservationId;
             if (ModelState.IsValid)
             {
                 try
@@ -809,6 +871,7 @@ namespace Ginilog_AdminWeb.Controllers
                     int totalDays = (endDate - startDate).Days;
                     AddPaymentCustomerBookedReservation login = new()
                     {
+                        UserId=Guid.NewGuid(),
                         PaymentChannel = requset.PaymentChannel,
                         CustomerName = requset.CustomerName,
                         CustomerPhoneNumber = requset.CustomerPhoneNumber,

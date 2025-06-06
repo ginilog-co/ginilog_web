@@ -27,8 +27,6 @@
     <div class="col-12 grid-margin">
         <div class="card">
             <div class="card-body">
-
-
                 <div class="row px-0 mx-0">
                     <div class="col-12 grid-margin px-0">
                         <div class="d-flex justify-content-end gap-2 px-0">
@@ -240,8 +238,7 @@
                                     <td> &#8358;@item.ItemCost.ToString("N2") </td>
                                     <td><div class="badge badge-outline-success">@item.OrderStatus</div></td>
                                     <th>@item.CreatedAt</th>
-                                    <td><a href="@Url.Action("OrderDetails", "Logistics", new { id = item!.Id })" class="btn btn-outline-info">View</a>
-                                    <td>
+                                    <td><a href="@Url.Action("OrderDetails", "Logistics", new { id = item!.Id })" class="btn btn-outline-info">View</a><td>
                                     <td><a href="@Url.Action("DeleteOrder", "Logistics", new { id = item!.Id })" class="btn btn-danger">Delete</a></td>
                                 </tr>
                             }

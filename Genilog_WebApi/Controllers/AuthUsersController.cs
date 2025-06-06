@@ -341,7 +341,7 @@ namespace Genilog_WebApi.Controllers
         }
 
         [HttpGet]
-        [Authorize]
+        [Authorize(Roles = "Admin,Super_Admin")]
         public async Task<IActionResult> GetAllUsersAsync([FromQuery] FilterLocationData data)
         {
             List<UsersDataModelTableDto> users = [];
@@ -475,10 +475,10 @@ namespace Genilog_WebApi.Controllers
         } 
 
         [HttpGet]
-        [Route("for-admin")]
+        [Route("for-admin/{id:guid}")]
         [ActionName("ProfileAsync")]
         [Authorize(Roles = "Admin,Super_Admin")]
-        public async Task<IActionResult> ProfileAsync([FromHeader]Guid id)
+        public async Task<IActionResult> ProfileAsync([FromRoute] Guid id)
         {
             var user = await newUsersRepository.GetAsync(id);
             if (user == null)

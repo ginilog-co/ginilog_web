@@ -40,51 +40,15 @@
                 types: ['geocode']
             });
 
-            autocomplete.setFields(['address_component', 'geometry']);
+             autocomplete.setFields(['place_id']);
 
-            autocomplete.addListener('place_changed', function () {
-                const place = autocomplete.getPlace();
+          autocomplete.addListener('place_changed', function () {
+         const place = autocomplete.getPlace();
+          const placeId = place.place_id;
 
-                let address = autocompleteInput.value;
-                let postcode = '';
-                let country = '';
-                let state = '';
-                let city = '';
-
-                if (place.address_components) {
-                    for (let component of place.address_components) {
-                        const types = component.types;
-
-                        if (types.includes('postal_code')) {
-                            postcode = component.long_name;
-                        }
-                        if (types.includes('country')) {
-                            country = component.long_name;
-                        }
-                        if (types.includes('administrative_area_level_1')) {
-                            state = component.long_name;
-                        }
-                        if (types.includes('locality')) {
-                            city = component.long_name;
-                        }
-                        if (!city && types.includes('administrative_area_level_2')) {
-                            city = component.long_name; // fallback
-                        }
-                    }
-                }
-
-                const lat = place.geometry.location.lat();
-                const lng = place.geometry.location.lng();
-
-                // Set values to hidden inputs
-                document.getElementById('SenderAddress').value = address;
-                document.getElementById('SenderState').value = state;
-                document.getElementById('SenderCountry').value = country;
-                document.getElementById('SenderLocality').value = city;
-                document.getElementById('SenderPostalCode').value = postcode;
-                document.getElementById('SenderLatitude').value = lat;
-                document.getElementById('SenderLongitude').value = lng;
-            });
+        // Set hidden input value
+        document.getElementById('SenderPlaceId').value = placeId;
+    });
         }
 
         function initRecieverAutocomplete() {
@@ -93,51 +57,15 @@
                      types: ['geocode']
                  });
 
-                 autocomplete.setFields(['address_component', 'geometry']);
+                 autocomplete.setFields(['place_id']);
 
-                 autocomplete.addListener('place_changed', function () {
-                     const place = autocomplete.getPlace();
+            autocomplete.addListener('place_changed', function () {
+           const place = autocomplete.getPlace();
+           const placeId = place.place_id;
 
-                     let address = autocompleteInput.value;
-                     let postcode = '';
-                     let country = '';
-                     let state = '';
-                     let city = '';
-
-                     if (place.address_components) {
-                         for (let component of place.address_components) {
-                             const types = component.types;
-
-                             if (types.includes('postal_code')) {
-                                 postcode = component.long_name;
-                             }
-                             if (types.includes('country')) {
-                                 country = component.long_name;
-                             }
-                             if (types.includes('administrative_area_level_1')) {
-                                 state = component.long_name;
-                             }
-                             if (types.includes('locality')) {
-                                 city = component.long_name;
-                             }
-                             if (!city && types.includes('administrative_area_level_2')) {
-                                 city = component.long_name; // fallback
-                             }
-                         }
-                     }
-
-                     const lat = place.geometry.location.lat();
-                     const lng = place.geometry.location.lng();
-
-                     // Set values to hidden inputs
-                     document.getElementById('RecieverAddress').value = address;
-                     document.getElementById('RecieverState').value = state;
-                     document.getElementById('RecieverCountry').value = country;
-                     document.getElementById('RecieverLocality').value = city;
-                     document.getElementById('RecieverPostalCode').value = postcode;
-                     document.getElementById('RecieverLatitude').value = lat;
-                     document.getElementById('RecieverLongitude').value = lng;
-                 });
+        // Set hidden input value
+            document.getElementById('RecieverPlaceId').value = placeId;
+    });
              }
 
 
@@ -262,16 +190,9 @@
 
             <div class="form-group">
                 <label>Sender Address</label>
-                <input id="senderData" type="text" class="form-control p_input"
-                       placeholder="Start typing an address...">
+                <input id="senderData" type="text" class="form-control p_input" placeholder="Start typing an address...">
                 <!-- Hidden fields to hold extracted data -->
-                <input type="hidden" asp-for="SenderAddress" id="SenderAddress" />
-                <input type="hidden" asp-for="SenderState" id="SenderState" />
-                <input type="hidden" asp-for="SenderCountry" id="SenderCountry" />
-                <input type="hidden" asp-for="SenderLocality" id="SenderLocality" />
-                <input type="hidden" asp-for="SenderPostalCode" id="SenderPostalCode" />
-                <input type="hidden" asp-for="SenderLatitude" id="SenderLatitude" />
-                <input type="hidden" asp-for="SenderLongitude" id="SenderLongitude" />
+                <input type="hidden" asp-for="SenderAddress" id="SenderPlaceId" />
                 <span asp-validation-for="SenderAddress" class="text-danger"></span>
             </div>
             <h2>Receiver Info</h2>
@@ -294,16 +215,9 @@
 
             <div class="form-group">
                 <label>Reciever Address</label>
-                <input id="recieverData" type="text" class="form-control p_input"
-                       placeholder="Start typing an address...">
+                <input id="recieverData" type="text" class="form-control p_input" placeholder="Start typing an address...">
                 <!-- Hidden fields to hold extracted data -->
-                <input type="hidden" asp-for="RecieverAddress" id="RecieverAddress" />
-                <input type="hidden" asp-for="RecieverState" id="RecieverState" />
-                <input type="hidden" asp-for="RecieverCountry" id="RecieverCountry" />
-                <input type="hidden" asp-for="RecieverLocality" id="RecieverLocality" />
-                <input type="hidden" asp-for="RecieverPostalCode" id="RecieverPostalCode" />
-                <input type="hidden" asp-for="RecieverLatitude" id="RecieverLatitude" />
-                <input type="hidden" asp-for="RecieverLongitude" id="RecieverLongitude" />
+                <input type="hidden" asp-for="RecieverAddress" id="RecieverPlaceId" />
                 <span asp-validation-for="RecieverAddress" class="text-danger"></span>
             </div>
             <div class="form-group">

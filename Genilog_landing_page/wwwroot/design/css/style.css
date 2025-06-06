@@ -474,3 +474,56 @@
 .footer .copyright a {
     color: var(--light);
 }
+
+.tracking-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    padding: 30px 15px;
+}
+
+.step-box {
+    background: #fff;
+    border: 2px solid #eee;
+    border-radius: 16px;
+    padding: 20px;
+    width: 160px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+}
+
+    .step-box:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 8px 16px rgba(0, 123, 255, 0.2);
+        border-color: #007bff;
+    }
+
+.step-icon {
+    font-size: 32px;
+    color: #007bff;
+    margin-bottom: 10px;
+}
+
+.step-text strong {
+    font-size: 14px;
+    font-weight: bold;
+    color: #000;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.step-text div {
+    font-size: 13px;
+    color: #555;
+}
+
+/* Responsive: stack on small screens */
+@media screen and (max-width: 768px) {
+    .step-box {
+        width: 100%;
+        max-width: 300px;
+    }
+}

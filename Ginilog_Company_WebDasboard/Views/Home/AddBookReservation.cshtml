@@ -1,0 +1,174 @@
+﻿@model Ginilog_Company_WebDasboard.Models.BookingsModel.AddBookAccomodationReservation
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Reservation - Ginilog Admin Panel</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+    <!-- base:css -->
+    <link rel="stylesheet" href="~/designs/vendors/mdi/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="~/designs/vendors/feather/feather.css">
+    <link rel="stylesheet" href="~/designs/vendors/base/vendor.bundle.base.css">
+    <!-- endinject -->
+    <!-- plugin css for this page -->
+    <link rel="stylesheet" href="~/designs/vendors/flag-icon-css/css/flag-icon.min.css" />
+    <link rel="stylesheet" href="~/designs/vendors/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="~/designs/vendors/jquery-bar-rating/fontawesome-stars-o.css">
+    <link rel="stylesheet" href="~/designs/vendors/jquery-bar-rating/fontawesome-stars.css">
+    <!-- End plugin css for this page -->
+    <!-- inject:css -->
+    <link rel="stylesheet" href="~/designs/css/style.css">
+    <!-- endinject -->
+    <link rel="shortcut icon" href="~/designs/images/favicon.png" />
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCuU7j9XnHs31-I6NE7cz_SxOw3lzScFuo&libraries=places"></script>
+    <script>
+        // your initAutocomplete function goes here
+          function initAutocomplete() {
+            const autocompleteInput = document.getElementById('autocomplete');
+            const autocomplete = new google.maps.places.Autocomplete(autocompleteInput, {
+                types: ['geocode']
+            });
+
+            autocomplete.setFields(['address_component', 'geometry']);
+
+            autocomplete.addListener('place_changed', function () {
+                const place = autocomplete.getPlace();
+
+                let address = autocompleteInput.value;
+                let postcode = '';
+                let country = '';
+                let state = '';
+                let city = '';
+
+                if (place.address_components) {
+                    for (let component of place.address_components) {
+                        const types = component.types;
+
+                        if (types.includes('postal_code')) {
+                            postcode = component.long_name;
+                        }
+                        if (types.includes('country')) {
+                            country = component.long_name;
+                        }
+                        if (types.includes('administrative_area_level_1')) {
+                            state = component.long_name;
+                        }
+                        if (types.includes('locality')) {
+                            city = component.long_name;
+                        }
+                        if (!city && types.includes('administrative_area_level_2')) {
+                            city = component.long_name; // fallback
+                        }
+                    }
+                }
+
+                const lat = place.geometry.location.lat();
+                const lng = place.geometry.location.lng();
+
+                // Set values to hidden inputs
+                document.getElementById('Address').value = address;
+                document.getElementById('Postcode').value = postcode;
+                document.getElementById('Country').value = country;
+                document.getElementById('State').value = state;
+                document.getElementById('City').value = city;
+                document.getElementById('Latitude').value = lat;
+                document.getElementById('Longitude').value = lng;
+            });
+        }
+
+        google.maps.event.addDomListener(window, 'load', initAutocomplete);
+    </script>
+</head>
+<body>
+
+
+
+
+    <!-- Spinner End -->
+    <div class="content-wrapper">
+
+        <div style="padding-top:20px"></div>
+        <p>
+            <a asp-action="AllAccomodationReservationListt" class="btn btn-outline-primarym-2">Back to List</a>
+        </p>
+        <h6 class="mb-4">Add BookReservation</h6>
+        <form asp-action="AddBookReservation" enctype="multipart/form-data" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+
+            <div class="form-group">
+                <label>Room Number</label>
+                <input hidden asp-for="AccommodationId" value="@ViewBag.AccommodationId" type="text" class="form-control p_input" placeholder="Accomodation Name">
+                <input asp-for="RoomNumber" type="number" class="form-control p_input" placeholder="Room Number">
+                <span asp-validation-for="RoomNumber" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Maximum No Of Guest</label>
+                <input asp-for="MaximumNoOfGuest" type="number" class="form-control p_input" placeholder="MaximumNoOfGuest">
+                <span asp-validation-for="MaximumNoOfGuest" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Room Price</label>
+                <input asp-for="RoomPrice" type="number" class="form-control p_input" placeholder="Room Price">
+                <span asp-validation-for="RoomPrice" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Room Type</label>
+                <input asp-for="RoomType" type="text" class="form-control p_input" placeholder="Room Type">
+                <span asp-validation-for="RoomType" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Room Features</label>
+                <textarea asp-for="RoomFeatures" class="form-control p_input" id="floatingPassword" placeholder="List Room Features and Separate by commas ,"></textarea>
+                <span asp-validation-for="RoomFeatures" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Room Image List</label>
+                <input id="RoomImages" asp-for="RoomImages" type="file" accept="image/*" multiple class="form-control p_input"
+                       placeholder="Room Images">
+                <span asp-validation-for="RoomImages" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block enter-btn">Add Now</button>
+        </form>
+    </div>
+
+
+
+    <!-- base:js -->
+    <script src="~/designs/vendors/base/vendor.bundle.base.js"></script>
+    <!-- endinject -->
+    <!-- Plugin js for this page-->
+    <!-- End plugin js for this page-->
+    <!-- inject:js -->
+    <script src="~/designs/js/off-canvas.js"></script>
+    <script src="~/designs/js/hoverable-collapse.js"></script>
+    <script src="~/designs/js/template.js"></script>
+    <!-- endinject -->
+    <!-- plugin js for this page -->
+    <script src="~/designs/vendors/chart.js/Chart.min.js"></script>
+    <script src="~/designs/vendors/jquery-bar-rating/jquery.barrating.min.js"></script>
+    <!-- End plugin js for this page -->
+    <!-- Custom js for this page-->
+    <script src="~/designs/js/dashboard.js"></script>
+    <!-- End custom js for this page-->
+    @section Scripts {
+        @{
+            await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        }
+    }
+</body>
+</html>
+

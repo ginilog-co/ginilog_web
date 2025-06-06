@@ -33,7 +33,18 @@
                             <div class="col-auto mb-2">
                                 <button class="nav-link btn btn-danger create-new-button" onclick="openModal()">Delete</button>
                             </div>
-
+                            @if(Model.CompanyType!.Contains("Logistics"))
+                            {
+                                <div class="col-auto mb-2">
+                                    <a href="~/Logistics/LogCompanyDetails/@Model.ManagerId" class="nav-link btn btn-primary create-new-button">View Logistic</a>
+                                </div>
+                            }
+                            @if (Model.CompanyType!.Contains("Accommodation"))
+                            {
+                                <div class="col-auto mb-2">
+                                    <a href="~/Bookings/AccommodationDetails/@Model.ManagerId" class="nav-link btn btn-secondary create-new-button">View Accommodation</a>
+                                </div>
+                            }
                             <div class="col-auto mb-2">
                                 @if (Model.ImagePath != "")
                                 {

@@ -30,64 +30,31 @@
     <link rel="stylesheet" href="~/new/assets/css/style.css">
     <!-- End layout styles -->
     <link rel="shortcut icon" href="~/new/assets/images/favicon.png" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCuU7j9XnHs31-I6NE7cz_SxOw3lzScFuo&libraries=places"></script>
     <script>
      
           // your initAutocomplete function goes here
-          function initAutocomplete() {
-            const autocompleteInput = document.getElementById('autocomplete');
-            const autocomplete = new google.maps.places.Autocomplete(autocompleteInput, {
-                types: ['geocode']
-            });
+  
+        function initAutocomplete() {
+    const autocompleteInput = document.getElementById('autocomplete');
+    const autocomplete = new google.maps.places.Autocomplete(autocompleteInput, {
+        types: ['geocode']
+    });
 
-            autocomplete.setFields(['address_component', 'geometry']);
+    autocomplete.setFields(['place_id']);
 
-            autocomplete.addListener('place_changed', function () {
-                const place = autocomplete.getPlace();
+    autocomplete.addListener('place_changed', function () {
+        const place = autocomplete.getPlace();
+        const placeId = place.place_id;
 
-                let address = autocompleteInput.value;
-                let postcode = '';
-                let country = '';
-                let state = '';
-                let city = '';
+        // Set hidden input value
+        document.getElementById('PlaceId').value = placeId;
+    });
+    }
 
-                if (place.address_components) {
-                    for (let component of place.address_components) {
-                        const types = component.types;
-
-                        if (types.includes('postal_code')) {
-                            postcode = component.long_name;
-                        }
-                        if (types.includes('country')) {
-                            country = component.long_name;
-                        }
-                        if (types.includes('administrative_area_level_1')) {
-                            state = component.long_name;
-                        }
-                        if (types.includes('locality')) {
-                            city = component.long_name;
-                        }
-                        if (!city && types.includes('administrative_area_level_2')) {
-                            city = component.long_name; // fallback
-                        }
-                    }
-                }
-
-                const lat = place.geometry.location.lat();
-                const lng = place.geometry.location.lng();
-
-                // Set values to hidden inputs
-                document.getElementById('CompanyAddress').value = address;
-                document.getElementById('CompanyPostcode').value = postcode;
-                document.getElementById('CompanyCountry').value = country;
-                document.getElementById('CompanyState').value = state;
-                document.getElementById('CompanyCity').value = city;
-                document.getElementById('CompanyLatitude').value = lat;
-                document.getElementById('CompanyLongitude').value = lng;
-            });
-        }
-
-        google.maps.event.addDomListener(window, 'load', initAutocomplete);
+google.maps.event.addDomListener(window, 'load', initAutocomplete);
 
     </script>
 </head>
@@ -163,12 +130,8 @@
                 <label>Company Address</label>
                 <input id="autocomplete" type="text" class="form-control p_input" placeholder="Start typing an address...">
                 <!-- Hidden fields to hold extracted data -->
-                <input type="hidden" asp-for="CompanyAddress" id="CompanyAddress" />
-                <input type="hidden" asp-for="CompanyPostCodes" id="CompanyPostcode" />
-                <input type="hidden" asp-for="CompanyState" id="CompanyState" value="State" />
-                <input type="hidden" asp-for="CompanyLocality" id="CompanyCity" value="City" />
-                <input type="hidden" asp-for="CompanyLatitude" id="CompanyLatitude" value="1.11" />
-                <input type="hidden" asp-for="CompanyLongitude" id="CompanyLongitude" value="1.11" />
+                <input type="hidden" asp-for="CompanyAddress" id="PlaceId" />
+               
                 <span asp-validation-for="CompanyAddress" class="text-danger"></span>
             </div>
 
@@ -228,7 +191,35 @@
     <!-- endinject -->
     <!-- Custom js for this page -->
     <script src="~/new/assets/js/dashboard.js"></script>
-   
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+
+              function matchCustom(params, data) {
+          // If there is no search term, return all results
+          if ($.trim(params.term) === '') {
+            return data;
+          }
+
+          // Do case-insensitive match
+          if (data.text.toLowerCase().indexOf(params.term.toLowerCase()) > -1) {
+            return data;
+          }
+
+          // Return `null` if the term should not be displayed
+          return null;
+        }
+
+        $(document).ready(function () {
+          $('#managerSelect').select2({
+            placeholder: "-- Select Manager --",
+            allowClear: true,
+             matcher: matchCustom
+          });
+        });
+
+
+    </script>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

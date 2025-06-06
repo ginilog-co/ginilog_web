@@ -96,6 +96,50 @@
         public string? SenderPhoneNo { get; set; }
         public string? SenderEmail { get; set; }
         public string? SenderAddress { get; set; }
+      //  public string? SenderState { get; set; }
+      //  public string? SenderCountry { get; set; }
+       // public string? SenderLocality { get; set; }
+       // public string? SenderPostalCode { get; set; }
+      //  public double SenderLatitude { get; set; }
+      //  public double SenderLongitude { get; set; }
+        // Receiver Info
+        public string? RecieverName { get; set; }
+        public string? RecieverPhoneNo { get; set; }
+        public string? RecieverEmail { get; set; }
+        public string? RecieverAddress { get; set; }
+       // public string? RecieverState { get; set; }
+      //  public string? RecieverCountry { get; set; }
+      //  public string? RecieverLocality { get; set; }
+       // public string? RecieverPostalCode { get; set; }
+      //  public double RecieverLatitude { get; set; }
+      //  public double RecieverLongitude { get; set; }
+        public List<string>? PackageImageLists { get; set; }
+        public string? RiderType { get; set; }
+        public string? ShippingType { get; set; }
+        public List<IFormFile>? ImageList { get; set; }
+        public string? PaymentChannel { get; set; }
+
+    }
+
+    public class AddMainOrder
+    {
+        public Guid CompanyId { get; set; }
+        public Guid UserId { get; set; }
+        public string? ExpectedDeliveryTime { get; set; }
+        public double ShippingCost { get; set; }
+        public double VatCost { get; set; }
+        public string? ItemName { get; set; }
+        public string? ItemDescription { get; set; }
+        public string? ItemModelNumber { get; set; }
+        public double ItemCost { get; set; }
+        public int ItemQuantity { get; set; }
+        public double ItemWeight { get; set; }
+        public string? PackageType { get; set; }
+        // Sender
+        public string? SenderName { get; set; }
+        public string? SenderPhoneNo { get; set; }
+        public string? SenderEmail { get; set; }
+        public string? SenderAddress { get; set; }
         public string? SenderState { get; set; }
         public string? SenderCountry { get; set; }
         public string? SenderLocality { get; set; }

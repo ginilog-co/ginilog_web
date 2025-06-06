@@ -951,7 +951,7 @@ namespace Genilog_WebApi.Controllers
                     Comment = "",
                     QRCode = "",
                     PackageType = request.PackageType,
-                    ExpectedDeliveryTime = "",
+                    ExpectedDeliveryTime = request.ExpectedDeliveryTime,
                     CurrentLatitude = request.SenderLatitude,
                     CurrentLongitude = request.SenderLongitude,
                     CurrentLocation = request.SenderAddress,
@@ -983,8 +983,8 @@ namespace Genilog_WebApi.Controllers
                     RecieverPostalCode = request.RecieverPostalCode,
                     RecieverLatitude = request.RecieverLatitude,
                     RecieverLongitude = request.RecieverLongitude,
-                    ShippingCost = 0,
-                    VatCost = 0,
+                    ShippingCost = request.ShippingCost,
+                    VatCost = request.VatCost,
                     TrnxReference = "",
                     PaymentStatus = false,
                     PaymentChannel = "",
@@ -1207,7 +1207,7 @@ namespace Genilog_WebApi.Controllers
                     PaymentStatus = status
                 };
 
-                if (paystackResponse.PaymentStatus == "completed")
+                if (paystackResponse.PaymentStatus == "completed" || paystackResponse.PaymentStatus == "successful")
                 {
 
                     var tronData = await companyRepository.GetOrderAsync(orderId);

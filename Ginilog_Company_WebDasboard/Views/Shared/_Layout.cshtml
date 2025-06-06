@@ -1,50 +1,413 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Ginilog_Company_WebDasboard</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Ginilog_Company_WebDasboard.styles.css" asp-append-version="true" />
+
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>@ViewData["Title"] - Ginilog</title>
+    <!-- base:css -->
+    <link rel="stylesheet" href="~/designs/vendors/mdi/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="~/designs/vendors/feather/feather.css">
+    <link rel="stylesheet" href="~/designs/vendors/base/vendor.bundle.base.css">
+    <!-- endinject -->
+    <!-- plugin css for this page -->
+    <link rel="stylesheet" href="~/designs/vendors/flag-icon-css/css/flag-icon.min.css" />
+    <link rel="stylesheet" href="~/designs/vendors/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="~/designs/vendors/jquery-bar-rating/fontawesome-stars-o.css">
+    <link rel="stylesheet" href="~/designs/vendors/jquery-bar-rating/fontawesome-stars.css">
+    <!-- End plugin css for this page -->
+    <!-- inject:css -->
+    <link rel="stylesheet" href="~/designs/css/style.css">
+    <!-- endinject -->
+    <link rel="shortcut icon" href="~/designs/images/favicon.png" />
+    <style>
+        #clock {
+            font-size: 2rem;
+            font-family: monospace;
+            color: #333;
+            background: #f0f0f0;
+            padding: 10px 20px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .readonly-white:hover,
+        .readonly-white:focus {
+            background-color: white !important;
+            color: black;
+            cursor: default;
+        }
+
+        .custom-carousel {
+            position: relative;
+            width: 250px;
+            height: 150px;
+            margin: auto;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+
+        .carousel-images {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .carousel-image {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+            border-radius: 10px;
+        }
+
+            .carousel-image.active {
+                display: block;
+            }
+
+        .navCarousel {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.4);
+            color: white;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            z-index: 10;
+            font-size: 18px;
+            border-radius: 50%;
+        }
+
+            .navCarousel.prev {
+                left: 10px;
+            }
+
+            .navCarousel.next {
+                right: 10px;
+            }
+
+        .custom-modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .custom-modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 0;
+            border-radius: 8px;
+            width: 400px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: slideDown 0.3s ease-out;
+        }
+
+
+
+        .custom-modal-header, .custom-modal-footer {
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .custom-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .custom-modal-body {
+            padding: 15px;
+        }
+
+        .custom-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+        .custom-modal-close {
+            font-size: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-secondary {
+            background-color: #ccc;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+        }
+
+            .btn-secondary:hover,
+            .btn-danger:hover {
+                opacity: 0.9;
+            }
+
+    </style>
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Ginilog_Company_WebDasboard</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
+  
+    <div class="container-scroller">
+        <!-- partial:partials/_navbar.html -->
+        <nav class="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
+            <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
+                <a class="navbar-brand brand-logo" href="index.html"><img src="~/designs/images/logo.svg" alt="logo" /></a>
+                <a class="navbar-brand brand-logo-mini" href="index.html"><img src="~/designs/images/logo-mini.svg" alt="logo" /></a>
+            </div>
+            <div class="navbar-menu-wrapper d-flex align-items-center justify-content-end">
+                <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize">
+                    <span class="icon-menu"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
+               
+              
+                <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-toggle="offcanvas">
+                    <span class="icon-menu"></span>
+                </button>
             </div>
         </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+        <!-- partial -->
+        <div class="container-fluid page-body-wrapper">
+            <!-- partial:partials/_sidebar.html -->
+            <nav class="sidebar sidebar-offcanvas" id="sidebar">
+                <div class="user-profile">
+                    <div class="user-image">
+                        <a href="~/Auth/UserProfile">
+                            @if (ViewBag.ProfilePics != "")
+                            {
+                                <img class="img-xs rounded-circle" style="width: 40px; height: 40px;" src="@ViewBag.ProfilePics" alt="">
+                            }
+                            @if (ViewBag.ProfilePics == "")
+                            {
+                                <img class="img-xs rounded-circle" style="width: 40px; height: 40px;" alt="" src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp">
+                            }
+                            @if (ViewBag.ProfilePics == null)
+                            {
+                                <img class="img-xs rounded-circle" style="width: 40px; height: 40px;" alt="" src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp">
+                            }
+                        </a>
+                      
+                    </div>
+                    <div class="user-name">
+                         <a style="text-decoration:none; color:white" href="~/Auth/UserProfile">
+                        @ViewBag.AdminName
+                        </a>
+                    </div>
+                    <div class="user-designation">
+                        <a style="text-decoration:none; color:white" href="~/Auth/UserProfile">
+                        @ViewBag.UseType
+                        </a>
+                    </div>
+                </div>
+                <ul class="nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="~/Home/Index">
+                            <i class="icon-box menu-icon"></i>
+                            <span class="menu-title">Dashboard</span>
+                        </a>
+                    </li>
+                     @if (ViewBag.CompanyType.Contains("Logistics") && ViewBag.CompanyType.Contains("Accommodation"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("OrderList", "Home")">
+                                <i class="icon-file menu-icon"></i>
+                                <span class="menu-title">Parcel Orders</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("AllAccomodationReservationList", "Home")">
+                                <i class="icon-pie-graph menu-icon"></i>
+                                <span class="menu-title">Reservation List</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("CustomerReservationList", "Home")">
+                                <i class="icon-command menu-icon"></i>
+                                <span class="menu-title">Bookings List</span>
+                            </a>
+                        </li>
+                    }
+                    else if (ViewBag.CompanyType.Contains("Logistics"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("OrderList", "Home")">
+                                <i class="icon-file menu-icon"></i>
+                                <span class="menu-title">Parcel Orders</span>
+                            </a>
+                        </li>
+                    }
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - Ginilog_Company_WebDasboard - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                    else if ( ViewBag.CompanyType.Contains("Accommodation"))
+                    {
+                      
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("AllAccomodationReservationList", "Home")">
+                                <i class="icon-pie-graph menu-icon"></i>
+                                <span class="menu-title">Reservation List</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("CustomerReservationList", "Home")">
+                                <i class="icon-command menu-icon"></i>
+                                <span class="menu-title">Bookings List</span>
+                            </a>
+                        </li>
+                    }
+                    @if (ViewBag.UseType == "Manager")
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("AllStaffData", "Home")">
+                                <i class="icon-help menu-icon"></i>
+                                <span class="menu-title">Staff List</span>
+                            </a>
+                        </li>
+                    }
+                  
+                    <li class="nav-item">
+                        <a class="nav-link" href="~/Auth/Logout">
+                            <i class="icon-book menu-icon"></i>
+                            <span class="menu-title">Logout</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="main-panel">
+
+
+            @RenderBody()
+
+
+
+                <!-- content-wrapper ends -->
+                <!-- partial:partials/_footer.html -->
+                <footer class="footer">
+                    <div class="d-sm-flex justify-content-center justify-content-sm-between">
+                        <span class="text-muted d-block text-center text-sm-left d-sm-inline-block">Copyright © Ginilog 2025</span>
+                        <span class="float-none float-sm-right d-block mt-1 mt-sm-0 text-center"><a href="https://www.ginilog.com" target="_blank">Ginilog</a> from cntechlite.com</span>
+                    </div>
+                </footer>
         </div>
-    </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    </div>
+    </div>
+ 
+    <!-- base:js -->
+    <script src="~/designs/vendors/base/vendor.bundle.base.js"></script>
+    <!-- endinject -->
+    <!-- Plugin js for this page-->
+    <!-- End plugin js for this page-->
+    <!-- inject:js -->
+    <script src="~/designs/js/off-canvas.js"></script>
+    <script src="~/designs/js/hoverable-collapse.js"></script>
+    <script src="~/designs/js/template.js"></script>
+    <!-- endinject -->
+    <!-- plugin js for this page -->
+    <script src="~/designs/vendors/chart.js/Chart.min.js"></script>
+    <script src="~/designs/vendors/jquery-bar-rating/jquery.barrating.min.js"></script>
+    <!-- End plugin js for this page -->
+    <!-- Custom js for this page-->
+    <script src="~/designs/js/dashboard.js"></script>
+    <!-- End custom js for this page-->
+    <script>
+        function updateClock() {
+          const now = new Date();
+          const hours = now.getHours().toString().padStart(2, '0'); // 24-hour format
+          const minutes = now.getMinutes().toString().padStart(2, '0');
+          const seconds = now.getSeconds().toString().padStart(2, '0');
+          const timeString = `${hours}:${minutes}:${seconds}`;
+          document.getElementById('clock').textContent = timeString;
+        }
+
+        setInterval(updateClock, 1000); // Update every second
+        updateClock(); // Initial call
+
+  
+        let currentIndex = 0;
+        const slides = document.querySelectorAll('.carousel-image');
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.remove('active');
+                if (i === index) {
+                    slide.classList.add('active');
+                }
+            });
+        }
+
+        function moveSlide(step) {
+            currentIndex = (currentIndex + step + slides.length) % slides.length;
+            showSlide(currentIndex);
+        }
+
+        // Optional: auto-play
+        setInterval(() => moveSlide(1), 5000); // every 5 seconds##
+
+
+          function openModal() {
+            document.getElementById('deleteModal').style.display = 'block';
+        }
+
+        function openSecondModal() {
+            document.getElementById('secondModal').style.display = 'block';
+        }
+
+        function openThirdModal() {
+            document.getElementById('thirdModal').style.display = 'block';
+        }
+
+        function openFourthModal() {
+            document.getElementById('fourthModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+        function closeSecondModal() {
+            document.getElementById('secondModal').style.display = 'none';
+        }
+
+         function closeThirdModal() {
+            document.getElementById('thirdModal').style.display = 'none';
+        }
+
+         function closeFourthModal() {
+            document.getElementById('fourthModal').style.display = 'none';
+        }
+
+        // Optional: Close when clicking outside the modal
+        window.onclick = function(event) {
+            const modal = document.getElementById('deleteModal');
+            const modal2 = document.getElementById('secondModal');
+            const modal3 = document.getElementById('secondModal');
+            const modal4 = document.getElementById('secondModal');
+            if (event.target === modal|| event.target === modal2 || event.target === modal3 || event.target === modal4) {
+                closeModal();
+                closeSecondModal();
+                closeFourthModal();
+                closeThirdModal();
+            }
+        };
+
+   
+
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

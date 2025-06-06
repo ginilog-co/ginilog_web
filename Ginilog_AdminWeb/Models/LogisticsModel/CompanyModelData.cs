@@ -54,11 +54,11 @@ namespace Ginilog_AdminWeb.Models.LogisticsModel
         public int NoOfTrucks { get; set; }
         public int NofOfBikes { get; set; }
         public string? CompanyAddress { get; set; }
-        public string? CompanyPostCodes { get; set; }
-        public string? CompanyLocality { get; set; }
-        public string? CompanyState { get; set; }
-        public double CompanyLatitude { get; set; }
-        public double CompanyLongitude { get; set; }
+       // public string? CompanyPostCodes { get; set; }
+       // public string? CompanyLocality { get; set; }
+       // public string? CompanyState { get; set; }
+      //  public double CompanyLatitude { get; set; }
+      //  public double CompanyLongitude { get; set; }
         public string? BankName { get; set; }
         public string? AccountName { get; set; }
         public string? AccountNumber { get; set; }
