@@ -1,10 +1,90 @@
+import 'dart:convert';
+
+import 'package:ginilog_customer_app/core/components/utils/constants.dart';
+import 'dart:io';
 import '../utils/package_export.dart';
 
 class PushNotificationService {
+  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  Future showNotification(String? message) async {
+  String deviceToken = '';
+  Future initialize() async {
+    if (Platform.isIOS) {
+      //Requires IOS permission
+      await _fcm.requestPermission(
+        alert: true,
+        announcement: true,
+        badge: true,
+        carPlay: true,
+        criticalAlert: true,
+        provisional: true,
+        sound: true,
+      );
+    }
+    //This is used to get the current device token
+    await _fcm.getToken().then((token) {
+      deviceToken = token!;
+      setToLocalStorage(name: "deviceToken", data: token);
+    });
+
+    // Enable Background Notification to retrieve any message that caused the application to open from a terminated state
+    RemoteMessage? initialMessage = await _fcm.getInitialMessage();
+
+    // This function routes to home view if the data property received has a type of home
+    void handleMessage(RemoteMessage message) {
+      if (message.data['type'] == 'home') {
+        //  AppNavigator.pushNamedReplacement(homeRoute);
+      }
+    }
+
+    if (initialMessage != null) {
+      handleMessage(initialMessage);
+    }
+
+    // This handles any interaction when the app is open but in the background and not terminated
+    FirebaseMessaging.onMessageOpenedApp.listen(handleMessage);
+
+    //Enable foreground Notification for iOS
+    await _fcm.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    // To handle messages while your application is in foreground for android we listen to the onMessage stream.
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+      await showNotification(message);
+    });
+
+    //This is used to define the initialization settings for iOS and android
+    var initializationSettingsAndroid = const AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
+    var initializationSettingsIOS = const DarwinInitializationSettings();
+    var initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+    );
+
+    // This handles routing to a specific page when there's a click event on the notification
+    void onSelectNotification(NotificationResponse notificationResponse) async {
+      debugPrint(notificationResponse.payload);
+      var payloadData = jsonDecode(notificationResponse.payload!);
+
+      if (payloadData["type"] == "home") {
+        //  AppNavigator.pushNamedReplacement(homeRoute);
+      }
+    }
+
+    _flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: onSelectNotification,
+    );
+  }
+
+  Future showNotification(RemoteMessage message) async {
     // We create an Android Notification Channel that overrides the default FCM channel to enable heads up notifications.
     AndroidNotificationChannel channel = const AndroidNotificationChannel(
       'fcm_default_channel',
@@ -15,40 +95,46 @@ class PushNotificationService {
     // This creates the channel on the device and if a channel with an id already exists, it will be updated
     await _flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(channel);
 
     //This is used to display the foreground notification
-    if (message != null) {
-      // AndroidNotificationDetails androidPlatformChannelSpecifics =
-      //     AndroidNotificationDetails(
-      //   channel.id,
-      //   channel.name,
-      //   importance: Importance.max,
-      //   playSound: true,
-      //   channelDescription: channel.description,
-      //   priority: Priority.high,
-      //   ongoing: true,
-      //   color: Colors.deepOrangeAccent,
-      //   styleInformation: const BigTextStyleInformation(''),
-      // );
+    if (message.notification != null) {
+      RemoteNotification? notification = message.notification;
 
-      // var iOSChannelSpecifics = const DarwinNotificationDetails(
-      //   presentAlert: true,
-      //   presentSound: true,
-      //   presentBadge: true,
-      // );
+      AndroidNotificationDetails androidPlatformChannelSpecifics =
+          AndroidNotificationDetails(
+            channel.id,
+            channel.name,
+            importance: Importance.max,
+            playSound: true,
+            channelDescription: channel.description,
+            priority: Priority.high,
+            ongoing: true,
+            color: Colors.deepOrangeAccent,
+            styleInformation: const BigTextStyleInformation(''),
+          );
 
-      // var platformChannelSpecifics = NotificationDetails(
-      //     android: androidPlatformChannelSpecifics, iOS: iOSChannelSpecifics);
+      var iOSChannelSpecifics = const DarwinNotificationDetails(
+        presentAlert: true, // show alert when app is in foreground
+        presentBadge: true, // show badge on app icon
+        presentSound: true, // play sound
+        badgeNumber: 1, // set or update badge number
+      );
 
-      // await _flutterLocalNotificationsPlugin.show(
-      // notification.hashCode,
-      // notification?.title,
-      // notification?.body,
-      //  platformChannelSpecifics,
-      //  payload: jsonEncode(message.data),
-      // );
+      var platformChannelSpecifics = NotificationDetails(
+        android: androidPlatformChannelSpecifics,
+        iOS: iOSChannelSpecifics,
+      );
+
+      await _flutterLocalNotificationsPlugin.show(
+        notification.hashCode,
+        notification?.title,
+        notification?.body,
+        platformChannelSpecifics,
+        payload: jsonEncode(message.data),
+      );
     }
   }
 }

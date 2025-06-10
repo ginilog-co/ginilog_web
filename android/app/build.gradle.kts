@@ -6,6 +6,8 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    id ("com.google.gms.google-services")
+    id ("com.google.firebase.crashlytics")
 }
 val keystoreProperties =  Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
@@ -76,4 +78,9 @@ dependencies {
         exclude(group = "com.google.android.play", module = "core")
     }
     implementation ("com.android.support:multidex:1.0.3")
+    implementation(platform("com.google.firebase:firebase-bom:33.11.0"))
+    implementation ("com.google.android.gms:play-services-auth:21.3.0")
+    implementation ("com.android.support:multidex:1.0.3")
+    implementation("com.google.firebase:firebase-appcheck-playintegrity")
+    implementation ("com.google.firebase:firebase-analytics-ktx")
 }

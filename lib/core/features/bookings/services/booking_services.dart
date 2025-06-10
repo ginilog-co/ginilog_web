@@ -8,6 +8,7 @@ import 'package:ginilog_customer_app/core/features/bookings/model/accomodation_r
 import 'package:ginilog_customer_app/core/features/bookings/model/accomodation_response_model.dart';
 import 'package:ginilog_customer_app/core/features/bookings/model/customer_book_response_model.dart';
 import 'package:http/http.dart' as http;
+import 'dart:io' show Platform;
 
 class BookingsService {
   // Accomodation
@@ -94,6 +95,7 @@ class BookingsService {
         "reservationId": reservationId,
       };
       final msg = jsonEncode({
+        "userId": globals.userId,
         "customerName": customerName,
         "customerPhoneNumber": customerPhoneNumber,
         "customerEmail": customerEmail,
@@ -106,19 +108,25 @@ class BookingsService {
         "reservationStartDate": reservationStartDate,
         "reservationEndDate": reservationEndDate,
         "noOfDays": noOfDays,
+        "staffId": globals.userId,
+        "staffName": globals.userName,
+        "purchaseChannel": "Mobile App ${Platform.isIOS ? 'iOS' : 'Android'}",
+        "userType": "Registered",
       });
       http.Response response = await http.post(
         stingUrl,
         body: msg,
         headers: headers,
       );
-      printData("dataResponse", response.body);
+      printData("Add Bookings dataResponse", response.body);
+      printData("Days", noOfDays);
       if (response.statusCode == 200 || response.statusCode == 201) {
         printData("successRegister", response.body);
 
         return response;
       } else {
-        printData("Error", response.body);
+        printData("Add Bookings Error", response.body);
+        printData("Add Bookings Error", response.statusCode);
         return response;
       }
     } catch (e) {

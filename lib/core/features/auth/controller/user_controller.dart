@@ -1,9 +1,11 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:ginilog_customer_app/core/components/helpers/globals.dart';
 import 'package:ginilog_customer_app/core/components/state/connectivity_state.dart';
 import 'package:ginilog_customer_app/core/components/utils/constants.dart';
 import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
 import 'package:ginilog_customer_app/core/features/auth/controller/confirm_email.dart';
+import 'package:ginilog_customer_app/core/features/home_screen.dart';
 
 import '../model/register_model.dart';
 import '../services/auth_service.dart';
@@ -179,58 +181,156 @@ class RegisterScreenController extends ConsumerState<RegisterScreen> {
       if (connectivityStatusProvider == ConnectivityStatus.isConnected) {
         if (isChecked == true) {
           userRegisterModel = RegisterModel(
-              firstName: fistNameTEC.text.trim(),
-              lastName: lastNameTEC.text.trim(),
-              email: email.text.trim(),
-              password: password.text.trim(),
-              phoneNo: phoneNo.text.trim());
-          var response = await AuthService()
-              .register(registerModel: userRegisterModel, cxt: context);
+            firstName: fistNameTEC.text.trim(),
+            lastName: lastNameTEC.text.trim(),
+            email: email.text.trim(),
+            password: password.text.trim(),
+            phoneNo: phoneNo.text.trim(),
+          );
+          var response = await AuthService().register(
+            registerModel: userRegisterModel,
+            cxt: context,
+          );
           if (response.statusCode == 200 || response.statusCode == 201) {
             setState(() {
               isLoading = false;
             });
             navigateToRoute(
-                context,
-                ConfirmEmailAddressScreen(
-                  email: email.text.trim(),
-                  fromLogin: false,
-                  password: password.text.trim(),
-                ));
+              context,
+              ConfirmEmailAddressScreen(
+                email: email.text.trim(),
+                fromLogin: false,
+                password: password.text.trim(),
+              ),
+            );
           } else {
             setState(() {
               isLoading = false;
             });
-            showCustomSnackbar(context,
-                title: "User Exist",
-                content: response.body,
-                type: SnackbarType.error,
-                isTopPosition: false);
+            showCustomSnackbar(
+              context,
+              title: "User Exist",
+              content: response.body,
+              type: SnackbarType.error,
+              isTopPosition: false,
+            );
           }
         } else {
           setState(() {
             isLoading = false;
           });
-          showCustomSnackbar(context,
-              title: "Terms of Service",
-              content: "Please accept terms & condition",
-              type: SnackbarType.error,
-              isTopPosition: false);
+          showCustomSnackbar(
+            context,
+            title: "Terms of Service",
+            content: "Please accept terms & condition",
+            type: SnackbarType.error,
+            isTopPosition: false,
+          );
         }
       } else {
         setState(() {
           isLoading = false;
         });
-        showCustomSnackbar(context,
-            title: "Network Connection",
-            content: "No Internet Connection",
-            type: SnackbarType.error,
-            isTopPosition: false);
+        showCustomSnackbar(
+          context,
+          title: "Network Connection",
+          content: "No Internet Connection",
+          type: SnackbarType.error,
+          isTopPosition: false,
+        );
       }
       setState(() {
         isLoading = false;
       });
     }
+  }
+
+  google() async {
+    var connectivityStatusProvider = ref.read(connectivityStatusProviders);
+
+    if (connectivityStatusProvider == ConnectivityStatus.isConnected) {
+      if (isChecked == true) {
+        final res = await AuthService().signInWithGoogle();
+        if (res.statusCode == 200 || res.statusCode == 201) {
+          await globals.init();
+          await AuthService().updateDeviceToken();
+          navigateAndReplaceRoute(context, const HomeScreenPage(imdex: 0));
+        } else {
+          showCustomSnackbar(
+            context,
+            title: "Authentication",
+            content: res.body,
+            type: SnackbarType.error,
+            isTopPosition: false,
+          );
+        }
+      } else {
+        showCustomSnackbar(
+          context,
+          title: "Terms of Service",
+          content: "Please accept terms & condition",
+          type: SnackbarType.error,
+          isTopPosition: false,
+        );
+      }
+    } else {
+      showCustomSnackbar(
+        context,
+        title: "Network Connection",
+        content: "No Internet Connection",
+        type: SnackbarType.error,
+        isTopPosition: false,
+      );
+    }
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  apple() async {
+    var connectivityStatusProvider = ref.read(connectivityStatusProviders);
+    if (connectivityStatusProvider == ConnectivityStatus.isConnected) {
+      if (isChecked == true) {
+        final res = await AuthService().signInWithApple();
+        if (res.statusCode == 200 || res.statusCode == 201) {
+          await globals.init();
+          await AuthService().updateDeviceToken();
+          navigateAndReplaceRoute(context, const HomeScreenPage(imdex: 0));
+        } else {
+          showCustomSnackbar(
+            context,
+            title: "Authentication",
+            content: res.body,
+            type: SnackbarType.error,
+            isTopPosition: false,
+          );
+        }
+      } else {
+        showCustomSnackbar(
+          context,
+          title: "Terms of Service",
+          content: "Please accept terms & condition",
+          type: SnackbarType.error,
+          isTopPosition: false,
+        );
+      }
+    } else {
+      showCustomSnackbar(
+        context,
+        title: "Network Connection",
+        content: "No Internet Connection",
+        type: SnackbarType.error,
+        isTopPosition: false,
+      );
+    }
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
+  google1() async {
+    await _googleSignIn.signOut();
   }
 
   @override

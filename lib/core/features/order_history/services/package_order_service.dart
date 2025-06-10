@@ -6,6 +6,7 @@ import 'package:ginilog_customer_app/core/components/helpers/globals.dart';
 import 'package:ginilog_customer_app/core/components/utils/constants.dart';
 import 'package:ginilog_customer_app/core/features/order_history/model/package_orders_model.dart';
 import 'package:http/http.dart' as http;
+import 'dart:io' show Platform;
 
 class PackageOrderService {
   Future<http.Response> createOrderWithAddress({
@@ -50,6 +51,7 @@ class PackageOrderService {
         "companyId": companyId,
       };
       final msg = jsonEncode({
+        "userId": globals.userId,
         "itemName": itemName,
         "itemDescription": itemDescription,
         "itemModelNumber": itemModelNumber,
@@ -80,6 +82,10 @@ class PackageOrderService {
         "packageImageLists": packageImageLists,
         "riderType": riderType,
         "shippingType": shippingType,
+        "staffId": globals.userId,
+        "staffName": globals.userName,
+        "purchaseChannel": "Mobile App ${Platform.isIOS ? 'iOS' : 'Android'}",
+        "userType": "Registered",
       });
       http.Response response = await http.post(
         stingUrl,
@@ -90,7 +96,6 @@ class PackageOrderService {
       printData("dataResponse", response.body);
       if (response.statusCode == 200 || response.statusCode == 201) {
         printData("successRegister", response.body);
-
         return response;
       } else {
         printData("Error", response.body);

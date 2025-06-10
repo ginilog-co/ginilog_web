@@ -2,6 +2,7 @@ import 'package:ginilog_customer_app/core/components/utils/constants.dart';
 import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/features/home/widget/package_info_page.dart.dart';
+import 'dart:io' show Platform;
 
 class PaystackPaymentPage extends ConsumerStatefulWidget {
   final String url;
@@ -27,55 +28,108 @@ class _PaystackPaymentPageState extends ConsumerState<PaystackPaymentPage> {
   @override
   void initState() {
     paymentUrl = widget.url;
-    _controller =
-        WebViewController()
-          ..loadRequest(Uri.parse(widget.url))
-          ..setJavaScriptMode(JavaScriptMode.unrestricted)
-          ..setNavigationDelegate(
-            NavigationDelegate(
-              onNavigationRequest: (NavigationRequest request) {
-                final uri = Uri.parse(request.url);
-                printData("identifier", uri);
-                printData("identifier", uri.host);
-                if (widget.isPaystack == true) {
-                  if (uri.host == "api-data.ginilog.com" &&
-                      (uri.path.contains("paystack-redirect") ||
-                          uri.path.contains("delete-accomodation"))) {
-                    navigateBack(context);
-                    return NavigationDecision.prevent;
+    if (Platform.isIOS) {
+      _controller =
+          WebViewController()
+            ..loadRequest(Uri.parse(widget.url))
+            ..setJavaScriptMode(JavaScriptMode.unrestricted)
+            ..setNavigationDelegate(
+              NavigationDelegate(
+                onPageFinished: (url) {
+                  final uri = Uri.parse(url);
+                  printData("identifier", uri);
+                  printData("identifier", uri.host);
+                  if (widget.isPaystack == true) {
+                    if (uri.host == "api-data.ginilog.com" &&
+                        (uri.path.contains("paystack-redirect") ||
+                            uri.path.contains("delete-accomodation"))) {
+                      navigateBack(context);
+                    } else if (uri.host == "api-data.ginilog.com" &&
+                        uri.path.contains("verify-")) {
+                      navigateToRoute(
+                        context,
+                        PaymentConfirmationPage(
+                          totalAmount:
+                              uri.queryParameters['totalAmount'] ?? "0",
+                          cardNumber: "card Number",
+                          isPackage: widget.isPackageOrder,
+                        ),
+                      );
+                    }
                   } else {
-                    navigateToRoute(
-                      context,
-                      PaymentConfirmationPage(
-                        totalAmount: uri.queryParameters['totalAmount'] ?? "0",
-                        cardNumber: "card Number",
-                        isPackage: widget.isPackageOrder,
-                      ),
-                    );
-                    // return NavigationDecision.prevent;
+                    if (uri.host == "data-test-api.ganatempire.com" &&
+                        (uri.path.contains("flutterwave-redirect") ||
+                            uri.path.contains("delete-accomodation"))) {
+                      navigateBack(context);
+                    } else if (uri.host == "data-test-api.ganatempire.com" &&
+                        uri.path.contains("verify-")) {
+                      navigateToRoute(
+                        context,
+                        PaymentConfirmationPage(
+                          totalAmount:
+                              uri.queryParameters['totalAmount'] ?? "0",
+                          cardNumber: "card Number",
+                          isPackage: widget.isPackageOrder,
+                        ),
+                      );
+                    }
                   }
-                  return NavigationDecision.navigate;
-                } else {
-                  if (uri.host == "api-data.ginilog.com" &&
-                      uri.path.contains("flutterwave-redirect")) {
-                    navigateBack(context);
-                    return NavigationDecision.prevent;
+                },
+              ),
+            );
+    } else {
+      _controller =
+          WebViewController()
+            ..loadRequest(Uri.parse(widget.url))
+            ..setJavaScriptMode(JavaScriptMode.unrestricted)
+            ..setNavigationDelegate(
+              NavigationDelegate(
+                onNavigationRequest: (NavigationRequest request) {
+                  final uri = Uri.parse(request.url);
+                  printData("identifier", uri);
+                  printData("identifier", uri.host);
+                  if (widget.isPaystack == true) {
+                    if (uri.host == "api-data.ginilog.com" &&
+                        (uri.path.contains("paystack-redirect") ||
+                            uri.path.contains("delete-accomodation"))) {
+                      navigateBack(context);
+                      return NavigationDecision.prevent;
+                    } else {
+                      navigateToRoute(
+                        context,
+                        PaymentConfirmationPage(
+                          totalAmount:
+                              uri.queryParameters['totalAmount'] ?? "0",
+                          cardNumber: "card Number",
+                          isPackage: widget.isPackageOrder,
+                        ),
+                      );
+                      // return NavigationDecision.prevent;
+                    }
+                    return NavigationDecision.navigate;
                   } else {
-                    navigateToRoute(
-                      context,
-                      PaymentConfirmationPage(
-                        totalAmount: uri.queryParameters['totalAmount'] ?? "0",
-                        cardNumber: "card Number",
-                        isPackage: widget.isPackageOrder,
-                      ),
-                    );
-                    // return NavigationDecision.prevent;
+                    if (uri.host == "api-data.ginilog.com" &&
+                        uri.path.contains("flutterwave-redirect")) {
+                      navigateBack(context);
+                      return NavigationDecision.prevent;
+                    } else {
+                      navigateToRoute(
+                        context,
+                        PaymentConfirmationPage(
+                          totalAmount:
+                              uri.queryParameters['totalAmount'] ?? "0",
+                          cardNumber: "card Number",
+                          isPackage: widget.isPackageOrder,
+                        ),
+                      );
+                      // return NavigationDecision.prevent;
+                    }
+                    return NavigationDecision.navigate;
                   }
-                  return NavigationDecision.navigate;
-                }
-              },
-            ),
-          );
+                },
+              ),
+            );
+    }
     super.initState();
   }
 

@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:ginilog_customer_app/core/components/constants/api_constants.dart';
 import 'package:ginilog_customer_app/core/components/helpers/notification_service.dart';
 import 'package:ginilog_customer_app/core/components/state/connectivity_state.dart';
 import 'package:ginilog_customer_app/core/components/state/theme_state.dart';
@@ -16,7 +17,7 @@ import 'package:geolocator/geolocator.dart' as positions;
 
 //Store this globally
 
-//final _pushMessagingNotification = getIt<PushNotificationService>();
+final _pushMessagingNotification = getIt<PushNotificationService>();
 
 Future myBackgroundMessageHandler(String message) async {
   debugPrint("onBackgroundMessage: $message");
@@ -25,14 +26,15 @@ Future myBackgroundMessageHandler(String message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // await Upgrader.clearSavedSettings(); // REMOVE this for release builds
-  SystemChrome.setPreferredOrientations(
-    [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown],
-  );
-
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+  await Firebase.initializeApp();
   getIt.registerLazySingleton<AppGlobals>(() => AppGlobals());
   await setupLocator();
   NotificationService().initializeNotifications();
-  // await _pushMessagingNotification.initialize();
+  await _pushMessagingNotification.initialize();
 
   await globals.init();
   if (globals.userId.toString().isNotEmpty) {
@@ -42,19 +44,11 @@ void main() async {
   final navigatorKey = GlobalKey<NavigatorState>();
   String? route = await initialRoute();
 
-  runApp(ProviderScope(
-      child: MyApp(
-    route: route,
-    navigatorKey: navigatorKey,
-  )));
+  runApp(ProviderScope(child: MyApp(route: route, navigatorKey: navigatorKey)));
 }
 
 class MyApp extends ConsumerStatefulWidget {
-  const MyApp({
-    super.key,
-    this.route,
-    required this.navigatorKey,
-  });
+  const MyApp({super.key, this.route, required this.navigatorKey});
   final String? route;
   final GlobalKey<NavigatorState> navigatorKey;
 
@@ -87,9 +81,13 @@ class _MyAppState extends ConsumerState<MyApp> {
 
     serviceEnabled = await positions.Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
           content: Text(
-              'Location services are disabled. Please enable the services')));
+            'Location services are disabled. Please enable the services',
+          ),
+        ),
+      );
       return false;
     }
     permission = await positions.Geolocator.checkPermission();
@@ -97,14 +95,19 @@ class _MyAppState extends ConsumerState<MyApp> {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Location permissions are denied')));
+          const SnackBar(content: Text('Location permissions are denied')),
+        );
         return false;
       }
     }
     if (permission == LocationPermission.deniedForever) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
           content: Text(
-              'Location permissions are permanently denied, we cannot request permissions.')));
+            'Location permissions are permanently denied, we cannot request permissions.',
+          ),
+        ),
+      );
       return false;
     }
     return true;
@@ -117,33 +120,37 @@ class _MyAppState extends ConsumerState<MyApp> {
     // ignore: deprecated_member_use
     await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high)
         .then((positions.Position position) {
-      setState(() => _currentPosition = position);
-      _getAddressFromLatLng(_currentPosition!);
-    }).catchError((e) {
-      debugPrint(e);
-    });
+          setState(() => _currentPosition = position);
+          _getAddressFromLatLng(_currentPosition!);
+        })
+        .catchError((e) {
+          debugPrint(e);
+        });
   }
 
   Future<void> _getAddressFromLatLng(positions.Position position) async {
     await placemarkFromCoordinates(
-            _currentPosition!.latitude, _currentPosition!.longitude)
+          _currentPosition!.latitude,
+          _currentPosition!.longitude,
+        )
         .then((List<Placemark> placemarks) async {
-      Placemark place = placemarks[0];
-      setState(() {
-        _currentAddress =
-            '${place.street}, ${place.subLocality}, ${place.subAdministrativeArea}, ${place.postalCode}';
-        _city = "${place.subAdministrativeArea}";
-        _state = "${place.administrativeArea}";
-      });
-      await globals.init();
-      printData("Location", _currentAddress!);
-      printData("Latitude", _currentPosition!.latitude);
-      printData("Longitude", _currentPosition!.longitude);
-      printData("City", _city);
-      printData("State", _state);
-    }).catchError((e) {
-      debugPrint(e);
-    });
+          Placemark place = placemarks[0];
+          setState(() {
+            _currentAddress =
+                '${place.street}, ${place.subLocality}, ${place.subAdministrativeArea}, ${place.postalCode}';
+            _city = "${place.subAdministrativeArea}";
+            _state = "${place.administrativeArea}";
+          });
+          await globals.init();
+          printData("Location", _currentAddress!);
+          printData("Latitude", _currentPosition!.latitude);
+          printData("Longitude", _currentPosition!.longitude);
+          printData("City", _city);
+          printData("State", _state);
+        })
+        .catchError((e) {
+          debugPrint(e);
+        });
   }
 
   @override
@@ -152,35 +159,36 @@ class _MyAppState extends ConsumerState<MyApp> {
     ref.watch(connectivityStatusProviders);
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.dark),
-      child: LayoutBuilder(builder: (context, constraints) {
-        return OrientationBuilder(builder: (context, orientation) {
-          SizeConfig().init(context, constraints, orientation);
-          return UpgradeAlert(
-            showReleaseNotes: false,
-            dialogStyle: UpgradeDialogStyle.cupertino,
-            upgrader: Upgrader(),
-            child: MaterialApp(
-              debugShowCheckedModeBanner: false,
-              title: 'Ginilog',
-              themeMode: themeMode,
-              theme: ThemeData.light(), // Light theme
-              darkTheme: ThemeData.dark(), // Dark theme
-              onGenerateRoute: router.generateRoute,
-              initialRoute: route,
-              navigatorKey: widget.navigatorKey,
-              builder: (BuildContext context, Widget? child) {
-                return Stack(
-                  children: [
-                    child!,
-                  ],
-                );
-              },
-            ),
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return OrientationBuilder(
+            builder: (context, orientation) {
+              SizeConfig().init(context, constraints, orientation);
+              return UpgradeAlert(
+                showReleaseNotes: false,
+                dialogStyle: UpgradeDialogStyle.cupertino,
+                upgrader: Upgrader(),
+                child: MaterialApp(
+                  debugShowCheckedModeBanner: false,
+                  title: 'Ginilog',
+                  themeMode: themeMode,
+                  theme: ThemeData.light(), // Light theme
+                  darkTheme: ThemeData.dark(), // Dark theme
+                  onGenerateRoute: router.generateRoute,
+                  initialRoute: route,
+                  navigatorKey: widget.navigatorKey,
+                  builder: (BuildContext context, Widget? child) {
+                    return Stack(children: [child!]);
+                  },
+                ),
+              );
+            },
           );
-        });
-      }),
+        },
+      ),
     );
   }
 }
