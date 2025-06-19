@@ -20,11 +20,12 @@ class ForgotPasswordView
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: PreferredSize(
-          preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(16)),
-          child: Padding(
-            padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-            child: const GlobalBackButton(backText: "", showBackButton: true),
-          )),
+        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(16)),
+        child: Padding(
+          padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
+          child: const GlobalBackButton(backText: "", showBackButton: true),
+        ),
+      ),
       body: SingleChildScrollView(
         child: SafeArea(
           child: Form(
@@ -39,30 +40,33 @@ class ForgotPasswordView
                     children: [
                       const SizedBox(height: 12),
                       const AppText(
-                          isBody: false,
-                          text: "Forgot Password",
-                          textAlign: TextAlign.center,
-                          fontSize: 88,
-                          color: AppColors.black,
-                          fontStyle: FontStyle.normal,
-                          fontWeight: FontWeight.bold),
+                        isBody: false,
+                        text: "Forgot Password",
+                        textAlign: TextAlign.center,
+                        fontSize: 88,
+                        color: AppColors.black,
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.bold,
+                      ),
                       const AppText(
-                          isBody: true,
-                          text: "Enter your email address",
-                          textAlign: TextAlign.start,
-                          fontSize: 78,
-                          color: AppColors.black,
-                          fontStyle: FontStyle.normal,
-                          fontWeight: FontWeight.w400),
+                        isBody: true,
+                        text: "Enter your email address",
+                        textAlign: TextAlign.start,
+                        fontSize: 78,
+                        color: AppColors.black,
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.w400,
+                      ),
                       const SizedBox(height: 40),
                       const AppText(
-                          isBody: false,
-                          text: "Email Address",
-                          textAlign: TextAlign.start,
-                          fontSize: 75,
-                          color: AppColors.black,
-                          fontStyle: FontStyle.normal,
-                          fontWeight: FontWeight.w400),
+                        isBody: false,
+                        text: "Email Address",
+                        textAlign: TextAlign.start,
+                        fontSize: 75,
+                        color: AppColors.black,
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.w400,
+                      ),
                       GlobalTextField(
                         fieldName: 'Email',
                         keyBoardType: TextInputType.emailAddress,
@@ -74,36 +78,51 @@ class ForgotPasswordView
                       ),
                       addVerticalSpacing(context, 5),
                       controller.isEmailChanged.isNotEmpty
-                          ? appButton("Send OTP", getScreenWidth(context), () {
+                          ? AppButton(
+                            text: "Send OTP",
+                            onPressed: () {
                               controller.onSubmit();
-                            }, AppColors.primary, controller.isLoading)
-                          : appButton("Send OTP", getScreenWidth(context),
-                              () {}, AppColors.grey, controller.isLoading),
+                            },
+                            widthPercent: 100,
+                            heightPercent: 6,
+                            btnColor: AppColors.primary,
+                            isLoading: controller.isLoading,
+                          )
+                          : AppButton(
+                            text: "Send OTP",
+                            onPressed: () {},
+                            widthPercent: 100,
+                            heightPercent: 6,
+                            btnColor: AppColors.grey,
+                            isLoading: controller.isLoading,
+                          ),
                       addVerticalSpacing(context, 5),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const AppText(
-                              isBody: true,
-                              text: "Remember password? Back to  ",
-                              textAlign: TextAlign.center,
-                              fontSize: 55,
-                              color: AppColors.black,
-                              fontStyle: FontStyle.normal,
-                              fontWeight: FontWeight.w500),
+                            isBody: true,
+                            text: "Remember password? Back to  ",
+                            textAlign: TextAlign.center,
+                            fontSize: 55,
+                            color: AppColors.black,
+                            fontStyle: FontStyle.normal,
+                            fontWeight: FontWeight.w500,
+                          ),
                           GestureDetector(
                             onTap: () {
                               navigateToRoute(context, const LoginScreens());
                             },
                             child: const AppText(
-                                isBody: false,
-                                text: "Sign In",
-                                textAlign: TextAlign.center,
-                                fontSize: 78,
-                                color: AppColors.blue,
-                                fontStyle: FontStyle.normal,
-                                fontWeight: FontWeight.w700),
-                          )
+                              isBody: false,
+                              text: "Sign In",
+                              textAlign: TextAlign.center,
+                              fontSize: 78,
+                              color: AppColors.blue,
+                              fontStyle: FontStyle.normal,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ],
                       ),
                     ],

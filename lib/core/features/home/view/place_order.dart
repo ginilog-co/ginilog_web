@@ -23,12 +23,15 @@ class PlaceOrderScreenView
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: PreferredSize(
-          preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(16)),
-          child: Padding(
-            padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-            child: const GlobalBackButton(
-                backText: "Place Your Order Here", showBackButton: true),
-          )),
+        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(16)),
+        child: Padding(
+          padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
+          child: const GlobalBackButton(
+            backText: "Place Your Order Here",
+            showBackButton: true,
+          ),
+        ),
+      ),
       body: Container(
         height: getScreenHeight(context),
         width: getScreenWidth(context),
@@ -53,23 +56,35 @@ class PlaceOrderScreenView
                       child: Container(
                         height: 8,
                         decoration: BoxDecoration(
-                          color: controller.isOriginAddressChanged.isEmpty ||
-                                  controller.isOriginNameChanged.isEmpty ||
-                                  controller.isOriginEmailChanged.isEmpty ||
-                                  controller.isOriginPhoneNoChanged.isEmpty ||
-                                  controller.isDestinationNameChanged.isEmpty ||
-                                  controller
-                                      .isDestinationEmailChanged.isEmpty ||
-                                  controller
-                                      .isDestinationAddressChanged.isEmpty ||
-                                  controller
-                                      .isDestinationPhoneNoChanged.isEmpty ||
-                                  controller.isPackageNameChanged.isEmpty ||
-                                  controller.isItemQuantityChanged.isEmpty ||
-                                  controller.isItemCostChanged.isEmpty ||
-                                  controller.isItemModelNumberChanged.isEmpty
-                              ? Colors.grey
-                              : Colors.green,
+                          color:
+                              controller.isOriginAddressChanged.isEmpty ||
+                                      controller.isOriginNameChanged.isEmpty ||
+                                      controller.isOriginEmailChanged.isEmpty ||
+                                      controller
+                                          .isOriginPhoneNoChanged
+                                          .isEmpty ||
+                                      controller
+                                          .isDestinationNameChanged
+                                          .isEmpty ||
+                                      controller
+                                          .isDestinationEmailChanged
+                                          .isEmpty ||
+                                      controller
+                                          .isDestinationAddressChanged
+                                          .isEmpty ||
+                                      controller
+                                          .isDestinationPhoneNoChanged
+                                          .isEmpty ||
+                                      controller.isPackageNameChanged.isEmpty ||
+                                      controller
+                                          .isItemQuantityChanged
+                                          .isEmpty ||
+                                      controller.isItemCostChanged.isEmpty ||
+                                      controller
+                                          .isItemModelNumberChanged
+                                          .isEmpty
+                                  ? Colors.grey
+                                  : Colors.green,
                           borderRadius: BorderRadius.circular(5),
                         ),
                       ),
@@ -90,12 +105,13 @@ class PlaceOrderScreenView
                       child: Container(
                         height: 8,
                         decoration: BoxDecoration(
-                          color: controller.isItemDescriptionChanged.isEmpty ||
-                                  controller.isItemTypeChanged.isEmpty ||
-                                  controller.companyId.isEmpty ||
-                                  controller.imageUrls.isEmpty
-                              ? Colors.grey
-                              : Colors.green,
+                          color:
+                              controller.isItemDescriptionChanged.isEmpty ||
+                                      controller.isItemTypeChanged.isEmpty ||
+                                      controller.companyId.isEmpty ||
+                                      controller.imageUrls.isEmpty
+                                  ? Colors.grey
+                                  : Colors.green,
                           borderRadius: BorderRadius.circular(5),
                         ),
                       ),
@@ -131,10 +147,11 @@ class PlaceOrderScreenView
                               "Origin Details",
                               textScaler: textScaler,
                               style: TextStyle(
-                                  fontSize: fontSized(context, 42),
-                                  color: AppColors.black,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: "Inter"),
+                                fontSize: fontSized(context, 42),
+                                color: AppColors.black,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: "Inter",
+                              ),
                             ),
                             GooglePlacesAutoCompleteTextFormField(
                               style: TextStyle(
@@ -166,18 +183,22 @@ class PlaceOrderScreenView
                                 controller.originAddressOnChanged(value!);
                               },
                               maxLines: 1,
-                              overlayContainerBuilder: (child) => Material(
-                                elevation: 1.0,
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                child: child,
-                              ),
-                              onPlaceDetailsWithCoordinatesReceived:
-                                  (prediction) async {
+                              overlayContainerBuilder:
+                                  (child) => Material(
+                                    elevation: 1.0,
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: child,
+                                  ),
+                              onPlaceDetailsWithCoordinatesReceived: (
+                                prediction,
+                              ) async {
                                 controller.origin(prediction);
                               },
-                              onSuggestionClicked: (prediction) => controller
-                                  .originAddress.text = prediction.description!,
+                              onSuggestionClicked:
+                                  (prediction) =>
+                                      controller.originAddress.text =
+                                          prediction.description!,
                               minInputLength: 3,
                             ),
                             addVerticalSpacing(context, 0.05),
@@ -215,10 +236,11 @@ class PlaceOrderScreenView
                               "Destination Details",
                               textScaler: textScaler,
                               style: TextStyle(
-                                  fontSize: fontSized(context, 42),
-                                  color: AppColors.black,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: "Inter"),
+                                fontSize: fontSized(context, 42),
+                                color: AppColors.black,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: "Inter",
+                              ),
                             ),
                             GooglePlacesAutoCompleteTextFormField(
                               style: TextStyle(
@@ -251,19 +273,22 @@ class PlaceOrderScreenView
                                 controller.destinationAddressOnChanged(value!);
                               },
                               maxLines: 1,
-                              overlayContainerBuilder: (child) => Material(
-                                elevation: 1.0,
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                child: child,
-                              ),
-                              onPlaceDetailsWithCoordinatesReceived:
-                                  (prediction) async {
+                              overlayContainerBuilder:
+                                  (child) => Material(
+                                    elevation: 1.0,
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: child,
+                                  ),
+                              onPlaceDetailsWithCoordinatesReceived: (
+                                prediction,
+                              ) async {
                                 controller.destination(prediction);
                               },
-                              onSuggestionClicked: (prediction) => controller
-                                  .destinationAddress
-                                  .text = prediction.description!,
+                              onSuggestionClicked:
+                                  (prediction) =>
+                                      controller.destinationAddress.text =
+                                          prediction.description!,
                               minInputLength: 3,
                             ),
                             addVerticalSpacing(context, 0.05),
@@ -301,10 +326,11 @@ class PlaceOrderScreenView
                               "Package Details",
                               textScaler: textScaler,
                               style: TextStyle(
-                                  fontSize: fontSized(context, 42),
-                                  color: AppColors.black,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: "Inter"),
+                                fontSize: fontSized(context, 42),
+                                color: AppColors.black,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: "Inter",
+                              ),
                             ),
                             GlobalTextField(
                               fieldName: 'Package Name',
@@ -326,8 +352,9 @@ class PlaceOrderScreenView
                                     obscureText: false,
                                     textController: controller.itemModelNumber,
                                     onChanged: (String? value) {
-                                      controller
-                                          .itemModelNumberOnChanged(value!);
+                                      controller.itemModelNumberOnChanged(
+                                        value!,
+                                      );
                                     },
                                   ),
                                 ),
@@ -374,29 +401,46 @@ class PlaceOrderScreenView
                             addVerticalSpacing(context, 5),
                             controller.isOriginAddressChanged.isEmpty ||
                                     controller
-                                        .isDestinationAddressChanged.isEmpty ||
+                                        .isDestinationAddressChanged
+                                        .isEmpty ||
                                     controller
-                                        .isDestinationPhoneNoChanged.isEmpty ||
+                                        .isDestinationPhoneNoChanged
+                                        .isEmpty ||
                                     controller.isOriginNameChanged.isEmpty ||
                                     controller.isOriginEmailChanged.isEmpty ||
                                     controller.isOriginPhoneNoChanged.isEmpty ||
                                     controller
-                                        .isDestinationNameChanged.isEmpty ||
+                                        .isDestinationNameChanged
+                                        .isEmpty ||
                                     controller
-                                        .isDestinationEmailChanged.isEmpty ||
+                                        .isDestinationEmailChanged
+                                        .isEmpty ||
                                     controller.isPackageNameChanged.isEmpty ||
                                     controller.isItemQuantityChanged.isEmpty ||
                                     controller.isItemCostChanged.isEmpty ||
                                     controller.isItemWeightChanged.isEmpty ||
                                     controller.isItemModelNumberChanged.isEmpty
-                                ? appButton("Next", getScreenWidth(context),
-                                    () {}, AppColors.grey, false)
-                                : appButton("Next", getScreenWidth(context),
-                                    () {
+                                ? AppButton(
+                                  text: "Next",
+                                  onPressed: () {},
+                                  widthPercent: 100,
+                                  heightPercent: 6,
+                                  btnColor: AppColors.grey,
+                                  isLoading: false,
+                                )
+                                : AppButton(
+                                  text: "Next",
+                                  onPressed: () {
                                     controller.pageController.nextPage(
-                                        duration: Duration(milliseconds: 300),
-                                        curve: Curves.easeInOut);
-                                  }, AppColors.primary, false),
+                                      duration: Duration(milliseconds: 300),
+                                      curve: Curves.easeInOut,
+                                    );
+                                  },
+                                  widthPercent: 100,
+                                  heightPercent: 6,
+                                  btnColor: AppColors.primary,
+                                  isLoading: false,
+                                ),
                             addVerticalSpacing(context, 5),
                           ],
                         ),
@@ -422,33 +466,35 @@ class PlaceOrderScreenView
                               "More Details",
                               textScaler: textScaler,
                               style: TextStyle(
-                                  fontSize: fontSized(context, 92),
-                                  color: AppColors.black,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: "Inter"),
+                                fontSize: fontSized(context, 92),
+                                color: AppColors.black,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: "Inter",
+                              ),
                             ),
                             addVerticalSpacing(context, 0.05),
                             widget.shippingType.toLowerCase() ==
                                     "charter".toLowerCase()
                                 ? SizedBox.shrink()
                                 : GlobalTextField(
-                                    fieldName: 'Package Type',
-                                    keyBoardType: TextInputType.name,
-                                    obscureText: false,
-                                    readOnly: true,
-                                    textController: controller.itemType,
-                                    isEyeVisible: false,
-                                    suffix: Icon(Icons.arrow_drop_down),
-                                    onChanged: (String? value) {
-                                      controller.itemTypeOnChanged(value!);
-                                    },
-                                    onTap: controller.showBottomSheet,
-                                  ),
+                                  fieldName: 'Package Type',
+                                  keyBoardType: TextInputType.name,
+                                  obscureText: false,
+                                  readOnly: true,
+                                  textController: controller.itemType,
+                                  isEyeVisible: false,
+                                  suffix: Icon(Icons.arrow_drop_down),
+                                  onChanged: (String? value) {
+                                    controller.itemTypeOnChanged(value!);
+                                  },
+                                  onTap: controller.showBottomSheet,
+                                ),
                             GlobalTextField(
-                              fieldName: widget.shippingType.toLowerCase() ==
-                                      "charter".toString()
-                                  ? "List other items here"
-                                  : 'Package Description',
+                              fieldName:
+                                  widget.shippingType.toLowerCase() ==
+                                          "charter".toString()
+                                      ? "List other items here"
+                                      : 'Package Description',
                               keyBoardType: TextInputType.multiline,
                               removeSpace: false,
                               obscureText: false,
@@ -467,51 +513,58 @@ class PlaceOrderScreenView
                                 padding: const EdgeInsets.all(6),
                                 child: SizedBox(
                                   height: 150,
-                                  child: controller.imageFiles.isNotEmpty
-                                      ? SingleChildScrollView(
-                                          scrollDirection: Axis.horizontal,
-                                          child: SizedBox(
-                                            height: 150,
-                                            child: Row(
-                                              children: List.generate(
+                                  child:
+                                      controller.imageFiles.isNotEmpty
+                                          ? SingleChildScrollView(
+                                            scrollDirection: Axis.horizontal,
+                                            child: SizedBox(
+                                              height: 150,
+                                              child: Row(
+                                                children: List.generate(
                                                   controller.imageFiles.length,
                                                   (index) => Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(8.0),
-                                                        child: Stack(
-                                                          children: [
-                                                            Image.file(
-                                                                File(controller
-                                                                    .imageFiles[
-                                                                        index]
-                                                                    .path),
-                                                                fit: BoxFit
-                                                                    .cover),
-                                                            Positioned(
-                                                              right: 0,
-                                                              child: IconButton(
-                                                                icon: const Icon(
-                                                                    Icons
-                                                                        .remove_circle,
-                                                                    color: Colors
-                                                                        .red),
-                                                                onPressed: () =>
-                                                                    controller
-                                                                        .removeImage(
-                                                                            index),
-                                                              ),
-                                                            ),
-                                                          ],
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                          8.0,
                                                         ),
-                                                      )),
+                                                    child: Stack(
+                                                      children: [
+                                                        Image.file(
+                                                          File(
+                                                            controller
+                                                                .imageFiles[index]
+                                                                .path,
+                                                          ),
+                                                          fit: BoxFit.cover,
+                                                        ),
+                                                        Positioned(
+                                                          right: 0,
+                                                          child: IconButton(
+                                                            icon: const Icon(
+                                                              Icons
+                                                                  .remove_circle,
+                                                              color: Colors.red,
+                                                            ),
+                                                            onPressed:
+                                                                () => controller
+                                                                    .removeImage(
+                                                                      index,
+                                                                    ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                          : Center(
+                                            child: Text(
+                                              textScaler: textScaler,
+                                              'Kindly upload the pictures of the Items',
                                             ),
                                           ),
-                                        )
-                                      : Center(
-                                          child: Text(
-                                              textScaler: textScaler,
-                                              'Kindly upload the pictures of the Items')),
                                 ),
                               ),
                             ),
@@ -523,9 +576,10 @@ class PlaceOrderScreenView
                                   child: const Text("Add Images"),
                                 ),
                                 ElevatedButton(
-                                  onPressed: controller.imageFiles.isNotEmpty
-                                      ? () => controller.clearAllImage()
-                                      : null,
+                                  onPressed:
+                                      controller.imageFiles.isNotEmpty
+                                          ? () => controller.clearAllImage()
+                                          : null,
                                   child: const Text("Remove All"),
                                 ),
                               ],
@@ -547,144 +601,171 @@ class PlaceOrderScreenView
                             controller.widget.shippingType.toLowerCase() ==
                                     "Inter state".toLowerCase()
                                 ? Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: controller.vehiclesInterState
-                                        .map((vehicle) {
-                                      bool isSelected = controller
-                                              .selectedInterStateVehicle ==
-                                          vehicle["name"];
-                                      return GestureDetector(
-                                        onTap: () =>
-                                            controller.selectInterStateVehicle(
-                                                vehicle["name"]),
-                                        child: Container(
-                                          padding: EdgeInsets.all(15),
-                                          margin: EdgeInsets.symmetric(
-                                              horizontal: 10),
-                                          decoration: BoxDecoration(
-                                            color: isSelected
-                                                ? Colors.blue
-                                                : Colors.grey[300],
-                                            borderRadius:
-                                                BorderRadius.circular(25),
-                                            border: Border.all(
-                                              color: isSelected
-                                                  ? Colors.blueAccent
-                                                  : Colors.grey,
-                                              width: 2,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children:
+                                      controller.vehiclesInterState.map((
+                                        vehicle,
+                                      ) {
+                                        bool isSelected =
+                                            controller
+                                                .selectedInterStateVehicle ==
+                                            vehicle["name"];
+                                        return GestureDetector(
+                                          onTap:
+                                              () => controller
+                                                  .selectInterStateVehicle(
+                                                    vehicle["name"],
+                                                  ),
+                                          child: Container(
+                                            padding: EdgeInsets.all(15),
+                                            margin: EdgeInsets.symmetric(
+                                              horizontal: 10,
                                             ),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            spacing: 5,
-                                            children: [
-                                              Icon(vehicle["icon"],
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  isSelected
+                                                      ? Colors.blue
+                                                      : Colors.grey[300],
+                                              borderRadius:
+                                                  BorderRadius.circular(25),
+                                              border: Border.all(
+                                                color:
+                                                    isSelected
+                                                        ? Colors.blueAccent
+                                                        : Colors.grey,
+                                                width: 2,
+                                              ),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              spacing: 5,
+                                              children: [
+                                                Icon(
+                                                  vehicle["icon"],
                                                   size: 15,
-                                                  color: isSelected
-                                                      ? Colors.white
-                                                      : Colors.black),
-                                              AppText(
+                                                  color:
+                                                      isSelected
+                                                          ? Colors.white
+                                                          : Colors.black,
+                                                ),
+                                                AppText(
                                                   isBody: true,
                                                   text: "${vehicle["name"]}",
                                                   textAlign: TextAlign.start,
                                                   fontSize: 30,
-                                                  color: isSelected
-                                                      ? AppColors.white
-                                                      : AppColors.black
-                                                          .withAlpha(162),
+                                                  color:
+                                                      isSelected
+                                                          ? AppColors.white
+                                                          : AppColors.black
+                                                              .withAlpha(162),
                                                   fontStyle: FontStyle.normal,
-                                                  fontWeight: FontWeight.w800),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
-                                  )
-                                : controller.widget.shippingType
-                                            .toLowerCase() ==
-                                        "Same State".toLowerCase()
-                                    ? SingleChildScrollView(
-                                        scrollDirection: Axis.horizontal,
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: controller.vehicles
-                                              .map((vehicle) {
-                                            bool isSelected =
-                                                controller.selectedVehicle ==
-                                                    vehicle["name"];
-                                            return GestureDetector(
-                                              onTap: () =>
-                                                  controller.selectVehicle(
-                                                      vehicle["name"]),
-                                              child: Container(
-                                                padding: EdgeInsets.all(15),
-                                                margin: EdgeInsets.symmetric(
-                                                    horizontal: 10),
-                                                decoration: BoxDecoration(
-                                                  color: isSelected
-                                                      ? Colors.blue
-                                                      : Colors.grey[300],
-                                                  borderRadius:
-                                                      BorderRadius.circular(25),
-                                                  border: Border.all(
-                                                    color: isSelected
-                                                        ? Colors.blueAccent
-                                                        : Colors.grey,
-                                                    width: 2,
-                                                  ),
+                                                  fontWeight: FontWeight.w800,
                                                 ),
-                                                child: Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  spacing: 5,
-                                                  children: [
-                                                    Icon(vehicle["icon"],
-                                                        size: 15,
-                                                        color: isSelected
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                                )
+                                : controller.widget.shippingType
+                                        .toLowerCase() ==
+                                    "Same State".toLowerCase()
+                                ? SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children:
+                                        controller.vehicles.map((vehicle) {
+                                          bool isSelected =
+                                              controller.selectedVehicle ==
+                                              vehicle["name"];
+                                          return GestureDetector(
+                                            onTap:
+                                                () => controller.selectVehicle(
+                                                  vehicle["name"],
+                                                ),
+                                            child: Container(
+                                              padding: EdgeInsets.all(15),
+                                              margin: EdgeInsets.symmetric(
+                                                horizontal: 10,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    isSelected
+                                                        ? Colors.blue
+                                                        : Colors.grey[300],
+                                                borderRadius:
+                                                    BorderRadius.circular(25),
+                                                border: Border.all(
+                                                  color:
+                                                      isSelected
+                                                          ? Colors.blueAccent
+                                                          : Colors.grey,
+                                                  width: 2,
+                                                ),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                spacing: 5,
+                                                children: [
+                                                  Icon(
+                                                    vehicle["icon"],
+                                                    size: 15,
+                                                    color:
+                                                        isSelected
                                                             ? Colors.white
-                                                            : Colors.black),
-                                                    AppText(
-                                                        isBody: true,
-                                                        text:
-                                                            "${vehicle["name"]}",
-                                                        textAlign:
-                                                            TextAlign.start,
-                                                        fontSize: 30,
-                                                        color: isSelected
+                                                            : Colors.black,
+                                                  ),
+                                                  AppText(
+                                                    isBody: true,
+                                                    text: "${vehicle["name"]}",
+                                                    textAlign: TextAlign.start,
+                                                    fontSize: 30,
+                                                    color:
+                                                        isSelected
                                                             ? AppColors.white
                                                             : AppColors.black
                                                                 .withAlpha(162),
-                                                        fontStyle:
-                                                            FontStyle.normal,
-                                                        fontWeight:
-                                                            FontWeight.w800),
-                                                  ],
-                                                ),
+                                                    fontStyle: FontStyle.normal,
+                                                    fontWeight: FontWeight.w800,
+                                                  ),
+                                                ],
                                               ),
-                                            );
-                                          }).toList(),
-                                        ),
-                                      )
-                                    : SizedBox.shrink(),
+                                            ),
+                                          );
+                                        }).toList(),
+                                  ),
+                                )
+                                : SizedBox.shrink(),
                             addVerticalSpacing(context, 5),
                             controller.isItemDescriptionChanged.isEmpty ||
                                     controller.isItemTypeChanged.isEmpty
-                                ? appButton("Submit", getScreenWidth(context),
-                                    () {}, AppColors.grey, controller.isLoading)
-                                : appButton("Submit", getScreenWidth(context),
-                                    () {
+                                ? AppButton(
+                                  text: "Submit",
+                                  onPressed: () {},
+                                  widthPercent: 100,
+                                  heightPercent: 6,
+                                  btnColor: AppColors.grey,
+                                  isLoading: controller.isLoading,
+                                )
+                                : AppButton(
+                                  text: "Submit",
+                                  onPressed: () {
                                     widget.shippingType.toLowerCase() ==
                                             "Same State".toLowerCase()
                                         ? controller.userRegister()
                                         : controller.widget.shippingType
-                                                    .toLowerCase() ==
-                                                "Inter state".toLowerCase()
-                                            ? controller.interState()
-                                            : controller.otherOnes();
-                                  }, AppColors.primary, controller.isLoading),
+                                                .toLowerCase() ==
+                                            "Inter state".toLowerCase()
+                                        ? controller.interState()
+                                        : controller.otherOnes();
+                                  },
+                                  widthPercent: 100,
+                                  heightPercent: 6,
+                                  btnColor: AppColors.primary,
+                                  isLoading: controller.isLoading,
+                                ),
                             addVerticalSpacing(context, 5),
                           ],
                         ),

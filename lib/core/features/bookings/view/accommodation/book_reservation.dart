@@ -10,8 +10,9 @@ import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
 import 'package:ginilog_customer_app/core/components/widgets/input.dart';
 import 'package:ginilog_customer_app/core/features/bookings/controller/book_reservation.dart';
 
-class BookReservationScreenView extends StatelessView<BookReservationScreen,
-    BookReservationScreenController> {
+class BookReservationScreenView
+    extends
+        StatelessView<BookReservationScreen, BookReservationScreenController> {
   const BookReservationScreenView(super.state, {super.key});
 
   @override
@@ -19,11 +20,12 @@ class BookReservationScreenView extends StatelessView<BookReservationScreen,
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: PreferredSize(
-          preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(14)),
-          child: Padding(
-            padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-            child: const GlobalBackButton(backText: "", showBackButton: true),
-          )),
+        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(14)),
+        child: Padding(
+          padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
+          child: const GlobalBackButton(backText: "", showBackButton: true),
+        ),
+      ),
       body: Container(
         height: getScreenHeight(context),
         width: getScreenWidth(context),
@@ -32,10 +34,7 @@ class BookReservationScreenView extends StatelessView<BookReservationScreen,
           child: Form(
             key: controller.formKey,
             child: Padding(
-              padding: const EdgeInsets.only(
-                left: 14.0,
-                right: 14.0,
-              ),
+              padding: const EdgeInsets.only(left: 14.0, right: 14.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,10 +46,11 @@ class BookReservationScreenView extends StatelessView<BookReservationScreen,
                       Text(
                         "Complete the form below and book the accomodation",
                         style: TextStyle(
-                            fontSize: fontSized(context, 35),
-                            color: AppColors.black,
-                            fontWeight: FontWeight.w400,
-                            fontFamily: "Mulish"),
+                          fontSize: fontSized(context, 35),
+                          color: AppColors.black,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: "Mulish",
+                        ),
                       ),
                     ],
                   ),
@@ -93,14 +93,15 @@ class BookReservationScreenView extends StatelessView<BookReservationScreen,
                         flagWidth: 12,
                         showFlag: true,
                         onChanged: (CountryCode country) {
-                          controller
-                              .phoneNoCountryCodeChanged(country.dialCode!);
+                          controller.phoneNoCountryCodeChanged(
+                            country.dialCode!,
+                          );
                         },
                         initialSelection: 'US', // Default country
                         favorite: [
                           '+1',
                           '+91',
-                          '+44'
+                          '+44',
                         ], // Prioritize commonly used codes
                         showCountryOnly: true,
                         showOnlyCountryWhenClosed: false,
@@ -134,10 +135,14 @@ class BookReservationScreenView extends StatelessView<BookReservationScreen,
                     textController: controller.reservationStartDate,
                     onTap: () async {
                       DateTime? initialDate;
-                      final selectedDateTime =
-                          await controller.pickDateTime(context, initialDate);
+                      final selectedDateTime = await controller.pickDateTime(
+                        context,
+                        initialDate,
+                      );
                       controller.reservationStartChanged(
-                          selectedDateTime.toString(), selectedDateTime);
+                        selectedDateTime.toString(),
+                        selectedDateTime,
+                      );
                     },
                     onChanged: (String? value) {},
                   ),
@@ -150,10 +155,14 @@ class BookReservationScreenView extends StatelessView<BookReservationScreen,
                     textController: controller.reservationEndDate,
                     onTap: () async {
                       DateTime? initialDate;
-                      final selectedDateTime =
-                          await controller.pickDateTime(context, initialDate);
+                      final selectedDateTime = await controller.pickDateTime(
+                        context,
+                        initialDate,
+                      );
                       controller.reservationEndChanged(
-                          selectedDateTime.toString(), selectedDateTime);
+                        selectedDateTime.toString(),
+                        selectedDateTime,
+                      );
                     },
                     onChanged: (String? value) {},
                   ),
@@ -179,12 +188,24 @@ class BookReservationScreenView extends StatelessView<BookReservationScreen,
                           controller.isNumberOfGuestChanged.isEmpty ||
                           controller.isReservationStartDateChanged.isEmpty ||
                           controller.isReservationEndDateChanged.isEmpty
-                      ? appButton("Book Now", getScreenWidth(context), () {},
-                          AppColors.grey, controller.isLoading)
-                      : appButton("Book Now", getScreenWidth(context), () {
+                      ? AppButton(
+                        text: "Book Now",
+                        onPressed: () {},
+                        widthPercent: 100,
+                        heightPercent: 6,
+                        btnColor: AppColors.grey,
+                        isLoading: controller.isLoading,
+                      )
+                      : AppButton(
+                        text: "Book Now",
+                        onPressed: () {
                           controller.userRegister();
-                        }, AppColors.primary, controller.isLoading),
-                  addVerticalSpacing(context, 5),
+                        },
+                        widthPercent: 100,
+                        heightPercent: 6,
+                        btnColor: AppColors.primary,
+                        isLoading: controller.isLoading,
+                      ),
                   addVerticalSpacing(context, 5),
                 ],
               ),

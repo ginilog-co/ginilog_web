@@ -44,103 +44,107 @@ class _LoginPageState extends State<PaymentConfirmationPage> {
       // ignore: deprecated_member_use
       onPopInvoked: (bool isPop) {
         navigateAndRemoveUntilRoute(
-            context,
-            HomeScreenPage(
-              imdex: widget.isPackage == true ? 1 : 0,
-            ));
+          context,
+          HomeScreenPage(imdex: widget.isPackage == true ? 1 : 0),
+        );
       },
       child: Container(
-          height: height,
-          width: width,
-          color: Colors.white,
-          child: Scaffold(
-            key: key,
-            backgroundColor: Colors.transparent,
-            body: ListView(
-              physics: const ScrollPhysics(),
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.only(left: 20, right: 20, top: 60),
-                  child: Row(
-                    children: [
-                      IconButton(
-                          onPressed: () {
-                            navigateAndRemoveUntilRoute(
-                                context,
-                                const HomeScreenPage(
-                                  imdex: 1,
-                                ));
-                          },
-                          icon: const Icon(
-                            Icons.arrow_back_ios,
-                            color: AppColors.black,
-                            size: 20,
-                          )),
-                      addHorizontalSpacing(20),
-                      const AppText(
-                          isBody: true,
-                          text: "",
-                          textAlign: TextAlign.center,
-                          fontSize: 79,
-                          color: Color.fromRGBO(48, 48, 48, 1),
-                          fontStyle: FontStyle.normal,
-                          fontWeight: FontWeight.w700),
-                    ],
-                  ),
+        height: height,
+        width: width,
+        color: Colors.white,
+        child: Scaffold(
+          key: key,
+          backgroundColor: Colors.transparent,
+          body: ListView(
+            physics: const ScrollPhysics(),
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.only(left: 20, right: 20, top: 60),
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        navigateAndRemoveUntilRoute(
+                          context,
+                          const HomeScreenPage(imdex: 1),
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.arrow_back_ios,
+                        color: AppColors.black,
+                        size: 20,
+                      ),
+                    ),
+                    addHorizontalSpacing(20),
+                    const AppText(
+                      isBody: true,
+                      text: "",
+                      textAlign: TextAlign.center,
+                      fontSize: 79,
+                      color: Color.fromRGBO(48, 48, 48, 1),
+                      fontStyle: FontStyle.normal,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ],
                 ),
-                Container(
-                  padding: const EdgeInsets.only(left: 20, right: 20),
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        addVerticalSpacing(context, 40),
-                        Image.asset(
-                          "assets/images/successful.png",
-                          height: 65,
-                          width: 65,
-                          //color: AppColors.black,
-                        ),
-                        addVerticalSpacing(context, 4),
-                        const AppText(
-                            isBody: true,
-                            text: "Thank you for using our service",
-                            textAlign: TextAlign.center,
-                            fontSize: 80,
-                            color: Color.fromRGBO(48, 48, 48, 1),
-                            fontStyle: FontStyle.normal,
-                            fontWeight: FontWeight.w500),
-                        addVerticalSpacing(context, 4),
-                        const AppText(
-                            isBody: true,
-                            text: "Your payment has been successful",
-                            textAlign: TextAlign.center,
-                            fontSize: 76,
-                            color: Color.fromRGBO(48, 48, 48, 1),
-                            fontStyle: FontStyle.normal,
-                            fontWeight: FontWeight.w400),
-                        addVerticalSpacing(context, 10),
-                        appButton2(
-                            onPressed: () async {
-                              navigateAndRemoveUntilRoute(
-                                  context,
-                                  HomeScreenPage(
-                                    imdex: widget.isPackage == true ? 1 : 0,
-                                  ));
-                            },
-                            child: const AppText(
-                                isBody: true,
-                                text: "Back to Home",
-                                textAlign: TextAlign.center,
-                                fontSize: 72,
-                                color: AppColors.white,
-                                fontStyle: FontStyle.normal,
-                                fontWeight: FontWeight.w600)),
-                        addVerticalSpacing(context, 4),
-                      ]),
+              ),
+              Container(
+                padding: const EdgeInsets.only(left: 20, right: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    addVerticalSpacing(context, 40),
+                    Image.asset(
+                      "assets/images/successful.png",
+                      height: 65,
+                      width: 65,
+                      //color: AppColors.black,
+                    ),
+                    addVerticalSpacing(context, 4),
+                    const AppText(
+                      isBody: true,
+                      text: "Thank you for using our service",
+                      textAlign: TextAlign.center,
+                      fontSize: 80,
+                      color: Color.fromRGBO(48, 48, 48, 1),
+                      fontStyle: FontStyle.normal,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    addVerticalSpacing(context, 4),
+                    const AppText(
+                      isBody: true,
+                      text: "Your payment has been successful",
+                      textAlign: TextAlign.center,
+                      fontSize: 76,
+                      color: Color.fromRGBO(48, 48, 48, 1),
+                      fontStyle: FontStyle.normal,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    addVerticalSpacing(context, 10),
+                    AppButton(
+                      onPressed: () async {
+                        navigateAndRemoveUntilRoute(
+                          context,
+                          HomeScreenPage(
+                            imdex: widget.isPackage == true ? 1 : 0,
+                          ),
+                        );
+                      },
+
+                      text: "Back to Home",
+                      widthPercent: 100,
+                      heightPercent: 6,
+                      btnColor: AppColors.primary,
+                      isLoading: false,
+                    ),
+                    addVerticalSpacing(context, 4),
+                  ],
                 ),
-              ],
-            ),
-          )),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

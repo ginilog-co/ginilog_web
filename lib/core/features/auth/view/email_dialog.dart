@@ -42,23 +42,36 @@ class _EmailSentDialogState extends State<EmailSentDialog> {
                   width: 100,
                 ),
                 addVerticalSpacing(context, 10),
-                Text('Verified!',
-                    style: TextStyle(
-                        color: AppColors.black,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: "Inter",
-                        fontSize: fontSized(context, 85))),
-                Text('You have successfully verified your account',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        color: AppColors.black,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: "Inter",
-                        fontSize: fontSized(context, 95))),
+                Text(
+                  'Verified!',
+                  style: TextStyle(
+                    color: AppColors.black,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: "Inter",
+                    fontSize: fontSized(context, 85),
+                  ),
+                ),
+                Text(
+                  'You have successfully verified your account',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.black,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: "Inter",
+                    fontSize: fontSized(context, 95),
+                  ),
+                ),
                 addVerticalSpacing(context, 10),
-                appButton("Go to Login", getScreenWidth(context), () {
-                  navigateAndReplaceRoute(context, const LoginScreens());
-                }, AppColors.primary, false),
+                AppButton(
+                  text: "Go to Login",
+                  onPressed: () {
+                    navigateAndReplaceRoute(context, const LoginScreens());
+                  },
+                  widthPercent: 70,
+                  heightPercent: 5,
+                  btnColor: AppColors.primary,
+                  isLoading: false,
+                ),
                 addVerticalSpacing(context, 10),
               ],
             ),
@@ -105,23 +118,36 @@ class _ErrorEmailSentDialogState extends State<ErrorEmailSentDialog> {
                   width: 100,
                 ),
                 addVerticalSpacing(context, 4),
-                Text('Opps!',
-                    style: TextStyle(
-                        color: AppColors.black,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: "Inter",
-                        fontSize: fontSized(context, 85))),
-                Text('Something went wrong, please try again',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        color: AppColors.black,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: "Inter",
-                        fontSize: fontSized(context, 85))),
+                Text(
+                  'Opps!',
+                  style: TextStyle(
+                    color: AppColors.black,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: "Inter",
+                    fontSize: fontSized(context, 85),
+                  ),
+                ),
+                Text(
+                  'Something went wrong, please try again',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.black,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: "Inter",
+                    fontSize: fontSized(context, 85),
+                  ),
+                ),
                 addVerticalSpacing(context, 10),
-                appButton("Retry", getScreenWidth(context), () {
-                  Navigator.pop(context);
-                }, AppColors.primary, false),
+                AppButton(
+                  text: "Retry",
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  widthPercent: 70,
+                  heightPercent: 5,
+                  btnColor: AppColors.primary,
+                  isLoading: false,
+                ),
                 addVerticalSpacing(context, 4),
               ],
             ),
@@ -168,23 +194,36 @@ class _PasswordChangedDialogState extends State<PasswordChangedDialog> {
                   width: 100,
                 ),
                 addVerticalSpacing(context, 4),
-                Text('Password Change!',
-                    style: TextStyle(
-                        color: AppColors.black,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: "Inter",
-                        fontSize: fontSized(context, 85))),
-                Text('You have successfully Change your password',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        color: AppColors.black,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: "Inter",
-                        fontSize: fontSized(context, 85))),
+                Text(
+                  'Password Change!',
+                  style: TextStyle(
+                    color: AppColors.black,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: "Inter",
+                    fontSize: fontSized(context, 85),
+                  ),
+                ),
+                Text(
+                  'You have successfully Change your password',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.black,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: "Inter",
+                    fontSize: fontSized(context, 85),
+                  ),
+                ),
                 addVerticalSpacing(context, 10),
-                appButton("Go to Login", getScreenWidth(context), () {
-                  navigateAndReplaceRoute(context, const LoginScreens());
-                }, AppColors.primary, false),
+                AppButton(
+                  text: "Go to Login",
+                  onPressed: () {
+                    navigateAndReplaceRoute(context, const LoginScreens());
+                  },
+                  widthPercent: 100,
+                  heightPercent: 6,
+                  btnColor: AppColors.primary,
+                  isLoading: false,
+                ),
                 addVerticalSpacing(context, 4),
               ],
             ),

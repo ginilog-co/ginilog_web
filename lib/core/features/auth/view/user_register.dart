@@ -22,11 +22,12 @@ class RegisterScreenView
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: PreferredSize(
-          preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(14)),
-          child: Padding(
-            padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-            child: const GlobalBackButton(backText: "", showBackButton: true),
-          )),
+        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(14)),
+        child: Padding(
+          padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
+          child: const GlobalBackButton(backText: "", showBackButton: true),
+        ),
+      ),
       body: Container(
         height: getScreenHeight(context),
         width: getScreenWidth(context),
@@ -35,10 +36,7 @@ class RegisterScreenView
           child: Form(
             key: controller.formKey,
             child: Padding(
-              padding: const EdgeInsets.only(
-                left: 14.0,
-                right: 14.0,
-              ),
+              padding: const EdgeInsets.only(left: 14.0, right: 14.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,18 +48,20 @@ class RegisterScreenView
                       Text(
                         "Create an Account",
                         style: TextStyle(
-                            fontSize: fontSized(context, 107),
-                            color: AppColors.black,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: "Inter"),
+                          fontSize: fontSized(context, 107),
+                          color: AppColors.black,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: "Inter",
+                        ),
                       ),
                       Text(
                         "Complete the sign up process to get started",
                         style: TextStyle(
-                            fontSize: fontSized(context, 65),
-                            color: AppColors.black,
-                            fontWeight: FontWeight.w400,
-                            fontFamily: "Mulish"),
+                          fontSize: fontSized(context, 65),
+                          color: AppColors.black,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: "Mulish",
+                        ),
                       ),
                     ],
                   ),
@@ -72,10 +72,11 @@ class RegisterScreenView
                       Text(
                         "First Name",
                         style: TextStyle(
-                            fontSize: fontSized(context, 80),
-                            color: AppColors.black,
-                            fontWeight: FontWeight.w200,
-                            fontFamily: "Inter"),
+                          fontSize: fontSized(context, 80),
+                          color: AppColors.black,
+                          fontWeight: FontWeight.w200,
+                          fontFamily: "Inter",
+                        ),
                       ),
                       GlobalTextField(
                         fieldName: 'First Name',
@@ -95,10 +96,11 @@ class RegisterScreenView
                       Text(
                         "Last Name",
                         style: TextStyle(
-                            fontSize: fontSized(context, 80),
-                            color: AppColors.black,
-                            fontWeight: FontWeight.w200,
-                            fontFamily: "Inter"),
+                          fontSize: fontSized(context, 80),
+                          color: AppColors.black,
+                          fontWeight: FontWeight.w200,
+                          fontFamily: "Inter",
+                        ),
                       ),
                       GlobalTextField(
                         fieldName: 'Last Name',
@@ -118,10 +120,11 @@ class RegisterScreenView
                       Text(
                         "Email Address",
                         style: TextStyle(
-                            fontSize: fontSized(context, 80),
-                            color: AppColors.black,
-                            fontWeight: FontWeight.w200,
-                            fontFamily: "Inter"),
+                          fontSize: fontSized(context, 80),
+                          color: AppColors.black,
+                          fontWeight: FontWeight.w200,
+                          fontFamily: "Inter",
+                        ),
                       ),
                       GlobalTextField(
                         fieldName: 'Email',
@@ -141,10 +144,11 @@ class RegisterScreenView
                       Text(
                         "Phone Number",
                         style: TextStyle(
-                            fontSize: fontSized(context, 80),
-                            color: AppColors.black,
-                            fontWeight: FontWeight.w200,
-                            fontFamily: "Inter"),
+                          fontSize: fontSized(context, 80),
+                          color: AppColors.black,
+                          fontWeight: FontWeight.w200,
+                          fontFamily: "Inter",
+                        ),
                       ),
                       GlobalTextField(
                         fieldName: 'Phone Number',
@@ -165,10 +169,11 @@ class RegisterScreenView
                       Text(
                         "Password",
                         style: TextStyle(
-                            fontSize: fontSized(context, 80),
-                            color: AppColors.black,
-                            fontWeight: FontWeight.w200,
-                            fontFamily: "Inter"),
+                          fontSize: fontSized(context, 80),
+                          color: AppColors.black,
+                          fontWeight: FontWeight.w200,
+                          fontFamily: "Inter",
+                        ),
                       ),
                       GlobalTextField(
                         fieldName: 'Password',
@@ -199,44 +204,52 @@ class RegisterScreenView
                         child: Text.rich(
                           TextSpan(
                             style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontFamily: "Mulish",
-                                color: AppColors.black,
-                                fontSize: fontSized(context, 65)),
+                              fontWeight: FontWeight.w500,
+                              fontFamily: "Mulish",
+                              color: AppColors.black,
+                              fontSize: fontSized(context, 65),
+                            ),
                             text: "I Agree to the ",
                             children: <TextSpan>[
                               TextSpan(
                                 text: "Terms & Conditions",
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontFamily: "Mulish",
-                                    color: AppColors.primary,
-                                    fontSize: fontSized(context, 65)),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    controller.urlString(
-                                        "https://ginilog.com/Home/TermsOfService");
-                                  },
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: "Mulish",
+                                  color: AppColors.primary,
+                                  fontSize: fontSized(context, 65),
+                                ),
+                                recognizer:
+                                    TapGestureRecognizer()
+                                      ..onTap = () {
+                                        controller.urlString(
+                                          "https://ginilog.com/Home/TermsOfService",
+                                        );
+                                      },
                               ),
                               TextSpan(
                                 text: " & ",
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontFamily: "Mulish",
-                                    fontSize: fontSized(context, 65)),
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: "Mulish",
+                                  fontSize: fontSized(context, 65),
+                                ),
                               ),
                               TextSpan(
                                 text: "Privacy Policy",
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontFamily: "Mulish",
-                                    color: AppColors.primary,
-                                    fontSize: fontSized(context, 65)),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    controller.urlString(
-                                        "https://ginilog.com/Home/Privacy");
-                                  },
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: "Mulish",
+                                  color: AppColors.primary,
+                                  fontSize: fontSized(context, 65),
+                                ),
+                                recognizer:
+                                    TapGestureRecognizer()
+                                      ..onTap = () {
+                                        controller.urlString(
+                                          "https://ginilog.com/Home/Privacy",
+                                        );
+                                      },
                               ),
                             ],
                           ),
@@ -250,36 +263,53 @@ class RegisterScreenView
                           controller.isFirstNameChanged.isEmpty ||
                           controller.isLastNameChanged.isEmpty ||
                           controller.isChecked == false
-                      ? appButton("Sign Up", getScreenWidth(context), () {},
-                          AppColors.grey, controller.isLoading)
-                      : appButton("Sign Up", getScreenWidth(context), () {
+                      ? AppButton(
+                        text: "Sign Up",
+                        onPressed: () {},
+                        widthPercent: 100,
+                        heightPercent: 6,
+                        fontSize: 35,
+                        btnColor: AppColors.grey,
+                        isLoading: controller.isLoading,
+                      )
+                      : AppButton(
+                        text: "Sign Up",
+                        onPressed: () {
                           controller.userRegister();
-                        }, AppColors.primary, controller.isLoading),
+                        },
+                        widthPercent: 100,
+                        heightPercent: 6,
+                        fontSize: 35,
+                        btnColor: AppColors.primary,
+                        isLoading: controller.isLoading,
+                      ),
                   addVerticalSpacing(context, 5),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const AppText(
-                          isBody: true,
-                          text: "Already have an account? ",
-                          textAlign: TextAlign.center,
-                          fontSize: 55,
-                          color: AppColors.black,
-                          fontStyle: FontStyle.normal,
-                          fontWeight: FontWeight.w500),
+                        isBody: true,
+                        text: "Already have an account? ",
+                        textAlign: TextAlign.center,
+                        fontSize: 55,
+                        color: AppColors.black,
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.w500,
+                      ),
                       GestureDetector(
                         onTap: () {
                           navigateToRoute(context, const LoginScreens());
                         },
                         child: const AppText(
-                            isBody: false,
-                            text: "Sign In",
-                            textAlign: TextAlign.center,
-                            fontSize: 78,
-                            color: AppColors.blue,
-                            fontStyle: FontStyle.normal,
-                            fontWeight: FontWeight.w700),
-                      )
+                          isBody: false,
+                          text: "Sign In",
+                          textAlign: TextAlign.center,
+                          fontSize: 78,
+                          color: AppColors.blue,
+                          fontStyle: FontStyle.normal,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ],
                   ),
                   addVerticalSpacing(context, 5),
@@ -292,20 +322,17 @@ class RegisterScreenView
                           thickness: 1,
                         ),
                       ),
-                      SizedBox(
-                        width: 10,
-                      ),
+                      SizedBox(width: 10),
                       AppText(
-                          isBody: true,
-                          text: "Or",
-                          textAlign: TextAlign.center,
-                          fontSize: 30,
-                          color: AppColors.black,
-                          fontStyle: FontStyle.normal,
-                          fontWeight: FontWeight.w600),
-                      SizedBox(
-                        width: 10,
+                        isBody: true,
+                        text: "Or",
+                        textAlign: TextAlign.center,
+                        fontSize: 30,
+                        color: AppColors.black,
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.w600,
                       ),
+                      SizedBox(width: 10),
                       Expanded(
                         child: Divider(
                           color: Color.fromRGBO(218, 218, 218, 1),
@@ -317,34 +344,11 @@ class RegisterScreenView
                   addVerticalSpacing(context, 5),
                   Platform.isIOS
                       ? Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          spacing: 5,
-                          children: [
-                            IconButton(
-                              onPressed: () async {
-                                //   controller.google();
-                              },
-                              icon: SvgPicture.asset(
-                                'assets/svgs/google.svg',
-                                height: 30,
-                                width: 30,
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () async {
-                                //   controller.google();
-                              },
-                              icon: SvgPicture.asset(
-                                'assets/svgs/apple.svg',
-                                height: 30,
-                                width: 30,
-                              ),
-                            ),
-                          ],
-                        )
-                      : Center(
-                          child: IconButton(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        spacing: 5,
+                        children: [
+                          IconButton(
                             onPressed: () async {
                               //   controller.google();
                             },
@@ -354,7 +358,30 @@ class RegisterScreenView
                               width: 30,
                             ),
                           ),
+                          IconButton(
+                            onPressed: () async {
+                              //   controller.google();
+                            },
+                            icon: SvgPicture.asset(
+                              'assets/svgs/apple.svg',
+                              height: 30,
+                              width: 30,
+                            ),
+                          ),
+                        ],
+                      )
+                      : Center(
+                        child: IconButton(
+                          onPressed: () async {
+                            //   controller.google();
+                          },
+                          icon: SvgPicture.asset(
+                            'assets/svgs/google.svg',
+                            height: 30,
+                            width: 30,
+                          ),
                         ),
+                      ),
                   addVerticalSpacing(context, 5),
                 ],
               ),

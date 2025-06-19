@@ -50,12 +50,12 @@ class _LoginPageState extends ConsumerState<ViewAllLogisticsPage> {
 
   List<LogisticResponseModel> getLogisticsByState() {
     return allLogisticss.where((element) {
-      return (element.state!
-                  .toLowerCase()
-                  .contains(widget.state.toLowerCase()) ||
-              element.locality!
-                  .toLowerCase()
-                  .contains(widget.city.toLowerCase())) &&
+      return (element.state!.toLowerCase().contains(
+                widget.state.toLowerCase(),
+              ) ||
+              element.locality!.toLowerCase().contains(
+                widget.city.toLowerCase(),
+              )) &&
           (element.available == true);
     }).toList();
   }
@@ -68,7 +68,8 @@ class _LoginPageState extends ConsumerState<ViewAllLogisticsPage> {
     num dLon = _degreesToRadians(lon2 - lon1);
 
     // Haversine formula
-    num a = sin(dLat / 2) * sin(dLat / 2) +
+    num a =
+        sin(dLat / 2) * sin(dLat / 2) +
         cos(_degreesToRadians(lat1)) *
             cos(_degreesToRadians(lat2)) *
             sin(dLon / 2) *
@@ -84,24 +85,28 @@ class _LoginPageState extends ConsumerState<ViewAllLogisticsPage> {
 
   @override
   Widget build(BuildContext context) {
-    var dataModel = getLogisticsByState().where((element) {
-      num distanceFilter = calculateDistance(
-        widget.latitude,
-        widget.longitude,
-        element.latitude!,
-        element.longitude!,
-      );
-      return distanceFilter <= distance;
-    }).toList();
+    var dataModel =
+        getLogisticsByState().where((element) {
+          num distanceFilter = calculateDistance(
+            widget.latitude,
+            widget.longitude,
+            element.latitude!,
+            element.longitude!,
+          );
+          return distanceFilter <= distance;
+        }).toList();
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: PreferredSize(
-          preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(16)),
-          child: Padding(
-            padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-            child: const GlobalBackButton(
-                backText: "Logistics Companys", showBackButton: true),
-          )),
+        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(16)),
+        child: Padding(
+          padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
+          child: const GlobalBackButton(
+            backText: "Logistics Company",
+            showBackButton: true,
+          ),
+        ),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.only(left: 18.0, right: 18.0),
@@ -109,16 +114,17 @@ class _LoginPageState extends ConsumerState<ViewAllLogisticsPage> {
             children: [
               addVerticalSpacing(context, 20),
               Expanded(
-                child: dataModel.isNotEmpty
-                    ? ListView.builder(
-                        shrinkWrap: true,
-                        scrollDirection: Axis.vertical,
-                        itemCount: dataModel.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          final data3 = dataModel[index];
-                          return Column(
-                            children: [
-                              InkWell(
+                child:
+                    dataModel.isNotEmpty
+                        ? ListView.builder(
+                          shrinkWrap: true,
+                          scrollDirection: Axis.vertical,
+                          itemCount: dataModel.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            final data3 = dataModel[index];
+                            return Column(
+                              children: [
+                                InkWell(
                                   onTap: () {
                                     // navigateToRoute(
                                     //     context,
@@ -139,14 +145,17 @@ class _LoginPageState extends ConsumerState<ViewAllLogisticsPage> {
                                             color: AppColors.grey,
                                             width: 1,
                                           ),
-                                          borderRadius:
-                                              BorderRadius.circular(50),
+                                          borderRadius: BorderRadius.circular(
+                                            50,
+                                          ),
                                           //set border radius to 50% of square height and width
                                           image: DecorationImage(
                                             image: NetworkImage(
-                                                data3.companyLogo.toString()),
-                                            fit: BoxFit
-                                                .contain, //change image fill type
+                                              data3.companyLogo.toString(),
+                                            ),
+                                            fit:
+                                                BoxFit
+                                                    .contain, //change image fill type
                                           ),
                                         ),
                                       ),
@@ -157,67 +166,72 @@ class _LoginPageState extends ConsumerState<ViewAllLogisticsPage> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             AppText(
-                                                isBody: true,
-                                                text: "${data3.companyName}",
-                                                textAlign: TextAlign.start,
-                                                fontSize: 15,
-                                                color: AppColors.black,
-                                                fontStyle: FontStyle.normal,
-                                                maxLines: 1,
-                                                fontWeight: FontWeight.bold),
+                                              isBody: true,
+                                              text: "${data3.companyName}",
+                                              textAlign: TextAlign.start,
+                                              fontSize: 15,
+                                              color: AppColors.black,
+                                              fontStyle: FontStyle.normal,
+                                              maxLines: 1,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                             AppText(
-                                                isBody: true,
-                                                text:
-                                                    "${data3.companyAddress}, ${data3.locality}, ${data3.state}",
-                                                textAlign: TextAlign.start,
-                                                fontSize: 25,
-                                                color: AppColors.black,
-                                                fontStyle: FontStyle.normal,
-                                                fontWeight: FontWeight.w700),
+                                              isBody: true,
+                                              text:
+                                                  "${data3.companyAddress}, ${data3.locality}, ${data3.state}",
+                                              textAlign: TextAlign.start,
+                                              fontSize: 25,
+                                              color: AppColors.black,
+                                              fontStyle: FontStyle.normal,
+                                              fontWeight: FontWeight.w700,
+                                            ),
                                             const AppText(
-                                                isBody: true,
-                                                text: "",
-                                                textAlign: TextAlign.start,
-                                                fontSize: 25,
-                                                color: AppColors.green,
-                                                fontStyle: FontStyle.normal,
-                                                fontWeight: FontWeight.w400),
+                                              isBody: true,
+                                              text: "",
+                                              textAlign: TextAlign.start,
+                                              fontSize: 25,
+                                              color: AppColors.green,
+                                              fontStyle: FontStyle.normal,
+                                              fontWeight: FontWeight.w400,
+                                            ),
                                           ],
                                         ),
                                       ),
                                     ],
-                                  )),
-                              const Divider(
-                                thickness: 0.7,
-                                color: AppColors.grey,
-                              )
-                            ],
-                          );
-                        },
-                      )
-                    : Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Image.asset(
-                              "assets/images/empty.png",
-                              width: 100,
-                              height: 100,
-                            ),
-                            addVerticalSpacing(context, 50),
-                            const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: AppText(
+                                  ),
+                                ),
+                                const Divider(
+                                  thickness: 0.7,
+                                  color: AppColors.grey,
+                                ),
+                              ],
+                            );
+                          },
+                        )
+                        : Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Image.asset(
+                                "assets/images/empty.png",
+                                width: 100,
+                                height: 100,
+                              ),
+                              addVerticalSpacing(context, 50),
+                              const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: AppText(
                                   isBody: false,
                                   text: "Coming soon!",
                                   textAlign: TextAlign.start,
                                   fontSize: 25,
                                   color: AppColors.black,
                                   fontStyle: FontStyle.normal,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                            const AppText(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const AppText(
                                 isBody: true,
                                 text:
                                     "There is no available Logistics Company in Your location",
@@ -225,10 +239,11 @@ class _LoginPageState extends ConsumerState<ViewAllLogisticsPage> {
                                 fontSize: 20,
                                 color: AppColors.black,
                                 fontStyle: FontStyle.normal,
-                                fontWeight: FontWeight.normal),
-                          ],
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
               ),
             ],
           ),

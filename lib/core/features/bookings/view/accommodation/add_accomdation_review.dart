@@ -9,8 +9,12 @@ import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
 import 'package:ginilog_customer_app/core/components/widgets/input.dart';
 import 'package:ginilog_customer_app/core/features/bookings/controller/add_review.dart';
 
-class AddAccomodationReviewScreenView extends StatelessView<
-    AddAccomodationReviewScreen, AddAccomodationReviewScreenController> {
+class AddAccomodationReviewScreenView
+    extends
+        StatelessView<
+          AddAccomodationReviewScreen,
+          AddAccomodationReviewScreenController
+        > {
   const AddAccomodationReviewScreenView(super.state, {super.key});
 
   @override
@@ -18,11 +22,12 @@ class AddAccomodationReviewScreenView extends StatelessView<
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: PreferredSize(
-          preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(16)),
-          child: Padding(
-            padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-            child: const GlobalBackButton(backText: "", showBackButton: true),
-          )),
+        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(16)),
+        child: Padding(
+          padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
+          child: const GlobalBackButton(backText: "", showBackButton: true),
+        ),
+      ),
       body: Container(
         height: getScreenHeight(context),
         width: getScreenWidth(context),
@@ -31,11 +36,7 @@ class AddAccomodationReviewScreenView extends StatelessView<
           child: Form(
             key: controller.formKey,
             child: Padding(
-              padding: const EdgeInsets.only(
-                left: 14.0,
-                right: 14.0,
-                top: 10,
-              ),
+              padding: const EdgeInsets.only(left: 14.0, right: 14.0, top: 10),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
@@ -46,10 +47,11 @@ class AddAccomodationReviewScreenView extends StatelessView<
                       Text(
                         "Review Rider",
                         style: TextStyle(
-                            fontSize: fontSized(context, 7),
-                            color: AppColors.black,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: "Montserrat"),
+                          fontSize: fontSized(context, 7),
+                          color: AppColors.black,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: "Montserrat",
+                        ),
                       ),
                     ],
                   ),
@@ -58,31 +60,36 @@ class AddAccomodationReviewScreenView extends StatelessView<
                       radius: 60,
                       backgroundColor: Colors.grey,
                       child: CircleAvatar(
-                          backgroundColor: Colors.white,
-                          radius: 57,
-                          backgroundImage: controller.widget.accomodationLogo
-                                  .toString()
-                                  .isEmpty
-                              ? const NetworkImage(
-                                  "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Microsoft_Account.svg/512px-Microsoft_Account.svg.png?20170218203212")
-                              // ignore: unnecessary_null_comparison
-                              : controller.widget.accomodationLogo == null
-                                  ? const NetworkImage(
-                                      "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Microsoft_Account.svg/512px-Microsoft_Account.svg.png?20170218203212")
-                                  : NetworkImage(controller
-                                      .widget.accomodationLogo
-                                      .toString())),
+                        backgroundColor: Colors.white,
+                        radius: 57,
+                        backgroundImage:
+                            controller.widget.accomodationLogo
+                                    .toString()
+                                    .isEmpty
+                                ? const NetworkImage(
+                                  "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Microsoft_Account.svg/512px-Microsoft_Account.svg.png?20170218203212",
+                                )
+                                // ignore: unnecessary_null_comparison
+                                : controller.widget.accomodationLogo == null
+                                ? const NetworkImage(
+                                  "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Microsoft_Account.svg/512px-Microsoft_Account.svg.png?20170218203212",
+                                )
+                                : NetworkImage(
+                                  controller.widget.accomodationLogo.toString(),
+                                ),
+                      ),
                     ),
                   ),
                   Center(
                     child: AppText(
-                        isBody: true,
-                        text: controller.widget.accomodationName.toString(),
-                        textAlign: TextAlign.start,
-                        fontSize: 19,
-                        color: AppColors.black,
-                        fontStyle: FontStyle.normal,
-                        fontWeight: FontWeight.bold),
+                      isBody: true,
+                      text: controller.widget.accomodationName.toString(),
+                      textAlign: TextAlign.start,
+                      fontSize: 19,
+                      color: AppColors.black,
+                      fontStyle: FontStyle.normal,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,8 +101,9 @@ class AddAccomodationReviewScreenView extends StatelessView<
                           halfFilledIcon: Icons.star_half,
                           filledIcon: Icons.star,
                           emptyIcon: Icons.star_border,
-                          onRatingChanged: (value) =>
-                              controller.reviewControllerOnChanged(value),
+                          onRatingChanged:
+                              (value) =>
+                                  controller.reviewControllerOnChanged(value),
                           initialRating: 0,
                           alignment: Alignment.center,
                           size: 50,
@@ -105,10 +113,11 @@ class AddAccomodationReviewScreenView extends StatelessView<
                       Text(
                         "Write Review",
                         style: TextStyle(
-                            fontSize: fontSized(context, 12),
-                            color: AppColors.black,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: "Montserrat"),
+                          fontSize: fontSized(context, 12),
+                          color: AppColors.black,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: "Montserrat",
+                        ),
                       ),
                       GlobalTextField(
                         fieldName: 'Write a Review',
@@ -123,9 +132,16 @@ class AddAccomodationReviewScreenView extends StatelessView<
                         },
                       ),
                       addVerticalSpacing(context, 10),
-                      appButton("Add Review", getScreenWidth(context), () {
-                        controller.userRegister();
-                      }, AppColors.primary, controller.isLoading),
+                      AppButton(
+                        text: "Add Review",
+                        onPressed: () {
+                          controller.userRegister();
+                        },
+                        widthPercent: 70,
+                        heightPercent: 5,
+                        btnColor: AppColors.primary,
+                        isLoading: controller.isLoading,
+                      ),
                       addVerticalSpacing(context, 20),
                     ],
                   ),

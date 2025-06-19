@@ -4,14 +4,12 @@ import 'package:ginilog_customer_app/core/components/utils/app_buttons.dart';
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
 import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
+import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/features/home/controller/place_order.dart';
 
 class SendParcelTypeBottomSheet extends ConsumerStatefulWidget {
-  const SendParcelTypeBottomSheet({
-    super.key,
-    required this.phoneNumber,
-  });
+  const SendParcelTypeBottomSheet({super.key, required this.phoneNumber});
   final String phoneNumber;
   @override
   _SendParcelTypeBottomSheetState createState() =>
@@ -25,25 +23,29 @@ class _SendParcelTypeBottomSheetState
 
   final List<SendParcelMethod> sendParcelMethods = [
     SendParcelMethod(
-        image: "assets/images/rider_icon.png",
-        sendParcelMethod: 'Same State',
-        subtitle: 'Send Parcel within the same state',
-        index: 0),
+      image: "assets/images/rider_icon.png",
+      sendParcelMethod: 'Same State',
+      subtitle: 'Send Parcel within the same state',
+      index: 0,
+    ),
     SendParcelMethod(
-        image: "assets/images/truck_icon.png",
-        sendParcelMethod: 'Inter state',
-        subtitle: 'Send Parcel outside your current state',
-        index: 1),
+      image: "assets/images/truck_icon.png",
+      sendParcelMethod: 'Inter state',
+      subtitle: 'Send Parcel outside your current state',
+      index: 1,
+    ),
     SendParcelMethod(
-        image: "assets/images/chatter_icon.png",
-        sendParcelMethod: 'Charter',
-        subtitle: 'Charter a vehicle to deliver your parcel',
-        index: 2),
+      image: "assets/images/chatter_icon.png",
+      sendParcelMethod: 'Charter',
+      subtitle: 'Charter a vehicle to deliver your parcel',
+      index: 2,
+    ),
     SendParcelMethod(
-        image: "assets/images/flight_icon.png",
-        sendParcelMethod: 'International',
-        subtitle: 'Send Parcel outside the country',
-        index: 3),
+      image: "assets/images/flight_icon.png",
+      sendParcelMethod: 'International',
+      subtitle: 'Send Parcel outside the country',
+      index: 3,
+    ),
   ];
 
   @override
@@ -64,21 +66,25 @@ class _SendParcelTypeBottomSheetState
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               AppText(
-                  isBody: true,
-                  text: "Choose the Parcel Type",
-                  textAlign: TextAlign.start,
-                  fontSize: 30,
-                  color: AppColors.black,
-                  fontStyle: FontStyle.normal,
-                  fontWeight: FontWeight.w800),
+                isBody: true,
+                text: "Choose the Parcel Type",
+                textAlign: TextAlign.start,
+                fontSize: 30,
+                color: AppColors.black,
+                fontStyle: FontStyle.normal,
+                fontWeight: FontWeight.w800,
+              ),
               addHorizontalSpacing(10),
               const Divider(),
               addHorizontalSpacing(10),
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: const SizedBox(
-                    height: 30, width: 30, child: Icon(Icons.close)),
-              )
+                  height: 30,
+                  width: 30,
+                  child: Icon(Icons.close),
+                ),
+              ),
             ],
           ),
           addVerticalSpacing(context, 1.2),
@@ -91,8 +97,9 @@ class _SendParcelTypeBottomSheetState
             child: GridView.builder(
               shrinkWrap: true,
               itemCount: sendParcelMethods.length,
-              padding:
-                  EdgeInsets.symmetric(vertical: getScreenWidth(context) / 200),
+              padding: EdgeInsets.symmetric(
+                vertical: getScreenWidth(context) / 200,
+              ),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2, // Adjust to fit your design
                 crossAxisSpacing: getScreenWidth(context) / 100,
@@ -110,9 +117,14 @@ class _SendParcelTypeBottomSheetState
                       selectedSendParcelMethod = method.sendParcelMethod;
                     });
                   },
-                  child: SendParcelMethodWidget(
-                    method: method,
-                    isSelected: isSelected,
+                  child: BoxSizer(
+                    widthPercent: 45, // responsive width for 2-column grid
+                    heightPercent: 23, // adjust for content height
+                    safeArea: true,
+                    child: SendParcelMethodWidget(
+                      method: method,
+                      isSelected: isSelected,
+                    ),
                   ),
                 );
               },
@@ -126,22 +138,43 @@ class _SendParcelTypeBottomSheetState
             spacing: 5,
             children: [
               Expanded(
-                child: appButton("Cancel", getScreenWidth(context) / 2.0,
-                    () => Navigator.pop(context), AppColors.grey, false),
+                child: AppButton(
+                  text: "Cancel",
+                  onPressed: () => Navigator.pop(context),
+                  widthPercent: 70,
+                  heightPercent: 6,
+                  btnColor: AppColors.grey,
+                  isLoading: false,
+                ),
               ),
               Expanded(
-                child: selectedSendParcelMethod.isEmpty
-                    ? appButton("Continue", getScreenWidth(context) / 2.0,
-                        () {}, AppColors.grey, false)
-                    : appButton("Continue", getScreenWidth(context), () {
-                        Navigator.pop(context);
-                        navigateToRoute(
-                            context,
-                            PlaceOrderScreen(
-                              shippingType: selectedSendParcelMethod,
-                              userPhone: widget.phoneNumber.toString(),
-                            ));
-                      }, AppColors.primary, false),
+                child:
+                    selectedSendParcelMethod.isEmpty
+                        ? AppButton(
+                          text: "Continue",
+                          onPressed: () {},
+                          widthPercent: 70,
+                          heightPercent: 6,
+                          btnColor: AppColors.grey,
+                          isLoading: false,
+                        )
+                        : AppButton(
+                          text: "Continue",
+                          onPressed: () {
+                            Navigator.pop(context);
+                            navigateToRoute(
+                              context,
+                              PlaceOrderScreen(
+                                shippingType: selectedSendParcelMethod,
+                                userPhone: widget.phoneNumber.toString(),
+                              ),
+                            );
+                          },
+                          widthPercent: 70,
+                          heightPercent: 6,
+                          btnColor: AppColors.primary,
+                          isLoading: false,
+                        ),
               ),
             ],
           ),
@@ -168,9 +201,10 @@ class SendParcelMethodWidget extends StatelessWidget {
     return Container(
       padding: EdgeInsets.only(left: 4, right: 4),
       decoration: BoxDecoration(
-        color: isSelected
-            ? AppColors.primary.withValues(alpha: 1.3)
-            : Colors.white,
+        color:
+            isSelected
+                ? AppColors.primary.withValues(alpha: 1.3)
+                : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isSelected ? AppColors.primary : AppColors.grey,
@@ -187,21 +221,23 @@ class SendParcelMethodWidget extends StatelessWidget {
             width: getScreenWidth(context) / 10,
           ),
           AppText(
-              isBody: false,
-              text: method.sendParcelMethod,
-              textAlign: TextAlign.center,
-              fontSize: 35,
-              color: isSelected ? AppColors.white : AppColors.black,
-              fontStyle: FontStyle.normal,
-              fontWeight: FontWeight.bold),
+            isBody: false,
+            text: method.sendParcelMethod,
+            textAlign: TextAlign.center,
+            fontSize: 35,
+            color: isSelected ? AppColors.white : AppColors.black,
+            fontStyle: FontStyle.normal,
+            fontWeight: FontWeight.bold,
+          ),
           AppText(
-              isBody: true,
-              text: method.subtitle,
-              textAlign: TextAlign.center,
-              fontSize: 35,
-              color: isSelected ? AppColors.white : AppColors.black,
-              fontStyle: FontStyle.normal,
-              fontWeight: FontWeight.w400),
+            isBody: true,
+            text: method.subtitle,
+            textAlign: TextAlign.center,
+            fontSize: 35,
+            color: isSelected ? AppColors.white : AppColors.black,
+            fontStyle: FontStyle.normal,
+            fontWeight: FontWeight.w400,
+          ),
         ],
       ),
     );

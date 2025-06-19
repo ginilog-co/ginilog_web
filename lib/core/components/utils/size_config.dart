@@ -17,8 +17,11 @@ class SizeConfig {
   static late double _heightMultiplier;
   static late double _widthMultiplier;
 
-  void init(BuildContext context, BoxConstraints constraints,
-      Orientation orientation) {
+  void init(
+    BuildContext context,
+    BoxConstraints constraints,
+    Orientation orientation,
+  ) {
     _mediaQueryData = MediaQuery.of(context);
     screenWidth = _mediaQueryData!.size.width;
     screenHeight = _mediaQueryData!.size.height;
@@ -76,4 +79,80 @@ extension WidgetHeight on num {
 
 extension WidgetWidth on num {
   double get widthAdjusted => SizeConfig.widthAdjusted(toDouble());
+}
+
+class MainSizeConfig {
+  static late MediaQueryData _mediaQueryData;
+  static late double screenWidth;
+  static late double screenHeight;
+
+  static void init(BuildContext context) {
+    _mediaQueryData = MediaQuery.of(context);
+    screenWidth = _mediaQueryData.size.width;
+    screenHeight = _mediaQueryData.size.height;
+  }
+
+  static double height(double percentage, {bool safeArea = false}) {
+    if (safeArea) {
+      final padding = _mediaQueryData.padding;
+      final safeHeight = screenHeight - padding.top - padding.bottom;
+      return (safeHeight / 100) * percentage;
+    }
+    return (screenHeight / 100) * percentage;
+  }
+
+  static double width(double percentage, {bool safeArea = false}) {
+    if (safeArea) {
+      final padding = _mediaQueryData.padding;
+      final safeWidth = screenWidth - padding.left - padding.right;
+      return (safeWidth / 100) * percentage;
+    }
+    return (screenWidth / 100) * percentage;
+  }
+}
+
+class BoxSizer extends StatelessWidget {
+  final double? widthPercent;
+  final double? heightPercent;
+  final bool safeArea;
+  final Widget child;
+
+  const BoxSizer({
+    super.key,
+    this.widthPercent,
+    this.heightPercent,
+    this.safeArea = false,
+    required this.child,
+  });
+
+  double _getWidth(BuildContext context) {
+    double width = MediaQuery.of(context).size.width;
+    if (safeArea) {
+      final padding = MediaQuery.of(context).padding;
+      width -= (padding.left + padding.right);
+    }
+    return widthPercent != null
+        ? (width * (widthPercent! / 100))
+        : double.infinity;
+  }
+
+  double _getHeight(BuildContext context) {
+    double height = MediaQuery.of(context).size.height;
+    if (safeArea) {
+      final padding = MediaQuery.of(context).padding;
+      height -= (padding.top + padding.bottom);
+    }
+    return heightPercent != null
+        ? (height * (heightPercent! / 100))
+        : double.infinity;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: _getWidth(context),
+      height: _getHeight(context),
+      child: child,
+    );
+  }
 }

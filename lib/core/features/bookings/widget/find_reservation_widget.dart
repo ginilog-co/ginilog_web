@@ -1,3 +1,4 @@
+import 'package:ginilog_customer_app/core/components/utils/app_buttons.dart';
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
 import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/money_formatter.dart';
@@ -10,8 +11,10 @@ import 'package:ginilog_customer_app/core/features/bookings/state/booking_state.
 
 class FindReservationWidget extends ConsumerStatefulWidget {
   final AccomodationReservationResponseModel accomodationReservation;
-  const FindReservationWidget(
-      {super.key, required this.accomodationReservation});
+  const FindReservationWidget({
+    super.key,
+    required this.accomodationReservation,
+  });
 
   @override
   ConsumerState<FindReservationWidget> createState() =>
@@ -25,8 +28,10 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
     super.initState();
     final bookings = ref.read(bookingProvider.notifier);
     bookings.getAllAccomodationData();
-    accomodationData = bookings
-        .fetchAccomodationById(widget.accomodationReservation.accomodationId!)!;
+    accomodationData =
+        bookings.fetchAccomodationById(
+          widget.accomodationReservation.accomodationId!,
+        )!;
   }
 
   @override
@@ -37,16 +42,17 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
       child: GestureDetector(
         onTap: () {
           navigateToRoute(
-              context,
-              BookReservationScreen(
-                reservationId: widget.accomodationReservation.id.toString(),
-                bookingPrice: widget.accomodationReservation.roomPrice!,
-                maximumNoOfGuest:
-                    widget.accomodationReservation.maximumNoOfGuest!.toInt(),
-                reservationName:
-                    widget.accomodationReservation.accomodationName.toString(),
-                reservationAddress: accomodationData.location.toString(),
-              ));
+            context,
+            BookReservationScreen(
+              reservationId: widget.accomodationReservation.id.toString(),
+              bookingPrice: widget.accomodationReservation.roomPrice!,
+              maximumNoOfGuest:
+                  widget.accomodationReservation.maximumNoOfGuest!.toInt(),
+              reservationName:
+                  widget.accomodationReservation.accomodationName.toString(),
+              reservationAddress: accomodationData.location.toString(),
+            ),
+          );
         },
         child: Card(
           elevation: 4,
@@ -54,9 +60,7 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
             width: getScreenWidth(context),
             decoration: BoxDecoration(
               color: AppColors.white,
-              borderRadius: const BorderRadius.all(
-                Radius.circular(10),
-              ),
+              borderRadius: const BorderRadius.all(Radius.circular(10)),
             ),
             child: Column(
               spacing: 1,
@@ -68,29 +72,29 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                   child: Row(
                     spacing: 5,
                     children: [
-                      SvgPicture.asset(
-                        'assets/svgs/time_clock.svg',
-                        width: 20,
-                      ),
+                      SvgPicture.asset('assets/svgs/time_clock.svg', width: 20),
                       AppText(
-                          isBody: true,
-                          text: "Check In: ${accomodationData.checkInTime}",
-                          textAlign: TextAlign.start,
-                          fontSize: 35,
-                          color: AppColors.black,
-                          fontStyle: FontStyle.normal,
-                          fontWeight: FontWeight.w500),
+                        isBody: true,
+                        text: "Check In: ${accomodationData.checkInTime}",
+                        textAlign: TextAlign.start,
+                        fontSize: 35,
+                        color: AppColors.black,
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.w500,
+                      ),
                       Spacer(),
                       AppText(
-                          isBody: true,
-                          text: data3.isBooked == true
-                              ? "Not Available"
-                              : "Available",
-                          textAlign: TextAlign.start,
-                          fontSize: 35,
-                          color: AppColors.black,
-                          fontStyle: FontStyle.normal,
-                          fontWeight: FontWeight.w500),
+                        isBody: true,
+                        text:
+                            data3.isBooked == true
+                                ? "Not Available"
+                                : "Available",
+                        textAlign: TextAlign.start,
+                        fontSize: 35,
+                        color: AppColors.black,
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ],
                   ),
                 ),
@@ -106,10 +110,12 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                         height: 50,
                         width: 50,
                         decoration: BoxDecoration(
-                            borderRadius: BorderRadius.all(Radius.circular(5)),
-                            image: DecorationImage(
-                                fit: BoxFit.fill,
-                                image: NetworkImage(data3.accomodationImage!))),
+                          borderRadius: BorderRadius.all(Radius.circular(5)),
+                          image: DecorationImage(
+                            fit: BoxFit.fill,
+                            image: NetworkImage(data3.accomodationImage!),
+                          ),
+                        ),
                       ),
                       Expanded(
                         child: Column(
@@ -120,22 +126,24 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                             Row(
                               children: [
                                 AppText(
-                                    isBody: false,
-                                    text: "Room: ${data3.roomNumber}",
-                                    textAlign: TextAlign.start,
-                                    fontSize: 35,
-                                    color: AppColors.black,
-                                    fontStyle: FontStyle.normal,
-                                    fontWeight: FontWeight.bold),
+                                  isBody: false,
+                                  text: "Room: ${data3.roomNumber}",
+                                  textAlign: TextAlign.start,
+                                  fontSize: 35,
+                                  color: AppColors.black,
+                                  fontStyle: FontStyle.normal,
+                                  fontWeight: FontWeight.bold,
+                                ),
                                 Spacer(),
                                 AppText(
-                                    isBody: false,
-                                    text: "${data3.roomType}",
-                                    textAlign: TextAlign.start,
-                                    fontSize: 35,
-                                    color: AppColors.green,
-                                    fontStyle: FontStyle.normal,
-                                    fontWeight: FontWeight.bold),
+                                  isBody: false,
+                                  text: "${data3.roomType}",
+                                  textAlign: TextAlign.start,
+                                  fontSize: 35,
+                                  color: AppColors.green,
+                                  fontStyle: FontStyle.normal,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ],
                             ),
                           ],
@@ -150,58 +158,45 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                   child: Row(
                     children: [
                       AppText(
-                          isBody: false,
-                          text:
-                              moneyFormat(context, data3.roomPrice!.toDouble()),
-                          textAlign: TextAlign.start,
-                          fontSize: 35,
-                          color: AppColors.black,
-                          fontStyle: FontStyle.normal,
-                          fontWeight: FontWeight.bold),
+                        isBody: false,
+                        text: moneyFormat(context, data3.roomPrice!.toDouble()),
+                        textAlign: TextAlign.start,
+                        fontSize: 35,
+                        color: AppColors.black,
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.bold,
+                      ),
                       Spacer(),
-                      GestureDetector(
-                        onTap: () async {
+                      AppButton(
+                        text: "Book Now",
+                        onPressed: () {
                           navigateToRoute(
-                              context,
-                              BookReservationScreen(
-                                reservationId: widget.accomodationReservation.id
-                                    .toString(),
-                                bookingPrice:
-                                    widget.accomodationReservation.roomPrice!,
-                                maximumNoOfGuest: widget
-                                    .accomodationReservation.maximumNoOfGuest!
-                                    .toInt(),
-                                reservationName: widget
-                                    .accomodationReservation.accomodationName
-                                    .toString(),
-                                reservationAddress:
-                                    accomodationData.location.toString(),
-                              ));
+                            context,
+                            BookReservationScreen(
+                              reservationId:
+                                  widget.accomodationReservation.id.toString(),
+                              bookingPrice:
+                                  widget.accomodationReservation.roomPrice!,
+                              maximumNoOfGuest:
+                                  widget
+                                      .accomodationReservation
+                                      .maximumNoOfGuest!
+                                      .toInt(),
+                              reservationName:
+                                  widget
+                                      .accomodationReservation
+                                      .accomodationName
+                                      .toString(),
+                              reservationAddress:
+                                  accomodationData.location.toString(),
+                            ),
+                          );
                         },
-                        child: Container(
-                          margin: const EdgeInsets.only(left: 20, right: 20),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(5),
-                            boxShadow: const [
-                              BoxShadow(
-                                  blurRadius: 15.0,
-                                  color: Color.fromRGBO(0, 0, 0, 0.2)),
-                            ],
-                          ),
-                          child: const Padding(
-                            padding: EdgeInsets.only(
-                                left: 25.0, right: 25, top: 10, bottom: 10),
-                            child: AppText(
-                                isBody: true,
-                                text: "Book Now",
-                                textAlign: TextAlign.center,
-                                fontSize: 32,
-                                color: AppColors.white,
-                                fontStyle: FontStyle.normal,
-                                fontWeight: FontWeight.w900),
-                          ),
-                        ),
+                        widthPercent: 25,
+                        heightPercent: 4,
+                        fontSize: 32,
+                        btnColor: AppColors.primary,
+                        isLoading: false,
                       ),
                     ],
                   ),

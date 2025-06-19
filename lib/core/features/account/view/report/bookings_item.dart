@@ -1,3 +1,4 @@
+import 'package:ginilog_customer_app/core/components/utils/app_buttons.dart';
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
 import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/money_formatter.dart';
@@ -123,40 +124,15 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                               ],
                             ),
                           ),
-                          Container(
-                            margin: const EdgeInsets.only(
-                              left: 40,
-                              right: 5,
-                              top: 10,
-                              bottom: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(15),
-                              boxShadow: const [
-                                BoxShadow(
-                                  blurRadius: 15.0,
-                                  color: Color.fromRGBO(0, 0, 0, 0.2),
-                                ),
-                              ],
-                            ),
-                            child: Padding(
-                              padding: EdgeInsets.only(
-                                left: 10,
-                                right: 10,
-                                top: 10,
-                                bottom: 10,
-                              ),
-                              child: AppText(
-                                isBody: true,
-                                text: "View",
-                                textAlign: TextAlign.center,
-                                fontSize: 32,
-                                color: AppColors.white,
-                                fontStyle: FontStyle.normal,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
+                          AppButton(
+                            text: "View",
+                            onPressed: () {},
+                            widthPercent: 15,
+                            heightPercent: 4,
+                            borderRadius: 20,
+                            fontSize: 35,
+                            btnColor: AppColors.primary,
+                            isLoading: false,
                           ),
                         ],
                       ),

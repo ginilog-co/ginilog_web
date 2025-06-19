@@ -43,33 +43,36 @@ class LoginScreensView
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       const AppText(
-                          isBody: false,
-                          text: "Welcome Back!",
-                          textAlign: TextAlign.start,
-                          fontSize: 100,
-                          color: AppColors.black,
-                          fontStyle: FontStyle.normal,
-                          fontWeight: FontWeight.bold),
+                        isBody: false,
+                        text: "Welcome Back!",
+                        textAlign: TextAlign.start,
+                        fontSize: 100,
+                        color: AppColors.black,
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.bold,
+                      ),
                       addVerticalSpacing(context, 1),
                       const AppText(
-                          isBody: true,
-                          text: "Fill in your email and password to continue",
-                          textAlign: TextAlign.start,
-                          fontSize: 80,
-                          color: AppColors.black,
-                          fontStyle: FontStyle.normal,
-                          fontWeight: FontWeight.w500),
+                        isBody: true,
+                        text: "Fill in your email and password to continue",
+                        textAlign: TextAlign.start,
+                        fontSize: 80,
+                        color: AppColors.black,
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ],
                   ),
                   addVerticalSpacing(context, 15),
                   const AppText(
-                      isBody: true,
-                      text: "Email",
-                      textAlign: TextAlign.start,
-                      fontSize: 80,
-                      color: AppColors.black,
-                      fontStyle: FontStyle.normal,
-                      fontWeight: FontWeight.w500),
+                    isBody: true,
+                    text: "Email",
+                    textAlign: TextAlign.start,
+                    fontSize: 80,
+                    color: AppColors.black,
+                    fontStyle: FontStyle.normal,
+                    fontWeight: FontWeight.w500,
+                  ),
                   GlobalTextField(
                     fieldName: 'Email',
                     keyBoardType: TextInputType.emailAddress,
@@ -81,13 +84,14 @@ class LoginScreensView
                   ),
                   addVerticalSpacing(context, 5),
                   const AppText(
-                      isBody: true,
-                      text: "Password",
-                      textAlign: TextAlign.start,
-                      fontSize: 80,
-                      color: AppColors.black,
-                      fontStyle: FontStyle.normal,
-                      fontWeight: FontWeight.w500),
+                    isBody: true,
+                    text: "Password",
+                    textAlign: TextAlign.start,
+                    fontSize: 80,
+                    color: AppColors.black,
+                    fontStyle: FontStyle.normal,
+                    fontWeight: FontWeight.w500,
+                  ),
                   GlobalTextField(
                     fieldName: 'Password',
                     obscureText: true,
@@ -106,17 +110,20 @@ class LoginScreensView
                       GestureDetector(
                         onTap: () {
                           navigateToRoute(
-                              context, const ForgotPasswordScreen());
+                            context,
+                            const ForgotPasswordScreen(),
+                          );
                         },
                         child: const AppText(
-                            isBody: true,
-                            text: "Forgot Password?",
-                            textAlign: TextAlign.end,
-                            fontSize: 50,
-                            color: AppColors.blue,
-                            fontStyle: FontStyle.normal,
-                            fontWeight: FontWeight.w700),
-                      )
+                          isBody: true,
+                          text: "Forgot Password?",
+                          textAlign: TextAlign.end,
+                          fontSize: 50,
+                          color: AppColors.blue,
+                          fontStyle: FontStyle.normal,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ],
                   ),
                   addVerticalSpacing(context, 4),
@@ -136,44 +143,52 @@ class LoginScreensView
                         child: Text.rich(
                           TextSpan(
                             style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontFamily: "Mulish",
-                                color: AppColors.black,
-                                fontSize: fontSized(context, 45)),
+                              fontWeight: FontWeight.w500,
+                              fontFamily: "Mulish",
+                              color: AppColors.black,
+                              fontSize: fontSized(context, 45),
+                            ),
                             text: "I Agree to the ",
                             children: <TextSpan>[
                               TextSpan(
                                 text: "Terms & Conditions",
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontFamily: "Mulish",
-                                    color: AppColors.primary,
-                                    fontSize: fontSized(context, 45)),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    controller.urlString(
-                                        "https://ginilog.com/Home/TermsOfService");
-                                  },
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: "Mulish",
+                                  color: AppColors.primary,
+                                  fontSize: fontSized(context, 45),
+                                ),
+                                recognizer:
+                                    TapGestureRecognizer()
+                                      ..onTap = () {
+                                        controller.urlString(
+                                          "https://ginilog.com/Home/TermsOfService",
+                                        );
+                                      },
                               ),
                               TextSpan(
                                 text: " & ",
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontFamily: "Mulish",
-                                    fontSize: fontSized(context, 45)),
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: "Mulish",
+                                  fontSize: fontSized(context, 45),
+                                ),
                               ),
                               TextSpan(
                                 text: "Privacy Policy",
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontFamily: "Mulish",
-                                    color: AppColors.primary,
-                                    fontSize: fontSized(context, 45)),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    controller.urlString(
-                                        "https://ginilog.com/Home/Privacy");
-                                  },
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: "Mulish",
+                                  color: AppColors.primary,
+                                  fontSize: fontSized(context, 45),
+                                ),
+                                recognizer:
+                                    TapGestureRecognizer()
+                                      ..onTap = () {
+                                        controller.urlString(
+                                          "https://ginilog.com/Home/Privacy",
+                                        );
+                                      },
                               ),
                             ],
                           ),
@@ -185,36 +200,51 @@ class LoginScreensView
                   controller.isEmailChanged.isEmpty ||
                           controller.isPasswordChanged.isEmpty ||
                           controller.isChecked == false
-                      ? appButton("LOG IN", getScreenWidth(context), () {},
-                          AppColors.grey, controller.isLoading)
-                      : appButton("LOG IN", getScreenWidth(context), () {
+                      ? AppButton(
+                        text: "LOG IN",
+                        onPressed: () {},
+                        widthPercent: 100,
+                        heightPercent: 6,
+                        btnColor: AppColors.grey,
+                        isLoading: controller.isLoading,
+                      )
+                      : AppButton(
+                        text: "LOG IN",
+                        onPressed: () {
                           controller.loginUser();
-                        }, AppColors.primary, controller.isLoading),
+                        },
+                        widthPercent: 100,
+                        heightPercent: 6,
+                        btnColor: AppColors.primary,
+                        isLoading: controller.isLoading,
+                      ),
                   addVerticalSpacing(context, 5),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const AppText(
-                          isBody: true,
-                          text: "Don't have an account? ",
-                          textAlign: TextAlign.center,
-                          fontSize: 55,
-                          color: AppColors.black,
-                          fontStyle: FontStyle.normal,
-                          fontWeight: FontWeight.w500),
+                        isBody: true,
+                        text: "Don't have an account? ",
+                        textAlign: TextAlign.center,
+                        fontSize: 55,
+                        color: AppColors.black,
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.w500,
+                      ),
                       GestureDetector(
                         onTap: () {
                           navigateToRoute(context, const RegisterScreen());
                         },
                         child: const AppText(
-                            isBody: false,
-                            text: "Sign Up",
-                            textAlign: TextAlign.center,
-                            fontSize: 78,
-                            color: AppColors.blue,
-                            fontStyle: FontStyle.normal,
-                            fontWeight: FontWeight.w700),
-                      )
+                          isBody: false,
+                          text: "Sign Up",
+                          textAlign: TextAlign.center,
+                          fontSize: 78,
+                          color: AppColors.blue,
+                          fontStyle: FontStyle.normal,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ],
                   ),
                   addVerticalSpacing(context, 5),
@@ -227,20 +257,17 @@ class LoginScreensView
                           thickness: 1,
                         ),
                       ),
-                      SizedBox(
-                        width: 10,
-                      ),
+                      SizedBox(width: 10),
                       AppText(
-                          isBody: true,
-                          text: "Or",
-                          textAlign: TextAlign.center,
-                          fontSize: 30,
-                          color: AppColors.black,
-                          fontStyle: FontStyle.normal,
-                          fontWeight: FontWeight.w600),
-                      SizedBox(
-                        width: 10,
+                        isBody: true,
+                        text: "Or",
+                        textAlign: TextAlign.center,
+                        fontSize: 30,
+                        color: AppColors.black,
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.w600,
                       ),
+                      SizedBox(width: 10),
                       Expanded(
                         child: Divider(
                           color: Color.fromRGBO(218, 218, 218, 1),
@@ -252,34 +279,11 @@ class LoginScreensView
                   addVerticalSpacing(context, 5),
                   Platform.isIOS
                       ? Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          spacing: 5,
-                          children: [
-                            IconButton(
-                              onPressed: () async {
-                                controller.google();
-                              },
-                              icon: SvgPicture.asset(
-                                'assets/svgs/google.svg',
-                                height: 30,
-                                width: 30,
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () async {
-                                controller.apple();
-                              },
-                              icon: SvgPicture.asset(
-                                'assets/svgs/apple.svg',
-                                height: 30,
-                                width: 30,
-                              ),
-                            ),
-                          ],
-                        )
-                      : Center(
-                          child: IconButton(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        spacing: 5,
+                        children: [
+                          IconButton(
                             onPressed: () async {
                               controller.google();
                             },
@@ -289,7 +293,30 @@ class LoginScreensView
                               width: 30,
                             ),
                           ),
-                        )
+                          IconButton(
+                            onPressed: () async {
+                              controller.apple();
+                            },
+                            icon: SvgPicture.asset(
+                              'assets/svgs/apple.svg',
+                              height: 30,
+                              width: 30,
+                            ),
+                          ),
+                        ],
+                      )
+                      : Center(
+                        child: IconButton(
+                          onPressed: () async {
+                            controller.google();
+                          },
+                          icon: SvgPicture.asset(
+                            'assets/svgs/google.svg',
+                            height: 30,
+                            width: 30,
+                          ),
+                        ),
+                      ),
                 ],
               ),
             ),
