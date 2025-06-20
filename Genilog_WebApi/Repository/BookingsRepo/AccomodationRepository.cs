@@ -281,7 +281,7 @@ namespace Genilog_WebApi.Repository.PlacesRepo
         //Customer
         public async Task<CustomerBookedReservation> AddCustomerBookedReservationAsync(CustomerBookedReservation dataInfo)
         {
-            dataInfo.Id = Guid.NewGuid();
+           // dataInfo.Id = Guid.NewGuid();
             await mAAP_Context.AddAsync(dataInfo);
             await mAAP_Context.SaveChangesAsync();
             return dataInfo;

@@ -21,6 +21,9 @@
         public bool? IsBooked { get; set; }
         public DateTime UpdateddAt { get; set; }
         public DateTime CreatedAt { get; set; }
+        public string? CheckInTime { get; set; }
+        public string? CheckOutTime { get; set; }
+        public string? Location { get; set; }
     }
     public class BookAccomodationReservatioModelDto
     {
@@ -43,6 +46,9 @@
         public bool? IsBooked { get; set; }
         public DateTime UpdateddAt { get; set; }
         public DateTime CreatedAt { get; set; }
+        public string? CheckInTime { get; set; }
+        public string? CheckOutTime { get; set; }
+        public string? Location { get; set; }
     }
 
     public class AddBookAccomodationReservation
@@ -87,6 +93,10 @@
         public double? TotalCost { get; set; }
         public DateTime UpdateddAt { get; set; }
         public DateTime CreatedAt { get; set; }
+        public Guid StaffId { get; set; }
+        public string? StaffName { get; set; }
+        public string? PurchaseChannel { get; set; }
+        public string? UserType { get; set; } // e.g., "Registerd", "Not Registered"
     }
     public class CustomerBookedReservationDto
     {
@@ -117,6 +127,10 @@
         public double? TotalCost { get; set; }
         public DateTime UpdateddAt { get; set; }
         public DateTime CreatedAt { get; set; }
+        public Guid StaffId { get; set; }
+        public string? StaffName { get; set; }
+        public string? PurchaseChannel { get; set; }
+        public string? UserType { get; set; } // e.g., "Registerd", "Not Registered"
 
     }
 
@@ -135,5 +149,9 @@
         public string? ReservationStartDate { get; set; }
         public string? ReservationEndDate { get; set; }
         public int? NoOfDays { get; set; }
+        public Guid StaffId { get; set; }
+        public string? StaffName { get; set; }
+        public string? PurchaseChannel { get; set; }
+        public string? UserType { get; set; } // e.g., "Registerd", "Not Registered"
     }
 }

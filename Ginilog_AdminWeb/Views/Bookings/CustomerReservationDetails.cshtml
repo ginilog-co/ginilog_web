@@ -36,7 +36,9 @@
                             <div class="col-auto mb-2">
                                 <button class="nav-link btn btn-danger create-new-button" onclick="openModal()">Delete</button>
                             </div>
-
+                            <div class="col-auto mb-2">
+                                <a class="nav-link btn btn-secondary  create-new-button">@Model!.UserType User</a>
+                            </div>
                          
                             <div class="col-auto mb-2">
                                 @if (Model.AccomodationImage != "")
@@ -133,6 +135,10 @@
 
 
                             <div class="form-group">
+                                <label>Staff Name</label>
+                                <input style="color: black; background-color: white;" value="@Model.StaffName" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
                                 <label>No Of Days</label>
                                 <input style="color: black; background-color: white;" value="@Model.NoOfDays" readonly type="text" class="form-control readonly-white">
                             </div>
@@ -143,6 +149,10 @@
                             <div class="form-group">
                                 <label>Payment Channel</label>
                                 <input style="color: black; background-color: white;" value="@Model.PaymentChannel" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Purchase Channel</label>
+                                <input style="color: black; background-color: white;" value="@Model.PurchaseChannel" readonly type="text" class="form-control readonly-white">
                             </div>
 
                             <div class="form-group">

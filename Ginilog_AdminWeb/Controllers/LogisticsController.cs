@@ -530,12 +530,16 @@ namespace Ginilog_AdminWeb.Controllers
                             (s.TrnxReference?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
                             (s.ItemName?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
                             (s.RecieverEmail?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
-                             s.UserId.ToString()== id|| s.CompanyId.ToString()== id
+                            (s.StaffName?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                            (s.UserType?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                            (s.PurchaseChannel?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                            (s.PaymentChannel?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                             s.UserId.ToString()== id|| s.CompanyId.ToString()== id || s.StaffId.ToString() == id
                             );
                     var allOrdersData = new AllOrdersDataModel()
                     {
                         OrderStatistics = stats,
-                        OrderModelData = search.ToList(),
+                        OrderModelData = [.. search],
 
                     };
 
@@ -547,7 +551,7 @@ namespace Ginilog_AdminWeb.Controllers
                     var allOrdersData = new AllOrdersDataModel()
                     {
                         OrderStatistics = stats,
-                        OrderModelData = search.ToList(),
+                        OrderModelData = [.. search],
 
                     };
 
@@ -558,7 +562,7 @@ namespace Ginilog_AdminWeb.Controllers
                     var allOrdersData = new AllOrdersDataModel()
                     {
                         OrderStatistics = stats,
-                        OrderModelData = search.ToList(),
+                        OrderModelData = [.. search],
                     };
                     return View(allOrdersData);
                 }
@@ -615,15 +619,12 @@ namespace Ginilog_AdminWeb.Controllers
         public IActionResult AddOrder(Guid id)
         {
             var userId = HttpContext.Session.GetString("bt_userId");
-            // var token = HttpContext.Session.GetString("bt_token");
-            var adminType = HttpContext.Session.GetString("bt_userType");
             if (userId != null)
             {
                 var users = Data()!.GetAwaiter().GetResult();
                 ViewBag.ProfilePics = users.ImagePath!;
                 ViewBag.AdminName = $"{users.FirstName} {users.SurName}";
-                ViewBag.UseType = adminType;
-
+                ViewBag.UseType = users.AdminType;
                 ViewBag.CompanyId = id;
                 return View();
             }
@@ -638,6 +639,7 @@ namespace Ginilog_AdminWeb.Controllers
         {
             var token = HttpContext.Session.GetString("bt_token");
             ViewBag.CompanyId = requset.CompanyId;
+            var users = Data()!.GetAwaiter().GetResult();
             if (ModelState.IsValid)
             {
                 try
@@ -688,7 +690,11 @@ namespace Ginilog_AdminWeb.Controllers
                         ShippingType=requset.ShippingType,
                         PackageImageLists=packageImages,
                         PaymentChannel=requset.PaymentChannel,
-
+                        StaffId=users.Id,
+                        StaffName= $"{users.FirstName} {users.SurName}",
+                        PurchaseChannel="Web Admin App",
+                        UserType = "Not Registered",
+                        
                     };
 
                     using var httpClient = new HttpClient();

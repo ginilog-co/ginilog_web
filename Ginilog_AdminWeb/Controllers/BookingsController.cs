@@ -8,7 +8,6 @@ using Newtonsoft.Json;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
-using static NuGet.Packaging.PackagingConstants;
 
 namespace Ginilog_AdminWeb.Controllers
 {
@@ -846,7 +845,6 @@ namespace Ginilog_AdminWeb.Controllers
                 ViewBag.ProfilePics = users.ImagePath!;
                 ViewBag.AdminName = $"{users.FirstName} {users.SurName}";
                 ViewBag.UseType = adminType;
-
                 ViewBag.ReservationId = id;
                 return View();
             }
@@ -860,7 +858,7 @@ namespace Ginilog_AdminWeb.Controllers
         public async Task<IActionResult> AddCustomerReservation(AddPaymentCustomerBookedReservation requset)
         {
             var token = HttpContext.Session.GetString("bt_token");
-
+            var users = Data()!.GetAwaiter().GetResult();
             ViewBag.ReservationId = requset.ReservationId;
             if (ModelState.IsValid)
             {
@@ -882,7 +880,11 @@ namespace Ginilog_AdminWeb.Controllers
                         ReservationEndDate =requset.ReservationEndDate,
                         NoOfDays = totalDays,
                         PaymentStatus =  true ,
-                        TrnxReference= requset.PaymentChannel == "Cash" ? CreateRandomTokenSix():""
+                        TrnxReference= requset.PaymentChannel == "Cash" ? CreateRandomTokenSix():"",
+                        StaffId = users.Id,
+                        StaffName = $"{users.FirstName} {users.SurName}",
+                        PurchaseChannel = "Web Admin App",
+                        UserType = "Not Registered",
                     };
 
                     using var httpClient = new HttpClient();

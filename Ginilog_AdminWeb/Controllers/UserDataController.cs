@@ -487,6 +487,7 @@ namespace Ginilog_AdminWeb.Controllers
         public async Task<IActionResult> AddOrder(AddOrder requset)
         {
             var token = HttpContext.Session.GetString("bt_token");
+            var users = Data()!.GetAwaiter().GetResult();
             ViewBag.UserId = requset.UserId;
             var companies = LogCompanyItems()!.GetAwaiter().GetResult();
             var company = companies.Select(m => new SelectListItem
@@ -545,7 +546,10 @@ namespace Ginilog_AdminWeb.Controllers
                         ShippingType = requset.ShippingType,
                         PackageImageLists = packageImages,
                         PaymentChannel = requset.PaymentChannel,
-
+                        StaffId = users.Id,
+                        StaffName = $"{users.FirstName} {users.SurName}",
+                        PurchaseChannel = "Web Admin App",
+                        UserType = "Registered",
                     };
 
                     using var httpClient = new HttpClient();
@@ -601,6 +605,7 @@ namespace Ginilog_AdminWeb.Controllers
         public async Task<IActionResult> AddCustomerReservation(AddPaymentCustomerBookedReservation requset)
         {
             var token = HttpContext.Session.GetString("bt_token");
+            var users = Data()!.GetAwaiter().GetResult();
             ViewBag.UserId = requset.UserId;
             var companies = BookAccomodationReservationItems()!.GetAwaiter().GetResult();
             var company = companies.Select(m => new SelectListItem
@@ -630,7 +635,11 @@ namespace Ginilog_AdminWeb.Controllers
                         ReservationEndDate = requset.ReservationEndDate,
                         NoOfDays = totalDays,
                         PaymentStatus = true,
-                        TrnxReference = requset.PaymentChannel == "Cash" ? CreateRandomTokenSix() : ""
+                        TrnxReference = requset.PaymentChannel == "Cash" ? CreateRandomTokenSix() : "",
+                        StaffId = users.Id,
+                        StaffName = $"{users.FirstName} {users.SurName}",
+                        PurchaseChannel = "Web Admin App",
+                        UserType = "Registered",
                     };
 
                     using var httpClient = new HttpClient();

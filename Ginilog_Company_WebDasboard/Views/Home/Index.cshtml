@@ -54,22 +54,33 @@
                           <div class="col-auto mb-2">
                             <a class="nav-link btn btn-primary create-new-button" href="~/Home/LogCompanyDetails">View Logistics</a>
                         </div>
+                         <div class="col-auto mb-2">
+                                <a href="~/Home/AddOrder" class="nav-link btn btn-secondary create-new-button">Create Order</a>
+                            </div>
                           <div class="col-auto mb-2">
                             <a class="nav-link btn btn-success create-new-button" href="~/Home/AccommodationDetails">View Accommodation</a>
                         </div>
+                          <div class="col-auto mb-2">
+                                <a href="~/Home/AddBookReservation/@ViewBag.AccommodationId" class="nav-link btn btn-secondary create-new-button">Create Reservation</a>
+                            </div>
                         }
                         else if (ViewBag.CompanyType.Contains("Logistics")&& ViewBag.Logistics != "NotRegistered")
                         {
                           <div class="col-auto mb-2">
                             <a class="nav-link btn btn-primary create-new-button" href="~/Home/LogCompanyDetails">View Logistics</a>
                         </div>
-
+                         <div class="col-auto mb-2">
+                                <a href="~/Home/AddOrder" class="nav-link btn btn-secondary create-new-button">Create Order</a>
+                         </div>
                         }
                         else  if ( ViewBag.CompanyType.Contains("Accommodation")&& ViewBag.Accommodation != "NotRegistered")
                         {
                          <div class="col-auto mb-2">
                             <a class="nav-link btn btn-success create-new-button" href="~/Home/AccommodationDetails">View Accommodation</a>
                         </div>
+                         <div class="col-auto mb-2">
+                                <a href="~/Home/AddBookReservation/@ViewBag.AccommodationId" class="nav-link btn btn-secondary create-new-button">Create Reservation</a>
+                            </div>
                         }
                 </div>
             </div>

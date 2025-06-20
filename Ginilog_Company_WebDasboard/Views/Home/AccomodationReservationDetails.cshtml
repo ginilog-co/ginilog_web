@@ -21,6 +21,9 @@
                                 <a href="~/Home/StaffDetails/@Model.BookAccomodationReservatioModel!.AdminId" class="nav-link btn btn-primary create-new-button">View Manager</a>
                             </div>
                             <div class="col-auto mb-2">
+                                <a href="~/Home/AddCustomerReservation/@Model.BookAccomodationReservatioModel.Id" class="nav-link btn btn-secondary create-new-button">Book Reservation</a>
+                            </div>
+                            <div class="col-auto mb-2">
                                 @if (Model.BookAccomodationReservatioModel.AccomodationImage != "")
                                 {
                                     <img class="rounded-circle" style="width: 40px; height: 40px;" src="@Model.BookAccomodationReservatioModel.AccomodationImage" alt="profile">

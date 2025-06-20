@@ -326,9 +326,9 @@ namespace Genilog_WebApi.Repository.AuthRepo
             return subTable;
         }
 #pragma warning disable CS8613 // Nullability of reference types in return type doesn't match implicitly implemented member.
-        public async Task<DeviceTokenModel?> DeleteDeviceTokenModelAsync(Guid id)
+        public async Task<DeviceTokenModel?> DeleteDeviceTokenModelAsync(string id)
         {
-            var subTable = await bmg_context.DeviceTokenModels!.FirstOrDefaultAsync(x => x.Id == id);
+            var subTable = await bmg_context.DeviceTokenModels!.FirstOrDefaultAsync(x => x.Id.ToString() == id||x.DeviceTokenId==id);
             if (subTable == null)
             {
                 return null;

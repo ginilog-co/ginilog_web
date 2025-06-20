@@ -813,6 +813,10 @@ namespace Genilog_WebApi.Controllers
                     PackageImageLists = request.PackageImageLists,
                     RiderType = request.RiderType,
                     ShippingType = request.ShippingType,
+                    PurchaseChannel = request.PurchaseChannel,
+                    StaffId = request.StaffId,
+                    StaffName = request.StaffName,
+                    UserType = request.UserType,
 
                 };
                 // Pass detials to repository
@@ -912,7 +916,10 @@ namespace Genilog_WebApi.Controllers
                         PackageImageLists = request.PackageImageLists,
                         RiderType = request.RiderType,
                         ShippingType = request.ShippingType,
-
+                        PurchaseChannel = request.PurchaseChannel,
+                        StaffId = request.StaffId,
+                        StaffName = request.StaffName,
+                        UserType = request.UserType,
                     };
                     // Pass detials to repository
                     contacts = await companyRepository.AddOrderAsync(contacts);
@@ -995,6 +1002,10 @@ namespace Genilog_WebApi.Controllers
                     PackageImageLists = request.PackageImageLists,
                     RiderType = request.RiderType,
                     ShippingType = request.ShippingType,
+                    PurchaseChannel = request.PurchaseChannel,
+                    StaffId = request.StaffId,
+                    StaffName = request.StaffName,
+                    UserType = request.UserType,
 
                 };
                 // Pass detials to repository
@@ -1571,42 +1582,65 @@ namespace Genilog_WebApi.Controllers
             }
             return strrandom;
         }
-        private async Task<string> SendNotification(Guid userId, string deviceToken, string names, double gasInputkg, string gasStation, string gasStationImage)
+
+        private async Task<string> SendNotification(string deviceToken, string names, string title, string comment, string notificationType, Guid userId)
         {
-
-
-            var message = new Message()
+            try
             {
-                Notification = new Notification
+                var message = new Message()
+                // if (status == "Ongoing") { }
                 {
-                    Title = "Customer Order Request",
-                    Body = $"{names} Has Open an Order of {gasInputkg}kg from {gasStation}",
-                    ImageUrl = $"{gasStationImage}"
-                },
-                Data = new Dictionary<string, string>()
+                    Notification = new Notification
+                    {
+                        Title = title,
+                        Body = comment,
+                    },
+                    Data = new Dictionary<string, string>()
+                    {
+                        ["CustomData"] = $"Hello, how are you doing? {names}"
+                    },
+                    Token = deviceToken
+                };
+
+                var messaging = FirebaseMessaging.DefaultInstance;
+                var result = await messaging.SendAsync(message);
+                var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
+
+                var contacts = new NotificationModel()
                 {
-                    ["CustomData"] = "Hello, how are you doing?"
-                },
-                Token = deviceToken
-            };
-
-            var messaging = FirebaseMessaging.DefaultInstance;
-            var result = await messaging.SendAsync(message);
-
-            var contacts = new NotificationModel()
+                    UserId = userId,
+                    Title = message.Notification.Title,
+                    Body = message.Notification.Body,
+                    UpdatedAt = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow,
+                    ImageUrl = message.Notification.ImageUrl,
+                    NotificationType = notificationType,
+                };
+                // Pass detials to repository
+                contacts = await notificationRepository.AddAsync(contacts);
+                return result;
+            }
+            catch (FirebaseMessagingException ex)
             {
-                UserId = userId,
-                IsRead = false,
-                Title = message.Notification.Title,
-                Body = message.Notification.Body,
-                UpdatedAt = DateTime.UtcNow,
-                CreatedAt = DateTime.UtcNow,
-                ImageUrl = message.Notification.ImageUrl,
-                NotificationType = "Orders",
-            };
-            // Pass detials to repository
-           await notificationRepository.AddAsync(contacts);
-            return result;
+                // Log the exception for debugging
+                Console.Error.WriteLine($"Firebase error: {ex.Message}");
+
+                // Optionally, handle specific error codes
+                if (ex.Message.Contains("Requested entity was not found"))
+                {
+                    // Take specific action if needed, e.g., mark token as invalid
+                    await generalUserRepository.DeleteDeviceTokenModelAsync(deviceToken);
+                    return "Notification not sent. Target not found.";
+                }
+
+                return "Notification failed to send";
+            }
+            catch (Exception ex)
+            {
+                // Log unexpected errors
+                Console.Error.WriteLine($"Unexpected error: {ex.Message}");
+                return "Unexpected error occurred";
+            }
         }
 
         #endregion

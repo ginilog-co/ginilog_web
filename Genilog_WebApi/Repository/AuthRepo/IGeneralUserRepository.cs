@@ -27,7 +27,7 @@ namespace Genilog_WebApi.Repository.AuthRepo
         // Device Token
         Task<IEnumerable<DeviceTokenModel>> GetAllDeviceTokenAsync();
         Task<DeviceTokenModel> AddDeviceTokenModelAsync(DeviceTokenModel region);
-        Task<DeviceTokenModel> DeleteDeviceTokenModelAsync(Guid id);
+        Task<DeviceTokenModel> DeleteDeviceTokenModelAsync(string id);
         Task<DeviceTokenModel> UpdateDeviceTokenModelAsync(Guid id, DeviceTokenModel region);
         Task<bool> DeviceTokenExistAsync(string token);
 

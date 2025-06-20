@@ -1,7 +1,12 @@
 ﻿using AutoMapper;
+using FirebaseAdmin.Messaging;
+using Genilog_WebApi.Key;
+using Genilog_WebApi.Model;
 using Genilog_WebApi.Model.BookingsModel;
 using Genilog_WebApi.Model.LogisticsModel;
-using Genilog_WebApi.Model;
+using Genilog_WebApi.Model.Notification_Model;
+using Genilog_WebApi.Model.WalletModel;
+using Genilog_WebApi.Repository.AdminRepo;
 using Genilog_WebApi.Repository.AuthRepo;
 using Genilog_WebApi.Repository.BookingsRepo;
 using Genilog_WebApi.Repository.NotificationRepo;
@@ -9,25 +14,20 @@ using Genilog_WebApi.Repository.PlacesRepo;
 using Genilog_WebApi.Repository.UploadRepo;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using System.Net;
-using System.Security.Claims;
-using QRCoder;
-using Genilog_WebApi.Key;
-using Genilog_WebApi.Model.WalletModel;
 using Newtonsoft.Json;
+using QRCoder;
+using System.Net;
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text;
-using Genilog_WebApi.Repository.UserRepo;
-using Genilog_WebApi.Repository.AdminRepo;
-using Genilog_WebApi.Repository.LogisticsRepo;
+using static QRCoder.PayloadGenerator.SwissQrCode;
 
 namespace Genilog_WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class BookingsController(IHostEnvironment _env, IMapper mapper, IAccomodationRepository accomodationRepository
-        , IGeneralUserRepository generalUserRepository, IUploadRepository uploadRepository, IAirlineRepository airlineRepository, IAdminRepository adminRepository) : ControllerBase
+        , IGeneralUserRepository generalUserRepository, IUploadRepository uploadRepository, IAirlineRepository airlineRepository, IAdminRepository adminRepository, INotificationRepository notificationRepository) : ControllerBase
     {
         private readonly IHostEnvironment _env = _env;
         private readonly IMapper mapper = mapper;
@@ -36,6 +36,7 @@ namespace Genilog_WebApi.Controllers
         private readonly IUploadRepository uploadRepository = uploadRepository;
         private readonly IAirlineRepository airlineRepository = airlineRepository;
         private readonly IAdminRepository adminRepository = adminRepository;
+        private readonly INotificationRepository notificationRepository = notificationRepository;
         readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
 
 
@@ -1162,6 +1163,9 @@ namespace Genilog_WebApi.Controllers
                     AccomodationName = events.AccomodationName,
                     AccomodationImage = events.AccomodationImages!.Count==0?"": events.AccomodationImages![0],
                     AccomodationType=events.AccomodationType,
+                    Location=events.Location,
+                    CheckInTime=events.CheckInTime,
+                    CheckOutTime=events.CheckOutTime,
                     IsBooked = false,
                     QRCode = cD1,
                     MaximumNoOfGuest = request.MaximumNoOfGuest,
@@ -1371,6 +1375,7 @@ namespace Genilog_WebApi.Controllers
 
                     var contacts = new CustomerBookedReservation()
                     {
+                        Id = Guid.NewGuid(),
                         UserId = Guid.NewGuid(),
                         AdminId = events.AdminId,
                         AccomodationId = events.AccomodationId,
@@ -1397,6 +1402,10 @@ namespace Genilog_WebApi.Controllers
                         TotalCost = events.RoomPrice * request.NoOfDays,
                         CreatedAt = DateTime.Now,
                         UpdateddAt = DateTime.Now,
+                        PurchaseChannel = request.PurchaseChannel,
+                        StaffId = request.StaffId,
+                        StaffName = request.StaffName,
+                        UserType=request.UserType,
                     };
                     // Pass detials to repository
                     contacts = await accomodationRepository.AddCustomerBookedReservationAsync(contacts);
@@ -1428,6 +1437,7 @@ namespace Genilog_WebApi.Controllers
 
                     var contacts = new CustomerBookedReservation()
                     {
+                        Id = Guid.NewGuid(),
                         UserId = userD.Id,
                         AdminId = events.AdminId,
                         AccomodationId = events.AccomodationId,
@@ -1454,6 +1464,10 @@ namespace Genilog_WebApi.Controllers
                         TotalCost = events.RoomPrice * request.NoOfDays,
                         CreatedAt = DateTime.Now,
                         UpdateddAt = DateTime.Now,
+                        PurchaseChannel = request.PurchaseChannel,
+                        StaffId = request.StaffId,
+                        StaffName = request.StaffName,
+                        UserType = request.UserType,
                     };
                     // Pass detials to repository
                     contacts = await accomodationRepository.AddCustomerBookedReservationAsync(contacts);
@@ -1519,6 +1533,7 @@ namespace Genilog_WebApi.Controllers
                     {
                         var contacts = new CustomerBookedReservation()
                         {
+                            Id = Guid.NewGuid(),
                             UserId = Guid.NewGuid(),
                             AdminId = events.AdminId,
                             AccomodationId = events.AccomodationId,
@@ -1545,8 +1560,12 @@ namespace Genilog_WebApi.Controllers
                             TotalCost = events.RoomPrice * request.NoOfDays,
                             CreatedAt = DateTime.Now,
                             UpdateddAt = DateTime.Now,
+                            PurchaseChannel = request.PurchaseChannel,
+                            StaffId = request.StaffId,
+                            StaffName = request.StaffName,
+                            UserType = request.UserType,
                         };
-                        contacts = await accomodationRepository.AddCustomerBookedReservationAsync(contacts);
+                       
 
 
                         var url = "https://api.paystack.co/transaction/initialize";
@@ -1570,14 +1589,13 @@ namespace Genilog_WebApi.Controllers
                         string apiResponse = await response.Content.ReadAsStringAsync();
                         if (response.StatusCode == HttpStatusCode.OK)
                         {
+                            contacts = await accomodationRepository.AddCustomerBookedReservationAsync(contacts);
                             var paystackResponse = JsonConvert.DeserializeObject<PaystackResponse>(apiResponse);
-
-
                             return Ok(paystackResponse);
                         }
                         else
                         {
-                            await accomodationRepository.DeleteCustomerBookedReservationAsync(contacts.Id);
+                           // await accomodationRepository.DeleteCustomerBookedReservationAsync(contacts.Id);
                             var error = new ErrorModel()
                             {
                                 Message = $"{apiResponse}",
@@ -1602,6 +1620,7 @@ namespace Genilog_WebApi.Controllers
                     {
                         var contacts = new CustomerBookedReservation()
                         {
+                            Id = Guid.NewGuid(),
                             UserId = userD.Id,
                             AdminId = events.AdminId,
                             AccomodationId = events.AccomodationId,
@@ -1628,8 +1647,12 @@ namespace Genilog_WebApi.Controllers
                             TotalCost = events.RoomPrice * request.NoOfDays,
                             CreatedAt = DateTime.Now,
                             UpdateddAt = DateTime.Now,
+                            PurchaseChannel = request.PurchaseChannel,
+                            StaffId = request.StaffId,
+                            StaffName = request.StaffName,
+                            UserType = request.UserType,
                         };
-                        contacts = await accomodationRepository.AddCustomerBookedReservationAsync(contacts);
+                     
 
 
                         var url = "https://api.paystack.co/transaction/initialize";
@@ -1653,9 +1676,8 @@ namespace Genilog_WebApi.Controllers
                         string apiResponse = await response.Content.ReadAsStringAsync();
                         if (response.StatusCode == HttpStatusCode.OK)
                         {
+                            contacts = await accomodationRepository.AddCustomerBookedReservationAsync(contacts);
                             var paystackResponse = JsonConvert.DeserializeObject<PaystackResponse>(apiResponse);
-
-
                             return Ok(paystackResponse);
                         }
                         else
@@ -1780,6 +1802,7 @@ namespace Genilog_WebApi.Controllers
                     {
                         var contacts = new CustomerBookedReservation()
                         {
+                            Id= Guid.NewGuid(),
                             UserId = Guid.NewGuid(),
                             AdminId = events.AdminId,
                             AccomodationId = events.AccomodationId,
@@ -1806,10 +1829,12 @@ namespace Genilog_WebApi.Controllers
                             TotalCost = events.RoomPrice * request.NoOfDays,
                             CreatedAt = DateTime.Now,
                             UpdateddAt = DateTime.Now,
+                            PurchaseChannel = request.PurchaseChannel,
+                            StaffId = request.StaffId,
+                            StaffName = request.StaffName,
+                            UserType = request.UserType,
                         };
-                        contacts = await accomodationRepository.AddCustomerBookedReservationAsync(contacts);
-
-
+                       
                         var url = "https://api.flutterwave.com/v3/payments";
                         var data = new
                         {
@@ -1829,29 +1854,43 @@ namespace Genilog_WebApi.Controllers
                             }
                         };
 
-
-                        using var httpClient = new HttpClient();
-
+                        var handler = new HttpClientHandler
+                        {
+                            SslProtocols = System.Security.Authentication.SslProtocols.Tls12
+                        };
+                        using var httpClient = new HttpClient(handler);
                         StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.FlutterwaveSecretKey);
-                        using var response = await httpClient.PostAsync($"{url}", content);
-                        string apiResponse = await response.Content.ReadAsStringAsync();
-                        if (response.StatusCode == HttpStatusCode.OK)
+                        try
                         {
-                            var paystackResponse = JsonConvert.DeserializeObject<FlutterwaveResponse>(apiResponse);
-                            return Ok(paystackResponse);
+                            using var response = await httpClient.PostAsync($"{url}", content);
+                            string apiResponse = await response.Content.ReadAsStringAsync();
+                            if (response.StatusCode == HttpStatusCode.OK)
+                            {
+                                contacts = await accomodationRepository.AddCustomerBookedReservationAsync(contacts);
+                                var paystackResponse = JsonConvert.DeserializeObject<FlutterwaveResponse>(apiResponse);
+                                return Ok(paystackResponse);
+                            }
+                            else
+                            {
+                                // await accomodationRepository.DeleteCustomerBookedReservationAsync(contacts.Id);
+                                var error = new ErrorModel()
+                                {
+                                    Message = $"{apiResponse}",
+                                    Status = true
+                                };
+                                return BadRequest(error);
+                            }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            await accomodationRepository.DeleteCustomerBookedReservationAsync(contacts.Id);
                             var error = new ErrorModel()
                             {
-                                Message = $"{apiResponse}",
+                                Message = $"Unhandled exception: {ex.Message}",
                                 Status = true
                             };
-                            return BadRequest(error);
+                            return StatusCode(500, error);  // Returns 500 Internal Server Error explicitly
                         }
-
                     }
                 }
                 else
@@ -1868,6 +1907,7 @@ namespace Genilog_WebApi.Controllers
                     {
                         var contacts = new CustomerBookedReservation()
                         {
+                            Id = Guid.NewGuid(),
                             UserId = userD.Id,
                             AdminId = events.AdminId,
                             AccomodationId = events.AccomodationId,
@@ -1894,9 +1934,12 @@ namespace Genilog_WebApi.Controllers
                             TotalCost = events.RoomPrice * request.NoOfDays,
                             CreatedAt = DateTime.Now,
                             UpdateddAt = DateTime.Now,
+                            PurchaseChannel = request.PurchaseChannel,
+                            StaffId = request.StaffId,
+                            StaffName = request.StaffName,
+                            UserType = request.UserType,
                         };
-                        contacts = await accomodationRepository.AddCustomerBookedReservationAsync(contacts);
-
+                       
 
                         var url = "https://api.flutterwave.com/v3/payments";
                         var data = new
@@ -1918,26 +1961,43 @@ namespace Genilog_WebApi.Controllers
                         };
 
 
-                        using var httpClient = new HttpClient();
+                        var handler = new HttpClientHandler
+                        {
+                            SslProtocols = System.Security.Authentication.SslProtocols.Tls12
+                        };
+                        using var httpClient = new HttpClient(handler);
 
                         StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.FlutterwaveSecretKey);
-                        using var response = await httpClient.PostAsync($"{url}", content);
+                        try
+                        {
+                            using var response = await httpClient.PostAsync($"{url}", content);
                         string apiResponse = await response.Content.ReadAsStringAsync();
                         if (response.StatusCode == HttpStatusCode.OK)
                         {
+                            contacts = await accomodationRepository.AddCustomerBookedReservationAsync(contacts);
                             var paystackResponse = JsonConvert.DeserializeObject<FlutterwaveResponse>(apiResponse);
                             return Ok(paystackResponse);
                         }
                         else
                         {
-                            await accomodationRepository.DeleteCustomerBookedReservationAsync(contacts.Id);
+                           // await accomodationRepository.DeleteCustomerBookedReservationAsync(contacts.Id);
                             var error = new ErrorModel()
                             {
                                 Message = $"{apiResponse}",
                                 Status = true
                             };
                             return BadRequest(error);
+                        }
+                        }
+                        catch (Exception ex)
+                        {
+                            var error = new ErrorModel()
+                            {
+                                Message = $"Unhandled exception: {ex.Message}",
+                                Status = true
+                            };
+                            return StatusCode(500, error);  // Returns 500 Internal Server Error explicitly
                         }
 
                     }
@@ -2298,6 +2358,67 @@ namespace Genilog_WebApi.Controllers
             var qrCodeImage = qrCode.GetGraphic(20);
             return qrCodeImage;  // Convert the image to base64
         }
+
+        private async Task<string> SendNotification(string deviceToken, string names, string title, string comment, string notificationType, Guid userId)
+        {
+            try
+            {
+                var message = new Message()
+                // if (status == "Ongoing") { }
+                {
+                    Notification = new Notification
+                    {
+                        Title = title,
+                        Body = comment,
+                    },
+                    Data = new Dictionary<string, string>()
+                    {
+                        ["CustomData"] = $"Hello, how are you doing? {names}"
+                    },
+                    Token = deviceToken
+                };
+
+                var messaging = FirebaseMessaging.DefaultInstance;
+                var result = await messaging.SendAsync(message);
+                var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
+
+                var contacts = new NotificationModel()
+                {
+                    UserId = userId,
+                    Title = message.Notification.Title,
+                    Body = message.Notification.Body,
+                    UpdatedAt = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow,
+                    ImageUrl = message.Notification.ImageUrl,
+                    NotificationType = notificationType,
+                };
+                // Pass detials to repository
+                contacts = await notificationRepository.AddAsync(contacts);
+                return result;
+            }
+            catch (FirebaseMessagingException ex)
+            {
+                // Log the exception for debugging
+                Console.Error.WriteLine($"Firebase error: {ex.Message}");
+
+                // Optionally, handle specific error codes
+                if (ex.Message.Contains("Requested entity was not found"))
+                {
+                    // Take specific action if needed, e.g., mark token as invalid
+                    await generalUserRepository.DeleteDeviceTokenModelAsync(deviceToken);
+                    return "Notification not sent. Target not found.";
+                }
+
+                return "Notification failed to send";
+            }
+            catch (Exception ex)
+            {
+                // Log unexpected errors
+                Console.Error.WriteLine($"Unexpected error: {ex.Message}");
+                return "Unexpected error occurred";
+            }
+        }
+
 
         #endregion
     }

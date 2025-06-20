@@ -3,11 +3,9 @@ using Ginilog_Company_WebDasboard.Models;
 using Ginilog_Company_WebDasboard.Models.BookingsModel;
 using Ginilog_Company_WebDasboard.Models.LogisticsModel;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
 using System.Net;
 using System.Net.Http.Headers;
-using System.Reflection.Metadata;
 using System.Text;
 
 namespace Ginilog_Company_WebDasboard.Controllers
@@ -421,9 +419,6 @@ namespace Ginilog_Company_WebDasboard.Controllers
             return View(requset);
         }
 
-
-
-
         public IActionResult ForgetPassword()
         {
             return View();
@@ -487,7 +482,7 @@ namespace Ginilog_Company_WebDasboard.Controllers
                     if (response.StatusCode == HttpStatusCode.OK)
                     {
                         ViewBag.ForgetPasswordResult = apiResponse;
-                        return RedirectToAction("SignIn", "Home");
+                        return RedirectToAction("SignIn", "Auth");
                     }
                     else
                     {
@@ -504,7 +499,6 @@ namespace Ginilog_Company_WebDasboard.Controllers
             return View(requset);
         }
 
-       
         public IActionResult LogOut()
         {
             return View();

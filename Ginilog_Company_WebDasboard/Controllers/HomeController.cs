@@ -2,10 +2,9 @@ using Ginilog_Company_WebDasboard.GlobalConst;
 using Ginilog_Company_WebDasboard.Models;
 using Ginilog_Company_WebDasboard.Models.BookingsModel;
 using Ginilog_Company_WebDasboard.Models.LogisticsModel;
+using Ginilog_Company_WebDasboard.Models.WalletModel;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
@@ -20,6 +19,20 @@ namespace Ginilog_Company_WebDasboard.Controllers
         private string email = "";
         private string sex = "";
         public string? imagePath = "";
+        private static string CreateRandomTokenSix()
+        {
+            char[] charArr = "ABCDEFGHIJKLMNOPQLSTUVWXYZ0123456789".ToCharArray();
+            string strrandom = string.Empty;
+            Random objran = new();
+            for (int i = 0; i < 6; i++)
+            {
+                //It will not allow Repetation of Characters
+                int pos = objran.Next(1, charArr.Length);
+                if (!strrandom.Contains(charArr.GetValue(pos)!.ToString()!)) strrandom += charArr.GetValue(pos);
+                else i--;
+            }
+            return strrandom;
+        }
         public async Task<string> UploadFile(IFormFile formFile, string token)
         {
             using var httpClient = new HttpClient();
@@ -737,7 +750,189 @@ namespace Ginilog_Company_WebDasboard.Controllers
         }
 
         // Orders Items
+        [HttpGet]
+        public IActionResult AddOrder()
+        {
+            var userId = HttpContext.Session.GetString("bt_userId");
+            if (userId != null)
+            {
+                var users = Data()!.GetAwaiter().GetResult();
+                ViewBag.ProfilePics = users.ImagePath!;
+                ViewBag.AdminName = $"{users.FirstName} {users.SurName}";
+                ViewBag.UseType = users.AdminType;
+                var company = LogCompany(users.ManagerId)!.GetAwaiter().GetResult(); 
+                ViewBag.CompanyId = company.Id;
+                return View();
+            }
+            else
+            {
+                return RedirectToAction("SignIn", "Auth");
 
+            }
+        }
+        [HttpPost]
+        public async Task<IActionResult> AddOrder(AddOrder requset)
+        {
+            var token = HttpContext.Session.GetString("bt_token");
+            ViewBag.CompanyId = requset.CompanyId;
+            var users = Data()!.GetAwaiter().GetResult();
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var senderAddress = await LocationData(requset.SenderAddress!)!;
+                    var recieverAddress = await LocationData(requset.RecieverAddress!)!;
+                    List<string> packageImages = [];
+                    for (int i = 0; i < requset.ImageList!.Count; i++)
+                    {
+                        var image = await UploadFile(requset.ImageList![i], token!);
+                        packageImages.Add(image);
+                    }
+                    AddMainOrder login = new()
+                    {
+                        CompanyId = requset.CompanyId,
+                        UserId = requset.UserId,
+                        ExpectedDeliveryTime = requset.ExpectedDeliveryTime,
+                        ShippingCost = requset.ShippingCost,
+                        VatCost = requset.VatCost,
+                        ItemName = requset.ItemName,
+                        ItemDescription = requset.ItemDescription,
+                        ItemModelNumber = requset.ItemModelNumber,
+                        ItemCost = requset.ItemCost,
+                        ItemQuantity = requset.ItemQuantity,
+                        ItemWeight = requset.ItemWeight,
+                        PackageType = requset.PackageType,
+                        RecieverAddress = recieverAddress.Address,
+                        RecieverCountry = recieverAddress.Country,
+                        RecieverLatitude = recieverAddress.Latitude,
+                        RecieverLocality = recieverAddress.Locality,
+                        RecieverLongitude = recieverAddress.Longitude,
+                        RecieverPostalCode = recieverAddress.Postcode,
+                        RecieverState = recieverAddress.State,
+                        RecieverEmail = requset.RecieverEmail,
+                        RecieverName = requset.RecieverName,
+                        RecieverPhoneNo = requset.RecieverPhoneNo,
+                        RiderType = requset.RiderType,
+                        SenderAddress = senderAddress.Address,
+                        SenderCountry = senderAddress.Country,
+                        SenderState = senderAddress.State,
+                        SenderLatitude = senderAddress.Latitude,
+                        SenderLocality = senderAddress.Locality,
+                        SenderLongitude = senderAddress.Longitude,
+                        SenderPostalCode = senderAddress.Postcode,
+                        SenderName = requset.SenderName,
+                        SenderPhoneNo = requset.SenderPhoneNo,
+                        SenderEmail = requset.SenderEmail,
+                        ShippingType = requset.ShippingType,
+                        PackageImageLists = packageImages,
+                        PaymentChannel = requset.PaymentChannel,
+                        StaffId = users.Id,
+                        StaffName = $"{users.FirstName} {users.SurName}",
+                        PurchaseChannel = "Web Manager App",
+                        UserType = "Not Registered",
+
+                    };
+
+                    using var httpClient = new HttpClient();
+                    StringContent content = new(JsonConvert.SerializeObject(login), Encoding.UTF8, "application/json");
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    using var response = await httpClient.PostAsync($"{GlobalConstant.BaseUrl}Logistics/add-package-orders", content);
+                    string apiResponse = await response.Content.ReadAsStringAsync();
+                    if (response.StatusCode == HttpStatusCode.Created || response.StatusCode == HttpStatusCode.OK)
+                    {
+                        var body = JsonConvert.DeserializeObject<OrderModelData>(apiResponse)!;
+                        return RedirectToAction("CompleteOrder", "Home", new { id = body.Id, paymentChannel = login.PaymentChannel });
+                    }
+                    else
+                    {
+                        ViewBag.UserError = apiResponse;
+                        return View(requset);
+                    }
+                }
+                catch
+                {
+                    return View(requset);
+                }
+            }
+            return View(requset);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CompleteOrder(string id, string paymentChannel)
+        {
+            var token = HttpContext.Session.GetString("bt_token");
+            if (ModelState.IsValid)
+            {
+                try
+                {
+
+                    UpdateOrder login = new()
+                    {
+                        PaymentChannel = paymentChannel,
+                        PaymentStatus = true,
+                        TrnxReference = CreateRandomTokenSix()
+                    };
+
+                    using var httpClient = new HttpClient();
+                    StringContent content = new(JsonConvert.SerializeObject(login), Encoding.UTF8, "application/json");
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                    if (paymentChannel == "Paystack")
+                    {
+                        StringContent content2 = new(JsonConvert.SerializeObject(""), Encoding.UTF8, "application/json");
+                        using var response = await httpClient.PutAsync($"{GlobalConstant.BaseUrl}Logistics/initialize-paystack-package-orders/{id}", content2);
+                        string apiResponse = await response.Content.ReadAsStringAsync();
+                        if (response.StatusCode == HttpStatusCode.Created || response.StatusCode == HttpStatusCode.OK)
+                        {
+                            var body = JsonConvert.DeserializeObject<PaystackResponse>(apiResponse)!;
+                            return Redirect(body.Data!.AuthorizationUrl!);
+                        }
+                        else
+                        {
+                            ViewBag.UserError = apiResponse;
+                            return RedirectToAction("OrderDetails", "Home", new { id });
+                        }
+                    }
+                    else if (paymentChannel == "Flutterwave")
+                    {
+                        StringContent content2 = new(JsonConvert.SerializeObject(""), Encoding.UTF8, "application/json");
+                        using var response = await httpClient.PutAsync($"{GlobalConstant.BaseUrl}Logistics/initialize-flutterwave-package-orders/{id}", content2);
+                        string apiResponse = await response.Content.ReadAsStringAsync();
+                        if (response.StatusCode == HttpStatusCode.Created || response.StatusCode == HttpStatusCode.OK)
+                        {
+                            var body = JsonConvert.DeserializeObject<FlutterwaveResponse>(apiResponse)!;
+                            return Redirect(body.Data!.Link!);
+                        }
+                        else
+                        {
+                            ViewBag.UserError = apiResponse;
+                            return RedirectToAction("OrderDetails", "Home", new { id });
+                        }
+                    }
+                    else
+                    {
+
+                        using var response = await httpClient.PutAsync($"{GlobalConstant.BaseUrl}Logistics/package-orders/{id}", content);
+                        string apiResponse = await response.Content.ReadAsStringAsync();
+                        if (response.StatusCode == HttpStatusCode.Created || response.StatusCode == HttpStatusCode.OK)
+                        {
+                            var body = JsonConvert.DeserializeObject<OrderModelData>(apiResponse)!;
+                            return RedirectToAction("OrderDetails", "Home", new { id = body.Id });
+                        }
+                        else
+                        {
+                            ViewBag.UserError = apiResponse;
+                            return RedirectToAction("OrderDetails", "Home", new { id });
+                        }
+                    }
+                }
+                catch
+                {
+                    return RedirectToAction("OrderDetails", "Home", new { id });
+                }
+            }
+            return RedirectToAction("OrderDetails", "Home", new { id });
+        }
         [HttpGet]
         public IActionResult OrderList(string id, string date)
         {
@@ -769,7 +964,9 @@ namespace Ginilog_Company_WebDasboard.Controllers
                             (s.TrnxReference?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
                             (s.ItemName?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
                             (s.RecieverEmail?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
-                             s.UserId.ToString() == id || s.CompanyId.ToString() == id
+                            (s.PurchaseChannel?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                            (s.PaymentChannel?.Contains(id, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                             s.UserId.ToString() == id || s.CompanyId.ToString() == id || s.StaffId.ToString() == id
                             );
                     var allOrdersData = new AllOrdersDataModel()
                     {
@@ -980,9 +1177,6 @@ namespace Ginilog_Company_WebDasboard.Controllers
       
 
         // Accommodation
-
-      
-
         public IActionResult AddAccommodation(Guid id)
         {
             var userId = HttpContext.Session.GetString("bt_userId");
@@ -1184,9 +1378,8 @@ namespace Ginilog_Company_WebDasboard.Controllers
             }
 
         }
+        
         // Reservation
-
-
         public IActionResult AddBookReservation(Guid id)
         {
             var userId = HttpContext.Session.GetString("bt_userId");
@@ -1371,6 +1564,119 @@ namespace Ginilog_Company_WebDasboard.Controllers
         }
 
         // Customer
+        public IActionResult AddCustomerReservation(Guid id)
+        {
+            var userId = HttpContext.Session.GetString("bt_userId");
+            // var token = HttpContext.Session.GetString("bt_token");
+            var adminType = HttpContext.Session.GetString("bt_userType");
+            if (userId != null)
+            {
+                var users = Data()!.GetAwaiter().GetResult();
+                ViewBag.ProfilePics = users.ImagePath!;
+                ViewBag.AdminName = $"{users.FirstName} {users.SurName}";
+                ViewBag.UseType = adminType;
+                ViewBag.ReservationId = id;
+                return View();
+            }
+            else
+            {
+                return RedirectToAction("SignIn", "Auth");
+
+            }
+        }
+        [HttpPost]
+        public async Task<IActionResult> AddCustomerReservation(AddPaymentCustomerBookedReservation requset)
+        {
+            var token = HttpContext.Session.GetString("bt_token");
+            var users = Data()!.GetAwaiter().GetResult();
+            ViewBag.ReservationId = requset.ReservationId;
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    DateTime startDate = DateTime.Parse(requset.ReservationStartDate!);
+                    DateTime endDate = DateTime.Parse(requset.ReservationEndDate!);
+                    int totalDays = (endDate - startDate).Days;
+                    AddPaymentCustomerBookedReservation login = new()
+                    {
+                        UserId = Guid.NewGuid(),
+                        PaymentChannel = requset.PaymentChannel,
+                        CustomerName = requset.CustomerName,
+                        CustomerPhoneNumber = requset.CustomerPhoneNumber,
+                        CustomerEmail = requset.CustomerEmail,
+                        NumberOfGuests = requset.NumberOfGuests,
+                        Comment = requset.Comment,
+                        ReservationStartDate = requset.ReservationStartDate,
+                        ReservationEndDate = requset.ReservationEndDate,
+                        NoOfDays = totalDays,
+                        PaymentStatus = true,
+                        TrnxReference = requset.PaymentChannel == "Cash" ? CreateRandomTokenSix() : "",
+                        StaffId = users.Id,
+                        StaffName = $"{users.FirstName} {users.SurName}",
+                        PurchaseChannel = "Web Manager App",
+                        UserType = "Not Registered",
+                    };
+
+                    using var httpClient = new HttpClient();
+                    StringContent content = new(JsonConvert.SerializeObject(login), Encoding.UTF8, "application/json");
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    httpClient.DefaultRequestHeaders.Add("reservationId", requset.ReservationId.ToString());
+
+                    if (requset.PaymentChannel == "Paystack")
+                    {
+                        using var response = await httpClient.PostAsync($"{GlobalConstant.BaseUrl}Bookings/initialize-paystack-accomodation-reservations-customer", content);
+                        string apiResponse = await response.Content.ReadAsStringAsync();
+                        if (response.StatusCode == HttpStatusCode.Created || response.StatusCode == HttpStatusCode.OK)
+                        {
+                            var body = JsonConvert.DeserializeObject<PaystackResponse>(apiResponse)!;
+                            return Redirect(body.Data!.AuthorizationUrl!);
+                        }
+                        else
+                        {
+                            ViewBag.UserError = apiResponse;
+                            return View(requset);
+                        }
+                    }
+                    else if (requset.PaymentChannel == "Flutterwave")
+                    {
+                        using var response = await httpClient.PostAsync($"{GlobalConstant.BaseUrl}Bookings/initialize-flutterwave-accomodation-reservations-customer", content);
+                        string apiResponse = await response.Content.ReadAsStringAsync();
+                        if (response.StatusCode == HttpStatusCode.Created || response.StatusCode == HttpStatusCode.OK)
+                        {
+                            var body = JsonConvert.DeserializeObject<FlutterwaveResponse>(apiResponse)!;
+                            return Redirect(body.Data!.Link!);
+                        }
+                        else
+                        {
+                            ViewBag.UserError = apiResponse;
+                            return View(requset);
+                        }
+                    }
+                    else
+                    {
+                        using var response = await httpClient.PostAsync($"{GlobalConstant.BaseUrl}Bookings/accomodation-reservations-customer", content);
+                        string apiResponse = await response.Content.ReadAsStringAsync();
+                        if (response.StatusCode == HttpStatusCode.Created || response.StatusCode == HttpStatusCode.OK)
+                        {
+                            var body = JsonConvert.DeserializeObject<CustomerBookedReservation>(apiResponse)!;
+                            return RedirectToAction("CustomerReservationDetails", "Home", new { id = body.Id });
+                        }
+                        else
+                        {
+                            ViewBag.UserError = apiResponse;
+                            return View(requset);
+                        }
+                    }
+
+                }
+                catch
+                {
+                    return View(requset);
+                }
+            }
+            return View(requset);
+        }
+
         [HttpGet]
         public IActionResult CustomerReservationList(string id)
         {

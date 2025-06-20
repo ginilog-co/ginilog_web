@@ -86,6 +86,7 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
+        [HttpPost]
         [Route("login-manager")]
         public async Task<IActionResult> LoginManagerAsync(LoginRequset requset)
         {

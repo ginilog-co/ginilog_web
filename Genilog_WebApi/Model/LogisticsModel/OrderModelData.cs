@@ -65,6 +65,10 @@
         public string? RiderType { get; set; }
         public string? ShippingType { get; set; }
         public List<OrderDeliveryFlow>? OrderDeliveryFlows { get; set; }
+        public Guid StaffId { get; set; }
+        public string? StaffName { get; set; }
+        public string? PurchaseChannel { get;set; }
+        public string? UserType { get; set; } // e.g., "Registerd", "Not Registered"
     }
 
     public class OrderDeliveryFlow
@@ -142,6 +146,10 @@
         public string? RiderType { get; set; }
         public string? ShippingType { get; set; }
         public List<OrderDeliveryFlowDto>? OrderDeliveryFlows { get; set; }
+        public Guid StaffId { get; set; }
+        public string? StaffName { get; set; }
+        public string? PurchaseChannel { get; set; }
+        public string? UserType { get; set; } // e.g., "Registerd", "Not Registered"
     }
 
     public class OrderDeliveryFlowDto
@@ -189,6 +197,10 @@
         public List<string>? PackageImageLists { get; set; }
         public string? RiderType { get; set; }
         public string? ShippingType { get; set; }
+        public Guid StaffId { get; set; }
+        public string? StaffName { get; set; }
+        public string? PurchaseChannel { get; set; }
+        public string? UserType { get; set; } // e.g., "Registerd", "Not Registered"
 
     }
 
@@ -231,6 +243,10 @@
         public List<string>? PackageImageLists { get; set; }
         public string? RiderType { get; set; }
         public string? ShippingType { get; set; }
+        public Guid StaffId { get; set; }
+        public string? StaffName { get; set; }
+        public string? PurchaseChannel { get; set; }
+        public string? UserType { get; set; } // e.g., "Registerd", "Not Registered"
 
     }
 

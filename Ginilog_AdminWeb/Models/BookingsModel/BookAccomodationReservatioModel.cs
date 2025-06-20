@@ -80,6 +80,10 @@
         public double TotalCost { get; set; }
         public DateTime UpdateddAt { get; set; }
         public DateTime CreatedAt { get; set; }
+        public Guid StaffId { get; set; }
+        public string? StaffName { get; set; }
+        public string? PurchaseChannel { get; set; }
+        public string? UserType { get; set; } // e.g., "Registerd", "Not Registered"
 
     }
 
@@ -114,6 +118,10 @@
         public int? NoOfDays { get; set; }
         public string? TrnxReference { get; set; }
         public bool PaymentStatus { get; set; }
+        public Guid StaffId { get; set; }
+        public string? StaffName { get; set; }
+        public string? PurchaseChannel { get; set; }
+        public string? UserType { get; set; } // e.g., "Registerd", "Not Registered"
     }
 
     public class AllCustomerBookedReservationModel

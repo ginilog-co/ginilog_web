@@ -60,7 +60,7 @@
                                         <div class="badge badge-outline-success">@item.RoomNumber</div>
                                     </td>
                                     <td>@item.CreatedAt</td>
-                                    <td><a href="@Url.Action("CustomerReservationDetails", "Home", new { id = item!.Id })" class="btn btn-outline-info">View</a>
+                                    <td><a href="@Url.Action("CustomerReservationDetails", "Bookings", new { id = item!.Id })" class="btn btn-outline-info">View</a>
                                     <td>
                                     <td><a href="@Url.Action("DeleteCustomerReservation", "Bookings", new { id = item!.Id })" class="btn btn-danger">Delete</a></td>
                                 </tr>

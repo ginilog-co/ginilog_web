@@ -4,6 +4,7 @@ using Genilog_WebApi.DataContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Genilog_WebApi.Migrations
 {
     [DbContext(typeof(Genilog_Data_Context))]
-    partial class Genilog_Data_ContextModelSnapshot : ModelSnapshot
+    [Migration("20250609092230_InitOrderAndBookingDetails")]
+    partial class InitOrderAndBookingDetails
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -846,20 +849,11 @@ namespace Genilog_WebApi.Migrations
                     b.Property<Guid>("AdminId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("CheckInTime")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CheckOutTime")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<bool?>("IsBooked")
                         .HasColumnType("bit");
-
-                    b.Property<string>("Location")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("MaximumNoOfGuest")
                         .HasColumnType("int");

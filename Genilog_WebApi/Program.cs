@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Net;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -29,7 +30,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
                       policy =>
                       {
-                          policy.WithOrigins("https://localhost:7001", "https://admin-dashboard.bringmygas.com").
+                          policy.WithOrigins("https://localhost:7001", "https://api-data.ginilog.com").
                          // policy.AllowAnyOrigin().
                          AllowAnyHeader()
                          .AllowAnyMethod()
