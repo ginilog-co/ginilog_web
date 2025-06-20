@@ -20,7 +20,6 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
-using static QRCoder.PayloadGenerator.SwissQrCode;
 
 namespace Genilog_WebApi.Controllers
 {
