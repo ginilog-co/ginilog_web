@@ -4,40 +4,38 @@ import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
-import 'package:ginilog_customer_app/core/features/bookings/controller/bookings.dart';
-import 'package:ginilog_customer_app/core/features/bookings/state/booking_state.dart';
-import 'package:ginilog_customer_app/core/features/bookings/view/all_booking_list.dart';
+import 'package:ginilog_customer_app/core/features/bookings/controller/reservation_screen.dart';
+import 'package:ginilog_customer_app/core/features/bookings/state/reservation_state.dart';
+import 'package:ginilog_customer_app/core/features/bookings/view/accommodation/list_accomodation_reservations.dart';
 import 'package:shimmer/shimmer.dart';
 
-class BookingsScreenView
-    extends StatelessView<BookingsScreen, BookingsScreenController> {
-  const BookingsScreenView(super.state, {super.key});
+class MainReservationScreenView
+    extends
+        StatelessView<MainReservationScreen, MainReservationScreenController> {
+  const MainReservationScreenView(super.state, {super.key});
 
   @override
   Widget build(BuildContext context) {
-    final notifier = controller.ref.watch(bookingProvider.notifier);
-    final state = controller.ref.watch(bookingProvider);
-    final isLoading = state is BookingLoading && !state.hasLoadedInitially;
-    final bookings = notifier.allAccomodations;
+    final notifier = controller.ref.watch(reservationStateProvider.notifier);
+    final state = controller.ref.watch(reservationStateProvider);
+    final isLoading =
+        state is ReservationStateLoading && !state.hasLoadedInitially;
+    final bookings = notifier.allAccomodationReservations;
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(11)),
+        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(12)),
         child: Padding(
           padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-          child: Column(
-            children: [
-              const GlobalBackButton(
-                backText: 'Bookings',
-                showBackButton: false,
-              ),
-            ],
+          child: const GlobalBackButton(
+            backText: 'Accommodation Reservation',
+            showBackButton: true,
           ),
         ),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          await notifier.getAllAccomodationData(forceRefresh: true);
+          await notifier.getAllAccomodationReservationData(refresh: true);
         },
         child: Builder(
           builder: (context) {
@@ -55,7 +53,9 @@ class BookingsScreenView
               );
             }
 
-            return BookingsListTab(allAccomodations: bookings);
+            return AccomodationReservationList(
+              accomodationReservations: bookings,
+            );
           },
         ),
       ),

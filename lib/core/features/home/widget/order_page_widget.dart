@@ -8,8 +8,11 @@ import 'package:ginilog_customer_app/core/features/order_history/view/order_item
 class OrderPageWidget extends ConsumerStatefulWidget {
   final List<PackageOrderResponseModel> allOrder;
   final String userPhone;
-  const OrderPageWidget(
-      {super.key, required this.allOrder, required this.userPhone});
+  const OrderPageWidget({
+    super.key,
+    required this.allOrder,
+    required this.userPhone,
+  });
 
   @override
   ConsumerState<OrderPageWidget> createState() => _OrderPageWidgetState();
@@ -24,13 +27,15 @@ class _OrderPageWidgetState extends ConsumerState<OrderPageWidget> {
   }
 
   List<PackageOrderResponseModel> orderBar(
-      List<PackageOrderResponseModel> data) {
-    var pending = data.where((element) {
-      return (element.orderStatus == OrderClassState.open ||
-          element.orderStatus == OrderClassState.booked ||
-          element.orderStatus == OrderClassState.picked ||
-          element.orderStatus == OrderClassState.inTransit);
-    }).toList();
+    List<PackageOrderResponseModel> data,
+  ) {
+    var pending =
+        data.where((element) {
+          return (element.orderStatus == OrderClassState.open ||
+              element.orderStatus == OrderClassState.booked ||
+              element.orderStatus == OrderClassState.picked ||
+              element.orderStatus == OrderClassState.inTransit);
+        }).toList();
     return pending;
   }
 
@@ -40,39 +45,42 @@ class _OrderPageWidgetState extends ConsumerState<OrderPageWidget> {
       children: [
         orderBar(allOrder).isEmpty
             ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    addVerticalSpacing(context, 55),
-                    const AppText(
-                        isBody: false,
-                        text: "Nothing to show here",
-                        textAlign: TextAlign.start,
-                        fontSize: 38,
-                        color: AppColors.black,
-                        fontStyle: FontStyle.normal,
-                        fontWeight: FontWeight.bold),
-                    const AppText(
-                        isBody: true,
-                        text: "You don't have any order at the moment",
-                        textAlign: TextAlign.center,
-                        fontSize: 30,
-                        color: AppColors.black,
-                        fontStyle: FontStyle.normal,
-                        fontWeight: FontWeight.normal),
-                  ],
-                ),
-              )
-            : Column(
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: List.generate(orderBar(allOrder).length, (index) {
-                  return ActiveOrderItem(
-                    order: orderBar(allOrder)[index],
-                    userPhone: widget.userPhone,
-                  );
-                }))
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  addVerticalSpacing(context, 5),
+                  const AppText(
+                    isBody: false,
+                    text: "Nothing to show here",
+                    textAlign: TextAlign.start,
+                    fontSize: 38,
+                    color: AppColors.black,
+                    fontStyle: FontStyle.normal,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  const AppText(
+                    isBody: true,
+                    text: "You don't have any order at the moment",
+                    textAlign: TextAlign.center,
+                    fontSize: 30,
+                    color: AppColors.black,
+                    fontStyle: FontStyle.normal,
+                    fontWeight: FontWeight.normal,
+                  ),
+                ],
+              ),
+            )
+            : Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: List.generate(orderBar(allOrder).length, (index) {
+                return ActiveOrderItem(
+                  order: orderBar(allOrder)[index],
+                  userPhone: widget.userPhone,
+                );
+              }),
+            ),
       ],
     );
   }

@@ -1,7 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 // ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
 
-import 'package:ginilog_customer_app/core/components/helpers/globals.dart';
 import 'package:ginilog_customer_app/core/components/utils/app_buttons.dart';
 import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
@@ -14,9 +13,7 @@ import 'package:ginilog_customer_app/core/features/account/view/personal_detail.
 import 'package:ginilog_customer_app/core/features/account/view/privacy_policy_screen.dart';
 import 'package:ginilog_customer_app/core/features/account/view/terms_of_service.dart';
 import 'package:ginilog_customer_app/core/features/auth/controller/login_controller.dart';
-import 'package:ginilog_customer_app/core/features/bookings/state/booking_state.dart';
 import 'package:ginilog_customer_app/core/features/account/view/notification_page.dart';
-import 'package:ginilog_customer_app/core/features/order_history/states/order_state.dart';
 
 import '../../../components/utils/colors.dart';
 import '../../../components/utils/package_export.dart';
@@ -37,14 +34,9 @@ class _LoginPageState extends ConsumerState<AccountPage> {
   @override
   void initState() {
     super.initState();
-    globals.updateHomeLoaded();
     provider = ref.read(accountProvider.notifier);
     provider.getAccount();
     provider.userData;
-    final orderProvider = ref.read(packageOrderProvider.notifier);
-    final booking = ref.read(bookingProvider.notifier);
-    orderProvider.getAllPackageOrderData();
-    booking.getAllCustomerBookData();
   }
 
   @override
@@ -159,9 +151,8 @@ class _LoginPageState extends ConsumerState<AccountPage> {
                     color: AppColors.white,
                     shape: RoundedRectangleBorder(),
                     child: CustomListTile(
-                      title: "Statements & Reports",
-                      subtitle:
-                          "Download transaction details, orders, deliveries",
+                      title: "Bookings Reports",
+                      subtitle: "View your bookings, reservations and payments",
                       imageUrl:
                           "assets/images/reports.png", // Replace with actual image
                       onTap: () {

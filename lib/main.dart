@@ -16,6 +16,9 @@ import 'core/components/routes/routers.dart' as router;
 import 'package:geolocator/geolocator.dart' as positions;
 
 //Store this globally
+// Global RouteObserver instance
+final RouteObserver<ModalRoute<void>> routeObserver =
+    RouteObserver<ModalRoute<void>>();
 
 final _pushMessagingNotification = getIt<PushNotificationService>();
 
@@ -177,6 +180,9 @@ class _MyAppState extends ConsumerState<MyApp> {
                   themeMode: themeMode,
                   theme: ThemeData.light(), // Light theme
                   darkTheme: ThemeData.dark(), // Dark theme
+                  navigatorObservers: [
+                    routeObserver,
+                  ], // 👈 Enables route lifecycle listening
                   onGenerateRoute: router.generateRoute,
                   initialRoute: route,
                   navigatorKey: widget.navigatorKey,

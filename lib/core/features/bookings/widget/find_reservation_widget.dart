@@ -6,8 +6,6 @@ import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/features/bookings/controller/book_reservation.dart';
 import 'package:ginilog_customer_app/core/features/bookings/model/accomodation_reservations_response_model.dart';
-import 'package:ginilog_customer_app/core/features/bookings/model/accomodation_response_model.dart';
-import 'package:ginilog_customer_app/core/features/bookings/state/booking_state.dart';
 
 class FindReservationWidget extends ConsumerStatefulWidget {
   final AccomodationReservationResponseModel accomodationReservation;
@@ -22,16 +20,9 @@ class FindReservationWidget extends ConsumerStatefulWidget {
 }
 
 class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
-  AccomodationResponseModel accomodationData = AccomodationResponseModel();
   @override
   void initState() {
     super.initState();
-    final bookings = ref.read(bookingProvider.notifier);
-    bookings.getAllAccomodationData();
-    accomodationData =
-        bookings.fetchAccomodationById(
-          widget.accomodationReservation.accomodationId!,
-        )!;
   }
 
   @override
@@ -50,7 +41,8 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                   widget.accomodationReservation.maximumNoOfGuest!.toInt(),
               reservationName:
                   widget.accomodationReservation.accomodationName.toString(),
-              reservationAddress: accomodationData.location.toString(),
+              reservationAddress:
+                  widget.accomodationReservation.location.toString(),
             ),
           );
         },
@@ -75,7 +67,8 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                       SvgPicture.asset('assets/svgs/time_clock.svg', width: 20),
                       AppText(
                         isBody: true,
-                        text: "Check In: ${accomodationData.checkInTime}",
+                        text:
+                            "Check In: ${widget.accomodationReservation.checkInTime}",
                         textAlign: TextAlign.start,
                         fontSize: 35,
                         color: AppColors.black,
@@ -85,10 +78,7 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                       Spacer(),
                       AppText(
                         isBody: true,
-                        text:
-                            data3.isBooked == true
-                                ? "Not Available"
-                                : "Available",
+                        text: "Available",
                         textAlign: TextAlign.start,
                         fontSize: 35,
                         color: AppColors.black,
@@ -188,7 +178,8 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                                       .accomodationName
                                       .toString(),
                               reservationAddress:
-                                  accomodationData.location.toString(),
+                                  widget.accomodationReservation.location
+                                      .toString(),
                             ),
                           );
                         },

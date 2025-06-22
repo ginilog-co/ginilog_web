@@ -5,6 +5,7 @@ import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
 import 'package:ginilog_customer_app/core/features/order_history/controller/order_history.dart';
 import 'package:ginilog_customer_app/core/features/order_history/model/package_orders_model.dart';
+import 'package:ginilog_customer_app/core/features/order_history/states/order_state.dart';
 import 'package:ginilog_customer_app/core/features/order_history/widget/all_order_list.dart';
 import 'package:ginilog_customer_app/core/features/order_history/widget/completed_tab.dart';
 import 'package:ginilog_customer_app/core/features/order_history/widget/ongoing_tab.dart';
@@ -15,77 +16,100 @@ class OrderHistoryScreenView
 
   @override
   Widget build(BuildContext context) {
-    var pending = controller.allOrders.where((element) {
-      return (element.orderStatus == OrderClassState.open ||
-          element.orderStatus == OrderClassState.booked);
-    }).toList();
-    var ongoingOrder = controller.allOrders.where((element) {
-      return (element.orderStatus == OrderClassState.picked ||
-          element.orderStatus == OrderClassState.inTransit);
-    }).toList();
-    var completedOrder = controller.allOrders.where((element) {
-      return (element.orderStatus == OrderClassState.delivered);
-    }).toList();
+    final notifier = controller.ref.watch(packageOrderProvider.notifier);
+    final state = controller.ref.watch(packageOrderProvider);
+    final isLoading = state is PackageOrderLoading && !state.hasLoadedInitially;
+    final data = notifier.allPackageOrders;
+
+    var pending =
+        data.where((element) {
+          return (element.orderStatus == OrderClassState.open ||
+              element.orderStatus == OrderClassState.booked);
+        }).toList();
+    var ongoingOrder =
+        data.where((element) {
+          return (element.orderStatus == OrderClassState.picked ||
+              element.orderStatus == OrderClassState.inTransit);
+        }).toList();
+    var completedOrder =
+        data.where((element) {
+          return (element.orderStatus == OrderClassState.delivered);
+        }).toList();
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: PreferredSize(
-          preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(22)),
-          child: Padding(
-            padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-            child: Column(
-              children: [
-                const GlobalBackButton(
-                    backText: 'My Orders', showBackButton: false),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(4, (index) {
-                    return ElevatedButton(
-                      onPressed: () {
-                        controller.selectTabb(index);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        elevation: 0,
-                        backgroundColor: controller.tabController.index == index
-                            ? Colors.red
-                            : Colors.white,
-                        foregroundColor: controller.tabController.index == index
-                            ? Colors.white
-                            : AppColors.grey2,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(22)),
+        child: Padding(
+          padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
+          child: Column(
+            children: [
+              const GlobalBackButton(
+                backText: 'My Orders',
+                showBackButton: false,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: List.generate(4, (index) {
+                  return ElevatedButton(
+                    onPressed: () {
+                      controller.selectTabb(index);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      elevation: 0,
+                      backgroundColor:
+                          controller.tabController.index == index
+                              ? Colors.red
+                              : Colors.white,
+                      foregroundColor:
+                          controller.tabController.index == index
+                              ? Colors.white
+                              : AppColors.grey2,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
                       ),
-                      child: Text(
-                          ['All', 'Pending', 'In-transit', 'Completed'][index]),
-                    );
-                  }),
-                ),
-              ],
-            ),
-          )),
-      body: TabBarView(
-        physics: NeverScrollableScrollPhysics(),
-        controller: controller.tabController,
-        children: [
-          AllOrderListTab(
-            allOrder: controller.allOrders,
-            userPhone: controller.userPhone,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      ['All', 'Pending', 'In-transit', 'Completed'][index],
+                    ),
+                  );
+                }),
+              ),
+            ],
           ),
-          OngoingTab(
-            ongoingOrder: pending,
-            userPhone: controller.userPhone,
-          ),
-          OngoingTab(
-            ongoingOrder: ongoingOrder,
-            userPhone: controller.userPhone,
-          ),
-          CompletedTab(
-            completedOrder: completedOrder,
-            userPhone: controller.userPhone,
-          )
-        ],
+        ),
+      ),
+      body: Builder(
+        builder: (context) {
+          if (isLoading) {
+            return CircularProgressIndicator(
+              color: AppColors.primary,
+              strokeWidth: 2.0,
+            );
+          }
+          return TabBarView(
+            physics: NeverScrollableScrollPhysics(),
+            controller: controller.tabController,
+            children: [
+              AllOrderListTab(allOrder: data, userPhone: controller.userPhone),
+              OngoingTab(
+                ongoingOrder: pending,
+                userPhone: controller.userPhone,
+              ),
+              OngoingTab(
+                ongoingOrder: ongoingOrder,
+                userPhone: controller.userPhone,
+              ),
+              CompletedTab(
+                completedOrder: completedOrder,
+                userPhone: controller.userPhone,
+              ),
+            ],
+          );
+        },
       ),
     );
   }

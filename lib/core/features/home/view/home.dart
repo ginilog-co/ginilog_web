@@ -5,11 +5,14 @@ import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/components/widgets/arrow_line_widget.dart';
-import 'package:ginilog_customer_app/core/features/bookings/view/accommodation/list_accomodation_reservations.dart';
+import 'package:ginilog_customer_app/core/features/bookings/controller/reservation_screen.dart';
 import 'package:ginilog_customer_app/core/features/home/controller/home.dart';
+import 'package:ginilog_customer_app/core/features/home/states/home_state.dart';
 import 'package:ginilog_customer_app/core/features/home/widget/order_page_widget.dart';
 import 'package:ginilog_customer_app/core/features/home/widget/send_parcel_bottomsheet.dart';
 import 'package:ginilog_customer_app/core/features/home_screen.dart';
+import 'package:ginilog_customer_app/core/features/order_history/states/order_state.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../../components/architecture/mvc.dart';
 
 class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
@@ -18,6 +21,18 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
   @override
   Widget build(BuildContext context) {
     // final provider = controller.ref.watch(getListGasStation);
+    final notifier = controller.ref.watch(packageOrderProvider.notifier);
+    final state = controller.ref.watch(packageOrderProvider);
+    final isLoading = state is PackageOrderLoading && !state.hasLoadedInitially;
+    final data = notifier.allPackageOrders;
+
+    // fetch Advert
+    final advert = controller.ref.watch(homeProvider.notifier);
+    final advertState = controller.ref.watch(homeProvider);
+    final isAdvertLoading =
+        advertState is HomeLoading && !advertState.hasLoadedInitially;
+    final advertData = advert.advertisements;
+
     return Scaffold(
       body: SafeArea(
         child: Container(
@@ -33,11 +48,7 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      navigateToRoute(
-                          context,
-                          HomeScreenPage(
-                            imdex: 3,
-                          ));
+                      navigateToRoute(context, HomeScreenPage(imdex: 3));
                     },
                     child: Row(
                       spacing: 5,
@@ -45,70 +56,83 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                         CircleAvatar(
                           backgroundColor: AppColors.grey5,
                           radius: 15,
-                          backgroundImage: controller.profilePicture!.isEmpty ||
-                                  controller.profilePicture == null
-                              ? AssetImage("assets/images/profile_icon.png")
-                              : NetworkImage(
-                                  controller.profilePicture.toString()),
+                          backgroundImage:
+                              controller.profilePicture!.isEmpty ||
+                                      controller.profilePicture == null
+                                  ? AssetImage("assets/images/profile_icon.png")
+                                  : NetworkImage(
+                                    controller.profilePicture.toString(),
+                                  ),
                         ),
                         AppText(
-                            isBody: false,
-                            text: controller.allNames,
-                            textAlign: TextAlign.start,
-                            fontSize: 30,
-                            color: AppColors.black,
-                            fontStyle: FontStyle.normal,
-                            fontWeight: FontWeight.bold),
+                          isBody: false,
+                          text: controller.allNames,
+                          textAlign: TextAlign.start,
+                          fontSize: 30,
+                          color: AppColors.black,
+                          fontStyle: FontStyle.normal,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ],
                     ),
                   ),
 
                   addVerticalSpacing(context, 5),
-                  CarouselSlider(
-                    carouselController: controller.carouselController,
-                    options: CarouselOptions(
-                      autoPlay: true,
-                      viewportFraction: 1,
-                      aspectRatio: 16 / 9,
-                      height: 200,
-                      initialPage: 0,
-                      enlargeCenterPage: true,
-                      onPageChanged: (index, reason) {
-                        controller.pageChanged(index);
-                      },
-                    ),
-                    items: List.generate(
-                      4,
-                      (index) => InkWell(
-                        onTap: () {},
-                        child: Card(
-                          child: Stack(
-                            children: [
-                              Container(
-                                height: 200,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey,
-                                  borderRadius: BorderRadius.circular(10),
-                                  image: DecorationImage(
-                                    fit: BoxFit.fill,
-                                    image: NetworkImage(
-                                      "https://api-data.ginilog.com/uploads/89f72fb5-c511-46e9-a745-255957197616.png",
+                  Builder(
+                    builder: (context) {
+                      if (isAdvertLoading) {
+                        return SizedBox(
+                          height: 200,
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+                      return CarouselSlider(
+                        carouselController: controller.carouselController,
+                        options: CarouselOptions(
+                          autoPlay: true,
+                          viewportFraction: 1,
+                          aspectRatio: 16 / 9,
+                          height: 200,
+                          initialPage: 0,
+                          enlargeCenterPage: true,
+                          onPageChanged: (index, reason) {
+                            controller.pageChanged(index);
+                          },
+                        ),
+                        items: List.generate(
+                          advertData.length,
+                          (index) => InkWell(
+                            onTap: () {},
+                            child: Card(
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    height: 200,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey,
+                                      borderRadius: BorderRadius.circular(10),
+                                      image: DecorationImage(
+                                        fit: BoxFit.fill,
+                                        image: NetworkImage(
+                                          "${advertData[index].advertImage}",
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                   addVerticalSpacing(context, 5),
                   // Smooth Page Indicator
                   Center(
                     child: AnimatedSmoothIndicator(
                       activeIndex: controller.currentIndex,
-                      count: 4,
+                      count: advertData.length,
                       effect: ExpandingDotsEffect(
                         dotHeight: 8,
                         dotWidth: 8,
@@ -131,13 +155,14 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                         ),
                       ),
                       const AppText(
-                          isBody: true,
-                          text: "Our Services",
-                          textAlign: TextAlign.start,
-                          fontSize: 50,
-                          color: AppColors.black,
-                          fontStyle: FontStyle.normal,
-                          fontWeight: FontWeight.w500),
+                        isBody: true,
+                        text: "Our Services",
+                        textAlign: TextAlign.start,
+                        fontSize: 50,
+                        color: AppColors.black,
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.w500,
+                      ),
                       Expanded(
                         child: CustomPaint(
                           size: Size(100, 10), // Adjust width here
@@ -161,9 +186,11 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                                 context: context,
                                 isScrollControlled: true,
                                 backgroundColor: Colors.transparent,
-                                builder: (context) => SendParcelTypeBottomSheet(
-                                  phoneNumber: controller.userPhone.toString(),
-                                ),
+                                builder:
+                                    (context) => SendParcelTypeBottomSheet(
+                                      phoneNumber:
+                                          controller.userPhone.toString(),
+                                    ),
                               );
                             },
                             child: Column(
@@ -172,23 +199,28 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                                   width: getScreenWidth(context) / 2,
                                   height: 200,
                                   decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.only(
-                                          topLeft: Radius.circular(10),
-                                          topRight: Radius.circular(10)),
-                                      image: DecorationImage(
-                                          fit: BoxFit.fill,
-                                          image: AssetImage(
-                                              "assets/images/place_order_items.png"))),
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(10),
+                                      topRight: Radius.circular(10),
+                                    ),
+                                    image: DecorationImage(
+                                      fit: BoxFit.fill,
+                                      image: AssetImage(
+                                        "assets/images/place_order_items.png",
+                                      ),
+                                    ),
+                                  ),
                                 ),
                                 addVerticalSpacing(context, 2),
                                 const AppText(
-                                    isBody: true,
-                                    text: "Send A Parcel",
-                                    textAlign: TextAlign.start,
-                                    fontSize: 30,
-                                    color: AppColors.black,
-                                    fontStyle: FontStyle.normal,
-                                    fontWeight: FontWeight.w400),
+                                  isBody: true,
+                                  text: "Send A Parcel",
+                                  textAlign: TextAlign.start,
+                                  fontSize: 30,
+                                  color: AppColors.black,
+                                  fontStyle: FontStyle.normal,
+                                  fontWeight: FontWeight.w400,
+                                ),
                               ],
                             ),
                           ),
@@ -198,8 +230,7 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                           height: getScreenHeight(context) / 3.8,
                           child: GestureDetector(
                             onTap: () {
-                              navigateToRoute(
-                                  context, AccomodationReservationList());
+                              navigateToRoute(context, MainReservationScreen());
                             },
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -209,23 +240,28 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                                   width: getScreenWidth(context) / 2,
                                   height: 200,
                                   decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.only(
-                                          topLeft: Radius.circular(10),
-                                          topRight: Radius.circular(10)),
-                                      image: DecorationImage(
-                                          fit: BoxFit.fill,
-                                          image: AssetImage(
-                                              "assets/images/book_hotel.png"))),
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(10),
+                                      topRight: Radius.circular(10),
+                                    ),
+                                    image: DecorationImage(
+                                      fit: BoxFit.fill,
+                                      image: AssetImage(
+                                        "assets/images/book_hotel.png",
+                                      ),
+                                    ),
+                                  ),
                                 ),
                                 addVerticalSpacing(context, 2),
                                 const AppText(
-                                    isBody: true,
-                                    text: "Accommodation Bookings",
-                                    textAlign: TextAlign.start,
-                                    fontSize: 30,
-                                    color: AppColors.black,
-                                    fontStyle: FontStyle.normal,
-                                    fontWeight: FontWeight.w400),
+                                  isBody: true,
+                                  text: "Accommodation Bookings",
+                                  textAlign: TextAlign.start,
+                                  fontSize: 30,
+                                  color: AppColors.black,
+                                  fontStyle: FontStyle.normal,
+                                  fontWeight: FontWeight.w400,
+                                ),
                               ],
                             ),
                           ),
@@ -235,20 +271,29 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                   ),
                   addVerticalSpacing(context, 5),
                   const AppText(
-                      isBody: true,
-                      text: "Recent Orders",
-                      textAlign: TextAlign.start,
-                      fontSize: 80,
-                      color: AppColors.black,
-                      fontStyle: FontStyle.normal,
-                      fontWeight: FontWeight.bold),
+                    isBody: true,
+                    text: "Recent Orders",
+                    textAlign: TextAlign.start,
+                    fontSize: 80,
+                    color: AppColors.black,
+                    fontStyle: FontStyle.normal,
+                    fontWeight: FontWeight.bold,
+                  ),
                   addVerticalSpacing(context, 3),
-                  controller.allOrders.isEmpty
-                      ? SizedBox.shrink()
-                      : OrderPageWidget(
-                          allOrder: controller.allOrders,
-                          userPhone: controller.userPhone.toString(),
-                        ),
+                  Builder(
+                    builder: (context) {
+                      if (isLoading) {
+                        return SizedBox(
+                          height: 200,
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+                      return OrderPageWidget(
+                        allOrder: data,
+                        userPhone: controller.userPhone.toString(),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -270,26 +315,73 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
         elevation: 2,
         child: Stack(
           children: [
-            Image.asset(
-              image,
-              height: 150,
-              width: 150,
-            ),
+            Image.asset(image, height: 150, width: 150),
             Positioned(
               bottom: 10,
               right: 23,
               child: AppText(
-                  isBody: true,
-                  text: title,
-                  textAlign: TextAlign.start,
-                  fontSize: 75,
-                  color: AppColors.black,
-                  fontStyle: FontStyle.normal,
-                  fontWeight: FontWeight.w400),
+                isBody: true,
+                text: title,
+                textAlign: TextAlign.start,
+                fontSize: 75,
+                color: AppColors.black,
+                fontStyle: FontStyle.normal,
+                fontWeight: FontWeight.w400,
+              ),
             ),
           ],
         ),
       ),
     );
   }
+}
+
+Widget orderShimmerCard(BuildContext context) {
+  return Card(
+    elevation: 4,
+    child: Container(
+      width: MediaQuery.of(context).size.width,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+      ),
+      padding: const EdgeInsets.all(8.0),
+      child: Shimmer.fromColors(
+        baseColor: Colors.grey.shade300,
+        highlightColor: Colors.grey.shade100,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(width: 20, height: 20, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 12,
+                    width: double.infinity,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 6),
+                  Container(height: 12, width: 120, color: Colors.white),
+                  const SizedBox(height: 6),
+                  Container(height: 12, width: 180, color: Colors.white),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              width: 70,
+              height: 30,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }

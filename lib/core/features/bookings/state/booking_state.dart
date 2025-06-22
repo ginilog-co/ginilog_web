@@ -1,31 +1,58 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
-import 'package:ginilog_customer_app/core/features/bookings/model/accomodation_reservations_response_model.dart';
+import 'package:ginilog_customer_app/core/components/utils/constants.dart';
 import 'package:ginilog_customer_app/core/features/bookings/model/accomodation_response_model.dart';
-import 'package:ginilog_customer_app/core/features/bookings/model/customer_book_response_model.dart';
 import 'package:ginilog_customer_app/core/features/bookings/services/booking_services.dart';
 import '../../../components/utils/package_export.dart';
 
-abstract class Bookings {}
+abstract class Bookings {
+  final bool isCreatingBooking;
+  final bool hasLoadedInitially;
+  final int visitCount;
 
-class BookingInitial extends Bookings {}
+  const Bookings({
+    this.isCreatingBooking = false,
+    this.hasLoadedInitially = false,
+    this.visitCount = 0,
+  });
+}
 
-class BookingLoading extends Bookings {}
+class BookingInitial extends Bookings {
+  const BookingInitial() : super();
+}
 
-class BookingSuccess extends Bookings {
+class BookingLoading extends Bookings {
+  const BookingLoading({super.hasLoadedInitially})
+    : super(isCreatingBooking: true);
+}
+
+class BookingRefreshing extends Bookings {
+  const BookingRefreshing()
+    : super(isCreatingBooking: false, hasLoadedInitially: true);
+}
+
+class BookingSuccess<T> extends Bookings {
   final String message;
-  BookingSuccess({required this.message});
+  final T? data;
+  final List<T>? listData;
+
+  const BookingSuccess({
+    required this.message,
+    this.data,
+    this.listData,
+    super.visitCount,
+  }) : super(isCreatingBooking: false, hasLoadedInitially: true);
 }
 
 class BookingUpdate extends Bookings {
   final String message;
-  BookingUpdate({required this.message});
+  const BookingUpdate({required this.message})
+    : super(isCreatingBooking: false, hasLoadedInitially: true);
 }
 
 class BookingFailure extends Bookings {
   final String error;
-  BookingFailure({required this.error});
+  const BookingFailure({required this.error}) : super(isCreatingBooking: false);
 }
 
 class BookingNotifier extends StateNotifier<Bookings> {
@@ -34,40 +61,76 @@ class BookingNotifier extends StateNotifier<Bookings> {
   // Accomodations
   List<AccomodationResponseModel> allAccomodations = [];
   AccomodationResponseModel accomodationModel = AccomodationResponseModel();
+  bool _hasFetchedAccomodations = false;
 
-  // ACCOMODATION RESERVATIONS
-  List<AccomodationReservationResponseModel> allAccomodationReservations = [];
-  List<CustomerBookResponseModel> allCustomerBooks = [];
+  final Map<String, bool> _fetchedAccomodationById = {};
+  int _visitCounter = 0;
   BookingNotifier({required this.booking}) : super(BookingInitial());
 
   // Accomodation
-  getAccomodationData({required String id}) async {
+
+  Future<void> getAccomodationData({
+    required String id,
+    bool forceRefresh = false,
+  }) async {
     try {
-      if (!mounted) {
-        state = BookingLoading();
-        return;
+      if (!_fetchedAccomodationById.containsKey(id) || forceRefresh) {
+        if (!_fetchedAccomodationById.containsKey(id)) {
+          state = const BookingLoading();
+        } else {
+          state = const BookingRefreshing();
+        }
+        AccomodationResponseModel response2 = await booking.getAccomodationData(
+          accomodationId: id,
+        );
+        accomodationModel = response2;
+        _fetchedAccomodationById[id] = true;
+        state = BookingSuccess<AccomodationResponseModel>(
+          message: "${response2.id} Notification Loaded",
+          data: response2,
+        );
       }
-      AccomodationResponseModel response2 = await booking.getAccomodationData(
-        accomodationId: id,
-      );
-      accomodationModel = response2;
-      state = BookingSuccess(message: "${response2.id} Notification Loaded");
-    } on Exception catch (e) {
+    } catch (e) {
       state = BookingFailure(error: e.toString());
     }
   }
 
-  getAllAccomodationData() async {
+  Future<void> getAllAccomodationData({bool forceRefresh = false}) async {
+    _visitCounter++;
+    printData("AllAccomodation Visit Count:", "$_visitCounter");
     try {
-      if (!mounted) {
-        state = BookingLoading();
-        return;
+      if (_visitCounter == 1) {
+        if (!_hasFetchedAccomodations || forceRefresh) {
+          if (!_hasFetchedAccomodations) {
+            state = const BookingLoading();
+          } else {
+            state = const BookingRefreshing();
+          }
+
+          final response = await booking.getAllAccomodationData();
+          allAccomodations = response;
+          _hasFetchedAccomodations = true;
+          state = BookingSuccess<AccomodationResponseModel>(
+            message: "All Accommodations Loaded",
+            listData: response,
+            visitCount: _visitCounter,
+          );
+        }
+      } else {
+        if (!mounted) {
+          state = BookingLoading();
+          return;
+        }
+        final response = await booking.getAllAccomodationData();
+        allAccomodations = response;
+        _hasFetchedAccomodations = true;
+        state = BookingSuccess<AccomodationResponseModel>(
+          message: "All Accommodations Loaded",
+          listData: response,
+          visitCount: _visitCounter,
+        );
       }
-      List<AccomodationResponseModel> response2 =
-          await booking.getAllAccomodationData();
-      allAccomodations = response2;
-      state = BookingSuccess(message: "All Accomodations Loaded");
-    } on Exception catch (e) {
+    } catch (e) {
       state = BookingFailure(error: e.toString());
     }
   }
@@ -81,103 +144,13 @@ class BookingNotifier extends StateNotifier<Bookings> {
     }
     return accomodation;
   }
-
-  // ACCOMODATION RESERVATIONS
-  createBooking({
-    required String reservationId,
-    required String customerName,
-    required String customerPhoneNumber,
-    required String customerEmail,
-    required String trnxReference,
-    required bool paymentStatus,
-    required int numberOfGuests,
-    required String comment,
-    required String paymentChannel,
-    required String reservationStartDate,
-    required String reservationEndDate,
-    required int noOfDays,
-    required String paymentType,
-    required BuildContext context,
-  }) async {
-    try {
-      if (!mounted) {
-        state = BookingLoading();
-        return;
-      }
-      var response = await booking.bookAccomodationReservation(
-        reservationId: reservationId,
-        customerName: customerName,
-        customerPhoneNumber: customerPhoneNumber,
-        customerEmail: customerEmail,
-        trnxReference: trnxReference,
-        paymentStatus: paymentStatus,
-        numberOfGuests: numberOfGuests,
-        comment: comment,
-        paymentChannel: paymentChannel,
-        reservationStartDate: reservationStartDate,
-        reservationEndDate: reservationEndDate,
-        noOfDays: noOfDays,
-        paymentType: paymentType,
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        state = BookingSuccess(message: "Booking Successfully");
-        showCustomSnackbar(
-          context,
-          title: "Booking Addition",
-          content: "Booking Added Successfully",
-          type: SnackbarType.success,
-          isTopPosition: false,
-        );
-      } else {
-        state = BookingFailure(error: response.body);
-        showCustomSnackbar(
-          context,
-          title: "Booking Addition",
-          content: response.body,
-          type: SnackbarType.error,
-          isTopPosition: false,
-        );
-      }
-    } on Exception catch (e) {
-      state = BookingFailure(error: e.toString());
-    }
-  }
-
-  getAllAccomodationReservationData() async {
-    try {
-      if (!mounted) {
-        state = BookingLoading();
-        return;
-      }
-      List<AccomodationReservationResponseModel> response2 =
-          await booking.getAllAccomodationReservationsData();
-      allAccomodationReservations = response2;
-      state = BookingSuccess(message: "All Accomodations Loaded");
-    } on Exception catch (e) {
-      state = BookingFailure(error: e.toString());
-    }
-  }
-
-  getAllCustomerBookData() async {
-    try {
-      if (!mounted) {
-        state = BookingLoading();
-        return;
-      }
-      List<CustomerBookResponseModel> response2 =
-          await booking.getAllCustomerBookData();
-      allCustomerBooks = response2;
-      state = BookingSuccess(message: "All Accomodations Loaded");
-    } on Exception catch (e) {
-      state = BookingFailure(error: e.toString());
-    }
-  }
 }
 
 final streamRepositoryProvider = Provider<BookingsService>(
   (ref) => BookingsService(),
 );
+
 final bookingProvider = StateNotifierProvider<BookingNotifier, Bookings>((ref) {
-  final BookingsService booking = BookingsService();
-  return BookingNotifier(booking: booking);
+  final bookingService = ref.read(streamRepositoryProvider);
+  return BookingNotifier(booking: bookingService);
 });

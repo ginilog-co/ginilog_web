@@ -69,6 +69,67 @@ class BookingsService {
   }
 
   // ACCOMODATION RESERVATIONS
+  Future<List<AccomodationReservationResponseModel>>
+  getAllAccomodationReservationsData() async {
+    List<AccomodationReservationResponseModel> data = [];
+    try {
+      Map<String, String> headers2 = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer ${globals.token}',
+      };
+      var url = Uri.parse(
+        "${Endpoints.baseUrl}Bookings/accomodation-reservations",
+      );
+      var response = await http.get(url, headers: headers2);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        var data1 = accomodationReservationResponseModelFromJson(response.body);
+        data = data1;
+        printData('All Accomodation Reservations', response.body);
+        return data;
+      } else {
+        printData('All Accomodation Reservations Error', response.body);
+      }
+    } catch (e) {
+      printData('Error', e.toString());
+      return Future.error(handleHttpError(e));
+    }
+    return data;
+  }
+
+  Future<AccomodationReservationResponseModel> getAccomodationReservationData({
+    required String id,
+  }) async {
+    AccomodationReservationResponseModel data =
+        AccomodationReservationResponseModel();
+    try {
+      Map<String, String> headers2 = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer ${globals.token}',
+      };
+      var url = Uri.parse(
+        "${Endpoints.baseUrl}Bookings/accomodation-reservations/$id",
+      );
+      var response = await http.get(url, headers: headers2);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final item = json.decode(response.body);
+        data = AccomodationReservationResponseModel.fromJson(
+          item,
+        ); // Mapping json response to our data model
+        printData('Accomodation Reservation Details', data);
+        return data;
+      } else {
+        printData('Accomodation Reservation Details Error', response.body);
+        return data;
+      }
+    } catch (e) {
+      printData('Error', e.toString());
+      return Future.error(handleHttpError(e));
+    }
+  }
+
+  // ACCOMODATION Customer Book RESERVATIONS
   Future<http.Response> bookAccomodationReservation({
     required String reservationId,
     required String customerName,
@@ -135,34 +196,6 @@ class BookingsService {
     }
   }
 
-  Future<List<AccomodationReservationResponseModel>>
-  getAllAccomodationReservationsData() async {
-    List<AccomodationReservationResponseModel> data = [];
-    try {
-      Map<String, String> headers2 = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ${globals.token}',
-      };
-      var url = Uri.parse(
-        "${Endpoints.baseUrl}Bookings/accomodation-reservations",
-      );
-      var response = await http.get(url, headers: headers2);
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        var data1 = accomodationReservationResponseModelFromJson(response.body);
-        data = data1;
-        printData('All Accomodation Reservations', response.body);
-        return data;
-      } else {
-        printData('All Accomodation Reservations Error', response.body);
-      }
-    } catch (e) {
-      printData('Error', e.toString());
-      return Future.error(handleHttpError(e));
-    }
-    return data;
-  }
-
   Future<List<CustomerBookResponseModel>> getAllCustomerBookData() async {
     List<CustomerBookResponseModel> data = [];
     try {
@@ -188,6 +221,37 @@ class BookingsService {
       return Future.error(handleHttpError(e));
     }
     return data;
+  }
+
+  Future<CustomerBookResponseModel> getCustomerBookData({
+    required String id,
+  }) async {
+    CustomerBookResponseModel data = CustomerBookResponseModel();
+    try {
+      Map<String, String> headers2 = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer ${globals.token}',
+      };
+      var url = Uri.parse(
+        "${Endpoints.baseUrl}Bookings/accomodation-reservations-customer/$id",
+      );
+      var response = await http.get(url, headers: headers2);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final item = json.decode(response.body);
+        data = CustomerBookResponseModel.fromJson(
+          item,
+        ); // Mapping json response to our data model
+        printData('Customer Book Details', data);
+        return data;
+      } else {
+        printData('Customer Book Details Error', response.body);
+        return data;
+      }
+    } catch (e) {
+      printData('Error', e.toString());
+      return Future.error(handleHttpError(e));
+    }
   }
 
   Future<http.Response> addAccomodationReview({

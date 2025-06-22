@@ -119,7 +119,7 @@ class _ErrorEmailSentDialogState extends State<ErrorEmailSentDialog> {
                 ),
                 addVerticalSpacing(context, 4),
                 Text(
-                  'Opps!',
+                  'Oops!',
                   style: TextStyle(
                     color: AppColors.black,
                     fontWeight: FontWeight.bold,
