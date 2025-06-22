@@ -7,6 +7,7 @@ import 'package:ginilog_customer_app/core/components/utils/constants.dart';
 import 'package:ginilog_customer_app/core/features/bookings/model/accomodation_reservations_response_model.dart';
 import 'package:ginilog_customer_app/core/features/bookings/model/accomodation_response_model.dart';
 import 'package:ginilog_customer_app/core/features/bookings/model/customer_book_response_model.dart';
+import 'package:ginilog_customer_app/core/features/bookings/model/reservation_date_response_model.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io' show Platform;
 
@@ -289,5 +290,36 @@ class BookingsService {
       printData('Error', e.toString());
       return Future.error(handleHttpError(e));
     }
+  }
+
+  //Reservation Date
+  Future<List<ReservationDataResponseModel>> getAllReservationDateData({
+    required String reservationId,
+  }) async {
+    List<ReservationDataResponseModel> data = [];
+    try {
+      Map<String, String> headers2 = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer ${globals.token}',
+        "reservationId": reservationId,
+      };
+      var url = Uri.parse(
+        "${Endpoints.baseUrl}Bookings/all-reservations-dates",
+      );
+      var response = await http.get(url, headers: headers2);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        var data1 = reservationDataResponseModelFromJson(response.body);
+        data = data1;
+        printData('All Reservation Dates', response.body);
+        return data;
+      } else {
+        printData('All Reservation Dates Error', response.body);
+      }
+    } catch (e) {
+      printData('Error', e.toString());
+      return Future.error(handleHttpError(e));
+    }
+    return data;
   }
 }

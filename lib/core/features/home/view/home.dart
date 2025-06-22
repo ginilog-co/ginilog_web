@@ -86,64 +86,74 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                           child: Center(child: CircularProgressIndicator()),
                         );
                       }
-                      return CarouselSlider(
-                        carouselController: controller.carouselController,
-                        options: CarouselOptions(
-                          autoPlay: true,
-                          viewportFraction: 1,
-                          aspectRatio: 16 / 9,
-                          height: 200,
-                          initialPage: 0,
-                          enlargeCenterPage: true,
-                          onPageChanged: (index, reason) {
-                            controller.pageChanged(index);
-                          },
-                        ),
-                        items: List.generate(
-                          advertData.length,
-                          (index) => InkWell(
-                            onTap: () {},
-                            child: Card(
-                              child: Stack(
-                                children: [
-                                  Container(
-                                    height: 200,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey,
-                                      borderRadius: BorderRadius.circular(10),
-                                      image: DecorationImage(
-                                        fit: BoxFit.fill,
-                                        image: NetworkImage(
-                                          "${advertData[index].advertImage}",
+                      return Column(
+                        children: [
+                          CarouselSlider(
+                            carouselController: controller.carouselController,
+                            options: CarouselOptions(
+                              autoPlay: true,
+                              viewportFraction: 1,
+                              aspectRatio: 16 / 9,
+                              height: 200,
+                              initialPage: 0,
+                              enlargeCenterPage: true,
+                              onPageChanged: (index, reason) {
+                                controller.pageChanged(index);
+                              },
+                            ),
+                            items: List.generate(
+                              advertData.length,
+                              (index) => InkWell(
+                                onTap: () {},
+                                child: Card(
+                                  child: Stack(
+                                    children: [
+                                      Container(
+                                        height: 200,
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey,
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          image: DecorationImage(
+                                            fit: BoxFit.fill,
+                                            image: NetworkImage(
+                                              "${advertData[index].advertImage}",
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                    ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                          addVerticalSpacing(context, 5),
+                          Center(
+                            child:
+                                advertData.isNotEmpty
+                                    ? AnimatedSmoothIndicator(
+                                      activeIndex: controller.currentIndex,
+                                      count: advertData.length,
+                                      effect: ExpandingDotsEffect(
+                                        dotHeight: 8,
+                                        dotWidth: 8,
+                                        activeDotColor: Colors.blue,
+                                        dotColor: Colors.grey,
+                                      ),
+                                      onDotClicked: (index) {
+                                        controller.carouselController
+                                            .animateToPage(index);
+                                      },
+                                    )
+                                    : SizedBox.shrink(),
+                          ),
+                        ],
                       );
                     },
                   ),
-                  addVerticalSpacing(context, 5),
-                  // Smooth Page Indicator
-                  Center(
-                    child: AnimatedSmoothIndicator(
-                      activeIndex: controller.currentIndex,
-                      count: advertData.length,
-                      effect: ExpandingDotsEffect(
-                        dotHeight: 8,
-                        dotWidth: 8,
-                        activeDotColor: Colors.blue,
-                        dotColor: Colors.grey,
-                      ),
-                      onDotClicked: (index) {
-                        controller.carouselController.animateToPage(index);
-                      },
-                    ),
-                  ),
+
                   addVerticalSpacing(context, 5),
                   Row(
                     spacing: 20,

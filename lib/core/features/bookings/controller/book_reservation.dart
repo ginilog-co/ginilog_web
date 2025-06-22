@@ -7,17 +7,19 @@ import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
 import 'package:ginilog_customer_app/core/features/account/model/user_response_model.dart';
 import 'package:ginilog_customer_app/core/features/account/states/account_provider.dart';
+import 'package:ginilog_customer_app/core/features/bookings/services/booking_services.dart';
 import 'package:ginilog_customer_app/core/features/bookings/view/accommodation/book_reservation.dart';
 import 'package:ginilog_customer_app/core/features/bookings/widget/confirm_payment.dart';
 
 class BookReservationScreen extends ConsumerStatefulWidget {
-  const BookReservationScreen(
-      {super.key,
-      required this.reservationId,
-      required this.reservationName,
-      required this.reservationAddress,
-      required this.bookingPrice,
-      required this.maximumNoOfGuest});
+  const BookReservationScreen({
+    super.key,
+    required this.reservationId,
+    required this.reservationName,
+    required this.reservationAddress,
+    required this.bookingPrice,
+    required this.maximumNoOfGuest,
+  });
   final String reservationId;
   final String reservationName;
   final String reservationAddress;
@@ -55,6 +57,9 @@ class BookReservationScreenController
   late RegisterResponseModel globals;
   int selected = 0;
   String paymentMethodUse = "";
+  DateTime? selectedStartDate;
+  DateTime? selectedEndDate;
+  Set<DateTime> bookedDates = {};
   @override
   void initState() {
     super.initState();
@@ -72,6 +77,7 @@ class BookReservationScreenController
       globals = accountProviders.userData!;
     });
     userDetails();
+    fetchReservationDates();
   }
 
   @override
@@ -95,6 +101,23 @@ class BookReservationScreenController
       isLastNameChanged = globals.lastName.toString();
       phoneNo.text = globals.phoneNo.toString();
       isPhoneNoChanged = globals.phoneNo.toString();
+    });
+  }
+
+  Future<void> fetchReservationDates() async {
+    final bookings = await BookingsService().getAllReservationDateData(
+      reservationId: widget.reservationId,
+    );
+    Set<DateTime> blocked = {};
+    for (var item in bookings) {
+      DateTime current = item.reservationStartDate!;
+      while (!current.isAfter(item.reservationEndDate!)) {
+        blocked.add(DateTime.utc(current.year, current.month, current.day));
+        current = current.add(Duration(days: 1));
+      }
+    }
+    setState(() {
+      bookedDates = blocked;
     });
   }
 
@@ -177,27 +200,6 @@ class BookReservationScreenController
     printData("identifier", isReservationEndDateChanged);
   }
 
-  Future<DateTime?> pickDateTime(
-      BuildContext context, DateTime? initialDate) async {
-    final DateTime? date = await showDatePicker(
-      context: context,
-      initialDate: initialDate ?? DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2200),
-    );
-
-    if (date == null) return null; // User canceled date selection
-
-    final TimeOfDay? time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(initialDate ?? DateTime.now()),
-    );
-
-    if (time == null) return date; // No time selected, return only date
-
-    return DateTime(date.year, date.month, date.day, time.hour, time.minute);
-  }
-
   userRegister() async {
     var connectivityStatusProvider = ref.read(connectivityStatusProviders);
     FocusScope.of(context).unfocus();
@@ -212,12 +214,14 @@ class BookReservationScreenController
           setState(() {
             isLoading = false;
           });
-          showCustomSnackbar(context,
-              title: "Maximum Guest",
-              content:
-                  "The no of Guest you selected is is more than the maximum number ${widget.maximumNoOfGuest}",
-              type: SnackbarType.error,
-              isTopPosition: false);
+          showCustomSnackbar(
+            context,
+            title: "Maximum Guest",
+            content:
+                "The no of Guest you selected is is more than the maximum number ${widget.maximumNoOfGuest}",
+            type: SnackbarType.error,
+            isTopPosition: false,
+          );
         } else {
           setState(() {
             isLoading = false;
@@ -227,32 +231,35 @@ class BookReservationScreenController
           Duration difference = date2.difference(date1);
           int daysBetween = difference.inDays;
           navigateToRoute(
-              context,
-              ConfirmAccomodationBookings(
-                  amount: widget.bookingPrice.toDouble(),
-                  reservationId: widget.reservationId,
-                  reservationName: widget.reservationName,
-                  reservationAddress: widget.reservationAddress,
-                  customerName:
-                      "${fistNameTec.text.trim()} ${lastNameTEC.text.trim()}",
-                  customerEmail: email.text.trim(),
-                  customerPhoneNumber:
-                      "$selectedCountryCode${phoneNo.text.trim()}",
-                  numberOfGuests: int.parse(numberOfGuest.text.trim()),
-                  comment: comment.text.isEmpty ? "" : comment.text.trim(),
-                  reservationStartDate: reservationStartDate.text.trim(),
-                  reservationEndDate: reservationEndDate.text.trim(),
-                  noOfDays: daysBetween));
+            context,
+            ConfirmAccomodationBookings(
+              amount: widget.bookingPrice.toDouble(),
+              reservationId: widget.reservationId,
+              reservationName: widget.reservationName,
+              reservationAddress: widget.reservationAddress,
+              customerName:
+                  "${fistNameTec.text.trim()} ${lastNameTEC.text.trim()}",
+              customerEmail: email.text.trim(),
+              customerPhoneNumber: "$selectedCountryCode${phoneNo.text.trim()}",
+              numberOfGuests: int.parse(numberOfGuest.text.trim()),
+              comment: comment.text.isEmpty ? "" : comment.text.trim(),
+              reservationStartDate: reservationStartDate.text.trim(),
+              reservationEndDate: reservationEndDate.text.trim(),
+              noOfDays: daysBetween,
+            ),
+          );
         }
       } else {
         setState(() {
           isLoading = false;
         });
-        showCustomSnackbar(context,
-            title: "Network Connection",
-            content: "No Internet Connection",
-            type: SnackbarType.error,
-            isTopPosition: false);
+        showCustomSnackbar(
+          context,
+          title: "Network Connection",
+          content: "No Internet Connection",
+          type: SnackbarType.error,
+          isTopPosition: false,
+        );
       }
       setState(() {
         isLoading = false;

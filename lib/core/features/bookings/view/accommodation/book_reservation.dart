@@ -9,6 +9,7 @@ import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
 import 'package:ginilog_customer_app/core/components/widgets/input.dart';
 import 'package:ginilog_customer_app/core/features/bookings/controller/book_reservation.dart';
+import 'package:ginilog_customer_app/core/features/bookings/widget/date_select_widget.dart';
 
 class BookReservationScreenView
     extends
@@ -134,15 +135,30 @@ class BookReservationScreenView
                     readOnly: true,
                     textController: controller.reservationStartDate,
                     onTap: () async {
-                      DateTime? initialDate;
-                      final selectedDateTime = await controller.pickDateTime(
-                        context,
-                        initialDate,
+                      showDialog(
+                        context: context,
+                        builder:
+                            (context) => BookingDateSelect(
+                              bookedDates: controller.bookedDates,
+                              onDateSelected: (start, end) {
+                                controller.reservationStartChanged(
+                                  start.toString(),
+                                  start,
+                                );
+                                controller.reservationEndChanged(
+                                  end.toString(),
+                                  end,
+                                );
+                              },
+                            ),
                       );
-                      controller.reservationStartChanged(
-                        selectedDateTime.toString(),
-                        selectedDateTime,
-                      );
+
+                      //  controller.openCalendar(context, true);
+                      // DateTime? initialDate;
+                      // final selectedDateTime = await controller.pickDateTime(
+                      //   context,
+                      //   initialDate,
+                      // );
                     },
                     onChanged: (String? value) {},
                   ),
@@ -154,15 +170,32 @@ class BookReservationScreenView
                     readOnly: true,
                     textController: controller.reservationEndDate,
                     onTap: () async {
-                      DateTime? initialDate;
-                      final selectedDateTime = await controller.pickDateTime(
-                        context,
-                        initialDate,
+                      showDialog(
+                        context: context,
+                        builder:
+                            (context) => BookingDateSelect(
+                              bookedDates: controller.bookedDates,
+                              onDateSelected: (start, end) {
+                                controller.reservationStartChanged(
+                                  start.toString(),
+                                  start,
+                                );
+                                controller.reservationEndChanged(
+                                  end.toString(),
+                                  end,
+                                );
+                              },
+                            ),
                       );
-                      controller.reservationEndChanged(
-                        selectedDateTime.toString(),
-                        selectedDateTime,
-                      );
+                      // DateTime? initialDate;
+                      // final selectedDateTime = await controller.pickDateTime(
+                      //   context,
+                      //   initialDate,
+                      // );
+                      // controller.reservationEndChanged(
+                      //   selectedDateTime.toString(),
+                      //   selectedDateTime,
+                      // );
                     },
                     onChanged: (String? value) {},
                   ),
