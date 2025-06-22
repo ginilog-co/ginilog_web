@@ -174,7 +174,7 @@ class _BookingDateSelectState extends State<BookingDateSelect> {
                                     : isStartOrEnd
                                     ? AppColors.blue
                                     : inRange
-                                    ? Colors.blue.withOpacity(0.4)
+                                    ? Colors.blue.withAlpha(4)
                                     : null,
                             borderRadius: BorderRadius.circular(8),
                           ),
