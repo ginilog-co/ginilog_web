@@ -1,16 +1,25 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using Genilog_WebApi.EmailSender;
+using Genilog_WebApi.Key;
+using Genilog_WebApi.Model;
+using Genilog_WebApi.Model.AdminsModel;
+using Genilog_WebApi.Model.AuthModel;
+using Genilog_WebApi.Model.LogisticsModel;
+using Genilog_WebApi.Model.WalletModel;
+using Genilog_WebApi.Repository;
 using Genilog_WebApi.Repository.AdminRepo;
 using Genilog_WebApi.Repository.AuthRepo;
-using Genilog_WebApi.Model.AdminsModel;
+using Genilog_WebApi.Repository.LogisticsRepo;
 using Genilog_WebApi.Repository.UploadRepo;
 using Google.Cloud.Firestore;
-using Genilog_WebApi.Model.AuthModel;
-using Genilog_WebApi.Model;
-using System.Security.Claims;
-using Genilog_WebApi.EmailSender;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System.Data;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Security.Claims;
+using System.Text;
 
 
 namespace Genilog_WebApi.Controllers
@@ -774,9 +783,35 @@ namespace Genilog_WebApi.Controllers
         public async Task<IActionResult> GetAllAirlinesAsync()
         {
             var events = await usersRepository.GetAllAdvertAsync();
-            events = [.. events.OrderByDescending(x => x.CreatedAt)];
-            var userDto = mapper.Map<List<AdvertHolderModelDto>>(events);
-            return Ok(userDto);
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userId, out Guid userGuid))
+            {
+                return BadRequest("Invalid User ID format.");
+            }
+
+            var user = await generalUserRepository.GetAsync(userGuid);
+            if (user.UserType == "User")
+            {
+                var now = DateTime.UtcNow;
+                events = [.. events.Where(x => x.ExpiredAt > now && x.TransStatus==true).OrderByDescending(x => x.CreatedAt)];
+                var userDto = mapper.Map<List<AdvertHolderModelDto>>(events);
+                return Ok(userDto);
+            }
+            else if (user.UserType == "Manager" || user.UserType == "StaffAdmin" || user.UserType == "Staff")
+            {
+                var admin = await usersRepository.GetAsync(userGuid);
+                events = [.. events.Where(x =>  x.AdminId == admin.ManagerId).OrderByDescending(x => x.CreatedAt)];
+                var userDto = mapper.Map<List<AdvertHolderModelDto>>(events);
+                return Ok(userDto);
+            }
+            else
+            {
+                events = [.. events.OrderByDescending(x => x.CreatedAt)];
+                var userDto = mapper.Map<List<AdvertHolderModelDto>>(events);
+                return Ok(userDto);
+
+            }
         }
 
         [HttpGet]
@@ -799,7 +834,7 @@ namespace Genilog_WebApi.Controllers
 
         [HttpDelete]
         [Route("advert/{id:guid}")]
-        [Authorize(Roles = "Manager,Admin,Super_Admin")]
+        [Authorize(Roles = "Admin,Super_Admin")]
         public async Task<IActionResult> DeleteAdvertAsync(Guid id)
         {
             // Get the region from the database
@@ -819,7 +854,7 @@ namespace Genilog_WebApi.Controllers
 
         [HttpPut]
         [Route("advert/{id:guid}")]
-        [Authorize(Roles = "User,Manager,Admin,Super_Admin")]
+        [Authorize(Roles = "Manager,Admin,Super_Admin,StaffAdmin,Staff")]
         public async Task<IActionResult> UpdateAdvertAsync([FromRoute] Guid id, [FromBody] AddAdvert request)
         {
             var userDto1 = await usersRepository.GetAdvertAsync(id);
@@ -836,9 +871,12 @@ namespace Genilog_WebApi.Controllers
                     AdvertImage = !string.IsNullOrWhiteSpace(request.AdvertImage) ? request.AdvertImage : userDto1.AdvertImage,
                     AdvertName = !string.IsNullOrWhiteSpace(request.AdvertName) ? request.AdvertName : userDto1.AdvertName,
                     AdvertType = !string.IsNullOrWhiteSpace(request.AdvertType) ? request.AdvertType : userDto1.AdvertType,
-                    AdvertItemCost = (request.AdvertItemCost ?? userDto1.AdvertItemCost),
+                    AdvertItemCost = request.AdvertDays4 == null || request.AdvertDays4 == 0 ? userDto1.AdvertItemCost : (int)(request.AdvertDays4 * 1000.50)!,
+                    TransRef = request.AdvertDays4 == null || request.AdvertDays4 == 0 ? userDto1.TransRef :"",
+                    TransStatus = (request.AdvertDays4 == null || request.AdvertDays4 == 0) && userDto1.TransStatus,
                     AdvertItemDescription = !string.IsNullOrWhiteSpace(request.AdvertItemDescription) ? request.AdvertItemDescription : userDto1.AdvertItemDescription,
                     AdvertDays4 = (request.AdvertDays4 ?? userDto1.AdvertDays4),
+                    ExpiredAt= request.AdvertDays4==null|| request.AdvertDays4==0? userDto1.ExpiredAt: DateTime.Now.AddDays((int)request.AdvertDays4),
                 };
                 // Update detials to repository
                 user = await usersRepository.UpdateAdvertAsync(id, user);
@@ -849,34 +887,37 @@ namespace Genilog_WebApi.Controllers
         }
 
         [HttpPost("advert")]
-        [Authorize(Roles = "Manager,Admin,Super_Admin")]
+        [Authorize(Roles = "Manager,Admin,Super_Admin,StaffAdmin,Staff")]
         public async Task<IActionResult> AddAdvertAsync([FromBody] AddAdvert request)
         {
             var check = ValidateAdvert(request);
-
-
             if (!check)
             {
                 return BadRequest(ModelState);
             }
             else
             {
+
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (!Guid.TryParse(userId, out Guid userGuid))
                 {
                     return BadRequest("Invalid User ID format.");
                 }
+                var admin = await usersRepository.GetAsync(userGuid);
                 var contacts = new AdvertHolderModel()
                 {
-                    AdminId = userGuid,
+                    AdminId = admin.ManagerId,
                     AdvertItemId = request.AdvertItemId,
                     AdvertImage = request.AdvertImage,
                     AdvertItemDescription = request.AdvertItemDescription,
                     AdvertType = request.AdvertType,
                     AdvertName = request.AdvertName,
-                    AdvertItemCost =(double)request.AdvertItemCost!,
+                    AdvertItemCost = (int)(request.AdvertDays4 * 1000.50)!,
                     AdvertDays4 = (int)request.AdvertDays4!,
+                    TransRef="",
+                    TransStatus = false,
                     CreatedAt = DateTime.Now,
+                    ExpiredAt = DateTime.Now.AddDays((int)request.AdvertDays4!),
 
                 };
                 // Pass detials to repository
@@ -888,6 +929,235 @@ namespace Genilog_WebApi.Controllers
                 return CreatedAtAction(nameof(GetAdvertAsync), new { id = contactsDto.Id }, contactsDto);
             }
         }
+
+        //paystack
+        [HttpPut("initialize-paystack-advert-payment/{id:guid}")]
+        [Authorize]
+        public async Task<IActionResult> InitializePayment([FromRoute] Guid id)
+        {
+
+            var events = await usersRepository.GetAdvertAsync(id);
+            if (events == null)
+            {
+                return BadRequest("Accommodation Does not Exist");
+            }
+            else
+            {
+                var admin= await usersRepository.GetAsync(events.AdminId);
+                var url = "https://api.paystack.co/transaction/initialize";
+                var data = new
+                {
+                    email = admin.Email,
+                    amount = (events.AdvertItemCost) * 100,  // Amount in Kobo (100 kobo = 1 Naira)
+                    callback_url = $"{Cls_Keys.ServerURL}/api/Admin/verify-paystack-advert-payment?orderId={events.Id}", // The URL to redirect after payment
+                    channels = new[] { "card", "bank", "ussd", "mobile_money", "bank_transfer" },
+                    metadata = new
+                    {
+                        cancel_action = $"{Cls_Keys.ServerURL}/api/paystack-redirect?status=cancelled"
+                    }
+                };
+
+                using var httpClient = new HttpClient();
+
+                StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.PaystackSecretKey);
+                using var response = await httpClient.PostAsync($"{url}", content);
+                string apiResponse = await response.Content.ReadAsStringAsync();
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    var paystackResponse = JsonConvert.DeserializeObject<PaystackResponse>(apiResponse);
+
+                    return Ok(paystackResponse);
+                }
+                else
+                {
+                    var error = new ErrorModel()
+                    {
+                        Message = $"{apiResponse}",
+                        Status = true
+                    };
+                    return BadRequest(error);
+                }
+
+            }
+
+        }
+
+        [HttpGet("verify-paystack-advert-payment")]
+        public async Task<IActionResult> VerifyPharmacyProductOrderPayment([FromQuery] Guid orderId, [FromQuery] string trxref, [FromQuery] string reference)
+        {
+
+            var url = $"https://api.paystack.co/transaction/verify/{reference}";
+
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.PaystackSecretKey);
+            using var response = await httpClient.GetAsync($"{url}");
+            string apiResponse = await response.Content.ReadAsStringAsync();
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                var paystackResponse = new PaymentSucessData()
+                {
+                    Status = true,
+                    Message = "Payment Made Sucessfully",
+                    AccessCode = trxref,
+                    Reference = reference
+                };
+
+                var tronData = await usersRepository.GetAdvertAsync(orderId);
+                var user = new AdvertHolderModel()
+                {
+
+                    AdminId = tronData.AdminId,
+                    AdvertItemId = tronData.AdvertItemId,
+                    AdvertImage = tronData.AdvertImage,
+                    AdvertItemDescription = tronData.AdvertItemDescription,
+                    AdvertType = tronData.AdvertType,
+                    TransRef = $"Paystack_{paystackResponse.Reference }",
+                    AdvertName = tronData.AdvertName,
+                    TransStatus = paystackResponse.Status,
+                    AdvertItemCost = tronData.AdvertItemCost,
+                    AdvertDays4 = tronData.AdvertDays4,
+                    ExpiredAt = tronData.ExpiredAt,
+                };
+
+                // Update detials to repository
+               await usersRepository.UpdateAdvertAsync(tronData.Id, user);
+                return Ok(paystackResponse);
+            }
+            else
+            {
+                var error = new ErrorModel()
+                {
+                    Message = $"{apiResponse}",
+                    Status = true
+                };
+                return BadRequest(error);
+            }
+        }
+
+
+        //flutterwave
+        [HttpPut("initialize-flutterwave-advert-payment/{id:guid}")]
+        [Authorize]
+        public async Task<IActionResult> InitializeFlutterwavePayment([FromRoute] Guid id)
+        {
+            var events = await usersRepository.GetAdvertAsync(id);
+
+            if (events == null)
+            {
+                return BadRequest("Accommodation Does not Exist");
+            }
+            else
+            {
+                var admin = await usersRepository.GetAsync(events.AdminId);
+                var url = "https://api.flutterwave.com/v3/payments";
+                var data = new
+                {
+                    tx_ref = CreateRandomTokenSix(),
+                    amount = events.AdvertItemCost,  // Amount in Kobo (100 kobo = 1 Naira)
+                    customer = new
+                    {
+                        email = admin.Email,
+                        name = admin.FirstName + " " + admin.SurName,
+                    },
+                    currency = "NGN",
+                    redirect_url = $"{Cls_Keys.ServerURL}/api/Admin/verify-flutterwave-advert-payment?orderId={events.Id}", // The URL to redirect after payment
+                    customizations = new
+                    {
+                        title = "My App Payment",
+                        description = "Payment for Advert Item"
+                    }
+                };
+
+
+                using var httpClient = new HttpClient();
+
+                StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.FlutterwaveSecretKey);
+                using var response = await httpClient.PostAsync($"{url}", content);
+                string apiResponse = await response.Content.ReadAsStringAsync();
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    var paystackResponse = JsonConvert.DeserializeObject<FlutterwaveResponse>(apiResponse);
+                    return Ok(paystackResponse);
+                }
+                else
+                {
+                    var error = new ErrorModel()
+                    {
+                        Message = $"{apiResponse}",
+                        Status = true
+                    };
+                    return BadRequest(error);
+                }
+
+            }
+
+        }
+
+        [HttpGet("verify-flutterwave-advert-payment")]
+        public async Task<IActionResult> VerifyFlutterwavePayment([FromQuery] Guid orderId, [FromQuery] string status, [FromQuery] string tx_ref, [FromQuery] string transaction_id)
+        {
+            var url = $"https://api.flutterwave.com/v3/transactions/{transaction_id}/verify";
+
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.FlutterwaveSecretKey);
+            using var response = await httpClient.GetAsync($"{url}");
+            string apiResponse = await response.Content.ReadAsStringAsync();
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                var paystackResponse = new PaymentSucessData()
+                {
+                    Status = true,
+                    Message = "Payment Made Sucessfully",
+                    AccessCode = transaction_id,
+                    Reference = tx_ref,
+                    PaymentStatus = status
+                };
+
+                if (paystackResponse.PaymentStatus == "completed" || paystackResponse.PaymentStatus == "successful")
+                {
+                    var tronData = await usersRepository.GetAdvertAsync(orderId);
+                    var user = new AdvertHolderModel()
+                    {
+
+                        AdminId = tronData.AdminId,
+                        AdvertItemId = tronData.AdvertItemId,
+                        AdvertImage = tronData.AdvertImage,
+                        AdvertItemDescription = tronData.AdvertItemDescription,
+                        AdvertType = tronData.AdvertType,
+                        TransRef = $"Flutterwave_{paystackResponse.Reference}",
+                        AdvertName = tronData.AdvertName,
+                        TransStatus = paystackResponse.Status,
+                        AdvertItemCost = tronData.AdvertItemCost,
+                        AdvertDays4 = tronData.AdvertDays4,
+                        ExpiredAt = tronData.ExpiredAt,
+                    };
+
+                    // Update detials to repository
+                    await usersRepository.UpdateAdvertAsync(tronData.Id, user);
+                    // TODO: Mark payment as successful in DB
+                    return Redirect($"{Cls_Keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
+                }
+                else
+                {
+
+                    return Redirect($"{Cls_Keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
+                }
+
+            }
+            else
+            {
+                var error = new ErrorModel()
+                {
+                    Message = $"{apiResponse}",
+                    Status = true
+                };
+                return BadRequest(error);
+            }
+        }
+
+
 
         // Company Apply Data
 
@@ -1096,6 +1366,49 @@ namespace Genilog_WebApi.Controllers
             }
             return true;
 
+        }
+
+        private static string CreateRandomTokenSix()
+        {
+            char[] charArr = "ABCDEFGHIJKLMNOPQLSTUVWXYZ0123456789".ToCharArray();
+            string strrandom = string.Empty;
+            Random objran = new();
+            for (int i = 0; i < 6; i++)
+            {
+                //It will not allow Repetation of Characters
+                int pos = objran.Next(1, charArr.Length);
+                if (!strrandom.Contains(charArr.GetValue(pos)!.ToString()!)) strrandom += charArr.GetValue(pos);
+                else i--;
+            }
+            return strrandom;
+        }
+        private static string CreateRandomTokenFour()
+        {
+            char[] charArr = "ABCDEFGHIJKLMNOPQLSTUVWXYZ0123456789".ToCharArray();
+            string strrandom = string.Empty;
+            Random objran = new();
+            for (int i = 0; i < 4; i++)
+            {
+                //It will not allow Repetation of Characters
+                int pos = objran.Next(1, charArr.Length);
+                if (!strrandom.Contains(charArr.GetValue(pos)!.ToString()!)) strrandom += charArr.GetValue(pos);
+                else i--;
+            }
+            return strrandom;
+        }
+        private static string CreateRandomTokenThree()
+        {
+            char[] charArr = "ABCDEFGHIJKLMNOPQLSTUVWXYZ0123456789".ToCharArray();
+            string strrandom = string.Empty;
+            Random objran = new();
+            for (int i = 0; i < 3; i++)
+            {
+                //It will not allow Repetation of Characters
+                int pos = objran.Next(1, charArr.Length);
+                if (!strrandom.Contains(charArr.GetValue(pos)!.ToString()!)) strrandom += charArr.GetValue(pos);
+                else i--;
+            }
+            return strrandom;
         }
 
         #endregion

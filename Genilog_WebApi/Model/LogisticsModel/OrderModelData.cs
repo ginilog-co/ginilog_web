@@ -1,4 +1,6 @@
-﻿namespace Genilog_WebApi.Model.LogisticsModel
+﻿using Newtonsoft.Json;
+
+namespace Genilog_WebApi.Model.LogisticsModel
 {
     public enum OrderStatusData { Open, Accepted, Rejected, Picked, Ongoing, Delivered, Completed, Closed }
     public class OrderModelData
@@ -82,86 +84,223 @@
         public Guid OrderModelDataId { get; set; }
         public DateTime? UpdatedAt { get; set; }
     }
+ 
+
     public class OrderModelDataDto
     {
+        [JsonProperty("id")]
         public Guid Id { get; set; }
+
+        [JsonProperty("adminId")]
         public Guid AdminId { get; set; }
+
+        [JsonProperty("trackingNum")]
         public string? TrackingNum { get; set; }
+
+        [JsonProperty("itemName")]
         public string? ItemName { get; set; }
+
+        [JsonProperty("itemDescription")]
         public string? ItemDescription { get; set; }
+
+        [JsonProperty("itemModelNumber")]
         public string? ItemModelNumber { get; set; }
+
+        [JsonProperty("itemCost")]
         public double ItemCost { get; set; }
+
+        [JsonProperty("itemWeight")]
         public double ItemWeight { get; set; }
+
+        [JsonProperty("itemQuantity")]
         public int ItemQuantity { get; set; }
+
+        [JsonProperty("packageType")]
         public string? PackageType { get; set; }
+
+        [JsonProperty("expectedDeliveryTime")]
         public string? ExpectedDeliveryTime { get; set; }
+
+        [JsonProperty("orderStatus")]
         public string? OrderStatus { get; set; }
+
         // Sender Info
+        [JsonProperty("userId")]
         public Guid UserId { get; set; }
+
+        [JsonProperty("senderName")]
         public string? SenderName { get; set; }
+
+        [JsonProperty("senderPhoneNo")]
         public string? SenderPhoneNo { get; set; }
+
+        [JsonProperty("senderEmail")]
         public string? SenderEmail { get; set; }
+
+        [JsonProperty("senderAddress")]
         public string? SenderAddress { get; set; }
+
+        [JsonProperty("senderState")]
         public string? SenderState { get; set; }
+
+        [JsonProperty("senderCountry")]
         public string? SenderCountry { get; set; }
+
+        [JsonProperty("senderLocality")]
         public string? SenderLocality { get; set; }
+
+        [JsonProperty("senderPostalCode")]
         public string? SenderPostalCode { get; set; }
+
+        [JsonProperty("senderLatitude")]
         public double SenderLatitude { get; set; }
+
+        [JsonProperty("senderLongitude")]
         public double SenderLongitude { get; set; }
+
         // Receiver Info
+        [JsonProperty("recieverName")]
         public string? RecieverName { get; set; }
+
+        [JsonProperty("recieverPhoneNo")]
         public string? RecieverPhoneNo { get; set; }
+
+        [JsonProperty("recieverEmail")]
         public string? RecieverEmail { get; set; }
+
+        [JsonProperty("recieverAddress")]
         public string? RecieverAddress { get; set; }
+
+        [JsonProperty("recieverState")]
         public string? RecieverState { get; set; }
+
+        [JsonProperty("recieverCountry")]
         public string? RecieverCountry { get; set; }
+
+        [JsonProperty("recieverLocality")]
         public string? RecieverLocality { get; set; }
+
+        [JsonProperty("recieverPostalCode")]
         public string? RecieverPostalCode { get; set; }
+
+        [JsonProperty("recieverLatitude")]
         public double RecieverLatitude { get; set; }
+
+        [JsonProperty("recieverLongitude")]
         public double RecieverLongitude { get; set; }
+
         // Company Info
+        [JsonProperty("companyId")]
         public Guid CompanyId { get; set; }
-        
+
+        [JsonProperty("riderId")]
         public Guid RiderId { get; set; }
+
+        [JsonProperty("riderName")]
         public string? RiderName { get; set; }
+
+        [JsonProperty("companyName")]
         public string? CompanyName { get; set; }
+
+        [JsonProperty("companyPhoneNo")]
         public string? CompanyPhoneNo { get; set; }
+
+        [JsonProperty("companyEmail")]
         public string? CompanyEmail { get; set; }
+
+        [JsonProperty("companyAddress")]
         public string? CompanyAddress { get; set; }
+
+        [JsonProperty("currentLatitude")]
         public double CurrentLatitude { get; set; }
+
+        [JsonProperty("currentLongitude")]
         public double CurrentLongitude { get; set; }
+
+        [JsonProperty("currentLocation")]
         public string? CurrentLocation { get; set; }
+
+        [JsonProperty("confirmationImage")]
         public string? ConfirmationImage { get; set; }
+
         // Payment Details
+        [JsonProperty("shippingCost")]
         public double ShippingCost { get; set; }
+
+        [JsonProperty("vatCost")]
         public double VatCost { get; set; }
+
+        [JsonProperty("trnxReference")]
         public string? TrnxReference { get; set; }
+
+        [JsonProperty("paymentChannel")]
         public string? PaymentChannel { get; set; }
+
+        [JsonProperty("paymentStatus")]
         public bool PaymentStatus { get; set; }
+
+        [JsonProperty("qrCode")]
         public string? QRCode { get; set; }
+
+        [JsonProperty("comment")]
         public string? Comment { get; set; }
+
+        [JsonProperty("createdAt")]
         public DateTime? CreatedAt { get; set; }
+
+        [JsonProperty("updatedAt")]
         public DateTime? UpdatedAt { get; set; }
+
+        [JsonProperty("packageImageLists")]
         public List<string>? PackageImageLists { get; set; }
+
+        [JsonProperty("riderType")]
         public string? RiderType { get; set; }
+
+        [JsonProperty("shippingType")]
         public string? ShippingType { get; set; }
+
+        [JsonProperty("orderDeliveryFlows")]
         public List<OrderDeliveryFlowDto>? OrderDeliveryFlows { get; set; }
+
+        [JsonProperty("staffId")]
         public Guid StaffId { get; set; }
+
+        [JsonProperty("staffName")]
         public string? StaffName { get; set; }
+
+        [JsonProperty("purchaseChannel")]
         public string? PurchaseChannel { get; set; }
-        public string? UserType { get; set; } // e.g., "Registerd", "Not Registered"
+
+        [JsonProperty("userType")]
+        public string? UserType { get; set; }
     }
+
 
     public class OrderDeliveryFlowDto
     {
+        [JsonProperty("id")]
         public Guid Id { get; set; }
+
+        [JsonProperty("orderStatus")]
         public string? OrderStatus { get; set; }
+
+        [JsonProperty("currentLatitude")]
         public double CurrentLatitude { get; set; }
+
+        [JsonProperty("currentLongitude")]
         public double CurrentLongitude { get; set; }
+
+        [JsonProperty("currentLocation")]
         public string? CurrentLocation { get; set; }
+
+        [JsonProperty("orderModelDataId")]
         public Guid OrderModelDataId { get; set; }
+
+        [JsonProperty("updatedAt")]
         public DateTime? UpdatedAt { get; set; }
     }
+
 
     public class AddOrder
     {

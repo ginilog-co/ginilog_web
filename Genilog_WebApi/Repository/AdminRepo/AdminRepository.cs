@@ -134,6 +134,9 @@ namespace Genilog_WebApi.Repository.AdminRepo
                 existinguser.AdvertItemDescription = user.AdvertItemDescription;
                 existinguser.AdvertItemCost = user.AdvertItemCost;
                 existinguser.AdvertDays4 = user.AdvertDays4;
+                existinguser.TransRef = user.TransRef;
+                existinguser.TransStatus = user.TransStatus;
+                existinguser.ExpiredAt = user.ExpiredAt;
                 await maap_Context.SaveChangesAsync();
                 return existinguser;
             }

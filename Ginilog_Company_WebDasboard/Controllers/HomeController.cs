@@ -5,6 +5,7 @@ using Ginilog_Company_WebDasboard.Models.LogisticsModel;
 using Ginilog_Company_WebDasboard.Models.WalletModel;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using NuGet.Common;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
@@ -607,6 +608,294 @@ namespace Ginilog_Company_WebDasboard.Controllers
                 return RedirectToAction("SignIn", "Auth");
 
             }
+        }
+
+        // Advert Data
+        [HttpGet]
+        public async Task<IActionResult> AllAdvertData(string id)
+        {
+            var userId = HttpContext.Session.GetString("bt_userId");
+            var token = HttpContext.Session.GetString("bt_token");
+            if (userId != null)
+            {
+                var users = Data()!.GetAwaiter().GetResult();
+                ViewBag.ProfilePics = users.ImagePath!;
+                ViewBag.AdminName = $"{users.FirstName} {users.SurName}";
+                ViewBag.UseType = users.AdminType;
+                ViewBag.CompanyType = users.CompanyType;
+                ViewBag.ManagerId = users.ManagerId;
+                List<AdvertHolderModel> adminUser = [];
+                using var httpClient = new HttpClient();
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                using var response = await httpClient.GetAsync($"{GlobalConstant.BaseUrl}{GlobalConstant.AdminUrl}advert");
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    string apiResponse = await response.Content.ReadAsStringAsync();
+                    adminUser = JsonConvert.DeserializeObject<List<AdvertHolderModel>>(apiResponse)!;
+                    adminUser = [.. adminUser!.OrderByDescending(x => x!.CreatedAt)];
+                    var search = from m in adminUser select m;
+                    if (!String.IsNullOrEmpty(id))
+                    {
+                        search = search.Where(s => s.AdvertName!.Contains(id, StringComparison.CurrentCultureIgnoreCase) || s.AdvertType!.Contains(id, StringComparison.CurrentCultureIgnoreCase)
+                        || s.TransRef!.Contains(id, StringComparison.CurrentCultureIgnoreCase)
+                        || s.AdvertItemDescription!.Contains(id, StringComparison.CurrentCultureIgnoreCase)
+                        );
+                        return View(search.ToList());
+                    }
+                    else
+                    {
+                        return View(adminUser);
+                    }
+                }
+                else
+                {
+                    ViewBag.StatusCode = response.StatusCode;
+                    return RedirectToAction("Index", "Home");
+                }
+            }
+            else
+            {
+                return RedirectToAction("SignIn", "Auth");
+            }
+        }
+
+        public IActionResult AddAdvert()
+        {
+            var userId = HttpContext.Session.GetString("bt_userId");
+            // var token = HttpContext.Session.GetString("bt_token");
+            var adminType = HttpContext.Session.GetString("bt_userType");
+            if (userId != null)
+            {
+                var users = Data()!.GetAwaiter().GetResult();
+                ViewBag.ProfilePics = users.ImagePath!;
+                ViewBag.AdminName = $"{users.FirstName} {users.SurName}";
+                ViewBag.UseType = adminType;
+                ViewBag.CompanyType = users.CompanyType;
+                ViewBag.ManagerId = users.ManagerId;
+                return View();
+            }
+            else
+            {
+                return RedirectToAction("SignIn", "Auth");
+
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddAdvert(AddAdvert requset)
+        {
+            var token = HttpContext.Session.GetString("bt_token");
+
+           // ViewBag.Managers = requset.ManagerId;
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var logo = await UploadFile(requset.AdvertImage!, token!);
+
+                    AddMainAdvert login = new()
+                    {
+                        AdvertItemId = Guid.NewGuid(),
+                        AdvertName = requset.AdvertName,
+                        AdvertType = requset.AdvertType,
+                        AdvertItemDescription = requset.AdvertItemDescription,
+                        AdvertDays4 = requset.AdvertDays4,
+                        AdvertImage = logo,
+                    };
+
+                    using var httpClient = new HttpClient();
+
+                    StringContent content = new(JsonConvert.SerializeObject(login), Encoding.UTF8, "application/json");
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    using var response = await httpClient.PostAsync($"{GlobalConstant.BaseUrl}{GlobalConstant.AdminUrl}advert", content);
+                    string apiResponse = await response.Content.ReadAsStringAsync();
+                    if (response.StatusCode == HttpStatusCode.Created || response.StatusCode == HttpStatusCode.OK)
+                    {
+                        var body = JsonConvert.DeserializeObject<dynamic>(apiResponse)!;
+                        return RedirectToAction("AllAdvertData", "Home");
+                    }
+                    else
+                    {
+                        ViewBag.UserError = apiResponse;
+                        return View(requset);
+                    }
+                }
+                catch (Exception e)
+                {
+                    ViewBag.UserError = e.Message;
+                    return View(requset);
+                }
+            }
+            return View(requset);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateAdvert(MainAdvertModel requset)
+
+        {
+            var token = HttpContext.Session.GetString("bt_token");
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var logo = await UploadFile(requset.AddAdvert!.AdvertImage!, token!);
+                    AddMainAdvert login = new()
+                    {
+                        AdvertItemId = Guid.NewGuid(),
+                        AdvertName = requset.AddAdvert.AdvertName,
+                        AdvertItemDescription = requset.AddAdvert.AdvertItemDescription,
+                        AdvertDays4 = requset.AddAdvert.AdvertDays4,
+                        AdvertImage = logo=="" || logo == null|| requset.AddAdvert!.AdvertImage==null?"": logo,
+                    };
+
+                    using var httpClient = new HttpClient();
+
+                    StringContent content = new(JsonConvert.SerializeObject(login), Encoding.UTF8, "application/json");
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    using var response = await httpClient.PutAsync($"{GlobalConstant.BaseUrl}{GlobalConstant.AdminUrl}advert/{requset.AddAdvert.Id}", content);
+                    string apiResponse = await response.Content.ReadAsStringAsync();
+                    if (response.StatusCode == HttpStatusCode.OK)
+                    {
+
+                        var body = JsonConvert.DeserializeObject<OrderModelData>(apiResponse)!;
+                        return RedirectToAction("AdvertDetails", "Home", new { id = body.Id });
+                    }
+                    else
+                    {
+                        ViewBag.UserError = apiResponse;
+                        return RedirectToAction("AdvertDetails", "Home", new { id = requset.AddAdvert.Id });
+                    }
+                }
+                catch
+                {
+                    return RedirectToAction("AdvertDetails", "Home", new { id = requset.AddAdvert!.Id });
+                }
+            }
+            return RedirectToAction("AdvertDetails", "Home", new { id = requset.AddAdvert!.Id });
+        }
+
+        [HttpGet]
+        public IActionResult DeleteAdvert(Guid id)
+        {
+            ViewBag.Id = id;
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DeleteAdvertConfirm(Guid id)
+        {
+
+            var token = HttpContext.Session.GetString("bt_token");
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            using var response = await httpClient.DeleteAsync($"{GlobalConstant.BaseUrl}{GlobalConstant.AdminUrl}advert/{id}");
+            if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                string apiResponse = await response.Content.ReadAsStringAsync();
+                return RedirectToAction("AllAdvertData", "Home");
+            }
+            else
+            {
+                ViewBag.StatusCode = response.StatusCode;
+                return RedirectToAction("AllAdvertData", "Home");
+            }
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> AdvertDetails(Guid id)
+        {
+            var userId = HttpContext.Session.GetString("bt_userId");
+            var token = HttpContext.Session.GetString("bt_token");
+            if (userId != null)
+            {
+                var users = Data()!.GetAwaiter().GetResult();
+                ViewBag.ProfilePics = users.ImagePath!;
+                ViewBag.AdminName = $"{users.FirstName} {users.SurName}";
+                ViewBag.UseType = users.AdminType;
+                ViewBag.CompanyType = users.CompanyType;
+                ViewBag.ManagerId = users.ManagerId;
+                using var httpClient = new HttpClient();
+                AdvertHolderModel advert = new();
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                using var response = await httpClient.GetAsync($"{GlobalConstant.BaseUrl}{GlobalConstant.AdminUrl}advert/{id}");
+                if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    string apiResponse = await response.Content.ReadAsStringAsync();
+                    advert = JsonConvert.DeserializeObject<AdvertHolderModel>(apiResponse)!;
+                    ViewBag.Id = id;
+                    var managers = ManagerData(advert.AdminId)!.GetAwaiter().GetResult();
+                    var dataDetails = new MainAdvertModel
+                    {
+                        AdvertHolderModel = advert,
+                        AdminModelTable = managers,
+                    };
+                    return View(dataDetails);
+                }
+                else
+                {
+                    ViewBag.StatusCode = response.StatusCode;
+                    return RedirectToAction("AllAdvertData", "Home");
+                }
+            }
+            else
+            {
+                return RedirectToAction("SignIn", "Auth");
+
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CompleteAdvertPayment(string id, string paymentChannel)
+        {
+            var token = HttpContext.Session.GetString("bt_token");
+            if (ModelState.IsValid)
+            {
+                try
+                {
+
+                    using var httpClient = new HttpClient();
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                    if (paymentChannel == "Paystack")
+                    {
+                        StringContent content2 = new(JsonConvert.SerializeObject(""), Encoding.UTF8, "application/json");
+                        using var response = await httpClient.PutAsync($"{GlobalConstant.BaseUrl}{GlobalConstant.AdminUrl}initialize-paystack-advert-payment/{id}", content2);
+                        string apiResponse = await response.Content.ReadAsStringAsync();
+                        if (response.StatusCode == HttpStatusCode.Created || response.StatusCode == HttpStatusCode.OK)
+                        {
+                            var body = JsonConvert.DeserializeObject<PaystackResponse>(apiResponse)!;
+                            return Redirect(body.Data!.AuthorizationUrl!);
+                        }
+                        else
+                        {
+                            ViewBag.UserError = apiResponse;
+                            return RedirectToAction("AdvertDetails", "Home", new { id });
+                        }
+                    }
+                    else if (paymentChannel == "Flutterwave")
+                    {
+                        StringContent content2 = new(JsonConvert.SerializeObject(""), Encoding.UTF8, "application/json");
+                        using var response = await httpClient.PutAsync($"{GlobalConstant.BaseUrl}{GlobalConstant.AdminUrl}initialize-flutterwave-advert-payment/{id}", content2);
+                        string apiResponse = await response.Content.ReadAsStringAsync();
+                        if (response.StatusCode == HttpStatusCode.Created || response.StatusCode == HttpStatusCode.OK)
+                        {
+                            var body = JsonConvert.DeserializeObject<FlutterwaveResponse>(apiResponse)!;
+                            return Redirect(body.Data!.Link!);
+                        }
+                        else
+                        {
+                            ViewBag.UserError = apiResponse;
+                            return RedirectToAction("AdvertDetails", "Home", new { id });
+                        }
+                    }
+                }
+                catch
+                {
+                    return RedirectToAction("AdvertDetails", "Home", new { id });
+                }
+            }
+            return RedirectToAction("AdvertDetails", "Home", new { id });
         }
 
 

@@ -154,4 +154,10 @@
         public string? PurchaseChannel { get; set; }
         public string? UserType { get; set; } // e.g., "Registerd", "Not Registered"
     }
+
+    public class AllReservationsDate
+    {
+        public DateTime ReservationStartDate { get; set; }
+        public DateTime ReservationEndDate { get; set; }
+    }
 }

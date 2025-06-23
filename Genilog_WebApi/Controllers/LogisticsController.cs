@@ -7,6 +7,7 @@ using Genilog_WebApi.Model.BookingsModel;
 using Genilog_WebApi.Model.LogisticsModel;
 using Genilog_WebApi.Model.Notification_Model;
 using Genilog_WebApi.Model.WalletModel;
+using Genilog_WebApi.Repository;
 using Genilog_WebApi.Repository.AdminRepo;
 using Genilog_WebApi.Repository.AuthRepo;
 using Genilog_WebApi.Repository.LogisticsRepo;
@@ -831,8 +832,18 @@ namespace Genilog_WebApi.Controllers
                     UpdatedAt = contacts.UpdatedAt,
                 };
                 await companyRepository.AddOrderDeliveryFlowAsync(orderflow);
+
+                // The Flow
                 var datra = await companyRepository.GetOrderAsync(contacts.Id);
                 var contactsDto = mapper.Map<OrderModelDataDto>(datra);
+                // Notify WebSocket clients about the new order
+                string contactsDtoJson = JsonConvert.SerializeObject(contactsDto);
+
+                await WebSocketHandler.SendOrderToGroup(datra.Id.ToString(), contactsDtoJson);
+                await WebSocketHandler.SendOrderToGroup(datra.RiderId.ToString(), contactsDtoJson);
+                await WebSocketHandler.SendOrderToGroup(datra.UserId.ToString(), contactsDtoJson);
+                await WebSocketHandler.SendOrderToGroup(datra.CompanyId.ToString(), contactsDtoJson);
+                await WebSocketHandler.SendOrderToGroup(datra.AdminId.ToString(), contactsDtoJson);
                 return Ok(contactsDto);
             }
         }
@@ -935,6 +946,14 @@ namespace Genilog_WebApi.Controllers
                     await companyRepository.AddOrderDeliveryFlowAsync(orderflow);
                     var datra = await companyRepository.GetOrderAsync(contacts.Id);
                     var contactsDto = mapper.Map<OrderModelDataDto>(datra);
+                    // Notify WebSocket clients about the new order
+                    string contactsDtoJson = JsonConvert.SerializeObject(contactsDto);
+
+                    await WebSocketHandler.SendOrderToGroup(datra.Id.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.RiderId.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.UserId.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.CompanyId.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.AdminId.ToString(), contactsDtoJson);
                     return Ok(contactsDto);
                 }
                 else
@@ -1022,7 +1041,14 @@ namespace Genilog_WebApi.Controllers
                 await companyRepository.AddOrderDeliveryFlowAsync(orderflow);
                 var datra = await companyRepository.GetOrderAsync(contacts.Id);
                 var contactsDto = mapper.Map<OrderModelDataDto>(datra);
-                return Ok(contactsDto);
+                    // Notify WebSocket clients about the new order
+                    string contactsDtoJson = JsonConvert.SerializeObject(contactsDto);
+                    await WebSocketHandler.SendOrderToGroup(datra.Id.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.RiderId.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.UserId.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.CompanyId.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.AdminId.ToString(), contactsDtoJson);
+                    return Ok(contactsDto);
 
                 }
             }
@@ -1064,8 +1090,7 @@ namespace Genilog_WebApi.Controllers
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
                     var paystackResponse = JsonConvert.DeserializeObject<PaystackResponse>(apiResponse);
-
-
+                  
                     return Ok(paystackResponse);
                 }
                 else
@@ -1123,6 +1148,16 @@ namespace Genilog_WebApi.Controllers
 
                 // Update detials to repository
                 user = await companyRepository.UpdateOrderAsync(tronData.Id, user);
+                var datra = await companyRepository.GetOrderAsync(user.Id);
+                var contactsDto = mapper.Map<OrderModelDataDto>(datra);
+                // Notify WebSocket clients about the new order
+                string contactsDtoJson = JsonConvert.SerializeObject(contactsDto);
+
+                await WebSocketHandler.SendOrderToGroup(datra.Id.ToString(), contactsDtoJson);
+                await WebSocketHandler.SendOrderToGroup(datra.RiderId.ToString(), contactsDtoJson);
+                await WebSocketHandler.SendOrderToGroup(datra.UserId.ToString(), contactsDtoJson);
+                await WebSocketHandler.SendOrderToGroup(datra.CompanyId.ToString(), contactsDtoJson);
+                await WebSocketHandler.SendOrderToGroup(datra.AdminId.ToString(), contactsDtoJson);
                 return Ok(paystackResponse);
             }
             else
@@ -1241,6 +1276,16 @@ namespace Genilog_WebApi.Controllers
 
                     // Update detials to repository
                     user = await companyRepository.UpdateOrderAsync(tronData.Id, user);
+                    var datra = await companyRepository.GetOrderAsync(user.Id);
+                    var contactsDto = mapper.Map<OrderModelDataDto>(datra);
+                    // Notify WebSocket clients about the new order
+                    string contactsDtoJson = JsonConvert.SerializeObject(contactsDto);
+
+                    await WebSocketHandler.SendOrderToGroup(datra.Id.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.RiderId.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.UserId.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.CompanyId.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.AdminId.ToString(), contactsDtoJson);
                     // TODO: Mark payment as successful in DB
                     return Redirect($"{Cls_Keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
                 }
@@ -1317,6 +1362,14 @@ namespace Genilog_WebApi.Controllers
                 {
                     var datra = await companyRepository.GetOrderAsync(user.Id);
                     var contactsDto = mapper.Map<OrderModelDataDto>(datra);
+                    // Notify WebSocket clients about the new order
+                    string contactsDtoJson = JsonConvert.SerializeObject(contactsDto);
+
+                    await WebSocketHandler.SendOrderToGroup(datra.Id.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.RiderId.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.UserId.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.CompanyId.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.AdminId.ToString(), contactsDtoJson);
                     return Ok(contactsDto);
                 }
                 else
@@ -1324,6 +1377,14 @@ namespace Genilog_WebApi.Controllers
                     await companyRepository.AddOrderDeliveryFlowAsync(orderflow);
                     var datra = await companyRepository.GetOrderAsync(user.Id);
                     var contactsDto = mapper.Map<OrderModelDataDto>(datra);
+                    // Notify WebSocket clients about the new order
+                    string contactsDtoJson = JsonConvert.SerializeObject(contactsDto);
+
+                    await WebSocketHandler.SendOrderToGroup(datra.Id.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.RiderId.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.UserId.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.CompanyId.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.AdminId.ToString(), contactsDtoJson);
                     return Ok(contactsDto);
                 }
             }
@@ -1381,6 +1442,14 @@ namespace Genilog_WebApi.Controllers
                     user2 = await companyRepository.UpdateOrderAsync(id, user2);
                     var datra = await companyRepository.GetOrderAsync(user2.Id);
                     var contactsDto = mapper.Map<OrderModelDataDto>(datra);
+                    // Notify WebSocket clients about the new order
+                    string contactsDtoJson = JsonConvert.SerializeObject(contactsDto);
+
+                    await WebSocketHandler.SendOrderToGroup(datra.Id.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.RiderId.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.UserId.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.CompanyId.ToString(), contactsDtoJson);
+                    await WebSocketHandler.SendOrderToGroup(datra.AdminId.ToString(), contactsDtoJson);
                     return Ok(contactsDto);
 
                 }

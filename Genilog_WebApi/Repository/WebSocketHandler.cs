@@ -153,7 +153,7 @@ namespace Genilog_WebApi.Repository
         public static async Task ReconnectAsync(string connectionId)
         {
             // You can provide the actual WebSocket server URI here.
-            string serverUri = "ws://api-data.bringmygas.com/ws"; // Replace with your WebSocket server URI
+            string serverUri = "ws://api-data.ginilog.com/ws"; // Replace with your WebSocket server URI
             Console.WriteLine($"Attempting to reconnect for connection: {connectionId}");
 
             try

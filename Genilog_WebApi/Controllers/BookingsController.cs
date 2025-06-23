@@ -5,6 +5,7 @@ using Genilog_WebApi.Model;
 using Genilog_WebApi.Model.BookingsModel;
 using Genilog_WebApi.Model.LogisticsModel;
 using Genilog_WebApi.Model.Notification_Model;
+using Genilog_WebApi.Model.UsersDataModel;
 using Genilog_WebApi.Model.WalletModel;
 using Genilog_WebApi.Repository.AdminRepo;
 using Genilog_WebApi.Repository.AuthRepo;
@@ -15,6 +16,7 @@ using Genilog_WebApi.Repository.UploadRepo;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using QRCoder;
 using System.Net;
 using System.Net.Http.Headers;
@@ -1201,6 +1203,38 @@ namespace Genilog_WebApi.Controllers
         }
 
         //Customer Book
+
+        [HttpGet]
+        [Route("all-reservations-dates")]
+        [Authorize]
+        public async Task<IActionResult> GetAllCustomerBookedReservationAsync([FromHeader] Guid reservationId)
+        {
+            List<AllReservationsDate> users = [];
+
+            var events = await accomodationRepository.GetAllCustomerBookedReservationAsync();
+            events = [.. events.OrderByDescending(x => x.CreatedAt)];
+            events = [.. events.Where(x => x.ResevationId == reservationId)];
+
+            var userDto = mapper.Map<List<CustomerBookedReservationDto>>(events);
+
+            foreach (var item in userDto)
+            {
+                var date = new AllReservationsDate
+                {
+                    ReservationStartDate = item.ReservationStartDate,
+                    ReservationEndDate = item.ReservationEndDate
+                };
+
+                users.Add(date);
+            }
+            // Sort the dates in ascending order (e.g., Jan → June)
+            users = [.. users.OrderBy(x => x.ReservationStartDate)];
+
+            return Ok(users);
+
+
+        }
+
         [HttpGet]
         [Route("accomodation-reservations-customer")]
         [Authorize]

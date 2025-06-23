@@ -688,6 +688,7 @@ namespace Ginilog_AdminWeb.Controllers
             }
             return View(requset);
         }
+      
         [HttpGet]
         public IActionResult DeleteStaff(Guid id)
         {
@@ -772,6 +773,122 @@ namespace Ginilog_AdminWeb.Controllers
             {
                 return RedirectToAction("SignIn", "Auth");
 
+            }
+        }
+
+        // Advert
+        [HttpGet]
+        public async Task<IActionResult> AllAdvertData(string id)
+        {
+            var userId = HttpContext.Session.GetString("bt_userId");
+            var token = HttpContext.Session.GetString("bt_token");
+            var adminType = HttpContext.Session.GetString("bt_userType");
+            if (userId != null)
+            {
+                var users = Data()!.GetAwaiter().GetResult();
+                ViewBag.ProfilePics = users.ImagePath!;
+                ViewBag.AdminName = $"{users.FirstName} {users.SurName}";
+                ViewBag.UseType = adminType;
+                List<AdvertHolderModel> adminUser = [];
+                using var httpClient = new HttpClient();
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                using var response = await httpClient.GetAsync($"{GlobalConstant.BaseUrl}{GlobalConstant.AdminUrl}advert");
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    string apiResponse = await response.Content.ReadAsStringAsync();
+                    adminUser = JsonConvert.DeserializeObject<List<AdvertHolderModel>>(apiResponse)!;
+                    adminUser = [.. adminUser!.OrderByDescending(x => x!.CreatedAt)];
+                    var search = from m in adminUser select m;
+                    if (!String.IsNullOrEmpty(id))
+                    {
+                        search = search.Where(s => s.AdvertName!.Contains(id, StringComparison.CurrentCultureIgnoreCase) || s.AdvertType!.Contains(id, StringComparison.CurrentCultureIgnoreCase)
+                        || s.TransRef!.Contains(id, StringComparison.CurrentCultureIgnoreCase)
+                        || s.AdvertItemDescription!.Contains(id, StringComparison.CurrentCultureIgnoreCase)
+                        );
+                        return View(search.ToList());
+                    }
+                    else
+                    {
+                        return View(adminUser);
+                    }
+                }
+                else
+                {
+                    ViewBag.StatusCode = response.StatusCode;
+                    return RedirectToAction("Index", "Home");
+                }
+            }
+            else
+            {
+                return RedirectToAction("SignIn", "Auth");
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> AdvertDetails(Guid id)
+        {
+            var userId = HttpContext.Session.GetString("bt_userId");
+            var token = HttpContext.Session.GetString("bt_token");
+            if (userId != null)
+            {
+                var userDAta = Data()!.GetAwaiter().GetResult();
+                ViewBag.ProfilePics = userDAta.ImagePath!;
+                ViewBag.AdminName = $"{userDAta.FirstName} {userDAta.SurName}";
+                ViewBag.UseType = userDAta.AdminType;
+                using var httpClient = new HttpClient();
+                AdvertHolderModel users = new();
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                using var response = await httpClient.GetAsync($"{GlobalConstant.BaseUrl}{GlobalConstant.AdminUrl}advert/{id}");
+                if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    string apiResponse = await response.Content.ReadAsStringAsync();
+                    users = JsonConvert.DeserializeObject<AdvertHolderModel>(apiResponse)!;
+                    ViewBag.Id = id;
+                    var managers = ManagerData(users.AdminId)!.GetAwaiter().GetResult();
+                    var dataDetails = new MainAdvertModel
+                    {
+                        AdvertHolderModel = users,
+                        AdminModelTable= managers,
+                    };
+                    return View(dataDetails);
+                }
+                else
+                {
+                    ViewBag.StatusCode = response.StatusCode;
+                    return RedirectToAction("AllAdvertData", "Home");
+                }
+            }
+            else
+            {
+                return RedirectToAction("SignIn", "Auth");
+            }
+
+        }
+
+        [HttpGet]
+        public IActionResult DeleteAdvert(Guid id)
+        {
+            ViewBag.Id = id;
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DeleteAdvertConfirm(Guid id)
+        {
+
+            var token = HttpContext.Session.GetString("bt_token");
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            using var response = await httpClient.DeleteAsync($"{GlobalConstant.BaseUrl}{GlobalConstant.AdminUrl}advert/{id}");
+            if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                string apiResponse = await response.Content.ReadAsStringAsync();
+                return RedirectToAction("AllAdvertData", "Home");
+            }
+            else
+            {
+                ViewBag.StatusCode = response.StatusCode;
+                return RedirectToAction("AllAdvertData", "Home");
             }
         }
 

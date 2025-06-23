@@ -1,0 +1,91 @@
+﻿@model IEnumerable<Ginilog_AdminWeb.Models.AdvertHolderModel>
+
+@{
+    ViewData["Title"] = "AllAdvertData";
+    Layout = "~/Views/Shared/_NewLayout.cshtml";
+}
+
+
+<!-- Blank Start -->
+<div class="row">
+    <div class="col-12 grid-margin">
+        <div class="card">
+
+            <div class="card-body">
+
+                <div style="padding-top:20px"></div>
+                <p>
+
+                    All Advert Request
+
+                </p>
+                <h6 class="mb-4">Search Here</h6>
+                <form asp-controller="Home" asp-action="AllAdvertData" method="get">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="id" placeholder="Search: Name, Type or Description or reference" aria-label="Recipient's username" aria-describedby="basic-addon2">
+                            <div class="input-group-append">
+                                <button class="btn btn-sm btn-primary" type="submit">Search</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <div style="padding-top:20px"></div>
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Advert Name</th>
+                                <th>Advert Type</th>
+                                <th>AdvertItemCost</th>
+                                <th>Trans Ref</th>
+                                <th>Trans Status</th>
+                                <th>Advert Days</th>
+                                <th>ExpiredAt</th>
+                                <th>Date</th>
+                                <th>View</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr class="feedback-item">
+                                    <td>@item!.AdvertName</td>
+                                    <td>@item!.AdvertType</td>
+                                    <td>&#8358;@item!.AdvertItemCost.ToString("N2")</td>
+                                    <td>@item!.TransRef</td>
+                                    <td> @if (item.TransStatus == true)
+                                        {
+                                            <div class="col-auto mb-2">
+                                                <button class="nav-link btn btn-primary create-new-button">Paid</button>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="col-auto mb-2">
+                                                <button class="nav-link btn btn-secondary create-new-button">Not Paid</button>
+                                            </div>
+                                        }
+                                    </td>
+                                    <td>@item!.AdvertDays4</td>
+                                    <td>@item!.ExpiredAt</td>
+                                    <td>@item!.CreatedAt</td>
+                                    <td><a href="@Url.Action("AdvertDetails", "Home", new { id = item!.Id })" class="btn btn-outline-info">View</a>
+                                    <td>
+                                    <td><a href="@Url.Action("DeleteAdvert", "Home", new { id = item!.Id })" class="btn btn-danger">Delete</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Blank End -->

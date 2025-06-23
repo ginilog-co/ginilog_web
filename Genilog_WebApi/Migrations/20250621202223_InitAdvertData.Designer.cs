@@ -4,6 +4,7 @@ using Genilog_WebApi.DataContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Genilog_WebApi.Migrations
 {
     [DbContext(typeof(Genilog_Data_Context))]
-    partial class Genilog_Data_ContextModelSnapshot : ModelSnapshot
+    [Migration("20250621202223_InitAdvertData")]
+    partial class InitAdvertData
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

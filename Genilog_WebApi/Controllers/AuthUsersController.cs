@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Google.Cloud.Firestore;
-using Genilog_WebApi.Model.UploadModels;
 using Genilog_WebApi.Repository.UploadRepo;
 using Genilog_WebApi.Model.UsersDataModel;
 using Genilog_WebApi.Model;
@@ -11,11 +10,6 @@ using Genilog_WebApi.Model.AuthModel;
 using Genilog_WebApi.EmailSender;
 using Genilog_WebApi.Repository.UserRepo;
 using System.Security.Claims;
-using Microsoft.AspNetCore.SignalR;
-using Google.Apis.Auth;
-using System.IdentityModel.Tokens.Jwt;
-using System.Text.Json;
-using Genilog_WebApi.Repository.NotificationRepo;
 
 namespace Genilog_WebApi.Controllers
 {
@@ -32,9 +26,7 @@ namespace Genilog_WebApi.Controllers
         private readonly IUser_RoleRepository user_RoleRepository = user_RoleRepository;
         private readonly IUserRepository newUsersRepository = newUsersRepository;
         private readonly IUploadRepository uploadRepository = uploadRepository;
-        // readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
 
-        private const string googleClientId = "650523296976-86526ebsjn0266ogajsl6fllfl08jn5h.apps.googleusercontent.com";
         [HttpPut]
         [Route("update-device-token")]
         [Authorize]
@@ -356,7 +348,7 @@ namespace Genilog_WebApi.Controllers
                 var userDto = mapper.Map<List<UsersDataModelTableDto>>(allPosts);
                 foreach (var item in userDto)
                 {
-                    item.DeviceTokenModels = token.Where(x => x.UserId == item.Id).ToList();
+                    item.DeviceTokenModels = [.. token.Where(x => x.UserId == item.Id)];
                     users.Add(item);
                 }
                 return Ok(users);
@@ -367,7 +359,7 @@ namespace Genilog_WebApi.Controllers
                 var userDto = mapper.Map<List<UsersDataModelTableDto>>(allPosts);
                 foreach (var item in userDto)
                 {
-                    item.DeviceTokenModels = token.Where(x => x.UserId == item.Id).ToList();
+                    item.DeviceTokenModels = [.. token.Where(x => x.UserId == item.Id)];
                     users.Add(item);
                 }
                 return Ok(users);
@@ -380,7 +372,7 @@ namespace Genilog_WebApi.Controllers
                 var userDto = mapper.Map<List<UsersDataModelTableDto>>(allPosts);
                 foreach (var item in userDto)
                 {
-                    item.DeviceTokenModels = token.Where(x => x.UserId == item.Id).ToList();
+                    item.DeviceTokenModels = [.. token.Where(x => x.UserId == item.Id)];
                     users.Add(item);
                 }
                 return Ok(users);
@@ -391,7 +383,7 @@ namespace Genilog_WebApi.Controllers
                 var userDto = mapper.Map<List<UsersDataModelTableDto>>(allPosts);
                 foreach (var item in userDto)
                 {
-                    item.DeviceTokenModels = token.Where(x => x.UserId == item.Id).ToList();
+                    item.DeviceTokenModels = [.. token.Where(x => x.UserId == item.Id)];
                     users.Add(item);
                 }
                 return Ok(users);
@@ -403,7 +395,7 @@ namespace Genilog_WebApi.Controllers
                 var userDto = mapper.Map<List<UsersDataModelTableDto>>(allPosts);
                 foreach (var item in userDto)
                 {
-                    item.DeviceTokenModels = token.Where(x => x.UserId == item.Id).ToList();
+                    item.DeviceTokenModels = [.. token.Where(x => x.UserId == item.Id)];
                     users.Add(item);
                 }
                 return Ok(users);
@@ -414,7 +406,7 @@ namespace Genilog_WebApi.Controllers
                 var userDto = mapper.Map<List<UsersDataModelTableDto>>(allPosts);
                 foreach (var item in userDto)
                 {
-                    item.DeviceTokenModels = token.Where(x => x.UserId == item.Id).ToList();
+                    item.DeviceTokenModels = [.. token.Where(x => x.UserId == item.Id)];
                     users.Add(item);
                 }
                 return Ok(users);
@@ -426,7 +418,7 @@ namespace Genilog_WebApi.Controllers
                 var userDto = mapper.Map<List<UsersDataModelTableDto>>(allPosts);
                 foreach (var item in userDto)
                 {
-                    item.DeviceTokenModels = token.Where(x => x.UserId == item.Id).ToList();
+                    item.DeviceTokenModels = [.. token.Where(x => x.UserId == item.Id)];
                     users.Add(item);
                 }
                 return Ok(users);
@@ -436,7 +428,7 @@ namespace Genilog_WebApi.Controllers
                 var userDto = mapper.Map<List<UsersDataModelTableDto>>(user);
                 foreach (var item in userDto)
                 {
-                    item.DeviceTokenModels = token.Where(x => x.UserId == item.Id).ToList();
+                    item.DeviceTokenModels = [.. token.Where(x => x.UserId == item.Id)];
                     users.Add(item);
                 }
                 return Ok(users);
