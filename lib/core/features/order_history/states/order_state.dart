@@ -62,7 +62,7 @@ class PackageOrderNotifier extends StateNotifier<PackageOrderState> {
   final PackageOrderService packageOrder;
   List<PackageOrderResponseModel> allPackageOrders = [];
 
-  PackageOrderResponseModel packageOrderModel = PackageOrderResponseModel();
+  PackageOrderResponseModel? packageOrderModel;
   // Notifications
   bool _hasFetchedOrders = false;
   final Map<String, bool> _fetchedOrdersById = {};
@@ -74,6 +74,26 @@ class PackageOrderNotifier extends StateNotifier<PackageOrderState> {
   String orderId = "";
   PackageOrderNotifier({required this.packageOrder})
     : super(PackageOrderInitial());
+
+  bool _isMounted = true;
+
+  @override
+  void dispose() {
+    _isMounted = false;
+    disconnect();
+    super.dispose();
+  }
+
+  void setInitialOrder(PackageOrderResponseModel order) {
+    packageOrderModel = order;
+
+    if (_isMounted) {
+      state = PackageOrderSuccess<PackageOrderResponseModel>(
+        message: "Tracking started",
+        data: order,
+      );
+    }
+  }
 
   // Initialize WebSocket connection
   Future<void> connectAndJoinOrder({
@@ -138,13 +158,14 @@ class PackageOrderNotifier extends StateNotifier<PackageOrderState> {
         );
         if (index != -1) {
           allPackageOrders[index] = updatedOrder;
+          packageOrderModel = updatedOrder;
         } else {
           allPackageOrders.insert(0, updatedOrder);
         }
-
         state = PackageOrderSuccess(
           message: 'Live Order Update',
           listData: allPackageOrders,
+          data: packageOrderModel,
           visitCount: _visitCounter,
         );
       } else {
@@ -164,6 +185,9 @@ class PackageOrderNotifier extends StateNotifier<PackageOrderState> {
         printData("Parsed Order 3:", ' $jsonOrder');
         final updatedOrder = PackageOrderResponseModel.fromJson(innerJson);
         packageOrderModel = updatedOrder;
+        if (!mounted) {
+          return;
+        }
         state = PackageOrderSuccess(
           message: 'Live Order Update',
           data: packageOrderModel,
@@ -268,7 +292,9 @@ final streamRepositoryProvider = Provider<PackageOrderService>(
 );
 
 final packageOrderProvider =
-    StateNotifierProvider<PackageOrderNotifier, PackageOrderState>((ref) {
+    StateNotifierProvider.autoDispose<PackageOrderNotifier, PackageOrderState>((
+      ref,
+    ) {
       final bookingService = ref.read(streamRepositoryProvider);
       return PackageOrderNotifier(packageOrder: bookingService);
     });

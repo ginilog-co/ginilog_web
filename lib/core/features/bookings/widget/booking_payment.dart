@@ -108,8 +108,8 @@ class _BookingPaymentBottomSheetState extends State<BookingPaymentBottomSheet> {
           addVerticalSpacing(context, 5.2),
 
           _buildPaymentOption("Pay with Paystack", 1),
-          SizedBox(height: 15),
-          _buildPaymentOption("Pay with Flutterwave", 2),
+          // SizedBox(height: 15),
+          // _buildPaymentOption("Pay with Flutterwave", 2),
           addVerticalSpacing(context, 10.2),
           AppButton(
             text: "Continue",

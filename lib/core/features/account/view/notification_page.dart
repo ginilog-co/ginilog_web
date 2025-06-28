@@ -74,12 +74,7 @@ class _LoginPageState extends ConsumerState<NotificationPage> {
           child: Builder(
             builder: (context) {
               if (isLoading) {
-                return Center(
-                  child: SizedBox(
-                    height: getScreenHeight(context) * 0.5,
-                    child: const CircularProgressIndicator(),
-                  ),
-                );
+                return Center(child: const CircularProgressIndicator());
               }
               return getOrdered(notifications).isNotEmpty
                   ? ListView.builder(

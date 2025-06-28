@@ -14,14 +14,15 @@ class AccountService {
       Map<String, String> headers2 = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Authorization': 'Bearer ${globals.token}'
+        'Authorization': 'Bearer ${globals.token}',
       };
       var url = Uri.parse("${Endpoints.baseUrl}${Endpoints.usersUrl}/profile");
       var response = await http.get(url, headers: headers2);
       if (response.statusCode == 200 || response.statusCode == 201) {
         final item = json.decode(response.body);
         data = RegisterResponseModel.fromJson(
-            item); // Mapping json response to our data model
+          item,
+        ); // Mapping json response to our data model
         printData('User Details', data);
         return data;
       } else {
@@ -40,15 +41,17 @@ class AccountService {
       Map<String, String> headers2 = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Authorization': 'Bearer ${globals.token}'
+        'Authorization': 'Bearer ${globals.token}',
       };
       var url = Uri.parse(
-          "${Endpoints.baseUrl}${Endpoints.usersUrl}/${globals.userId}");
+        "${Endpoints.baseUrl}${Endpoints.usersUrl}/${globals.userId}",
+      );
       var response = await http.get(url, headers: headers2);
       if (response.statusCode == 200 || response.statusCode == 201) {
         final item = json.decode(response.body);
         data = RegisterResponseModel.fromJson(
-            item); // Mapping json response to our data model
+          item,
+        ); // Mapping json response to our data model
         printData('User Details', data);
         return data;
       } else {
@@ -61,128 +64,35 @@ class AccountService {
     }
   }
 
-  Future<http.Response> updateProfilePics({
-    required String imageFile,
-    required String userId,
+  Future<http.Response> updateProfile({
+    String? firstName,
+    String? lastName,
+    String? imageFile,
+    String? phoneNo,
+    bool? availability,
   }) async {
     try {
       var stingUrl = Uri.parse("${Endpoints.baseUrl}${Endpoints.userUpdate}");
       Map<String, String> headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Authorization': 'Bearer ${globals.token}'
+        'Authorization': 'Bearer ${globals.token}',
       };
-
-      final msg = jsonEncode(
-        {
-          "profilePicture": imageFile,
-        },
+      final msg = jsonEncode({
+        "firstName": firstName ?? "",
+        "lastName": lastName ?? "",
+        "profilePicture": imageFile ?? "",
+        "phoneNo": phoneNo ?? "",
+        "userStatus": availability ?? false,
+      });
+      http.Response response = await http.put(
+        stingUrl,
+        body: msg,
+        headers: headers,
       );
-      http.Response response =
-          await http.put(stingUrl, body: msg, headers: headers);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         printData("Response", response.body);
-        getUserData();
-        return response;
-      } else {
-        printData("Error", response.body);
-        return response;
-      }
-    } catch (e) {
-      printData('Error', e.toString());
-      return Future.error(handleHttpError(e));
-    }
-  }
-
-  Future<http.Response> updateNames({
-    required String userId,
-    required String firstName,
-    required String lastName,
-  }) async {
-    try {
-      var stingUrl = Uri.parse("${Endpoints.baseUrl}${Endpoints.userUpdate}");
-      Map<String, String> headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ${globals.token}'
-      };
-      final msg = jsonEncode(
-        {
-          "firstName": firstName,
-          "lastName": lastName,
-        },
-      );
-      http.Response response =
-          await http.put(stingUrl, body: msg, headers: headers);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        printData("Response", response.body);
-        getUserData();
-        return response;
-      } else {
-        printData("Error", response.body);
-        return response;
-      }
-    } catch (e) {
-      printData('Error', e.toString());
-      return Future.error(handleHttpError(e));
-    }
-  }
-
-  Future<http.Response> updatePhoneNo({
-    required String userId,
-    required String phoneNo,
-  }) async {
-    try {
-      var stingUrl = Uri.parse("${Endpoints.baseUrl}${Endpoints.userUpdate}");
-      Map<String, String> headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ${globals.token}'
-      };
-      final msg = jsonEncode(
-        {
-          "phoneNo": phoneNo,
-        },
-      );
-      http.Response response =
-          await http.put(stingUrl, body: msg, headers: headers);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        printData("Response", response.body);
-        getUserData();
-        return response;
-      } else {
-        printData("Error", response.body);
-        return response;
-      }
-    } catch (e) {
-      printData('Error', e.toString());
-      return Future.error(handleHttpError(e));
-    }
-  }
-
-  Future<http.Response> updateOnlineStatus({
-    required bool availability,
-  }) async {
-    try {
-      var stingUrl = Uri.parse("${Endpoints.baseUrl}${Endpoints.userUpdate}");
-      Map<String, String> headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ${globals.token}'
-      };
-      final msg = jsonEncode(
-        {
-          "userStatus": availability,
-        },
-      );
-      http.Response response =
-          await http.put(stingUrl, body: msg, headers: headers);
-      printData("Online Status Update", response.body);
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        printData("Online Status Update", response.body);
         getUserData();
         return response;
       } else {
@@ -209,27 +119,29 @@ class AccountService {
   }) async {
     try {
       var stingUrl = Uri.parse(
-          "${Endpoints.baseUrl}${Endpoints.usersUrl}/add-new-address/$userId");
+        "${Endpoints.baseUrl}${Endpoints.usersUrl}/add-new-address/$userId",
+      );
       Map<String, String> headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Authorization': 'Bearer ${globals.token}'
+        'Authorization': 'Bearer ${globals.token}',
       };
-      final msg = jsonEncode(
-        {
-          "address": address,
-          "phoneNo": phoneNo,
-          "userName": userName,
-          "addressPostCodes": addressPostCodes,
-          "houseNo": houseNo,
-          "city": city,
-          "state": state,
-          "latitude": latitude,
-          "longitude": longitude,
-        },
+      final msg = jsonEncode({
+        "address": address,
+        "phoneNo": phoneNo,
+        "userName": userName,
+        "addressPostCodes": addressPostCodes,
+        "houseNo": houseNo,
+        "city": city,
+        "state": state,
+        "latitude": latitude,
+        "longitude": longitude,
+      });
+      http.Response response = await http.put(
+        stingUrl,
+        body: msg,
+        headers: headers,
       );
-      http.Response response =
-          await http.put(stingUrl, body: msg, headers: headers);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         setToLocalStorage(name: "state", data: state);
@@ -264,26 +176,28 @@ class AccountService {
   }) async {
     try {
       var stingUrl = Uri.parse(
-          "${Endpoints.baseUrl}${Endpoints.usersUrl}/update-delivery-address/$addressId");
+        "${Endpoints.baseUrl}${Endpoints.usersUrl}/update-delivery-address/$addressId",
+      );
       Map<String, String> headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Authorization': 'Bearer ${globals.token}'
+        'Authorization': 'Bearer ${globals.token}',
       };
-      final msg = jsonEncode(
-        {
-          "phoneNo": phoneNo,
-          "userName": userName,
-          "address": address,
-          "addressPostCodes": addressPostCodes,
-          "houseNo": houseNo,
-          "city": city,
-          "latitude": latitude,
-          "longitude": longitude,
-        },
+      final msg = jsonEncode({
+        "phoneNo": phoneNo,
+        "userName": userName,
+        "address": address,
+        "addressPostCodes": addressPostCodes,
+        "houseNo": houseNo,
+        "city": city,
+        "latitude": latitude,
+        "longitude": longitude,
+      });
+      http.Response response = await http.put(
+        stingUrl,
+        body: msg,
+        headers: headers,
       );
-      http.Response response =
-          await http.put(stingUrl, body: msg, headers: headers);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         setToLocalStorage(name: "city", data: city);
@@ -310,11 +224,12 @@ class AccountService {
   }) async {
     try {
       var stingUrl = Uri.parse(
-          "${Endpoints.baseUrl}${Endpoints.usersUrl}/delete-delivery-address/$addressId");
+        "${Endpoints.baseUrl}${Endpoints.usersUrl}/delete-delivery-address/$addressId",
+      );
       Map<String, String> headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Authorization': 'Bearer ${globals.token}'
+        'Authorization': 'Bearer ${globals.token}',
       };
       http.Response response = await http.delete(stingUrl, headers: headers);
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -339,18 +254,19 @@ class AccountService {
       Map<String, String> headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Authorization': 'Bearer ${globals.token}'
+        'Authorization': 'Bearer ${globals.token}',
       };
-      final msg = jsonEncode(
-        {
-          "name": globals.userName,
-          "email": globals.userEmail,
-          "feedback": feedback,
-          "phoneNo": phoneNo,
-        },
+      final msg = jsonEncode({
+        "name": globals.userName,
+        "email": globals.userEmail,
+        "feedback": feedback,
+        "phoneNo": phoneNo,
+      });
+      http.Response response = await http.post(
+        stingUrl,
+        body: msg,
+        headers: headers,
       );
-      http.Response response =
-          await http.post(stingUrl, body: msg, headers: headers);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         printData("Response", response.body);

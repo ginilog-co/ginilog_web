@@ -56,9 +56,10 @@ class _LoginPageState extends ConsumerState<AccountPage> {
   @override
   Widget build(BuildContext context) {
     final key = GlobalKey<ScaffoldMessengerState>();
-    final accountProviderd = ref.read(accountProvider.notifier);
-    accountProviderd.getAccount();
-    var user = accountProviderd.userData;
+    final notifier = ref.watch(accountProvider.notifier);
+    final state = ref.watch(accountProvider);
+    final isLoading = state is AccountLoading && !state.hasLoadedInitially;
+    final user = notifier.userData;
 
     return Container(
       height: MediaQuery.of(context).size.height,
@@ -111,7 +112,10 @@ class _LoginPageState extends ConsumerState<AccountPage> {
                           children: [
                             AppText(
                               isBody: true,
-                              text: "${user.firstName} ${user.lastName}",
+                              text:
+                                  isLoading
+                                      ? ""
+                                      : "${user.firstName} ${user.lastName}",
                               textAlign: TextAlign.start,
                               fontSize: 33,
                               color: AppColors.black,
@@ -303,7 +307,7 @@ class _LoginPageState extends ConsumerState<AccountPage> {
                                         AppButton(
                                           text: "Log Out",
                                           onPressed: () {
-                                            accountProviderd.handleSignOut();
+                                            notifier.handleSignOut();
                                             navigateAndRemoveUntilRoute(
                                               context,
                                               const LoginScreens(),

@@ -6,7 +6,7 @@ import 'package:ginilog_customer_app/core/components/services/upload_service.dar
 import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
-import 'package:ginilog_customer_app/core/features/account/services/account_services.dart';
+import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
 
 import '../../../components/utils/app_buttons.dart';
 import '../../../components/utils/colors.dart';
@@ -33,6 +33,7 @@ class _LoginPageState extends ConsumerState<AccountDetailsPage> {
   bool isProcessing = false;
 
   bool loading = false;
+  bool rebuildWidget = false;
 
   late AccountNotifier accountProviders;
   late RegisterResponseModel globals;
@@ -44,12 +45,12 @@ class _LoginPageState extends ConsumerState<AccountDetailsPage> {
     _lastName = TextEditingController();
 
     accountProviders = ref.read(accountProvider.notifier);
-    accountProviders.getAccount();
-    setState(() {
-      globals = accountProviders.userData!;
-    });
+    // accountProviders.getAccount();
+    globals = accountProviders.userData!;
     userDetails();
     super.initState();
+    Future.microtask(() {});
+    globals = accountProviders.userData!;
   }
 
   @override
@@ -88,10 +89,13 @@ class _LoginPageState extends ConsumerState<AccountDetailsPage> {
         });
       }
       String imageUrl = await ApiService.upload(image!.path);
-      AccountService().updateProfilePics(
-        userId: globals.id.toString(),
+      accountProviders.updateProfile(
         imageFile: imageUrl,
+        //context: context
       );
+      setState(() {
+        rebuildWidget == true;
+      });
     } catch (e) {
       debugPrint(e.toString());
     }
@@ -291,13 +295,16 @@ class _LoginPageState extends ConsumerState<AccountDetailsPage> {
                           text: "Update",
                           onPressed: () {
                             if (_formkey.currentState!.validate()) {
-                              accountProviders.updateNames(
-                                context: context,
-                                userId: globals.id.toString(),
+                              setState(() {
+                                rebuildWidget == true;
+                              });
+                              accountProviders.updateProfile(
+                                //  context: context,
                                 firstName: _firstName.text.trim(),
                                 lastName: _lastName.text.trim(),
                               );
-                              Navigator.pop(context);
+
+                              //  Navigator.pop(context);
                             }
                           },
                           widthPercent: 70,
@@ -319,6 +326,39 @@ class _LoginPageState extends ConsumerState<AccountDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final notifier = ref.watch(accountProvider.notifier);
+    final state = ref.watch(accountProvider);
+    final isLoading = state is AccountLoading && !state.hasLoadedInitially;
+    final user = notifier.userData;
+
+    if (!rebuildWidget) {
+      rebuildWidget == true;
+      ref.listen<AccountState>(accountProvider, (previous, next) {
+        // Prevent snackbar on first load
+        if (previous == null) return;
+
+        if (next is AccountSuccess) {
+          user;
+          globals = next.data;
+          showCustomSnackbar(
+            context,
+            title: "User Success",
+            content: next.message,
+            type: SnackbarType.success,
+            isTopPosition: false,
+          );
+        } else if (next is AccountFailure) {
+          showCustomSnackbar(
+            context,
+            title: "Update Failed",
+            content: next.error,
+            type: SnackbarType.error,
+            isTopPosition: false,
+          );
+        }
+      });
+    }
+
     return Container(
       height: MediaQuery.of(context).size.height,
       width: MediaQuery.of(context).size.width,
@@ -329,10 +369,10 @@ class _LoginPageState extends ConsumerState<AccountDetailsPage> {
           preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(12)),
           child: Padding(
             padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-            child: const Column(
+            child: Column(
               children: [
                 GlobalBackButton(
-                  backText: 'Profile Updates',
+                  backText: isLoading ? "" : 'Profile Updates',
                   showBackButton: true,
                 ),
               ],

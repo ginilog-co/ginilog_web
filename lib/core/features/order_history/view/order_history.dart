@@ -73,7 +73,7 @@ class OrderHistoryScreenView
                       ),
                     ),
                     child: Text(
-                      ['All', 'Pending', 'In-transit', 'Completed'][index],
+                      ['Pending', 'In-transit', 'Completed', 'All'][index],
                     ),
                   );
                 }),
@@ -94,7 +94,6 @@ class OrderHistoryScreenView
             physics: NeverScrollableScrollPhysics(),
             controller: controller.tabController,
             children: [
-              AllOrderListTab(allOrder: data, userPhone: controller.userPhone),
               OngoingTab(
                 ongoingOrder: pending,
                 userPhone: controller.userPhone,
@@ -107,6 +106,7 @@ class OrderHistoryScreenView
                 completedOrder: completedOrder,
                 userPhone: controller.userPhone,
               ),
+              AllOrderListTab(allOrder: data, userPhone: controller.userPhone),
             ],
           );
         },

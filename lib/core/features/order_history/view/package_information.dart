@@ -8,7 +8,9 @@ import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
+import 'package:ginilog_customer_app/core/features/home_screen.dart';
 import 'package:ginilog_customer_app/core/features/order_history/model/package_orders_model.dart';
+import 'package:ginilog_customer_app/core/features/order_history/states/order_state.dart';
 import 'package:ginilog_customer_app/core/features/order_history/widget/payment_set.dart';
 
 class PackageInformationPage extends ConsumerStatefulWidget {
@@ -30,9 +32,40 @@ class _PackageInformationPageState
   bool isLoading = false;
   int selected = 0;
   String paymentMethodUse = "";
+
+  late PackageOrderNotifier notifier;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() async {
+      notifier = ref.read(packageOrderProvider.notifier);
+
+      if (!mounted) return; // ✅ Prevent access if widget is disposed
+      /// Set initial data manually (no fetch needed)
+      notifier.setInitialOrder(widget.order);
+      if (!mounted) return;
+
+      /// Connect to WebSocket for future updates
+      notifier.connectAndJoinOrder(
+        orderId: widget.order.userId ?? "",
+        isSingle: false,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    notifier.disconnect();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final data3 = widget.order;
+    //final data3 = widget.order;
+    final notifier = ref.watch(packageOrderProvider.notifier);
+    ref.watch(packageOrderProvider);
+    final data3 = notifier.packageOrderModel ?? widget.order;
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: PreferredSize(
@@ -410,46 +443,61 @@ class _PackageInformationPageState
                 fontWeight: FontWeight.w500,
               ),
               addVerticalSpacing(context, 5),
-              data3.shippingCost == 0
-                  ? Align(
-                    alignment: Alignment.bottomRight,
-                    child: AppButton(
-                      text:
-                          "Waiting for the company to update the shipping cost",
-                      onPressed: () async {
-                        //  showPaymentMethodSelection(context);
-                      },
-                      widthPercent: 50,
-                      heightPercent: 6,
-                      textColor: AppColors.black,
-                      btnColor: AppColors.grey,
-                      isLoading: false,
-                    ),
-                  )
-                  : Align(
-                    alignment: Alignment.bottomRight,
-                    child: AppButton(
-                      text: "Make Payment",
-                      onPressed: () async {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(20),
-                            ),
-                          ),
-                          builder:
-                              (context) =>
-                                  PaymentMethodBottomSheet(order: widget.order),
-                        );
-                      },
-                      widthPercent: 50,
-                      heightPercent: 6,
-                      btnColor: AppColors.primary,
-                      isLoading: isLoading,
-                    ),
+              Row(
+                children: [
+                  AppButton(
+                    text: "Back Home",
+                    onPressed: () async {
+                      navigateAndReplaceRoute(
+                        context,
+                        HomeScreenPage(imdex: 0),
+                      );
+                    },
+                    widthPercent: 30,
+                    heightPercent: 6,
+                    textColor: AppColors.white,
+                    btnColor: AppColors.primary,
+                    isLoading: false,
                   ),
+                  Spacer(),
+                  data3.shippingCost == 0
+                      ? AppButton(
+                        text:
+                            "Waiting for the company to update the shipping cost",
+                        onPressed: () async {
+                          //  showPaymentMethodSelection(context);
+                        },
+                        widthPercent: 50,
+                        heightPercent: 6,
+                        textColor: AppColors.black,
+                        btnColor: AppColors.grey,
+                        isLoading: false,
+                      )
+                      : AppButton(
+                        text: "Make Payment",
+                        onPressed: () async {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(20),
+                              ),
+                            ),
+                            builder:
+                                (context) => PaymentMethodBottomSheet(
+                                  order: widget.order,
+                                ),
+                          );
+                        },
+                        widthPercent: 50,
+                        heightPercent: 6,
+                        textColor: AppColors.white,
+                        btnColor: AppColors.green,
+                        isLoading: isLoading,
+                      ),
+                ],
+              ),
             ],
           ),
         ),

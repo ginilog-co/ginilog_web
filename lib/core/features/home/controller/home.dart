@@ -35,32 +35,25 @@ class HomeScreenController extends ConsumerState<HomeScreen> {
   double? currentLat;
   double? currentLon;
   late List<PackageOrderResponseModel> allOrders;
-  Timer? timer;
   int currentIndex = 0;
   final CarouselSliderController carouselController =
       CarouselSliderController();
   late PackageOrderNotifier orderProvider;
   @override
   void initState() {
-    _getCurrentPosition();
+    //   _getCurrentPosition();
     super.initState();
     // User Data
     final accountProviderd = ref.read(accountProvider.notifier);
-    accountProviderd.getAccount();
-    accountProviderd.userData;
-    profilePicture =
-        accountProviderd.userData?.profilePicture ??
-        "${globals.profilePicture}";
-    firstNames = accountProviderd.userData?.firstName ?? "${globals.userName}";
-    lastNames = accountProviderd.userData?.lastName ?? "";
-    allNames = "$firstNames $lastNames";
-    userPhone = accountProviderd.userData?.phoneNo ?? "";
+
     // Logistics Company
     final station = ref.read(homeProvider.notifier);
 
     // Order
     orderProvider = ref.read(packageOrderProvider.notifier);
     Future.microtask(() {
+      accountProviderd.getAccount();
+      accountProviderd.userData;
       orderProvider.getAllPackageOrderData();
       allOrders = orderProvider.allPackageOrders;
       station.getAllLogisticsData();
@@ -71,6 +64,14 @@ class HomeScreenController extends ConsumerState<HomeScreen> {
       orderId: globals.userId!,
       isSingle: false,
     );
+    accountProviderd.userData;
+    profilePicture =
+        accountProviderd.userData?.profilePicture ??
+        "${globals.profilePicture}";
+    firstNames = accountProviderd.userData?.firstName ?? "${globals.userName}";
+    lastNames = accountProviderd.userData?.lastName ?? "";
+    allNames = "$firstNames $lastNames";
+    userPhone = accountProviderd.userData?.phoneNo ?? "";
   }
 
   @override
@@ -79,7 +80,7 @@ class HomeScreenController extends ConsumerState<HomeScreen> {
     super.dispose();
   }
 
-  Future<void> _getCurrentPosition() async {
+  Future<void> getCurrentPosition() async {
     await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high)
         .then((positions.Position position) {
           setState(() => _currentPosition = position);

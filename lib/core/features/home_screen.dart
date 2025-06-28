@@ -18,10 +18,7 @@ import '../components/utils/package_export.dart';
 final GlobalKey<NavigatorState> navKey = GlobalKey<NavigatorState>();
 
 class HomeScreenPage extends StatefulWidget {
-  const HomeScreenPage({
-    super.key,
-    required this.imdex,
-  });
+  const HomeScreenPage({super.key, required this.imdex});
   final int imdex;
   @override
   _NavBarfeaturestate createState() => _NavBarfeaturestate();
@@ -53,7 +50,7 @@ class _NavBarfeaturestate extends State<HomeScreenPage>
   }
 
   void setStatus(bool status) async {
-    await AccountService().updateOnlineStatus(availability: status);
+    await AccountService().updateProfile(availability: status);
   }
 
   @override
@@ -87,9 +84,13 @@ class _NavBarfeaturestate extends State<HomeScreenPage>
 
     serviceEnabled = await positions.Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
           content: Text(
-              'Location services are disabled. Please enable the services')));
+            'Location services are disabled. Please enable the services',
+          ),
+        ),
+      );
       return false;
     }
     permission = await positions.Geolocator.checkPermission();
@@ -97,14 +98,19 @@ class _NavBarfeaturestate extends State<HomeScreenPage>
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Location permissions are denied')));
+          const SnackBar(content: Text('Location permissions are denied')),
+        );
         return false;
       }
     }
     if (permission == LocationPermission.deniedForever) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
           content: Text(
-              'Location permissions are permanently denied, we cannot request permissions.')));
+            'Location permissions are permanently denied, we cannot request permissions.',
+          ),
+        ),
+      );
       return false;
     }
     return true;
@@ -116,33 +122,37 @@ class _NavBarfeaturestate extends State<HomeScreenPage>
     if (!hasPermission) return;
     await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high)
         .then((positions.Position position) {
-      setState(() => _currentPosition = position);
-      _getAddressFromLatLng(_currentPosition!);
-    }).catchError((e) {
-      debugPrint(e);
-    });
+          setState(() => _currentPosition = position);
+          _getAddressFromLatLng(_currentPosition!);
+        })
+        .catchError((e) {
+          debugPrint(e);
+        });
   }
 
   Future<void> _getAddressFromLatLng(positions.Position position) async {
     await placemarkFromCoordinates(
-            _currentPosition!.latitude, _currentPosition!.longitude)
+          _currentPosition!.latitude,
+          _currentPosition!.longitude,
+        )
         .then((List<Placemark> placemarks) async {
-      Placemark place = placemarks[0];
-      setState(() {
-        _currentAddress =
-            '${place.street}, ${place.subLocality}, ${place.subAdministrativeArea}, ${place.postalCode}';
-        _city = "${place.subAdministrativeArea}";
-        _state = "${place.administrativeArea}";
-      });
-      await globals.init();
-      printData("Location", _currentAddress!);
-      printData("Latitude", _currentPosition!.latitude);
-      printData("Longitude", _currentPosition!.longitude);
-      printData("City", _city);
-      printData("State", _state);
-    }).catchError((e) {
-      debugPrint(e);
-    });
+          Placemark place = placemarks[0];
+          setState(() {
+            _currentAddress =
+                '${place.street}, ${place.subLocality}, ${place.subAdministrativeArea}, ${place.postalCode}';
+            _city = "${place.subAdministrativeArea}";
+            _state = "${place.administrativeArea}";
+          });
+          await globals.init();
+          printData("Location", _currentAddress!);
+          printData("Latitude", _currentPosition!.latitude);
+          printData("Longitude", _currentPosition!.longitude);
+          printData("City", _city);
+          printData("State", _state);
+        })
+        .catchError((e) {
+          debugPrint(e);
+        });
   }
 
   int tabselected = 0;
@@ -156,42 +166,44 @@ class _NavBarfeaturestate extends State<HomeScreenPage>
     }
     return (await showDialog(
           context: context,
-          builder: (context) => BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-            child: AlertDialog(
-              title: const Text(
-                'Exit App',
-                style: TextStyle(color: AppColors.primary),
-              ),
-              content: const Text(
-                'Do you want to exit the app?',
-                style: TextStyle(color: AppColors.primary),
-              ),
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15)),
-              actions: <Widget>[
-                TextButton(
-                  child: const Text(
-                    'Yes',
-                    style: TextStyle(color: Colors.black),
-                  ),
-                  onPressed: () {
-                    SystemNavigator.pop();
-                  },
-                ),
-                TextButton(
-                  child: const Text(
-                    'No',
+          builder:
+              (context) => BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                child: AlertDialog(
+                  title: const Text(
+                    'Exit App',
                     style: TextStyle(color: AppColors.primary),
                   ),
-                  onPressed: () {
-                    Navigator.of(context).pop(false);
-                  },
+                  content: const Text(
+                    'Do you want to exit the app?',
+                    style: TextStyle(color: AppColors.primary),
+                  ),
+                  backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      child: const Text(
+                        'Yes',
+                        style: TextStyle(color: Colors.black),
+                      ),
+                      onPressed: () {
+                        SystemNavigator.pop();
+                      },
+                    ),
+                    TextButton(
+                      child: const Text(
+                        'No',
+                        style: TextStyle(color: AppColors.primary),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop(false);
+                      },
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
         )) ??
         false;
   }
@@ -208,76 +220,88 @@ class _NavBarfeaturestate extends State<HomeScreenPage>
       const BookingsScreen(),
       const AccountPage(),
     ];
-    return Consumer(builder: (context, WidgetRef ref, Widget? child) {
-      return PopScope(
-        onPopInvokedWithResult: _onPopInvoked,
-        canPop: false,
-        child: Scaffold(
-          backgroundColor: Colors.white,
-          body: children[_currentIndex],
-          bottomNavigationBar: BottomNavigationBar(
+    return Consumer(
+      builder: (context, WidgetRef ref, Widget? child) {
+        return PopScope(
+          onPopInvokedWithResult: _onPopInvoked,
+          canPop: false,
+          child: Scaffold(
             backgroundColor: Colors.white,
-            selectedLabelStyle: const TextStyle(
-                fontSize: 10, fontWeight: FontWeight.w400, fontFamily: 'Inter'),
-            unselectedLabelStyle: const TextStyle(
-                fontSize: 10, fontWeight: FontWeight.w400, fontFamily: 'Inter'),
-            selectedItemColor: AppColors.primary,
-            unselectedItemColor: Colors.grey,
-            currentIndex: _currentIndex,
-            type: BottomNavigationBarType.fixed,
-            onTap: (index) {
-              onTabTapped(index);
-            },
-            items: [
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: const EdgeInsets.only(bottom: 5.0),
-                  child: Image.asset(
-                    "assets/images/home.png",
-                    width: 20,
-                    color: _currentIndex == 0 ? AppColors.primary : Colors.grey,
-                  ),
-                ),
-                label: 'Home',
+            body: children[_currentIndex],
+            bottomNavigationBar: BottomNavigationBar(
+              backgroundColor: Colors.white,
+              selectedLabelStyle: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Inter',
               ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: const EdgeInsets.only(bottom: 5.0, right: 8),
-                  child: Image.asset(
-                    "assets/images/track_history.png",
-                    width: 20,
-                    color: _currentIndex == 1 ? AppColors.primary : Colors.grey,
-                  ),
-                ),
-                label: 'Track',
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Inter',
               ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: const EdgeInsets.only(bottom: 5.0),
-                  child: Image.asset(
-                    "assets/images/bookings.png",
-                    width: 20,
-                    color: _currentIndex == 2 ? AppColors.primary : Colors.grey,
+              selectedItemColor: AppColors.primary,
+              unselectedItemColor: Colors.grey,
+              currentIndex: _currentIndex,
+              type: BottomNavigationBarType.fixed,
+              onTap: (index) {
+                onTabTapped(index);
+              },
+              items: [
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: const EdgeInsets.only(bottom: 5.0),
+                    child: Image.asset(
+                      "assets/images/home.png",
+                      width: 20,
+                      color:
+                          _currentIndex == 0 ? AppColors.primary : Colors.grey,
+                    ),
                   ),
+                  label: 'Home',
                 ),
-                label: 'Bookings',
-              ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: const EdgeInsets.only(bottom: 5.0),
-                  child: Image.asset(
-                    "assets/images/account_icon.png",
-                    width: 20,
-                    color: _currentIndex == 3 ? AppColors.primary : Colors.grey,
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: const EdgeInsets.only(bottom: 5.0, right: 8),
+                    child: Image.asset(
+                      "assets/images/track_history.png",
+                      width: 20,
+                      color:
+                          _currentIndex == 1 ? AppColors.primary : Colors.grey,
+                    ),
                   ),
+                  label: 'Track',
                 ),
-                label: 'Profile',
-              ),
-            ],
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: const EdgeInsets.only(bottom: 5.0),
+                    child: Image.asset(
+                      "assets/images/bookings.png",
+                      width: 20,
+                      color:
+                          _currentIndex == 2 ? AppColors.primary : Colors.grey,
+                    ),
+                  ),
+                  label: 'Bookings',
+                ),
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: const EdgeInsets.only(bottom: 5.0),
+                    child: Image.asset(
+                      "assets/images/account_icon.png",
+                      width: 20,
+                      color:
+                          _currentIndex == 3 ? AppColors.primary : Colors.grey,
+                    ),
+                  ),
+                  label: 'Profile',
+                ),
+              ],
+            ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 
   void onTabTapped(int index) {
