@@ -12,8 +12,10 @@
         private static string messeageSendId = "701313096073";
         private static string cloudeMessageKey = "701313096073";
         private static string appId = "1:701313096073:web:34be72968f9a14d183e958";
-       // private static string paystackSecretKey1 = "sk_live_453f6643d0ae38a02c94d1e20bc9de2231f9b8ff";
-        private static string paystackSecretKey = "sk_test_bddced709bd1dc7069ed81c77644f531cc86cb74";  
+         private static string paystackSecretKey = "sk_live_91c59990661ceca40d1b8c9c07fb7654d509d1c0";
+       // private static string paystackSecretKey1 = "sk_test_bddced709bd1dc7069ed81c77644f531cc86cb74";
+       // 
+
        // private static string flutterwaveSecretKey1 = "sk_live_453f6643d0ae38a02c94d1e20bc9de2231f9b8ff";
         private static string flutterwaveSecretKey = "FLWSECK_TEST-b56f6e352ec72e745191f44c5d0575dd-X";
         private static string sitURl = "https://api-data.ginilog.com";
