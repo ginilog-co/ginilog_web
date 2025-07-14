@@ -7,7 +7,6 @@ import 'package:ginilog_customer_app/core/features/home/model/notification_model
 import 'package:ginilog_customer_app/core/features/home/states/home_state.dart';
 
 import '../../../components/utils/colors.dart';
-import '../../../components/utils/helper_functions.dart';
 import '../../../components/utils/package_export.dart';
 import '../../../components/widgets/app_text.dart';
 
@@ -55,17 +54,17 @@ class _LoginPageState extends ConsumerState<NotificationPage> {
             .toList();
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(18)),
-        child: Padding(
-          padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-          child: GlobalBackButton(
-            backText: "Notifications",
-            showBackButton: true,
-            buttonElements: [
-              IconButton(onPressed: () {}, icon: Icon(Icons.settings)),
-            ],
-          ),
+      appBar: buildFlexibleAppBar(
+        context: context,
+
+        title: AppText(
+          isBody: true,
+          text: "Notifications",
+          textAlign: TextAlign.start,
+          fontSize: 18,
+          color: AppColors.black,
+          fontStyle: FontStyle.normal,
+          fontWeight: FontWeight.w800,
         ),
       ),
       body: SafeArea(
@@ -116,7 +115,7 @@ class _LoginPageState extends ConsumerState<NotificationPage> {
                                           isBody: false,
                                           text: "${data3.title}",
                                           textAlign: TextAlign.start,
-                                          fontSize: 20,
+                                          fontSize: 16,
                                           color: AppColors.black,
                                           fontStyle: FontStyle.normal,
                                           maxLines: 1,
@@ -126,19 +125,19 @@ class _LoginPageState extends ConsumerState<NotificationPage> {
                                           isBody: true,
                                           text: "${data3.body}",
                                           textAlign: TextAlign.start,
-                                          fontSize: 29,
+                                          fontSize: 15,
                                           color: AppColors.black,
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                           fontStyle: FontStyle.normal,
                                           fontWeight: FontWeight.w400,
                                         ),
-                                        addVerticalSpacing(context, 55),
+                                        addVerticalSpacing(55),
                                         AppText(
                                           isBody: true,
                                           text: "$date $time",
                                           textAlign: TextAlign.start,
-                                          fontSize: 25,
+                                          fontSize: 15,
                                           color: AppColors.green,
                                           fontStyle: FontStyle.normal,
                                           fontWeight: FontWeight.w400,
@@ -154,7 +153,7 @@ class _LoginPageState extends ConsumerState<NotificationPage> {
                               ],
                             ),
                           ),
-                          addVerticalSpacing(context, 35),
+                          addVerticalSpacing(35),
                         ],
                       );
                     },
@@ -168,12 +167,12 @@ class _LoginPageState extends ConsumerState<NotificationPage> {
                           width: 100,
                           height: 100,
                         ),
-                        addVerticalSpacing(context, 5),
+                        addVerticalSpacing(5),
                         const AppText(
                           isBody: false,
                           text: "Nothing to show here",
                           textAlign: TextAlign.start,
-                          fontSize: 35,
+                          fontSize: 18,
                           color: AppColors.black,
                           fontStyle: FontStyle.normal,
                           fontWeight: FontWeight.bold,
@@ -182,7 +181,7 @@ class _LoginPageState extends ConsumerState<NotificationPage> {
                           isBody: true,
                           text: "There is no notification yet",
                           textAlign: TextAlign.center,
-                          fontSize: 30,
+                          fontSize: 15,
                           color: AppColors.black,
                           fontStyle: FontStyle.normal,
                           fontWeight: FontWeight.normal,

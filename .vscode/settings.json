@@ -7,10 +7,12 @@
         "androidx",
         "appcheck",
         "appinvite",
+        "atmbrhi",
         "availablity",
         "Axpgn",
         "bottomsheet",
         "bringmygas",
+        "comgooglemaps",
         "cupertino",
         "Dbny",
         "dontwarn",
@@ -19,6 +21,8 @@
         "formkey",
         "ganatempire",
         "ginilog",
+        "googleappmeasurement",
+        "googledatatransport",
         "googleusercontent",
         "gson",
         "iapuf",
@@ -49,7 +53,9 @@
         "textcolor",
         "trnx",
         "ufbcg",
-        "updatedd"
+        "updatedd",
+        "Zoomable"
     ],
-    "cmake.ignoreCMakeListsMissing": true
+    "cmake.ignoreCMakeListsMissing": true,
+    "C_Cpp.errorSquiggles": "disabled"
 }

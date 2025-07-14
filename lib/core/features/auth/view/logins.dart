@@ -1,5 +1,7 @@
 import 'package:flutter/gestures.dart';
+import 'package:ginilog_customer_app/core/components/helpers/globals.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
+import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import '../../../components/architecture/mvc.dart';
 import '../../../components/utils/app_buttons.dart';
 import '../../../components/utils/colors.dart';
@@ -19,21 +21,15 @@ class LoginScreensView
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: AppBar(
-        backgroundColor: AppColors.white,
-        surfaceTintColor: AppColors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-      ),
-      body: Container(
-        height: getScreenHeight(context),
-        width: getScreenWidth(context),
-        color: AppColors.white,
+      body: SafeArea(
         child: SingleChildScrollView(
           child: Form(
             key: controller.formKey,
             child: Padding(
-              padding: const EdgeInsets.only(left: 14, right: 14, top: 20),
+              padding: EdgeInsets.symmetric(
+                horizontal: 4.widthAdjusted,
+                vertical: 4.heightAdjusted,
+              ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,52 +38,68 @@ class LoginScreensView
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      const AppText(
+                      addVerticalSpacing(2),
+                      AppText(
                         isBody: false,
-                        text: "Welcome Back!",
+                        text:
+                            globals.userName!.isEmpty
+                                ? "Login"
+                                : "Welcome back, ${globals.userName}",
                         textAlign: TextAlign.start,
-                        fontSize: 100,
+                        fontSize: 20,
                         color: AppColors.black,
                         fontStyle: FontStyle.normal,
                         fontWeight: FontWeight.bold,
                       ),
-                      addVerticalSpacing(context, 1),
+                      addVerticalSpacing(1),
                       const AppText(
                         isBody: true,
-                        text: "Fill in your email and password to continue",
+                        text:
+                            "Enter username and password to login to your account",
                         textAlign: TextAlign.start,
-                        fontSize: 80,
+                        fontSize: 15,
                         color: AppColors.black,
                         fontStyle: FontStyle.normal,
                         fontWeight: FontWeight.w500,
                       ),
                     ],
                   ),
-                  addVerticalSpacing(context, 15),
+                  globals.userEmail!.isEmpty
+                      ? addVerticalSpacing(2)
+                      : SizedBox.shrink(),
+                  globals.userEmail!.isEmpty
+                      ? const AppText(
+                        isBody: true,
+                        text: "Email Address",
+                        textAlign: TextAlign.start,
+                        fontSize: 18,
+                        color: AppColors.black,
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.w500,
+                      )
+                      : SizedBox.shrink(),
+                  globals.userEmail!.isEmpty
+                      ? GlobalTextField(
+                        fieldName: 'Enter Email',
+                        suffix: Icon(
+                          Icons.email,
+                          size: 2.imageSize,
+                          color: AppColors.grey,
+                        ),
+                        keyBoardType: TextInputType.emailAddress,
+                        obscureText: false,
+                        textController: controller.emailController,
+                        onChanged: (String? value) {
+                          controller.emailOnChanged(value!);
+                        },
+                      )
+                      : SizedBox.shrink(),
+                  addVerticalSpacing(2),
                   const AppText(
                     isBody: true,
-                    text: "Email",
+                    text: "Enter Password",
                     textAlign: TextAlign.start,
-                    fontSize: 80,
-                    color: AppColors.black,
-                    fontStyle: FontStyle.normal,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  GlobalTextField(
-                    fieldName: 'Email',
-                    keyBoardType: TextInputType.emailAddress,
-                    obscureText: false,
-                    textController: controller.emailController,
-                    onChanged: (String? value) {
-                      controller.emailOnChanged(value!);
-                    },
-                  ),
-                  addVerticalSpacing(context, 5),
-                  const AppText(
-                    isBody: true,
-                    text: "Password",
-                    textAlign: TextAlign.start,
-                    fontSize: 80,
+                    fontSize: 18,
                     color: AppColors.black,
                     fontStyle: FontStyle.normal,
                     fontWeight: FontWeight.w500,
@@ -103,12 +115,14 @@ class LoginScreensView
                       controller.passwordOnChanged(value!);
                     },
                   ),
-                  addVerticalSpacing(context, 3),
+                  addVerticalSpacing(2),
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      GestureDetector(
-                        onTap: () {
+                      TextButton(
+                        onPressed: () {
                           navigateToRoute(
                             context,
                             const ForgotPasswordScreen(),
@@ -118,137 +132,77 @@ class LoginScreensView
                           isBody: true,
                           text: "Forgot Password?",
                           textAlign: TextAlign.end,
-                          fontSize: 50,
-                          color: AppColors.blue,
+                          fontSize: 18,
+                          color: AppColors.primary,
                           fontStyle: FontStyle.normal,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
                   ),
-                  addVerticalSpacing(context, 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Checkbox(
-                        checkColor: AppColors.white,
-                        activeColor: AppColors.primary,
-                        value: controller.isChecked,
-                        onChanged: (value) {
-                          controller.onChanged(value!);
-                        },
-                      ),
-                      Expanded(
-                        child: Text.rich(
-                          TextSpan(
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontFamily: "Mulish",
-                              color: AppColors.black,
-                              fontSize: fontSized(context, 45),
-                            ),
-                            text: "I Agree to the ",
-                            children: <TextSpan>[
-                              TextSpan(
-                                text: "Terms & Conditions",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: "Mulish",
-                                  color: AppColors.primary,
-                                  fontSize: fontSized(context, 45),
-                                ),
-                                recognizer:
-                                    TapGestureRecognizer()
-                                      ..onTap = () {
-                                        controller.urlString(
-                                          "https://ginilog.com/Home/TermsOfService",
-                                        );
-                                      },
-                              ),
-                              TextSpan(
-                                text: " & ",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: "Mulish",
-                                  fontSize: fontSized(context, 45),
-                                ),
-                              ),
-                              TextSpan(
-                                text: "Privacy Policy",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: "Mulish",
-                                  color: AppColors.primary,
-                                  fontSize: fontSized(context, 45),
-                                ),
-                                recognizer:
-                                    TapGestureRecognizer()
-                                      ..onTap = () {
-                                        controller.urlString(
-                                          "https://ginilog.com/Home/Privacy",
-                                        );
-                                      },
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  addVerticalSpacing(context, 20),
+                  addVerticalSpacing(2),
                   controller.isEmailChanged.isEmpty ||
-                          controller.isPasswordChanged.isEmpty ||
-                          controller.isChecked == false
+                          controller.isPasswordChanged.isEmpty
                       ? AppButton(
-                        text: "LOG IN",
+                        text: "Proceed",
                         onPressed: () {},
                         widthPercent: 100,
                         heightPercent: 6,
+                        fontSize: 20,
+                        textColor: AppColors.black,
                         btnColor: AppColors.grey,
                         isLoading: controller.isLoading,
+                        borderRadius: 25,
                       )
                       : AppButton(
-                        text: "LOG IN",
+                        text: "Proceed",
                         onPressed: () {
                           controller.loginUser();
                         },
                         widthPercent: 100,
                         heightPercent: 6,
+                        borderRadius: 25,
+                        fontSize: 20,
                         btnColor: AppColors.primary,
                         isLoading: controller.isLoading,
                       ),
-                  addVerticalSpacing(context, 5),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const AppText(
-                        isBody: true,
-                        text: "Don't have an account? ",
-                        textAlign: TextAlign.center,
-                        fontSize: 55,
-                        color: AppColors.black,
-                        fontStyle: FontStyle.normal,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          navigateToRoute(context, const RegisterScreen());
-                        },
-                        child: const AppText(
-                          isBody: false,
-                          text: "Sign Up",
-                          textAlign: TextAlign.center,
-                          fontSize: 78,
-                          color: AppColors.blue,
-                          fontStyle: FontStyle.normal,
-                          fontWeight: FontWeight.w700,
+                  addVerticalSpacing(2),
+                  Center(
+                    child: Text.rich(
+                      textAlign: TextAlign.center,
+                      TextSpan(
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontFamily: "Mulish",
+                          color: AppColors.black,
+                          fontSize: 15.textSize,
                         ),
+                        text: "Don't have an account? ",
+                        children: <TextSpan>[
+                          TextSpan(
+                            text: "Sign Up",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontFamily: "Mulish",
+                              color: AppColors.primary,
+                              fontSize: 20.textSize,
+                            ),
+                            recognizer:
+                                TapGestureRecognizer()
+                                  ..onTap = () {
+                                    navigateToRoute(
+                                      context,
+                                      const RegisterScreen(),
+                                    );
+                                  },
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                  addVerticalSpacing(context, 5),
-                  const Row(
+
+                  addVerticalSpacing(2),
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Expanded(
@@ -257,17 +211,17 @@ class LoginScreensView
                           thickness: 1,
                         ),
                       ),
-                      SizedBox(width: 10),
+                      addHorizontalSpacing(2),
                       AppText(
                         isBody: true,
                         text: "Or",
                         textAlign: TextAlign.center,
-                        fontSize: 30,
+                        fontSize: 15,
                         color: AppColors.black,
                         fontStyle: FontStyle.normal,
                         fontWeight: FontWeight.w600,
                       ),
-                      SizedBox(width: 10),
+                      addHorizontalSpacing(2),
                       Expanded(
                         child: Divider(
                           color: Color.fromRGBO(218, 218, 218, 1),
@@ -276,7 +230,7 @@ class LoginScreensView
                       ),
                     ],
                   ),
-                  addVerticalSpacing(context, 5),
+                  addVerticalSpacing(2),
                   Platform.isIOS
                       ? Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -289,8 +243,7 @@ class LoginScreensView
                             },
                             icon: SvgPicture.asset(
                               'assets/svgs/google.svg',
-                              height: 30,
-                              width: 30,
+                              height: 10.imageSize,
                             ),
                           ),
                           IconButton(
@@ -299,8 +252,7 @@ class LoginScreensView
                             },
                             icon: SvgPicture.asset(
                               'assets/svgs/apple.svg',
-                              height: 30,
-                              width: 30,
+                              height: 10.imageSize,
                             ),
                           ),
                         ],
@@ -312,11 +264,11 @@ class LoginScreensView
                           },
                           icon: SvgPicture.asset(
                             'assets/svgs/google.svg',
-                            height: 30,
-                            width: 30,
+                            height: 10.imageSize,
                           ),
                         ),
                       ),
+                  addVerticalSpacing(2),
                 ],
               ),
             ),

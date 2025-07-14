@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Ginilog Customer App</string>
+	<string>Ginilog</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -45,5 +45,36 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+<array>
+  <dict>
+    <key>CFBundleURLSchemes</key>
+    <array>
+      <string>com.googleusercontent.apps.701313096073-br9p343ad3ril913q8g1ab0atmbrhi8p</string> <!-- from plist -->
+    </array>
+  </dict>
+</array>
+<key>LSApplicationQueriesSchemes</key>
+<array>
+  <string>google</string>
+  <string>com.google</string>
+   <string>comgooglemaps</string>
+</array>
+<key>UIBackgroundModes</key>
+<array>
+  <string>fetch</string>
+  <string>remote-notification</string>
+</array>
+<key>FirebaseAppDelegateProxyEnabled</key>
+<true/>
+<key>NSUserTrackingUsageDescription</key>
+<string>This identifier will be used to deliver personalized ads to you.</string>
+<key>NSPushNotificationsUsageDescription</key>
+<string>We use push notifications to keep you updated.</string>
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>This app needs access to your location to show nearby places and features.</string>
+<key>NSLocationAlwaysUsageDescription</key>
+<string>This app uses your location even when the app is in the background.</string>
+
 </dict>
 </plist>

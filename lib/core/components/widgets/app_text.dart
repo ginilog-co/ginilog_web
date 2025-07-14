@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
+// ignore: unused_import
 import 'responsive.dart';
 
 class AppText extends StatelessWidget {
@@ -39,9 +41,8 @@ class AppText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    TextScaler textScaler = MediaQuery.of(context).textScaler;
     final style = TextStyle(
-      fontSize: fontSized(context, fontSize),
+      fontSize: fontSize?.textSize ?? 20.textSize,
       letterSpacing: letterSpacing ?? 1,
       color: color ?? Colors.black,
       fontStyle: fontStyle ?? FontStyle.normal,
@@ -50,43 +51,15 @@ class AppText extends StatelessWidget {
       height: linHeight ?? 1.5,
       fontFamily: isBody == true ? "Mulish" : "Inter",
     );
-    return Text(text,
-        style: style,
-        textAlign: textAlign,
-        overflow: overflow,
-        maxLines: maxLines,
-        softWrap: softWrap,
-        textScaler: textScaler,
-        textWidthBasis: textWidthBasis,
-        textHeightBehavior: textHeightBehavior);
+    return Text(
+      text,
+      style: style,
+      textAlign: textAlign,
+      overflow: overflow,
+      maxLines: maxLines,
+      softWrap: softWrap,
+      textWidthBasis: textWidthBasis,
+      textHeightBehavior: textHeightBehavior,
+    );
   }
-}
-
-double fontSized(BuildContext context, double? fontSize,
-    {double desktopFactor = 6,
-    double tabletFactor = 4,
-    double mobileFactor = 2,
-    double scaleFactor = 4.0,
-    double minFontSize = 12.0,
-    double maxFontSize = 24.0}) {
-  double screenWidth = MediaQuery.of(context).size.width;
-  TextScaler textScaler = MediaQuery.of(context).textScaler;
-
-  // Determine scaling factor based on device type
-  double scalingFactor = Responsive.isDesktop(context)
-      ? desktopFactor
-      : Responsive.isTablet(context)
-          ? tabletFactor
-          : mobileFactor;
-
-  // Calculate base font size
-  double baseFontSize = fontSize != null
-      ? (screenWidth / scalingFactor) * (fontSize / 100) / scaleFactor
-      : 14.0;
-
-  // Clamp to prevent extreme sizes
-  double clampedFontSize = baseFontSize.clamp(minFontSize, maxFontSize);
-
-  // Apply text scaling and return final size
-  return textScaler.scale(clampedFontSize);
 }

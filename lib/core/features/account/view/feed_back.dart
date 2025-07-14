@@ -1,7 +1,6 @@
 // ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api
 
 import 'package:ginilog_customer_app/core/components/utils/app_buttons.dart';
-import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
 import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
@@ -43,32 +42,30 @@ class _FeedbackPageState extends ConsumerState<FeedbackPage> {
 
   @override
   Widget build(BuildContext context) {
-    double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
     final key = GlobalKey<ScaffoldMessengerState>();
     final accountProviderd = ref.read(accountProvider.notifier);
     accountProviderd.getAccount();
     var user = accountProviderd.userData;
 
-    return Container(
-      color: Colors.white,
-      height: height,
-      width: width,
-      child: Scaffold(
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(16)),
-          child: Padding(
-            padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-            child: const Column(
-              children: [
-                GlobalBackButton(backText: "Contact Us", showBackButton: true),
-              ],
-            ),
-          ),
+    return Scaffold(
+      appBar: buildFlexibleAppBar(
+        context: context,
+
+        title: AppText(
+          isBody: true,
+          text: "Contact Us",
+          textAlign: TextAlign.start,
+          fontSize: 18,
+          color: AppColors.black,
+          fontStyle: FontStyle.normal,
+          fontWeight: FontWeight.w800,
         ),
-        key: key,
-        backgroundColor: Colors.transparent,
-        body: GestureDetector(
+      ),
+      key: key,
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: GestureDetector(
           onTap: () {
             _focusFeedback.unfocus();
           },
@@ -91,7 +88,7 @@ class _FeedbackPageState extends ConsumerState<FeedbackPage> {
                   text:
                       "If you are having trouble placing and completing orders, or you have any question or queries, please feel free to email us",
                   textAlign: TextAlign.start,
-                  fontSize: 73,
+                  fontSize: 15,
                   color: AppColors.black,
                   fontStyle: FontStyle.normal,
                   fontWeight: FontWeight.bold,
@@ -116,7 +113,7 @@ class _FeedbackPageState extends ConsumerState<FeedbackPage> {
                     isBody: true,
                     text: "info@ginilog.com",
                     textAlign: TextAlign.start,
-                    fontSize: 73,
+                    fontSize: 15,
                     color: AppColors.primary,
                     fontStyle: FontStyle.normal,
                     fontWeight: FontWeight.bold,
@@ -142,7 +139,7 @@ class _FeedbackPageState extends ConsumerState<FeedbackPage> {
                     isBody: true,
                     text: "0816 651 6944",
                     textAlign: TextAlign.start,
-                    fontSize: 73,
+                    fontSize: 15,
                     color: AppColors.primary,
                     fontStyle: FontStyle.normal,
                     fontWeight: FontWeight.bold,
@@ -159,7 +156,7 @@ class _FeedbackPageState extends ConsumerState<FeedbackPage> {
                   isBody: true,
                   text: "a member of our team will attend to you",
                   textAlign: TextAlign.start,
-                  fontSize: 73,
+                  fontSize: 15,
                   color: AppColors.black,
                   fontStyle: FontStyle.normal,
                   fontWeight: FontWeight.bold,
@@ -181,7 +178,7 @@ class _FeedbackPageState extends ConsumerState<FeedbackPage> {
                           isBody: false,
                           text: "Leave a message with us",
                           textAlign: TextAlign.start,
-                          fontSize: 73,
+                          fontSize: 15,
                           color: AppColors.black,
                           fontStyle: FontStyle.normal,
                           fontWeight: FontWeight.bold,
@@ -203,7 +200,7 @@ class _FeedbackPageState extends ConsumerState<FeedbackPage> {
                           onChanged: (String? value) {},
                         ),
                       ),
-                      addVerticalSpacing(context, 10),
+                      addVerticalSpacing(3),
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: AppButton(

@@ -6,7 +6,7 @@ import 'package:ginilog_customer_app/core/components/services/upload_service.dar
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
 import 'package:ginilog_customer_app/core/components/utils/constants.dart';
 import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
-import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
+import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
 import 'package:ginilog_customer_app/core/features/account/model/user_response_model.dart';
 import 'package:ginilog_customer_app/core/features/account/states/account_provider.dart';
@@ -22,8 +22,11 @@ import 'package:google_places_autocomplete_text_field/google_places_autocomplete
 import '../../../components/utils/package_export.dart';
 
 class PlaceOrderScreen extends ConsumerStatefulWidget {
-  const PlaceOrderScreen(
-      {super.key, required this.shippingType, required this.userPhone});
+  const PlaceOrderScreen({
+    super.key,
+    required this.shippingType,
+    required this.userPhone,
+  });
   final String shippingType;
   final String userPhone;
   @override
@@ -35,7 +38,7 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
   final GlobalKey<FormState> formKey2 = GlobalKey<FormState>();
   PageController pageController = PageController();
   int currentPage = 0;
-// Origin
+  // Origin
   late TextEditingController senderName;
   late TextEditingController senderEmail;
   late TextEditingController originAddress;
@@ -49,7 +52,7 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
   final FocusNode originPhoneNoFocusNode = FocusNode();
   String originCountry = "";
 
-// Destination
+  // Destination
   late TextEditingController receiverName;
   late TextEditingController receiverEmail;
   late TextEditingController destinationAddress;
@@ -63,7 +66,7 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
   final FocusNode destinationPhoneNoFocusNode = FocusNode();
   String destinationCountry = "";
 
-// Package Details
+  // Package Details
   late TextEditingController packageName;
   late TextEditingController itemCost;
   late TextEditingController itemQuantity;
@@ -81,10 +84,10 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
     "Documents",
     "Clothing",
     "Foodstuff",
-    "Others"
+    "Others",
   ];
   List<String> filteredItems = [];
-// Company
+  // Company
   TextEditingController company = TextEditingController();
   String companyId = "";
   late AccountNotifier accountProviders;
@@ -174,7 +177,7 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
     });
   }
 
-//Origin
+  //Origin
   String isOriginNameChanged = "";
   String isOriginEmailChanged = "";
   String isOriginAddressChanged = "";
@@ -287,7 +290,6 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
   }
 
   void showBottomSheet() {
-    TextScaler textScaler = MediaQuery.of(context).textScaler;
     _searchController.clear(); // Clear search field when opening
     setState(() {
       filteredItems = List.from(allItems);
@@ -302,9 +304,10 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
           builder: (context, setState) {
             return Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context)
-                    .viewInsets
-                    .bottom, // Adjust for keyboard
+                bottom:
+                    MediaQuery.of(
+                      context,
+                    ).viewInsets.bottom, // Adjust for keyboard
               ),
               child: Container(
                 padding: const EdgeInsets.all(16),
@@ -322,40 +325,48 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
                       ),
                       onChanged: (value) {
                         setState(() {
-                          filteredItems = allItems
-                              .where((item) => item
-                                  .toLowerCase()
-                                  .contains(value.toLowerCase()))
-                              .toList();
+                          filteredItems =
+                              allItems
+                                  .where(
+                                    (item) => item.toLowerCase().contains(
+                                      value.toLowerCase(),
+                                    ),
+                                  )
+                                  .toList();
                         });
                       },
                     ),
                     const SizedBox(height: 10),
                     Expanded(
-                      child: filteredItems.isEmpty
-                          ? Center(child: Text("No results found"))
-                          : ListView.builder(
-                              itemCount: filteredItems.length,
-                              itemBuilder: (context, index) {
-                                return ListTile(
-                                  title: Text(filteredItems[index],
-                                      textScaler: textScaler,
+                      child:
+                          filteredItems.isEmpty
+                              ? Center(child: Text("No results found"))
+                              : ListView.builder(
+                                itemCount: filteredItems.length,
+                                itemBuilder: (context, index) {
+                                  return ListTile(
+                                    title: Text(
+                                      filteredItems[index],
+
                                       style: TextStyle(
-                                          fontSize: fontSized(context, 32),
-                                          color: AppColors.black,
-                                          fontWeight: FontWeight.bold,
-                                          fontFamily: "Inter")),
-                                  onTap: () {
-                                    setState(() {
-                                      itemType.text = filteredItems[index];
-                                      isItemTypeChanged = filteredItems[index];
-                                    });
-                                    printData("Item Type", isItemTypeChanged);
-                                    Navigator.pop(context);
-                                  },
-                                );
-                              },
-                            ),
+                                        fontSize: 18.textSize,
+                                        color: AppColors.black,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: "Inter",
+                                      ),
+                                    ),
+                                    onTap: () {
+                                      setState(() {
+                                        itemType.text = filteredItems[index];
+                                        isItemTypeChanged =
+                                            filteredItems[index];
+                                      });
+                                      printData("Item Type", isItemTypeChanged);
+                                      Navigator.pop(context);
+                                    },
+                                  );
+                                },
+                              ),
                     ),
                   ],
                 ),
@@ -367,7 +378,7 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
     );
   }
 
-// Select Vehicle
+  // Select Vehicle
   String selectedVehicle = "Motorcycle"; // Default selection
 
   final List<Map<String, dynamic>> vehicles = [
@@ -382,8 +393,8 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
     });
   }
 
-// Inter State Vehicle
-// Select Vehicle
+  // Inter State Vehicle
+  // Select Vehicle
   String selectedInterStateVehicle = "Van"; // Default selection
 
   final List<Map<String, dynamic>> vehiclesInterState = [
@@ -397,11 +408,10 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
     });
   }
 
-  origin(
-    Prediction placeId,
-  ) async {
-    Map<String, dynamic>? placeDetails =
-        await HomeService().getPlaceDetails(placeId.placeId!);
+  origin(Prediction placeId) async {
+    Map<String, dynamic>? placeDetails = await HomeService().getPlaceDetails(
+      placeId.placeId!,
+    );
     if (placeDetails != null) {
       setState(() {
         originAddress.text = placeId.description.toString();
@@ -432,8 +442,9 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
   }
 
   destination(Prediction placeId) async {
-    Map<String, dynamic>? placeDetails =
-        await HomeService().getPlaceDetails(placeId.placeId!);
+    Map<String, dynamic>? placeDetails = await HomeService().getPlaceDetails(
+      placeId.placeId!,
+    );
     if (placeDetails != null) {
       setState(() {
         destinationAddress.text = placeId.description.toString();
@@ -463,7 +474,7 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
     }
   }
 
-// Images of the item
+  // Images of the item
   final List<XFile> imageFiles = [];
   final List<String> imageUrls = [];
   final List<String> _imageCompressed = [];
@@ -523,95 +534,6 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
 
       if (destinationStateController.text == originStateController.text) {
         final response = await PackageOrderService().createOrderWithAddress(
-            companyId: companyId,
-            // Item
-            itemName: packageName.text.trim(),
-            itemDescription: itemDescription.text.trim(),
-            itemCost: num.parse(itemCost.text.trim()),
-            itemModelNumber: itemModelNumber.text.trim(),
-            itemQuantity: int.parse(itemQuantity.text.trim()),
-            itemWeight: num.parse(itemWeight.text.trim()),
-            packageType: itemType.text.trim(),
-            riderType: selectedVehicle,
-            shippingType: widget.shippingType,
-            packageImageLists: imageUrls,
-            // Sender
-            senderName: senderName.text.trim(),
-            senderPhoneNo: originPhoneNoTec.text.trim(),
-            senderEmail: senderEmail.text.trim(),
-            senderAddress: originAddress.text.trim(),
-            senderState: originStateController.text.trim(),
-            senderLocality: originCityController.text.trim(),
-            senderPostalCode: originPostcodes.text.trim(),
-            senderLatitude: originLatitude,
-            senderLongitude: originLongitude,
-            senderCountry: originCountry,
-            // Receiver
-            recieverName: receiverName.text.trim(),
-            recieverEmail: receiverEmail.text.trim(),
-            recieverPhoneNo: destinationPhoneNoTec.text.trim(),
-            recieverAddress: destinationAddress.text.trim(),
-            recieverState: destinationStateController.text.trim(),
-            recieverLocality: destinationCityController.text.trim(),
-            recieverPostalCode: destinationPostcodes.text.trim(),
-            recieverLatitude: destinationLatitude,
-            recieverLongitude: destinationLongitude,
-            recieverCountry: destinationCountry);
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          final item = json.decode(response.body);
-          var data = PackageOrderResponseModel.fromJson(item);
-          setState(() {
-            isLoading = false;
-          });
-          showCustomSnackbar(context,
-              title: "Package Order",
-              content: "Order Created Successfully",
-              type: SnackbarType.success,
-              isTopPosition: false);
-          navigateToRoute(
-              context,
-              PackageInformationPage(
-                order: data,
-                userPhone: widget.userPhone,
-              ));
-        } else {
-          setState(() {
-            isLoading = false;
-          });
-          showCustomSnackbar(context,
-              title: "Package Order",
-              content: "Error in Creating The Order ${response.body}",
-              type: SnackbarType.error,
-              isTopPosition: false);
-        }
-      } else {
-        setState(() {
-          isLoading = false;
-        });
-        showCustomSnackbar(context,
-            title: "Same State Order",
-            content: "Choose the same State and place the order",
-            type: SnackbarType.error,
-            isTopPosition: false);
-      }
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  interState() async {
-    setState(() {
-      saveButtonPressed = true;
-    });
-    FocusScope.of(context).unfocus();
-    if (formKey2.currentState!.validate()) {
-      formKey2.currentState!.save();
-      setState(() {
-        isLoading = true;
-      });
-
-      final response = await PackageOrderService().createOrderWithAddress(
           companyId: companyId,
           // Item
           itemName: packageName.text.trim(),
@@ -621,7 +543,7 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
           itemQuantity: int.parse(itemQuantity.text.trim()),
           itemWeight: num.parse(itemWeight.text.trim()),
           packageType: itemType.text.trim(),
-          riderType: selectedInterStateVehicle,
+          riderType: selectedVehicle,
           shippingType: widget.shippingType,
           packageImageLists: imageUrls,
           // Sender
@@ -645,33 +567,130 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
           recieverPostalCode: destinationPostcodes.text.trim(),
           recieverLatitude: destinationLatitude,
           recieverLongitude: destinationLongitude,
-          recieverCountry: destinationCountry);
+          recieverCountry: destinationCountry,
+        );
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          final item = json.decode(response.body);
+          var data = PackageOrderResponseModel.fromJson(item);
+          setState(() {
+            isLoading = false;
+          });
+          showCustomSnackbar(
+            context,
+            title: "Package Order",
+            content: "Order Created Successfully",
+            type: SnackbarType.success,
+            isTopPosition: false,
+          );
+          navigateToRoute(
+            context,
+            PackageInformationPage(order: data, userPhone: widget.userPhone),
+          );
+        } else {
+          setState(() {
+            isLoading = false;
+          });
+          showCustomSnackbar(
+            context,
+            title: "Package Order",
+            content: "Error in Creating The Order ${response.body}",
+            type: SnackbarType.error,
+            isTopPosition: false,
+          );
+        }
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+        showCustomSnackbar(
+          context,
+          title: "Same State Order",
+          content: "Choose the same State and place the order",
+          type: SnackbarType.error,
+          isTopPosition: false,
+        );
+      }
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  interState() async {
+    setState(() {
+      saveButtonPressed = true;
+    });
+    FocusScope.of(context).unfocus();
+    if (formKey2.currentState!.validate()) {
+      formKey2.currentState!.save();
+      setState(() {
+        isLoading = true;
+      });
+
+      final response = await PackageOrderService().createOrderWithAddress(
+        companyId: companyId,
+        // Item
+        itemName: packageName.text.trim(),
+        itemDescription: itemDescription.text.trim(),
+        itemCost: num.parse(itemCost.text.trim()),
+        itemModelNumber: itemModelNumber.text.trim(),
+        itemQuantity: int.parse(itemQuantity.text.trim()),
+        itemWeight: num.parse(itemWeight.text.trim()),
+        packageType: itemType.text.trim(),
+        riderType: selectedInterStateVehicle,
+        shippingType: widget.shippingType,
+        packageImageLists: imageUrls,
+        // Sender
+        senderName: senderName.text.trim(),
+        senderPhoneNo: originPhoneNoTec.text.trim(),
+        senderEmail: senderEmail.text.trim(),
+        senderAddress: originAddress.text.trim(),
+        senderState: originStateController.text.trim(),
+        senderLocality: originCityController.text.trim(),
+        senderPostalCode: originPostcodes.text.trim(),
+        senderLatitude: originLatitude,
+        senderLongitude: originLongitude,
+        senderCountry: originCountry,
+        // Receiver
+        recieverName: receiverName.text.trim(),
+        recieverEmail: receiverEmail.text.trim(),
+        recieverPhoneNo: destinationPhoneNoTec.text.trim(),
+        recieverAddress: destinationAddress.text.trim(),
+        recieverState: destinationStateController.text.trim(),
+        recieverLocality: destinationCityController.text.trim(),
+        recieverPostalCode: destinationPostcodes.text.trim(),
+        recieverLatitude: destinationLatitude,
+        recieverLongitude: destinationLongitude,
+        recieverCountry: destinationCountry,
+      );
       if (response.statusCode == 200 || response.statusCode == 201) {
         final item = json.decode(response.body);
         var data = PackageOrderResponseModel.fromJson(item);
         setState(() {
           isLoading = false;
         });
-        showCustomSnackbar(context,
-            title: "Package Order",
-            content: "Order Created Successfully",
-            type: SnackbarType.success,
-            isTopPosition: false);
+        showCustomSnackbar(
+          context,
+          title: "Package Order",
+          content: "Order Created Successfully",
+          type: SnackbarType.success,
+          isTopPosition: false,
+        );
         navigateToRoute(
-            context,
-            PackageInformationPage(
-              order: data,
-              userPhone: widget.userPhone,
-            ));
+          context,
+          PackageInformationPage(order: data, userPhone: widget.userPhone),
+        );
       } else {
         setState(() {
           isLoading = false;
         });
-        showCustomSnackbar(context,
-            title: "Package Order",
-            content: "Error in Creating The Order ${response.body}",
-            type: SnackbarType.error,
-            isTopPosition: false);
+        showCustomSnackbar(
+          context,
+          title: "Package Order",
+          content: "Error in Creating The Order ${response.body}",
+          type: SnackbarType.error,
+          isTopPosition: false,
+        );
       }
 
       setState(() {
@@ -692,71 +711,75 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
       });
 
       final response = await PackageOrderService().createOrderWithAddress(
-          companyId: companyId,
-          // Item
-          itemName: packageName.text.trim(),
-          itemDescription: itemDescription.text.trim(),
-          itemCost: num.parse(itemCost.text.trim()),
-          itemModelNumber: itemModelNumber.text.trim(),
-          itemQuantity: int.parse(itemQuantity.text.trim()),
-          itemWeight: num.parse(itemWeight.text.trim()),
-          packageType:
-              widget.shippingType.toLowerCase() == "charter".toLowerCase()
-                  ? "Charter"
-                  : itemType.text.trim(),
-          riderType: widget.shippingType.toLowerCase() == "charter".toString()
-              ? "Pickup"
-              : "Plane Flight",
-          shippingType: widget.shippingType,
-          packageImageLists: imageUrls,
-          // Sender
-          senderName: senderName.text.trim(),
-          senderPhoneNo: originPhoneNoTec.text.trim(),
-          senderEmail: senderEmail.text.trim(),
-          senderAddress: originAddress.text.trim(),
-          senderState: originStateController.text.trim(),
-          senderLocality: originCityController.text.trim(),
-          senderPostalCode: originPostcodes.text.trim(),
-          senderLatitude: originLatitude,
-          senderLongitude: originLongitude,
-          senderCountry: originCountry,
-          // Receiver
-          recieverName: receiverName.text.trim(),
-          recieverEmail: receiverEmail.text.trim(),
-          recieverPhoneNo: destinationPhoneNoTec.text.trim(),
-          recieverAddress: destinationAddress.text.trim(),
-          recieverState: destinationStateController.text.trim(),
-          recieverLocality: destinationCityController.text.trim(),
-          recieverPostalCode: destinationPostcodes.text.trim(),
-          recieverLatitude: destinationLatitude,
-          recieverLongitude: destinationLongitude,
-          recieverCountry: destinationCountry);
+        companyId: companyId,
+        // Item
+        itemName: packageName.text.trim(),
+        itemDescription: itemDescription.text.trim(),
+        itemCost: num.parse(itemCost.text.trim()),
+        itemModelNumber: itemModelNumber.text.trim(),
+        itemQuantity: int.parse(itemQuantity.text.trim()),
+        itemWeight: num.parse(itemWeight.text.trim()),
+        packageType:
+            widget.shippingType.toLowerCase() == "charter".toLowerCase()
+                ? "Charter"
+                : itemType.text.trim(),
+        riderType:
+            widget.shippingType.toLowerCase() == "charter".toString()
+                ? "Pickup"
+                : "Plane Flight",
+        shippingType: widget.shippingType,
+        packageImageLists: imageUrls,
+        // Sender
+        senderName: senderName.text.trim(),
+        senderPhoneNo: originPhoneNoTec.text.trim(),
+        senderEmail: senderEmail.text.trim(),
+        senderAddress: originAddress.text.trim(),
+        senderState: originStateController.text.trim(),
+        senderLocality: originCityController.text.trim(),
+        senderPostalCode: originPostcodes.text.trim(),
+        senderLatitude: originLatitude,
+        senderLongitude: originLongitude,
+        senderCountry: originCountry,
+        // Receiver
+        recieverName: receiverName.text.trim(),
+        recieverEmail: receiverEmail.text.trim(),
+        recieverPhoneNo: destinationPhoneNoTec.text.trim(),
+        recieverAddress: destinationAddress.text.trim(),
+        recieverState: destinationStateController.text.trim(),
+        recieverLocality: destinationCityController.text.trim(),
+        recieverPostalCode: destinationPostcodes.text.trim(),
+        recieverLatitude: destinationLatitude,
+        recieverLongitude: destinationLongitude,
+        recieverCountry: destinationCountry,
+      );
       if (response.statusCode == 200 || response.statusCode == 201) {
         final item = json.decode(response.body);
         var data = PackageOrderResponseModel.fromJson(item);
         setState(() {
           isLoading = false;
         });
-        showCustomSnackbar(context,
-            title: "Package Order",
-            content: "Order Created Successfully",
-            type: SnackbarType.success,
-            isTopPosition: false);
+        showCustomSnackbar(
+          context,
+          title: "Package Order",
+          content: "Order Created Successfully",
+          type: SnackbarType.success,
+          isTopPosition: false,
+        );
         navigateToRoute(
-            context,
-            PackageInformationPage(
-              order: data,
-              userPhone: widget.userPhone,
-            ));
+          context,
+          PackageInformationPage(order: data, userPhone: widget.userPhone),
+        );
       } else {
         setState(() {
           isLoading = false;
         });
-        showCustomSnackbar(context,
-            title: "Package Order",
-            content: "Error in Creating The Order ${response.body}",
-            type: SnackbarType.error,
-            isTopPosition: false);
+        showCustomSnackbar(
+          context,
+          title: "Package Order",
+          content: "Error in Creating The Order ${response.body}",
+          type: SnackbarType.error,
+          isTopPosition: false,
+        );
       }
 
       setState(() {
@@ -775,9 +798,10 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => CompanySelectPage(
-                isSelectionType: widget.shippingType,
-              )),
+        builder:
+            (context) =>
+                CompanySelectPage(isSelectionType: widget.shippingType),
+      ),
     );
 
     if (result != null) {

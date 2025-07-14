@@ -1,5 +1,4 @@
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
-import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
@@ -28,7 +27,6 @@ class _FindReservationPageState extends ConsumerState<FindReservationPage> {
     super.initState();
 
     final bookingsProvider = ref.read(reservationStateProvider.notifier);
-    bookingsProvider.getAllAccomodationReservationData();
 
     // First-time load
     Future.microtask(() {
@@ -40,90 +38,92 @@ class _FindReservationPageState extends ConsumerState<FindReservationPage> {
   Widget build(BuildContext context) {
     final notifier = ref.watch(reservationStateProvider.notifier);
     final state = ref.watch(reservationStateProvider);
-
     final isLoading =
         state is ReservationStateLoading && !state.hasLoadedInitially;
-    final isRefreshing = state is ReservationStateRefreshing;
-    // final isCreating = state.isCreatingBooking;
-    notifier.getAllAccomodationReservationData(refresh: isRefreshing);
+
     var filteredTickets =
         notifier.allAccomodationReservations.where((test) {
           return test.accomodationId == widget.accommodationId;
         }).toList();
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(12)),
-        child: Padding(
-          padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-          child: GlobalBackButton(
-            backText: '${widget.accommodationName} Available Rooms',
-            showBackButton: true,
-          ),
+      appBar: buildFlexibleAppBar(
+        context: context,
+
+        title: AppText(
+          isBody: true,
+          text: "${widget.accommodationName} Available Rooms",
+          textAlign: TextAlign.start,
+          fontSize: 18,
+          color: AppColors.black,
+          fontStyle: FontStyle.normal,
+          fontWeight: FontWeight.w800,
         ),
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await notifier.getAllAccomodationReservationData(refresh: true);
-        },
-        child: Builder(
-          builder: (context) {
-            if (isLoading) {
-              return ListView.builder(
-                itemCount: 4,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemBuilder: (context, index) {
-                  return buildBookingShimmerCard(context);
-                },
-              );
-            }
-            return SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  filteredTickets.isEmpty
-                      ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            addVerticalSpacing(context, 55),
-                            const AppText(
-                              isBody: false,
-                              text: "Nothing to show here",
-                              textAlign: TextAlign.start,
-                              fontSize: 38,
-                              color: AppColors.black,
-                              fontStyle: FontStyle.normal,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            const AppText(
-                              isBody: true,
-                              text:
-                                  "We don't have any Accomodation Reservations at the moment",
-                              textAlign: TextAlign.center,
-                              fontSize: 30,
-                              color: AppColors.black,
-                              fontStyle: FontStyle.normal,
-                              fontWeight: FontWeight.normal,
-                            ),
-                          ],
-                        ),
-                      )
-                      : ListView.builder(
-                        itemCount: filteredTickets.length,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemBuilder:
-                            (context, index) => FindReservationWidget(
-                              accomodationReservation: filteredTickets[index],
-                            ),
-                      ),
-                ],
-              ),
-            );
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await notifier.getAllAccomodationReservationData(refresh: true);
           },
+          child: Builder(
+            builder: (context) {
+              if (isLoading) {
+                return ListView.builder(
+                  itemCount: 4,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemBuilder: (context, index) {
+                    return buildBookingShimmerCard(context);
+                  },
+                );
+              }
+              return SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    filteredTickets.isEmpty
+                        ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              addVerticalSpacing(5),
+                              const AppText(
+                                isBody: false,
+                                text: "Nothing to show here",
+                                textAlign: TextAlign.start,
+                                fontSize: 18,
+                                color: AppColors.black,
+                                fontStyle: FontStyle.normal,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              const AppText(
+                                isBody: true,
+                                text:
+                                    "We don't have any Accomodation Reservations at the moment",
+                                textAlign: TextAlign.center,
+                                fontSize: 15,
+                                color: AppColors.black,
+                                fontStyle: FontStyle.normal,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ],
+                          ),
+                        )
+                        : ListView.builder(
+                          itemCount: filteredTickets.length,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemBuilder:
+                              (context, index) => FindReservationWidget(
+                                accomodationReservation: filteredTickets[index],
+                              ),
+                        ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -135,7 +135,7 @@ Widget buildBookingShimmerCard(BuildContext context) {
     baseColor: Colors.grey.shade300,
     highlightColor: Colors.grey.shade100,
     child: Container(
-      width: getScreenWidth(context),
+      width: SizeConfig.widthAdjusted(100),
       margin: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.white,
@@ -146,7 +146,7 @@ Widget buildBookingShimmerCard(BuildContext context) {
         child: Column(
           children: [
             Container(
-              width: getScreenWidth(context),
+              width: SizeConfig.widthAdjusted(100),
               height: 200,
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -170,13 +170,13 @@ Widget buildBookingShimmerCard(BuildContext context) {
                 const SizedBox(height: 10),
                 Container(
                   height: 15,
-                  width: getScreenWidth(context) * 0.8,
+                  width: SizeConfig.widthAdjusted(100) * 0.8,
                   color: Colors.white,
                 ),
                 const SizedBox(height: 5),
                 Container(
                   height: 15,
-                  width: getScreenWidth(context) * 0.6,
+                  width: SizeConfig.widthAdjusted(100) * 0.6,
                   color: Colors.white,
                 ),
               ],

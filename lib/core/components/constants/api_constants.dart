@@ -1,8 +1,8 @@
 import 'dart:convert';
-
-import 'package:ginilog_customer_app/core/components/utils/constants.dart';
 import 'dart:io';
+
 import '../utils/package_export.dart';
+import '../utils/constants.dart';
 
 class PushNotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
@@ -10,10 +10,11 @@ class PushNotificationService {
       FlutterLocalNotificationsPlugin();
 
   String deviceToken = '';
+
   Future initialize() async {
     if (Platform.isIOS) {
-      //Requires IOS permission
-      await _fcm.requestPermission(
+      // Request iOS permissions
+      NotificationSettings settings = await _fcm.requestPermission(
         alert: true,
         announcement: true,
         badge: true,
@@ -22,20 +23,46 @@ class PushNotificationService {
         provisional: true,
         sound: true,
       );
+
+      if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+        debugPrint("🚫 Notification permission denied on iOS");
+        return;
+      }
+
+      // Wait for APNs token
+      String? apnsToken;
+      int retry = 0;
+      while (apnsToken == null && retry < 10) {
+        apnsToken = await _fcm.getAPNSToken();
+        if (apnsToken == null) {
+          await Future.delayed(const Duration(seconds: 1));
+          retry++;
+        }
+      }
+
+      debugPrint("📲 APNs Token: $apnsToken");
     }
-    //This is used to get the current device token
+
+    // Get FCM token
+    // String? token = await _fcm.getToken();
+    // if (token != null) {
+    //   deviceToken = token;
+    //   setToLocalStorage(name: "deviceToken", data: token);
+    //   debugPrint("📲 FCM Token: $token");
+    // }
     await _fcm.getToken().then((token) {
       deviceToken = token!;
+      printData("Token Device", token);
       setToLocalStorage(name: "deviceToken", data: token);
     });
 
-    // Enable Background Notification to retrieve any message that caused the application to open from a terminated state
+    // Check if app was opened via notification
     RemoteMessage? initialMessage = await _fcm.getInitialMessage();
 
-    // This function routes to home view if the data property received has a type of home
     void handleMessage(RemoteMessage message) {
       if (message.data['type'] == 'home') {
-        //  AppNavigator.pushNamedReplacement(homeRoute);
+        // Navigate to home route
+        // AppNavigator.pushNamedReplacement(homeRoute);
       }
     }
 
@@ -43,96 +70,91 @@ class PushNotificationService {
       handleMessage(initialMessage);
     }
 
-    // This handles any interaction when the app is open but in the background and not terminated
+    // Listen for interaction when app is in background
     FirebaseMessaging.onMessageOpenedApp.listen(handleMessage);
 
-    //Enable foreground Notification for iOS
+    // Set foreground presentation options for iOS
     await _fcm.setForegroundNotificationPresentationOptions(
       alert: true,
       badge: true,
       sound: true,
     );
 
-    // To handle messages while your application is in foreground for android we listen to the onMessage stream.
+    // Foreground message listener (Android/iOS)
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
       await showNotification(message);
     });
 
-    //This is used to define the initialization settings for iOS and android
-    var initializationSettingsAndroid = const AndroidInitializationSettings(
+    // Init local notifications
+    const androidSettings = AndroidInitializationSettings(
       '@mipmap/ic_launcher',
     );
-    var initializationSettingsIOS = const DarwinInitializationSettings();
-    var initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
+    const iOSSettings = DarwinInitializationSettings();
+
+    final initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iOSSettings,
     );
 
-    // This handles routing to a specific page when there's a click event on the notification
-    void onSelectNotification(NotificationResponse notificationResponse) async {
-      debugPrint(notificationResponse.payload);
-      var payloadData = jsonDecode(notificationResponse.payload!);
-
-      if (payloadData["type"] == "home") {
-        //  AppNavigator.pushNamedReplacement(homeRoute);
-      }
-    }
-
     _flutterLocalNotificationsPlugin.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: onSelectNotification,
+      initSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) async {
+        debugPrint("🔔 Notification clicked: ${response.payload}");
+        if (response.payload != null) {
+          final data = jsonDecode(response.payload!);
+          if (data['type'] == 'home') {
+            // AppNavigator.pushNamedReplacement(homeRoute);
+          }
+        }
+      },
     );
   }
 
   Future showNotification(RemoteMessage message) async {
-    // We create an Android Notification Channel that overrides the default FCM channel to enable heads up notifications.
-    AndroidNotificationChannel channel = const AndroidNotificationChannel(
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
       'fcm_default_channel',
       'High Importance Notifications',
       importance: Importance.high,
     );
 
-    // This creates the channel on the device and if a channel with an id already exists, it will be updated
     await _flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >()
         ?.createNotificationChannel(channel);
 
-    //This is used to display the foreground notification
     if (message.notification != null) {
-      RemoteNotification? notification = message.notification;
+      final notification = message.notification;
 
-      AndroidNotificationDetails androidPlatformChannelSpecifics =
-          AndroidNotificationDetails(
-            channel.id,
-            channel.name,
-            importance: Importance.max,
-            playSound: true,
-            channelDescription: channel.description,
-            priority: Priority.high,
-            ongoing: true,
-            color: Colors.deepOrangeAccent,
-            styleInformation: const BigTextStyleInformation(''),
-          );
-
-      var iOSChannelSpecifics = const DarwinNotificationDetails(
-        presentAlert: true, // show alert when app is in foreground
-        presentBadge: true, // show badge on app icon
-        presentSound: true, // play sound
-        badgeNumber: 1, // set or update badge number
+      final androidDetails = AndroidNotificationDetails(
+        channel.id,
+        channel.name,
+        importance: Importance.max,
+        playSound: true,
+        priority: Priority.high,
+        ongoing: true,
+        color: Colors.deepOrangeAccent,
+        channelDescription: channel.description,
+        styleInformation: const BigTextStyleInformation(''),
       );
 
-      var platformChannelSpecifics = NotificationDetails(
-        android: androidPlatformChannelSpecifics,
-        iOS: iOSChannelSpecifics,
+      const iOSDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+        badgeNumber: 1,
+      );
+
+      final platformDetails = NotificationDetails(
+        android: androidDetails,
+        iOS: iOSDetails,
       );
 
       await _flutterLocalNotificationsPlugin.show(
         notification.hashCode,
-        notification?.title,
-        notification?.body,
-        platformChannelSpecifics,
+        notification!.title,
+        notification.body,
+        platformDetails,
         payload: jsonEncode(message.data),
       );
     }

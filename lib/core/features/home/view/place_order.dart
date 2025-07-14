@@ -8,7 +8,6 @@ import 'package:google_places_autocomplete_text_field/google_places_autocomplete
 
 import '../../../components/architecture/mvc.dart';
 import '../../../components/utils/colors.dart';
-import '../../../components/utils/helper_functions.dart';
 import '../../../components/utils/package_export.dart';
 import '../../../components/widgets/app_text.dart';
 import '../../../components/widgets/input.dart';
@@ -19,28 +18,30 @@ class PlaceOrderScreenView
 
   @override
   Widget build(BuildContext context) {
-    TextScaler textScaler = MediaQuery.of(context).textScaler;
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(16)),
-        child: Padding(
-          padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-          child: const GlobalBackButton(
-            backText: "Place Your Order Here",
-            showBackButton: true,
-          ),
+      appBar: buildFlexibleAppBar(
+        context: context,
+
+        title: AppText(
+          isBody: true,
+          text: "Place Your Order",
+          textAlign: TextAlign.start,
+          fontSize: 18,
+          color: AppColors.black,
+          fontStyle: FontStyle.normal,
+          fontWeight: FontWeight.w800,
         ),
       ),
-      body: Container(
-        height: getScreenHeight(context),
-        width: getScreenWidth(context),
-        color: AppColors.white,
+      body: SafeArea(
         child: Column(
           children: [
             // Clickable Page Indicators
             Padding(
-              padding: const EdgeInsets.all(6.0),
+              padding: EdgeInsets.symmetric(
+                horizontal: 1.widthAdjusted,
+                vertical: 1.heightAdjusted,
+              ),
               child: Row(
                 children: [
                   // Indicator 1 (Clickable)
@@ -54,7 +55,7 @@ class PlaceOrderScreenView
                         );
                       },
                       child: Container(
-                        height: 8,
+                        height: 0.5.heightAdjusted,
                         decoration: BoxDecoration(
                           color:
                               controller.isOriginAddressChanged.isEmpty ||
@@ -103,7 +104,7 @@ class PlaceOrderScreenView
                         );
                       },
                       child: Container(
-                        height: 8,
+                        height: 0.5.heightAdjusted,
                         decoration: BoxDecoration(
                           color:
                               controller.isItemDescriptionChanged.isEmpty ||
@@ -145,9 +146,9 @@ class PlaceOrderScreenView
                           children: [
                             Text(
                               "Origin Details",
-                              textScaler: textScaler,
+
                               style: TextStyle(
-                                fontSize: fontSized(context, 42),
+                                fontSize: 18.textSize,
                                 color: AppColors.black,
                                 fontWeight: FontWeight.bold,
                                 fontFamily: "Inter",
@@ -157,7 +158,7 @@ class PlaceOrderScreenView
                               style: TextStyle(
                                 color: AppColors.black,
                                 fontFamily: "Mulish",
-                                fontSize: fontSized(context, 35),
+                                fontSize: 20.textSize,
                               ),
                               textEditingController: controller.originAddress,
                               googleAPIKey:
@@ -168,7 +169,7 @@ class PlaceOrderScreenView
                                 labelStyle: TextStyle(
                                   color: AppColors.black,
                                   fontFamily: "Mulish",
-                                  fontSize: fontSized(context, 35),
+                                  fontSize: 20.textSize,
                                 ),
                                 border: OutlineInputBorder(),
                               ),
@@ -201,7 +202,7 @@ class PlaceOrderScreenView
                                           prediction.description!,
                               minInputLength: 3,
                             ),
-                            addVerticalSpacing(context, 0.05),
+                            addVerticalSpacing(0.05),
                             GlobalTextField(
                               fieldName: 'Sender Name',
                               keyBoardType: TextInputType.name,
@@ -212,7 +213,7 @@ class PlaceOrderScreenView
                                 controller.originNameOnChanged(value!);
                               },
                             ),
-                            addVerticalSpacing(context, 0.05),
+                            addVerticalSpacing(0.05),
                             GlobalTextField(
                               fieldName: 'Sender Email',
                               keyBoardType: TextInputType.emailAddress,
@@ -222,7 +223,7 @@ class PlaceOrderScreenView
                                 controller.originEmailOnChanged(value!);
                               },
                             ),
-                            addVerticalSpacing(context, 0.05),
+                            addVerticalSpacing(0.05),
                             GlobalTextField(
                               fieldName: 'Phone Number',
                               keyBoardType: TextInputType.phone,
@@ -234,9 +235,9 @@ class PlaceOrderScreenView
                             ),
                             Text(
                               "Destination Details",
-                              textScaler: textScaler,
+
                               style: TextStyle(
-                                fontSize: fontSized(context, 42),
+                                fontSize: 18.textSize,
                                 color: AppColors.black,
                                 fontWeight: FontWeight.bold,
                                 fontFamily: "Inter",
@@ -246,7 +247,7 @@ class PlaceOrderScreenView
                               style: TextStyle(
                                 color: AppColors.black,
                                 fontFamily: "Mulish",
-                                fontSize: fontSized(context, 35),
+                                fontSize: 20.textSize,
                               ),
                               textEditingController:
                                   controller.destinationAddress,
@@ -258,7 +259,7 @@ class PlaceOrderScreenView
                                 labelStyle: TextStyle(
                                   color: AppColors.black,
                                   fontFamily: "Mulish",
-                                  fontSize: fontSized(context, 35),
+                                  fontSize: 20.textSize,
                                 ),
                                 border: OutlineInputBorder(),
                               ),
@@ -291,7 +292,7 @@ class PlaceOrderScreenView
                                           prediction.description!,
                               minInputLength: 3,
                             ),
-                            addVerticalSpacing(context, 0.05),
+                            addVerticalSpacing(0.05),
                             GlobalTextField(
                               fieldName: 'Receiver Name',
                               keyBoardType: TextInputType.name,
@@ -302,7 +303,7 @@ class PlaceOrderScreenView
                                 controller.destinationNameOnChanged(value!);
                               },
                             ),
-                            addVerticalSpacing(context, 0.05),
+                            addVerticalSpacing(0.05),
                             GlobalTextField(
                               fieldName: 'Receiver Email',
                               keyBoardType: TextInputType.emailAddress,
@@ -312,7 +313,7 @@ class PlaceOrderScreenView
                                 controller.destinationEmailOnChanged(value!);
                               },
                             ),
-                            addVerticalSpacing(context, 0.05),
+                            addVerticalSpacing(0.05),
                             GlobalTextField(
                               fieldName: 'Receiver Phone Number',
                               keyBoardType: TextInputType.phone,
@@ -324,9 +325,9 @@ class PlaceOrderScreenView
                             ),
                             Text(
                               "Package Details",
-                              textScaler: textScaler,
+
                               style: TextStyle(
-                                fontSize: fontSized(context, 42),
+                                fontSize: 18.textSize,
                                 color: AppColors.black,
                                 fontWeight: FontWeight.bold,
                                 fontFamily: "Inter",
@@ -398,7 +399,7 @@ class PlaceOrderScreenView
                                 ),
                               ],
                             ),
-                            addVerticalSpacing(context, 5),
+                            addVerticalSpacing(5),
                             controller.isOriginAddressChanged.isEmpty ||
                                     controller
                                         .isDestinationAddressChanged
@@ -441,7 +442,7 @@ class PlaceOrderScreenView
                                   btnColor: AppColors.primary,
                                   isLoading: false,
                                 ),
-                            addVerticalSpacing(context, 5),
+                            addVerticalSpacing(5),
                           ],
                         ),
                       ),
@@ -464,15 +465,15 @@ class PlaceOrderScreenView
                           children: [
                             Text(
                               "More Details",
-                              textScaler: textScaler,
+
                               style: TextStyle(
-                                fontSize: fontSized(context, 92),
+                                fontSize: 18.textSize,
                                 color: AppColors.black,
                                 fontWeight: FontWeight.bold,
                                 fontFamily: "Inter",
                               ),
                             ),
-                            addVerticalSpacing(context, 0.05),
+                            addVerticalSpacing(0.05),
                             widget.shippingType.toLowerCase() ==
                                     "charter".toLowerCase()
                                 ? SizedBox.shrink()
@@ -561,7 +562,6 @@ class PlaceOrderScreenView
                                           )
                                           : Center(
                                             child: Text(
-                                              textScaler: textScaler,
                                               'Kindly upload the pictures of the Items',
                                             ),
                                           ),
@@ -597,7 +597,7 @@ class PlaceOrderScreenView
                                 controller.navigateToSelectionPage();
                               },
                             ),
-                            addVerticalSpacing(context, 5),
+                            addVerticalSpacing(5),
                             controller.widget.shippingType.toLowerCase() ==
                                     "Inter state".toLowerCase()
                                 ? Row(
@@ -738,7 +738,7 @@ class PlaceOrderScreenView
                                   ),
                                 )
                                 : SizedBox.shrink(),
-                            addVerticalSpacing(context, 5),
+                            addVerticalSpacing(5),
                             controller.isItemDescriptionChanged.isEmpty ||
                                     controller.isItemTypeChanged.isEmpty
                                 ? AppButton(
@@ -766,7 +766,7 @@ class PlaceOrderScreenView
                                   btnColor: AppColors.primary,
                                   isLoading: controller.isLoading,
                                 ),
-                            addVerticalSpacing(context, 5),
+                            addVerticalSpacing(5),
                           ],
                         ),
                       ),

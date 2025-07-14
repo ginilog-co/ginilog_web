@@ -3,6 +3,7 @@ import 'package:ginilog_customer_app/core/components/utils/colors.dart';
 import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/money_formatter.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
+import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/features/account/view/report/view_bookings_receipt.dart';
 import 'package:ginilog_customer_app/core/features/bookings/model/customer_book_response_model.dart';
@@ -18,8 +19,6 @@ class CustomerItemPage extends ConsumerStatefulWidget {
 class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
   @override
   Widget build(BuildContext context) {
-    TextScaler textScaler = MediaQuery.of(context).textScaler;
-
     final data3 = widget.accomodation;
     // DateTime dt2 = DateTime.parse(data3.createdAt!.toLocal().toString());
     // String date = DateFormat("E, MMM d hh:mm a").format(dt2.toLocal());
@@ -33,7 +32,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
         child: Card(
           elevation: 4,
           child: Container(
-            width: getScreenWidth(context),
+            width: SizeConfig.widthAdjusted(100),
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: const BorderRadius.all(Radius.circular(10)),
@@ -61,7 +60,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                               children: [
                                 RichText(
                                   textAlign: TextAlign.start,
-                                  textScaler: textScaler,
+
                                   text: TextSpan(
                                     style: const TextStyle(color: Colors.black),
                                     children: [
@@ -70,7 +69,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.w400,
-                                          fontSize: fontSized(context, 35),
+                                          fontSize: 15.textSize,
                                           fontFamily: "Inter",
                                         ),
                                       ),
@@ -79,7 +78,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: fontSized(context, 35),
+                                          fontSize: 15.textSize,
                                           fontFamily: "Mulish",
                                         ),
                                       ),
@@ -90,7 +89,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                                   isBody: true,
                                   text: "Room: ${data3.roomNumber}",
                                   textAlign: TextAlign.start,
-                                  fontSize: 35,
+                                  fontSize: 15,
                                   color: AppColors.black,
                                   fontStyle: FontStyle.normal,
                                   fontWeight: FontWeight.bold,
@@ -105,7 +104,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.w400,
-                                          fontSize: fontSized(context, 35),
+                                          fontSize: 15.textSize,
                                           fontFamily: "Inter",
                                         ),
                                       ),
@@ -114,7 +113,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: fontSized(context, 35),
+                                          fontSize: 15.textSize,
                                           fontFamily: "Mulish",
                                         ),
                                       ),
@@ -130,13 +129,13 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                             widthPercent: 15,
                             heightPercent: 4,
                             borderRadius: 20,
-                            fontSize: 35,
+                            fontSize: 12,
                             btnColor: AppColors.primary,
                             isLoading: false,
                           ),
                         ],
                       ),
-                      addVerticalSpacing(context, 5),
+                      addVerticalSpacing(2),
                       RichText(
                         textAlign: TextAlign.start,
                         text: TextSpan(
@@ -147,7 +146,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                               style: TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.w400,
-                                fontSize: fontSized(context, 15),
+                                fontSize: 15.textSize,
                                 fontFamily: "Inter",
                               ),
                             ),
@@ -157,7 +156,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                               style: TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold,
-                                fontSize: fontSized(context, 25),
+                                fontSize: 15.textSize,
                                 fontFamily: "Mulish",
                               ),
                             ),
@@ -166,7 +165,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                               style: TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.w400,
-                                fontSize: fontSized(context, 15),
+                                fontSize: 15.textSize,
                                 fontFamily: "Inter",
                               ),
                             ),
@@ -176,7 +175,7 @@ class _CustomerItemPageState extends ConsumerState<CustomerItemPage> {
                               style: TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold,
-                                fontSize: fontSized(context, 25),
+                                fontSize: 15.textSize,
                                 fontFamily: "Mulish",
                               ),
                             ),

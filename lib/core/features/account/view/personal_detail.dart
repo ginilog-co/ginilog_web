@@ -3,7 +3,6 @@
 import 'dart:io';
 
 import 'package:ginilog_customer_app/core/components/services/upload_service.dart';
-import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
 import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
@@ -181,13 +180,13 @@ class _LoginPageState extends ConsumerState<AccountDetailsPage> {
               ],
             ),
           ),
-          addVerticalSpacing(context, 2),
+          addVerticalSpacing(2),
           ListTile(
             title: const AppText(
               isBody: false,
               text: "Email",
               textAlign: TextAlign.start,
-              fontSize: 33,
+              fontSize: 15,
               color: AppColors.black,
               fontStyle: FontStyle.normal,
               fontWeight: FontWeight.bold,
@@ -196,7 +195,7 @@ class _LoginPageState extends ConsumerState<AccountDetailsPage> {
               isBody: true,
               text: "${globals.email}",
               textAlign: TextAlign.start,
-              fontSize: 27,
+              fontSize: 15,
               color: AppColors.black,
               fontStyle: FontStyle.normal,
               fontWeight: FontWeight.w600,
@@ -208,7 +207,7 @@ class _LoginPageState extends ConsumerState<AccountDetailsPage> {
               isBody: false,
               text: "Phone Number",
               textAlign: TextAlign.start,
-              fontSize: 33,
+              fontSize: 15,
               color: AppColors.black,
               fontStyle: FontStyle.normal,
               fontWeight: FontWeight.bold,
@@ -217,7 +216,7 @@ class _LoginPageState extends ConsumerState<AccountDetailsPage> {
               isBody: true,
               text: "${globals.phoneNo}",
               textAlign: TextAlign.start,
-              fontSize: 27,
+              fontSize: 15,
               color: AppColors.black,
               fontStyle: FontStyle.normal,
               fontWeight: FontWeight.w600,
@@ -240,7 +239,7 @@ class _LoginPageState extends ConsumerState<AccountDetailsPage> {
                     isBody: false,
                     text: "Name",
                     textAlign: TextAlign.start,
-                    fontSize: 33,
+                    fontSize: 15,
                     color: AppColors.black,
                     fontStyle: FontStyle.normal,
                     fontWeight: FontWeight.bold,
@@ -249,7 +248,7 @@ class _LoginPageState extends ConsumerState<AccountDetailsPage> {
                     isBody: true,
                     text: "${globals.firstName} ${globals.lastName}",
                     textAlign: TextAlign.start,
-                    fontSize: 27,
+                    fontSize: 15,
                     color: AppColors.black,
                     fontStyle: FontStyle.normal,
                     fontWeight: FontWeight.w600,
@@ -276,7 +275,7 @@ class _LoginPageState extends ConsumerState<AccountDetailsPage> {
                               textController: _firstName,
                               onChanged: (String? value) {},
                             ),
-                            addVerticalSpacing(context, 5),
+                            addVerticalSpacing(5),
                             GlobalTextField(
                               fieldName: 'Last Name',
                               keyBoardType: TextInputType.name,
@@ -288,7 +287,7 @@ class _LoginPageState extends ConsumerState<AccountDetailsPage> {
                           ],
                         ),
                       ),
-                      addVerticalSpacing(context, 3),
+                      addVerticalSpacing(3),
                       Padding(
                         padding: const EdgeInsets.only(left: 35.0, right: 35.0),
                         child: AppButton(
@@ -307,7 +306,7 @@ class _LoginPageState extends ConsumerState<AccountDetailsPage> {
                               //  Navigator.pop(context);
                             }
                           },
-                          widthPercent: 70,
+                          widthPercent: 100,
                           heightPercent: 5,
                           btnColor: AppColors.primary,
                           isLoading: false,
@@ -359,28 +358,23 @@ class _LoginPageState extends ConsumerState<AccountDetailsPage> {
       });
     }
 
-    return Container(
-      height: MediaQuery.of(context).size.height,
-      width: MediaQuery.of(context).size.width,
-      color: Colors.white,
-      child: Scaffold(
-        backgroundColor: AppColors.white,
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(12)),
-          child: Padding(
-            padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-            child: Column(
-              children: [
-                GlobalBackButton(
-                  backText: isLoading ? "" : 'Profile Updates',
-                  showBackButton: true,
-                ),
-              ],
-            ),
-          ),
+    return Scaffold(
+      backgroundColor: AppColors.white,
+      appBar: buildFlexibleAppBar(
+        context: context,
+
+        title: AppText(
+          isBody: true,
+          text: isLoading ? "" : "Profile Updates",
+          textAlign: TextAlign.start,
+          fontSize: 18,
+          color: AppColors.black,
+          fontStyle: FontStyle.normal,
+          fontWeight: FontWeight.w800,
         ),
-        body: buildTop(context),
       ),
+
+      body: SafeArea(child: buildTop(context)),
     );
   }
 }

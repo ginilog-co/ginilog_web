@@ -1,6 +1,5 @@
 import 'package:ginilog_customer_app/core/components/architecture/mvc.dart';
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
-import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
@@ -21,74 +20,76 @@ class StatementReportScreenView
 
     final isLoading =
         state is CustomerBookedStateLoading && !state.hasLoadedInitially;
-    //final isRefreshing = state is CustomerBookedStateRefreshing;
-    // final isCreating = state.isCreatingBooking;
-    // notifier.getAllCustomerReservationData(refresh: isRefreshing);
     final reservationsList = notifier.allCustomerReservations;
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(12)),
-        child: Padding(
-          padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-          child: const GlobalBackButton(
-            backText: 'Bookings Report',
-            showBackButton: true,
-          ),
+      appBar: buildFlexibleAppBar(
+        context: context,
+
+        title: AppText(
+          isBody: true,
+          text: "Bookings Report",
+          textAlign: TextAlign.start,
+          fontSize: 18,
+          color: AppColors.black,
+          fontStyle: FontStyle.normal,
+          fontWeight: FontWeight.w800,
         ),
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await notifier.getAllCustomerReservationData(refresh: true);
-        },
-        child: Builder(
-          builder: (context) {
-            if (isLoading) {
-              return Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.primary,
-                  strokeWidth: 2.0,
-                ),
-              );
-            }
-            return reservationsList.isEmpty
-                ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      addVerticalSpacing(context, 55),
-                      const AppText(
-                        isBody: false,
-                        text: "Nothing to show here",
-                        textAlign: TextAlign.start,
-                        fontSize: 38,
-                        color: AppColors.black,
-                        fontStyle: FontStyle.normal,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      const AppText(
-                        isBody: true,
-                        text: "You don't have any Bookings at the moment",
-                        textAlign: TextAlign.center,
-                        fontSize: 30,
-                        color: AppColors.black,
-                        fontStyle: FontStyle.normal,
-                        fontWeight: FontWeight.normal,
-                      ),
-                    ],
-                  ),
-                )
-                : ListView.builder(
-                  itemCount: reservationsList.length,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemBuilder:
-                      (context, index) => CustomerItemPage(
-                        accomodation: reservationsList[index],
-                      ),
-                );
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await notifier.getAllCustomerReservationData(refresh: true);
           },
+          child: Builder(
+            builder: (context) {
+              if (isLoading) {
+                return Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.primary,
+                    strokeWidth: 2.0,
+                  ),
+                );
+              }
+              return reservationsList.isEmpty
+                  ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        addVerticalSpacing(15),
+                        const AppText(
+                          isBody: false,
+                          text: "Nothing to show here",
+                          textAlign: TextAlign.start,
+                          fontSize: 18,
+                          color: AppColors.black,
+                          fontStyle: FontStyle.normal,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        const AppText(
+                          isBody: true,
+                          text: "You don't have any Bookings at the moment",
+                          textAlign: TextAlign.center,
+                          fontSize: 13,
+                          color: AppColors.black,
+                          fontStyle: FontStyle.normal,
+                          fontWeight: FontWeight.normal,
+                        ),
+                      ],
+                    ),
+                  )
+                  : ListView.builder(
+                    itemCount: reservationsList.length,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemBuilder:
+                        (context, index) => CustomerItemPage(
+                          accomodation: reservationsList[index],
+                        ),
+                  );
+            },
+          ),
         ),
       ),
     );

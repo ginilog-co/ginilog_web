@@ -3,6 +3,7 @@ import 'package:ginilog_customer_app/core/components/utils/colors.dart';
 import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/money_formatter.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
+import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/features/bookings/controller/book_reservation.dart';
 import 'package:ginilog_customer_app/core/features/bookings/model/accomodation_reservations_response_model.dart';
@@ -49,7 +50,7 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
         child: Card(
           elevation: 4,
           child: Container(
-            width: getScreenWidth(context),
+            width: SizeConfig.widthAdjusted(100),
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: const BorderRadius.all(Radius.circular(10)),
@@ -70,7 +71,7 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                         text:
                             "Check In: ${widget.accomodationReservation.checkInTime}",
                         textAlign: TextAlign.start,
-                        fontSize: 35,
+                        fontSize: 15,
                         color: AppColors.black,
                         fontStyle: FontStyle.normal,
                         fontWeight: FontWeight.w500,
@@ -80,7 +81,7 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                         isBody: true,
                         text: "Available",
                         textAlign: TextAlign.start,
-                        fontSize: 35,
+                        fontSize: 15,
                         color: AppColors.black,
                         fontStyle: FontStyle.normal,
                         fontWeight: FontWeight.w500,
@@ -119,7 +120,7 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                                   isBody: false,
                                   text: "Room: ${data3.roomNumber}",
                                   textAlign: TextAlign.start,
-                                  fontSize: 35,
+                                  fontSize: 15,
                                   color: AppColors.black,
                                   fontStyle: FontStyle.normal,
                                   fontWeight: FontWeight.bold,
@@ -129,7 +130,7 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                                   isBody: false,
                                   text: "${data3.roomType}",
                                   textAlign: TextAlign.start,
-                                  fontSize: 35,
+                                  fontSize: 15,
                                   color: AppColors.green,
                                   fontStyle: FontStyle.normal,
                                   fontWeight: FontWeight.bold,
@@ -151,7 +152,7 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                         isBody: false,
                         text: moneyFormat(context, data3.roomPrice!.toDouble()),
                         textAlign: TextAlign.start,
-                        fontSize: 35,
+                        fontSize: 15,
                         color: AppColors.black,
                         fontStyle: FontStyle.normal,
                         fontWeight: FontWeight.bold,
@@ -185,14 +186,14 @@ class _FindReservationWidgetState extends ConsumerState<FindReservationWidget> {
                         },
                         widthPercent: 25,
                         heightPercent: 4,
-                        fontSize: 32,
+                        fontSize: 12,
                         btnColor: AppColors.primary,
                         isLoading: false,
                       ),
                     ],
                   ),
                 ),
-                addVerticalSpacing(context, 2),
+                addVerticalSpacing(2),
               ],
             ),
           ),

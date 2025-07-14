@@ -1,7 +1,6 @@
 import 'package:ginilog_customer_app/core/components/architecture/mvc.dart';
 import 'package:ginilog_customer_app/core/components/utils/app_buttons.dart';
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
-import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
@@ -21,17 +20,20 @@ class AddAccomodationReviewScreenView
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(16)),
-        child: Padding(
-          padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-          child: const GlobalBackButton(backText: "", showBackButton: true),
+      appBar: buildFlexibleAppBar(
+        context: context,
+
+        title: AppText(
+          isBody: true,
+          text: "",
+          textAlign: TextAlign.start,
+          fontSize: 18,
+          color: AppColors.black,
+          fontStyle: FontStyle.normal,
+          fontWeight: FontWeight.w800,
         ),
       ),
-      body: Container(
-        height: getScreenHeight(context),
-        width: getScreenWidth(context),
-        color: AppColors.white,
+      body: SafeArea(
         child: SingleChildScrollView(
           child: Form(
             key: controller.formKey,
@@ -47,7 +49,7 @@ class AddAccomodationReviewScreenView
                       Text(
                         "Review Rider",
                         style: TextStyle(
-                          fontSize: fontSized(context, 7),
+                          fontSize: 8.textSize,
                           color: AppColors.black,
                           fontWeight: FontWeight.bold,
                           fontFamily: "Montserrat",
@@ -94,7 +96,7 @@ class AddAccomodationReviewScreenView
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      addVerticalSpacing(context, 15),
+                      addVerticalSpacing(5),
                       Center(
                         child: RatingBar(
                           isHalfAllowed: true,
@@ -109,11 +111,11 @@ class AddAccomodationReviewScreenView
                           size: 50,
                         ),
                       ),
-                      addVerticalSpacing(context, 15),
+                      addVerticalSpacing(1),
                       Text(
                         "Write Review",
                         style: TextStyle(
-                          fontSize: fontSized(context, 12),
+                          fontSize: 12.textSize,
                           color: AppColors.black,
                           fontWeight: FontWeight.w700,
                           fontFamily: "Montserrat",
@@ -131,18 +133,18 @@ class AddAccomodationReviewScreenView
                           controller.reviewMessageOnChanged(value!);
                         },
                       ),
-                      addVerticalSpacing(context, 10),
+                      addVerticalSpacing(10),
                       AppButton(
                         text: "Add Review",
                         onPressed: () {
                           controller.userRegister();
                         },
-                        widthPercent: 70,
+                        widthPercent: 100,
                         heightPercent: 5,
                         btnColor: AppColors.primary,
                         isLoading: controller.isLoading,
                       ),
-                      addVerticalSpacing(context, 20),
+                      addVerticalSpacing(20),
                     ],
                   ),
                 ],

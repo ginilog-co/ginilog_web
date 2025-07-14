@@ -1,6 +1,7 @@
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
-import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
+import 'package:ginilog_customer_app/core/components/utils/size_config.dart'
+    show addVerticalSpacing;
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/features/order_history/model/package_orders_model.dart';
 import 'package:ginilog_customer_app/core/features/order_history/view/order_items.dart';
@@ -49,12 +50,12 @@ class _OrderPageWidgetState extends ConsumerState<OrderPageWidget> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  addVerticalSpacing(context, 5),
+                  addVerticalSpacing(5),
                   const AppText(
                     isBody: false,
                     text: "Nothing to show here",
                     textAlign: TextAlign.start,
-                    fontSize: 38,
+                    fontSize: 18,
                     color: AppColors.black,
                     fontStyle: FontStyle.normal,
                     fontWeight: FontWeight.bold,
@@ -63,7 +64,7 @@ class _OrderPageWidgetState extends ConsumerState<OrderPageWidget> {
                     isBody: true,
                     text: "You don't have any order at the moment",
                     textAlign: TextAlign.center,
-                    fontSize: 30,
+                    fontSize: 15,
                     color: AppColors.black,
                     fontStyle: FontStyle.normal,
                     fontWeight: FontWeight.normal,

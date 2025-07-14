@@ -1,114 +1,66 @@
 import 'package:flutter/material.dart';
 
 /// Model class for Size Configurations
-
 class SizeConfig {
-  static MediaQueryData? _mediaQueryData;
-  static double? screenWidth;
-  static double? screenHeight;
-  static Orientation? orientation;
-  static late double _screenWidth;
-  static late double _screenHeight;
-  static double _blockWidth = 0;
-  static double _blockHeight = 0;
-
-  static late double _textMultiplier;
-  static late double _imageSizeMultiplier;
-  static late double _heightMultiplier;
-  static late double _widthMultiplier;
-
-  void init(
-    BuildContext context,
-    BoxConstraints constraints,
-    Orientation orientation,
-  ) {
-    _mediaQueryData = MediaQuery.of(context);
-    screenWidth = _mediaQueryData!.size.width;
-    screenHeight = _mediaQueryData!.size.height;
-    orientation = _mediaQueryData!.orientation;
-    if (orientation == Orientation.portrait) {
-      _screenWidth = constraints.maxWidth;
-      _screenHeight = constraints.maxHeight;
-      if (_screenWidth < 450) {}
-    } else {
-      _screenWidth = constraints.maxHeight;
-      _screenHeight = constraints.maxWidth;
-    }
-
-    _blockWidth = _screenWidth / 100;
-    _blockHeight = _screenHeight / 100;
-
-    _textMultiplier = _blockHeight;
-    _imageSizeMultiplier = _blockWidth;
-    _heightMultiplier = _blockHeight;
-    _widthMultiplier = _blockWidth;
-  }
-
-  static double heightAdjusted(double height) {
-    if (_heightMultiplier > 5.92) {
-      return 1.2 * height * SizeConfig._widthMultiplier;
-    } else {
-      return height * SizeConfig._widthMultiplier;
-    }
-  }
-
-  static double widthAdjusted(double width) {
-    return width * SizeConfig._heightMultiplier;
-  }
-
-  static double textAdjusted(double fontSize) {
-    return (fontSize * SizeConfig._textMultiplier) / 10;
-  }
-
-  static double imageAdjusted(double imageSize) {
-    return imageSize * SizeConfig._imageSizeMultiplier;
-  }
-}
-
-// double widgetHeight(double height) {
-//   return SizeConfig.heightAdjusted(height);
-// }
-
-extension WidgetHeight on num {
-  double get heightAdjusted => SizeConfig.heightAdjusted(toDouble());
-}
-
-// double widgetWidth(double height) {
-//   return SizeConfig.widthAdjusted(height);
-// }
-
-extension WidgetWidth on num {
-  double get widthAdjusted => SizeConfig.widthAdjusted(toDouble());
-}
-
-class MainSizeConfig {
   static late MediaQueryData _mediaQueryData;
   static late double screenWidth;
   static late double screenHeight;
+  static late TextScaler _textScaler;
 
   static void init(BuildContext context) {
     _mediaQueryData = MediaQuery.of(context);
     screenWidth = _mediaQueryData.size.width;
     screenHeight = _mediaQueryData.size.height;
+    _textScaler = _mediaQueryData.textScaler;
   }
 
-  static double height(double percentage, {bool safeArea = false}) {
+  /// Returns height as percentage of screen height.
+  static double heightAdjusted(double percentage, {bool safeArea = false}) {
+    double height = screenHeight;
     if (safeArea) {
       final padding = _mediaQueryData.padding;
-      final safeHeight = screenHeight - padding.top - padding.bottom;
-      return (safeHeight / 100) * percentage;
+      height -= (padding.top + padding.bottom);
     }
-    return (screenHeight / 100) * percentage;
+    return (height / 100) * percentage;
   }
 
-  static double width(double percentage, {bool safeArea = false}) {
+  /// Returns width as percentage of screen width.
+  static double widthAdjusted(double percentage, {bool safeArea = false}) {
+    double width = screenWidth;
     if (safeArea) {
       final padding = _mediaQueryData.padding;
-      final safeWidth = screenWidth - padding.left - padding.right;
-      return (safeWidth / 100) * percentage;
+      width -= (padding.left + padding.right);
     }
-    return (screenWidth / 100) * percentage;
+    return (width / 100) * percentage;
   }
+
+  /// Scales font size based on device width and text scaling settings.
+  static double text(double fontSize) {
+    double minFontSize = screenWidth < 350 ? 10.0 : 12.0;
+    double maxFontSize = screenWidth > 600 ? 26.0 : 24.0;
+    double baseSize =
+        ((fontSize * screenWidth) / 375); // 375 = reference iPhone width
+
+    // Clamp to prevent extreme sizes
+    double clampedFontSize = baseSize.clamp(minFontSize, maxFontSize);
+    return _textScaler.scale(clampedFontSize);
+  }
+
+  /// Returns responsive image size based on width percentage.
+  static double image(double imageSize) {
+    return imageSize * (screenWidth / 100);
+  }
+}
+
+extension SizeHelpers on num {
+  double get heightAdjusted => SizeConfig.heightAdjusted(toDouble());
+  double get widthAdjusted => SizeConfig.widthAdjusted(toDouble());
+  double get heightSafeAdjusted =>
+      SizeConfig.heightAdjusted(toDouble(), safeArea: true);
+  double get widthSafeAdjusted =>
+      SizeConfig.widthAdjusted(toDouble(), safeArea: true);
+  double get textSize => SizeConfig.text(toDouble());
+  double get imageSize => SizeConfig.image(toDouble());
 }
 
 class BoxSizer extends StatelessWidget {
@@ -125,10 +77,10 @@ class BoxSizer extends StatelessWidget {
     required this.child,
   });
 
-  double _getWidth(BuildContext context) {
-    double width = MediaQuery.of(context).size.width;
+  double _getWidth() {
+    double width = SizeConfig.screenWidth;
     if (safeArea) {
-      final padding = MediaQuery.of(context).padding;
+      final padding = SizeConfig._mediaQueryData.padding;
       width -= (padding.left + padding.right);
     }
     return widthPercent != null
@@ -136,10 +88,10 @@ class BoxSizer extends StatelessWidget {
         : double.infinity;
   }
 
-  double _getHeight(BuildContext context) {
-    double height = MediaQuery.of(context).size.height;
+  double _getHeight() {
+    double height = SizeConfig.screenHeight;
     if (safeArea) {
-      final padding = MediaQuery.of(context).padding;
+      final padding = SizeConfig._mediaQueryData.padding;
       height -= (padding.top + padding.bottom);
     }
     return heightPercent != null
@@ -149,10 +101,20 @@ class BoxSizer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: _getWidth(context),
-      height: _getHeight(context),
-      child: child,
-    );
+    return SizedBox(width: _getWidth(), height: _getHeight(), child: child);
   }
+}
+
+/// Adds vertical spacing as a percentage of screen height.
+Widget addVerticalSpacing(double heightPercent, {bool safeArea = false}) {
+  return SizedBox(
+    height: SizeConfig.heightAdjusted(heightPercent, safeArea: safeArea),
+  );
+}
+
+/// Adds horizontal spacing as a percentage of screen width.
+Widget addHorizontalSpacing(double widthPercent, {bool safeArea = false}) {
+  return SizedBox(
+    width: SizeConfig.widthAdjusted(widthPercent, safeArea: safeArea),
+  );
 }

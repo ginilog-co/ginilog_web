@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:ginilog_customer_app/core/components/extension/error_handling.dart';
 import 'package:ginilog_customer_app/core/components/helpers/globals.dart';
 import 'package:ginilog_customer_app/core/components/state/connectivity_state.dart';
 import 'package:ginilog_customer_app/core/components/utils/constants.dart';
@@ -123,6 +124,7 @@ class RegisterScreenController extends ConsumerState<RegisterScreen> {
   String isFirstNameChanged = "";
   String isLastNameChanged = "";
   String isPhoneNoChanged = "";
+  String selectedCountryCode = "+234"; // Default country code
 
   emailOnChanged(String value) {
     setState(() {
@@ -159,6 +161,13 @@ class RegisterScreenController extends ConsumerState<RegisterScreen> {
     printData("identifier", isLastNameChanged);
   }
 
+  phoneNoCountryCodeChanged(String value) {
+    setState(() {
+      selectedCountryCode = value;
+    });
+    printData("identifier", selectedCountryCode);
+  }
+
   phoneNoChanged(String value) {
     setState(() {
       isPhoneNoChanged = value;
@@ -185,11 +194,15 @@ class RegisterScreenController extends ConsumerState<RegisterScreen> {
             lastName: lastNameTEC.text.trim(),
             email: email.text.trim(),
             password: password.text.trim(),
-            phoneNo: phoneNo.text.trim(),
+            phoneNo: "$selectedCountryCode${phoneNo.text.trim()}",
           );
           var response = await AuthService().register(
             registerModel: userRegisterModel,
             cxt: context,
+          );
+          final errorMessage = getErrorMessageFromResponse(
+            response.statusCode,
+            response.body,
           );
           if (response.statusCode == 200 || response.statusCode == 201) {
             setState(() {
@@ -209,8 +222,8 @@ class RegisterScreenController extends ConsumerState<RegisterScreen> {
             });
             showCustomSnackbar(
               context,
-              title: "User Exist",
-              content: response.body,
+              title: "User Error",
+              content: errorMessage,
               type: SnackbarType.error,
               isTopPosition: false,
             );

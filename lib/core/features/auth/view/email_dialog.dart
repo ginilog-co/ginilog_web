@@ -1,7 +1,7 @@
 import 'package:ginilog_customer_app/core/components/utils/app_buttons.dart';
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
 import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
-import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
+import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/features/auth/controller/login_controller.dart';
 
 import '../../../components/utils/package_export.dart';
@@ -35,20 +35,20 @@ class _EmailSentDialogState extends State<EmailSentDialog> {
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                addVerticalSpacing(context, 4),
+                addVerticalSpacing(4),
                 Image.asset(
                   "assets/images/good_big.png",
                   height: 100,
                   width: 100,
                 ),
-                addVerticalSpacing(context, 10),
+                addVerticalSpacing(10),
                 Text(
                   'Verified!',
                   style: TextStyle(
                     color: AppColors.black,
                     fontWeight: FontWeight.bold,
                     fontFamily: "Inter",
-                    fontSize: fontSized(context, 85),
+                    fontSize: 20.textSize,
                   ),
                 ),
                 Text(
@@ -58,10 +58,10 @@ class _EmailSentDialogState extends State<EmailSentDialog> {
                     color: AppColors.black,
                     fontWeight: FontWeight.w500,
                     fontFamily: "Inter",
-                    fontSize: fontSized(context, 95),
+                    fontSize: 20.textSize,
                   ),
                 ),
-                addVerticalSpacing(context, 10),
+                addVerticalSpacing(10),
                 AppButton(
                   text: "Go to Login",
                   onPressed: () {
@@ -72,7 +72,7 @@ class _EmailSentDialogState extends State<EmailSentDialog> {
                   btnColor: AppColors.primary,
                   isLoading: false,
                 ),
-                addVerticalSpacing(context, 10),
+                addVerticalSpacing(10),
               ],
             ),
           ),
@@ -111,20 +111,20 @@ class _ErrorEmailSentDialogState extends State<ErrorEmailSentDialog> {
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                addVerticalSpacing(context, 4),
+                addVerticalSpacing(4),
                 Image.asset(
                   "assets/images/declined.png",
                   height: 100,
                   width: 100,
                 ),
-                addVerticalSpacing(context, 4),
+                addVerticalSpacing(4),
                 Text(
                   'Oops!',
                   style: TextStyle(
                     color: AppColors.black,
                     fontWeight: FontWeight.bold,
                     fontFamily: "Inter",
-                    fontSize: fontSized(context, 85),
+                    fontSize: 20.textSize,
                   ),
                 ),
                 Text(
@@ -134,10 +134,10 @@ class _ErrorEmailSentDialogState extends State<ErrorEmailSentDialog> {
                     color: AppColors.black,
                     fontWeight: FontWeight.w500,
                     fontFamily: "Inter",
-                    fontSize: fontSized(context, 85),
+                    fontSize: 20.textSize,
                   ),
                 ),
-                addVerticalSpacing(context, 10),
+                addVerticalSpacing(10),
                 AppButton(
                   text: "Retry",
                   onPressed: () {
@@ -148,7 +148,7 @@ class _ErrorEmailSentDialogState extends State<ErrorEmailSentDialog> {
                   btnColor: AppColors.primary,
                   isLoading: false,
                 ),
-                addVerticalSpacing(context, 4),
+                addVerticalSpacing(4),
               ],
             ),
           ),
@@ -187,20 +187,20 @@ class _PasswordChangedDialogState extends State<PasswordChangedDialog> {
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                addVerticalSpacing(context, 4),
+                addVerticalSpacing(4),
                 Image.asset(
                   "assets/images/good_big.png",
                   height: 100,
                   width: 100,
                 ),
-                addVerticalSpacing(context, 4),
+                addVerticalSpacing(4),
                 Text(
                   'Password Change!',
                   style: TextStyle(
                     color: AppColors.black,
                     fontWeight: FontWeight.bold,
                     fontFamily: "Inter",
-                    fontSize: fontSized(context, 85),
+                    fontSize: 20.textSize,
                   ),
                 ),
                 Text(
@@ -210,10 +210,10 @@ class _PasswordChangedDialogState extends State<PasswordChangedDialog> {
                     color: AppColors.black,
                     fontWeight: FontWeight.w500,
                     fontFamily: "Inter",
-                    fontSize: fontSized(context, 85),
+                    fontSize: 20.textSize,
                   ),
                 ),
-                addVerticalSpacing(context, 10),
+                addVerticalSpacing(10),
                 AppButton(
                   text: "Go to Login",
                   onPressed: () {
@@ -224,7 +224,7 @@ class _PasswordChangedDialogState extends State<PasswordChangedDialog> {
                   btnColor: AppColors.primary,
                   isLoading: false,
                 ),
-                addVerticalSpacing(context, 4),
+                addVerticalSpacing(4),
               ],
             ),
           ),

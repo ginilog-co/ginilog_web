@@ -6,12 +6,13 @@ import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 
 class GlobalBackButton extends StatelessWidget {
-  const GlobalBackButton(
-      {super.key,
-      this.backText,
-      this.buttonElements,
-      this.color = Colors.black,
-      this.showBackButton = true});
+  const GlobalBackButton({
+    super.key,
+    this.backText,
+    this.buttonElements,
+    this.color = Colors.black,
+    this.showBackButton = true,
+  });
 
   final String? backText;
   final bool showBackButton;
@@ -20,7 +21,7 @@ class GlobalBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TextScaler textScaler = MediaQuery.of(context).textScaler;
+    //
     return SizedBox(
       width: double.infinity,
       child: Column(
@@ -36,36 +37,42 @@ class GlobalBackButton extends StatelessWidget {
                   children: [
                     showBackButton
                         ? InkWell(
-                            onTap: () => Navigator.pop(context),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: AppColors.darkBlue,
-                                borderRadius: BorderRadius.circular(5),
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.darkBlue,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                left: 5,
+                                right: 5,
+                                top: 5,
+                                bottom: 5,
                               ),
-                              child: Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 5, right: 5, top: 5, bottom: 5),
-                                child: SvgPicture.asset(
-                                    'assets/svgs/back_button.svg',
-                                    width: 15,
-                                    color: Colors.white),
+                              child: SvgPicture.asset(
+                                'assets/svgs/back_button.svg',
+                                width: 15,
+                                color: Colors.white,
                               ),
                             ),
-                          )
-                        : Gap(6.heightAdjusted),
-                    Gap(1.heightAdjusted),
+                          ),
+                        )
+                        : addHorizontalSpacing(2),
+                    addHorizontalSpacing(1),
                     AppText(
-                        isBody: true,
-                        text: backText ?? "",
-                        textAlign: TextAlign.start,
-                        fontSize: 38,
-                        color: color,
-                        fontStyle: FontStyle.normal,
-                        fontWeight: FontWeight.w700)
+                      isBody: true,
+                      text: backText ?? "",
+                      textAlign: TextAlign.start,
+                      fontSize: 38,
+                      color: color,
+                      fontStyle: FontStyle.normal,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ],
                 ),
                 const Spacer(),
-                Row(children: buttonElements ?? [])
+                Row(children: buttonElements ?? []),
               ],
             ),
           ),
@@ -74,4 +81,46 @@ class GlobalBackButton extends StatelessWidget {
       ),
     );
   }
+}
+
+AppBar buildFlexibleAppBar({
+  required BuildContext context,
+  String backIconAsset = 'assets/svgs/back_button.svg',
+  double iconWidth = 15.0,
+  VoidCallback? onBack,
+  Color backgroundColor = AppColors.white,
+  Color surfaceTintColor = AppColors.white,
+  Color foregroundColor = AppColors.white,
+  bool showBackButton = true,
+  Widget? title,
+  List<Widget>? actions,
+  Widget? bottomWidget, // e.g. Search bar, filter chips
+  double bottomHeight = 56.0,
+  bool automaticallyImplyLeading = false,
+  bool centerTitle = false,
+}) {
+  return AppBar(
+    automaticallyImplyLeading: automaticallyImplyLeading,
+    backgroundColor: backgroundColor,
+    surfaceTintColor: surfaceTintColor,
+    foregroundColor: foregroundColor,
+    elevation: 0,
+    centerTitle: centerTitle,
+    leading:
+        showBackButton
+            ? IconButton(
+              onPressed: onBack ?? () => Navigator.pop(context),
+              icon: SvgPicture.asset(backIconAsset, width: iconWidth),
+            )
+            : null,
+    title: title,
+    actions: actions,
+    bottom:
+        bottomWidget != null
+            ? PreferredSize(
+              preferredSize: Size.fromHeight(bottomHeight),
+              child: bottomWidget,
+            )
+            : null,
+  );
 }

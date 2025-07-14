@@ -87,7 +87,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                   borderRadius: BorderRadius.circular(1),
                   image: DecorationImage(
                     image: NetworkImage(widget.reservation.roomImages![index]),
-                    fit: BoxFit.cover,
+                    fit: BoxFit.fill,
                   ),
                 ),
               );
@@ -124,7 +124,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                       image: NetworkImage(
                         widget.reservation.roomImages![index],
                       ),
-                      fit: BoxFit.cover,
+                      fit: BoxFit.fill,
                     ),
                   ),
                 ),
@@ -143,7 +143,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                     isBody: false,
                     text: "${widget.reservation.accomodationName}",
                     textAlign: TextAlign.start,
-                    fontSize: 55,
+                    fontSize: 18,
                     color: AppColors.primaryDark,
                     fontStyle: FontStyle.normal,
                     fontWeight: FontWeight.bold,
@@ -167,7 +167,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                   ),
                 ],
               ),
-              addVerticalSpacing(context, 2),
+              addVerticalSpacing(2),
               Row(
                 spacing: 10,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,7 +178,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                       isBody: true,
                       text: "${widget.reservation.location}",
                       textAlign: TextAlign.start,
-                      fontSize: 35,
+                      fontSize: 15,
                       color: AppColors.black,
                       fontStyle: FontStyle.normal,
                       fontWeight: FontWeight.w500,
@@ -186,23 +186,23 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                   ),
                 ],
               ),
-              addVerticalSpacing(context, 2),
+              addVerticalSpacing(2),
               const AppText(
                 isBody: true,
                 text: "Opens Monday - Sunday",
                 textAlign: TextAlign.start,
-                fontSize: 32,
+                fontSize: 12,
                 color: AppColors.black,
                 fontStyle: FontStyle.normal,
                 fontWeight: FontWeight.w600,
               ),
-              addVerticalSpacing(context, 2),
+              addVerticalSpacing(2),
               AppText(
                 isBody: true,
                 text:
                     "Booking Price: ${moneyFormat(context, widget.reservation.roomPrice!.toDouble())}",
                 textAlign: TextAlign.start,
-                fontSize: 32,
+                fontSize: 15,
                 color: AppColors.primaryDark,
                 fontStyle: FontStyle.normal,
                 fontWeight: FontWeight.w600,
@@ -210,14 +210,14 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
             ],
           ),
         ),
-        addVerticalSpacing(context, 5),
+        addVerticalSpacing(2),
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: AppText(
             isBody: true,
             text: "Room Features",
             textAlign: TextAlign.center,
-            fontSize: 32,
+            fontSize: 12,
             color: AppColors.black,
             fontStyle: FontStyle.normal,
             fontWeight: FontWeight.bold,
@@ -232,9 +232,9 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
               index,
             ) {
               return Container(
-                width: getScreenWidth(context) / 3.5,
+                width: SizeConfig.widthAdjusted(100) / 3.5,
                 decoration: BoxDecoration(
-                  color: AppColors.grey.withAlpha(40),
+                  color: AppColors.grey.withAlpha(100),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 alignment: Alignment.center,
@@ -244,7 +244,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
                     isBody: true,
                     text: widget.reservation.roomFeatures![index],
                     textAlign: TextAlign.center,
-                    fontSize: 32,
+                    fontSize: 12,
                     color: AppColors.black,
                     fontStyle: FontStyle.normal,
                     fontWeight: FontWeight.w500,
@@ -255,7 +255,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
           ),
         ),
 
-        addVerticalSpacing(context, 5),
+        addVerticalSpacing(2),
 
         Align(
           alignment: Alignment.centerRight,
@@ -280,7 +280,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
               },
               widthPercent: 25,
               heightPercent: 5,
-              fontSize: 32,
+              fontSize: 13,
               btnColor: AppColors.primary,
               isLoading: false,
             ),
@@ -292,7 +292,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
             isBody: true,
             text: "${widget.reservation.accomodationType} Room Images",
             textAlign: TextAlign.center,
-            fontSize: 32,
+            fontSize: 15,
             color: AppColors.black,
             fontStyle: FontStyle.normal,
             fontWeight: FontWeight.bold,
@@ -322,7 +322,7 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
           ),
         ),
 
-        addVerticalSpacing(context, 5),
+        addVerticalSpacing(1),
         const Divider(thickness: 0.7, color: AppColors.grey),
       ],
     );
@@ -332,60 +332,67 @@ class _LoginPageState extends ConsumerState<ViewAccomodationReservationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(10.9)),
-        child: Padding(
-          padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-          child: GlobalBackButton(
-            backText: "${widget.reservation.accomodationName}",
-            showBackButton: true,
-          ),
+      appBar: buildFlexibleAppBar(
+        context: context,
+
+        title: AppText(
+          isBody: true,
+          text: "${widget.reservation.accomodationName}",
+          textAlign: TextAlign.start,
+          fontSize: 18,
+          color: AppColors.black,
+          fontStyle: FontStyle.normal,
+          fontWeight: FontWeight.w800,
         ),
       ),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(1),
+
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(1),
+                  ),
+                  child: buildItem(context),
                 ),
-                child: buildItem(context),
               ),
             ),
-          ),
-          // Bottom "Book" Button (only shown when in-body button is not visible)
-          if (_showBottomButton)
-            Positioned(
-              left: 20,
-              right: 20,
-              bottom: 20,
-              child: AppButton(
-                text: "Book Now",
-                onPressed: () {
-                  navigateToRoute(
-                    context,
-                    BookReservationScreen(
-                      reservationId: widget.reservation.id.toString(),
-                      bookingPrice: widget.reservation.roomPrice!,
-                      maximumNoOfGuest:
-                          widget.reservation.maximumNoOfGuest!.toInt(),
-                      reservationName:
-                          widget.reservation.accomodationName.toString(),
-                      reservationAddress: accomodationData.location.toString(),
-                    ),
-                  );
-                },
-                widthPercent: 100,
-                heightPercent: 6,
-                fontSize: 32,
-                btnColor: AppColors.primary,
-                isLoading: false,
+            // Bottom "Book" Button (only shown when in-body button is not visible)
+            if (_showBottomButton)
+              Positioned(
+                left: 20,
+                right: 20,
+                bottom: 20,
+                child: AppButton(
+                  text: "Book Now",
+                  onPressed: () {
+                    navigateToRoute(
+                      context,
+                      BookReservationScreen(
+                        reservationId: widget.reservation.id.toString(),
+                        bookingPrice: widget.reservation.roomPrice!,
+                        maximumNoOfGuest:
+                            widget.reservation.maximumNoOfGuest!.toInt(),
+                        reservationName:
+                            widget.reservation.accomodationName.toString(),
+                        reservationAddress:
+                            accomodationData.location.toString(),
+                      ),
+                    );
+                  },
+                  widthPercent: 100,
+                  heightPercent: 6,
+                  fontSize: 15,
+                  btnColor: AppColors.primary,
+                  isLoading: false,
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

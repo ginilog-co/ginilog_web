@@ -64,14 +64,14 @@
 //   @override
 //   Widget build(BuildContext context) {
 //     return Container(
-//       height: getScreenHeight(context) / 3,
+//       height: SizeConfig.heightAdjusted(100) / 3,
 //       padding: const EdgeInsets.all(8),
 //       alignment: Alignment.center,
 //       child: Form(
 //         key: formKey,
 //         child: Column(
 //           children: [
-//             addVerticalSpacing(context, 35),
+//             addVerticalSpacing( 35),
 //             Column(
 //               crossAxisAlignment: CrossAxisAlignment.start,
 //               children: [
@@ -79,7 +79,7 @@
 //                     isBody: true,
 //                     text: "Start Date",
 //                     textAlign: TextAlign.center,
-//                     fontSize: 78,
+//                     fontSize: 18,
 //                     color: AppColors.black,
 //                     fontStyle: FontStyle.normal,
 //                     fontWeight: FontWeight.w700),
@@ -145,7 +145,7 @@
 //                 ),
 //               ],
 //             ),
-//             addVerticalSpacing(context, 5),
+//             addVerticalSpacing( 5),
 //             Column(
 //               crossAxisAlignment: CrossAxisAlignment.start,
 //               children: [
@@ -153,7 +153,7 @@
 //                     isBody: true,
 //                     text: "End Date",
 //                     textAlign: TextAlign.center,
-//                     fontSize: 78,
+//                     fontSize: 18,
 //                     color: AppColors.black,
 //                     fontStyle: FontStyle.normal,
 //                     fontWeight: FontWeight.w700),
@@ -220,8 +220,8 @@
 //                 ),
 //               ],
 //             ),
-//             addVerticalSpacing(context, 3),
-//             appButton("Select", getScreenWidth(context), () {
+//             addVerticalSpacing( 3),
+//             appButton("Select", SizeConfig.widthAdjusted(100), () {
 //               if (formKey.currentState!.validate()) {
 //                 formKey.currentState!.save();
 //                 DateTime date1 = firstDate;
@@ -245,7 +245,7 @@
 //                 Navigator.pop(context, daysOld);
 //               }
 //             }, AppColors.primary, false),
-//             // addVerticalSpacing(context, 20),
+//             // addVerticalSpacing( 20),
 //           ],
 //         ),
 //       ),

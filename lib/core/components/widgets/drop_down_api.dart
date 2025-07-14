@@ -38,7 +38,7 @@
 //         style: TextStyle(
 //           color: AppColors.black,
 //           fontFamily: "Mulish",
-//           fontSize: fontSized(context, 85),
+//           fontSize: 20.textSize,
 //         ),
 //         validator: (value) => value == null ? 'Choose an item' : null,
 //         decoration: InputDecoration(
@@ -79,7 +79,7 @@
 //               style: TextStyle(
 //                 color: AppColors.black,
 //                 fontFamily: "Mulish",
-//                 fontSize: fontSized(context, 85),
+//                 fontSize: 20.textSize,
 //               ),
 //             ),
 //           );

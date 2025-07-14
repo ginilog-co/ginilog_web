@@ -8,6 +8,7 @@ import 'package:ginilog_customer_app/core/components/utils/app_buttons.dart';
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
 import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
+import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
 import 'package:ginilog_customer_app/core/components/widgets/payment_page_widget.dart';
@@ -68,7 +69,7 @@ class _BookingPaymentBottomSheetState extends State<BookingPaymentBottomSheet> {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.only(top: 10, left: 8, right: 8),
-      height: getScreenHeight(context) * 0.45,
+      height: SizeConfig.heightAdjusted(100) * 0.45,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -102,15 +103,15 @@ class _BookingPaymentBottomSheetState extends State<BookingPaymentBottomSheet> {
               ),
             ],
           ),
-          addVerticalSpacing(context, 1.2),
+          addVerticalSpacing(1.2),
           const Divider(),
 
-          addVerticalSpacing(context, 5.2),
+          addVerticalSpacing(5.2),
 
           _buildPaymentOption("Pay with Paystack", 1),
           // SizedBox(height: 15),
           // _buildPaymentOption("Pay with Flutterwave", 2),
-          addVerticalSpacing(context, 10.2),
+          addVerticalSpacing(10.2),
           AppButton(
             text: "Continue",
             onPressed: handlePayment,

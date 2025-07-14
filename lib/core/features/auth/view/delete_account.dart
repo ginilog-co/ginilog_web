@@ -56,8 +56,8 @@ class _LoginPageState extends ConsumerState<DeleteAccountPage> {
         ),
       ),
       body: Container(
-        height: getScreenHeight(context),
-        width: getScreenWidth(context),
+        height: SizeConfig.heightAdjusted(100),
+        width: SizeConfig.widthAdjusted(100),
         color: AppColors.white,
         child: SingleChildScrollView(
           child: Form(
@@ -123,7 +123,7 @@ class _LoginPageState extends ConsumerState<DeleteAccountPage> {
                       fontWeight: FontWeight.normal,
                     ),
                   ),
-                  addVerticalSpacing(context, 20),
+                  addVerticalSpacing(20),
                   const AppText(
                     isBody: true,
                     text:
@@ -144,7 +144,7 @@ class _LoginPageState extends ConsumerState<DeleteAccountPage> {
                     textController: reason,
                     onChanged: (String? value) {},
                   ),
-                  addVerticalSpacing(context, 30),
+                  addVerticalSpacing(30),
                   AppButton(
                     text: "Delete My Account",
                     onPressed: () async {
@@ -234,7 +234,7 @@ class _LoginPageState extends ConsumerState<DeleteAccountPage> {
                     btnColor: AppColors.primary,
                     isLoading: isLoading,
                   ),
-                  addVerticalSpacing(context, 20),
+                  addVerticalSpacing(20),
                 ],
               ),
             ),

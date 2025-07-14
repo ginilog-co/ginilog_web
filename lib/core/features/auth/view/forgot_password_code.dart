@@ -4,7 +4,6 @@ import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
 import '../../../components/architecture/mvc.dart';
 import '../../../components/utils/app_buttons.dart';
 import '../../../components/utils/colors.dart';
-import '../../../components/utils/helper_functions.dart';
 import '../../../components/utils/package_export.dart';
 import '../../../components/widgets/app_text.dart';
 import '../../../components/widgets/input.dart';
@@ -19,20 +18,13 @@ class ForgotPasswordCodeScreenView
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(16)),
-        child: Padding(
-          padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-          child: const GlobalBackButton(backText: "", showBackButton: true),
-        ),
-      ),
-      body: SizedBox(
-        height: getScreenHeight(context),
+      appBar: buildFlexibleAppBar(context: context),
+      body: SafeArea(
         child: SingleChildScrollView(
           child: Form(
             key: controller.formKey,
             child: Padding(
-              padding: const EdgeInsets.only(left: 18.0, right: 18.0, top: 0),
+              padding: EdgeInsets.symmetric(horizontal: 4.widthAdjusted),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.start,
@@ -41,98 +33,85 @@ class ForgotPasswordCodeScreenView
                     isBody: false,
                     text: "Create New Password",
                     textAlign: TextAlign.start,
-                    fontSize: 88,
+                    fontSize: 25,
                     color: AppColors.black,
                     fontStyle: FontStyle.normal,
                     fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 1.heightAdjusted),
                   const AppText(
                     isBody: true,
                     text:
                         "Please enter the your new password if you forget it, then click on forget password",
                     textAlign: TextAlign.start,
-                    fontSize: 78,
+                    fontSize: 18,
                     color: AppColors.black,
                     fontStyle: FontStyle.normal,
                     fontWeight: FontWeight.w400,
                   ),
-                  addVerticalSpacing(context, 15),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "OTP Code",
-                        style: TextStyle(
-                          fontSize: fontSized(context, 80),
-                          color: AppColors.black,
-                          fontWeight: FontWeight.w500,
-                          fontFamily: "Mulish",
-                        ),
-                      ),
-                      GlobalTextField(
-                        fieldName: 'OTP Code',
-                        keyBoardType: TextInputType.number,
-                        obscureText: false,
-                        maxLength: 5,
-                        textController: controller.codeController,
-                        onChanged: (String? value) {
-                          controller.otpOnChanged(value!);
-                        },
-                      ),
-                    ],
+                  addVerticalSpacing(2),
+                  const AppText(
+                    isBody: false,
+                    text: "OTP",
+                    textAlign: TextAlign.start,
+                    fontSize: 25,
+                    color: AppColors.black,
+                    fontStyle: FontStyle.normal,
+                    fontWeight: FontWeight.w400,
                   ),
-                  addVerticalSpacing(context, 5),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const AppText(
-                        isBody: false,
-                        text: "New Password",
-                        textAlign: TextAlign.start,
-                        fontSize: 80,
-                        color: AppColors.black,
-                        fontStyle: FontStyle.normal,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      GlobalTextField(
-                        fieldName: 'New Password',
-                        keyBoardType: TextInputType.text,
-                        obscureText: true,
-                        isEyeVisible: true,
-                        textController: controller.newPasswordController,
-                        onChanged: (String? value) {
-                          controller.newPasswordOnChanged(value!);
-                        },
-                      ),
-                    ],
+                  GlobalTextField(
+                    fieldName: 'OTP Code',
+                    keyBoardType: TextInputType.number,
+                    obscureText: false,
+                    maxLength: 5,
+                    textController: controller.codeController,
+                    onChanged: (String? value) {
+                      controller.otpOnChanged(value!);
+                    },
                   ),
-                  addVerticalSpacing(context, 5),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const AppText(
-                        isBody: false,
-                        text: "Confirm Password",
-                        textAlign: TextAlign.start,
-                        fontSize: 80,
-                        color: AppColors.black,
-                        fontStyle: FontStyle.normal,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      GlobalTextField(
-                        fieldName: 'Confirm Password',
-                        keyBoardType: TextInputType.text,
-                        obscureText: true,
-                        isEyeVisible: true,
-                        textController: controller.confirmPasswordController,
-                        onChanged: (String? value) {
-                          controller.confirmPasswordOnChanged(value!);
-                        },
-                      ),
-                    ],
+                  addVerticalSpacing(2),
+                  const AppText(
+                    isBody: false,
+                    text: "New Password",
+                    textAlign: TextAlign.start,
+                    fontSize: 25,
+                    color: AppColors.black,
+                    fontStyle: FontStyle.normal,
+                    fontWeight: FontWeight.w400,
                   ),
-                  addVerticalSpacing(context, 10),
+                  GlobalTextField(
+                    fieldName: 'New Password',
+                    keyBoardType: TextInputType.text,
+                    obscureText: true,
+                    isEyeVisible: true,
+                    textController: controller.newPasswordController,
+                    onChanged: (String? value) {
+                      controller.newPasswordOnChanged(value!);
+                    },
+                  ),
+                  addVerticalSpacing(2),
+                  const AppText(
+                    isBody: false,
+                    text: "Confirm Password",
+                    textAlign: TextAlign.start,
+                    fontSize: 25,
+                    color: AppColors.black,
+                    fontStyle: FontStyle.normal,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  GlobalTextField(
+                    fieldName: 'Confirm Password',
+                    keyBoardType: TextInputType.text,
+                    obscureText: true,
+                    isEyeVisible: true,
+                    confirmPasswordMatch:
+                        controller.newPasswordController.text, // Compare here
+                    textController: controller.confirmPasswordController,
+                    onChanged: (String? value) {
+                      controller.confirmPasswordOnChanged(value!);
+                    },
+                  ),
+                  addVerticalSpacing(2),
                   controller.isOTPChanged.isEmpty ||
                           controller.isNewPasswordChanged.isEmpty ||
                           controller.isConfirmPasswordChanged.isEmpty ||
@@ -141,10 +120,12 @@ class ForgotPasswordCodeScreenView
                       ? AppButton(
                         text: "Update Password",
                         onPressed: () {},
-                        widthPercent: 70,
-                        heightPercent: 5,
-                        btnColor: AppColors.primary,
-                        isLoading: controller.isLoading,
+                        widthPercent: 100,
+                        heightPercent: 6,
+                        btnColor: AppColors.grey,
+                        fontSize: 20,
+                        // safeArea: true,
+                        isLoading: false,
                       )
                       : AppButton(
                         text: "Update Password",
@@ -153,10 +134,10 @@ class ForgotPasswordCodeScreenView
                         },
                         widthPercent: 100,
                         heightPercent: 6,
-                        btnColor: AppColors.primary,
+                        fontSize: 20,
                         isLoading: controller.isLoading,
                       ),
-                  addVerticalSpacing(context, 5),
+                  addVerticalSpacing(2),
                 ],
               ),
             ),

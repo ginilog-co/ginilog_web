@@ -1,6 +1,5 @@
 import 'package:ginilog_customer_app/core/components/utils/app_buttons.dart';
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
-import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/money_formatter.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
@@ -111,7 +110,7 @@ class _ConfirmAccomodationBookingsState
                 maxLines: 1,
                 fontWeight: FontWeight.w400,
               ),
-              addVerticalSpacing(context, 5),
+              addVerticalSpacing(5),
               AppText(
                 isBody: true,
                 text: "Customer Details",
@@ -152,7 +151,7 @@ class _ConfirmAccomodationBookingsState
                 maxLines: 1,
                 fontWeight: FontWeight.w400,
               ),
-              addVerticalSpacing(context, 5),
+              addVerticalSpacing(5),
               AppText(
                 isBody: true,
                 text: "Order Details",
@@ -263,9 +262,9 @@ class _ConfirmAccomodationBookingsState
                   ),
                 ],
               ),
-              addVerticalSpacing(context, 5),
+              addVerticalSpacing(5),
               Divider(),
-              addVerticalSpacing(context, 5),
+              addVerticalSpacing(5),
               AppText(
                 isBody: true,
                 text: "Charges",
@@ -330,7 +329,7 @@ class _ConfirmAccomodationBookingsState
                   ),
                 ],
               ),
-              addVerticalSpacing(context, 10),
+              addVerticalSpacing(10),
               Align(
                 alignment: Alignment.bottomRight,
                 child: AppButton(

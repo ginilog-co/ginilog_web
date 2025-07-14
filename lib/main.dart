@@ -169,7 +169,7 @@ class _MyAppState extends ConsumerState<MyApp> {
         builder: (context, constraints) {
           return OrientationBuilder(
             builder: (context, orientation) {
-              SizeConfig().init(context, constraints, orientation);
+              SizeConfig.init(context);
               return UpgradeAlert(
                 showReleaseNotes: false,
                 dialogStyle: UpgradeDialogStyle.cupertino,

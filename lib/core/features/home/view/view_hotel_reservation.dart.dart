@@ -9,7 +9,6 @@ import 'package:ginilog_customer_app/core/features/home/model/company_response_m
 import 'package:ginilog_customer_app/core/features/home/states/home_state.dart';
 
 import '../../../components/utils/colors.dart';
-import '../../../components/utils/helper_functions.dart';
 import '../../../components/utils/package_export.dart';
 import '../../../components/widgets/app_text.dart';
 
@@ -112,7 +111,7 @@ class _LoginPageState extends ConsumerState<ViewAllLogisticsPage> {
           padding: const EdgeInsets.only(left: 18.0, right: 18.0),
           child: Column(
             children: [
-              addVerticalSpacing(context, 20),
+              addVerticalSpacing(20),
               Expanded(
                 child:
                     dataModel.isNotEmpty
@@ -218,7 +217,7 @@ class _LoginPageState extends ConsumerState<ViewAllLogisticsPage> {
                                 width: 100,
                                 height: 100,
                               ),
-                              addVerticalSpacing(context, 50),
+                              addVerticalSpacing(50),
                               const Padding(
                                 padding: EdgeInsets.all(8.0),
                                 child: AppText(

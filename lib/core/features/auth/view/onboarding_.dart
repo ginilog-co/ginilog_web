@@ -1,3 +1,5 @@
+import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
+
 import '../../../components/architecture/mvc.dart';
 import '../../../components/routes/route.dart';
 import '../../../components/utils/app_buttons.dart';
@@ -14,80 +16,67 @@ class OnboardingView
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.black,
+      backgroundColor: AppColors.white,
       body: Stack(
         children: [
           SizedBox(
-            height: getScreenHeight(context),
-            width: getScreenWidth(context),
+            height: double.infinity,
+            width: double.infinity,
             child: PageView.builder(
               controller: controller.pageController,
               itemCount: controller.onboardingList.length,
               itemBuilder: (_, index) {
                 return Container(
-                  height: getScreenHeight(context),
-                  width: getScreenWidth(context),
                   decoration: BoxDecoration(
                     color: AppColors.black,
                     image: DecorationImage(
                       image: AssetImage(
                         controller.onboardingList[index].image.toString(),
                       ),
-                      fit: BoxFit.cover,
+                      fit: BoxFit.fill,
                     ),
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      addVerticalSpacing(context, 90.9),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 10, left: 10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            AppText(
-                              isBody: false,
-                              text:
-                                  controller.onboardingList[index].text
-                                      .toString(),
-                              textAlign: TextAlign.center,
-                              fontSize: 100,
-                              color: AppColors.white,
-                              fontStyle: FontStyle.normal,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            addVerticalSpacing(context, 8),
-                            AppText(
-                              isBody: true,
-                              text:
-                                  controller.onboardingList[index].pre
-                                      .toString(),
-                              textAlign: TextAlign.center,
-                              fontSize: 86,
-                              color: AppColors.white,
-                              fontStyle: FontStyle.normal,
-                              fontWeight: FontWeight.w400,
-                            ),
-                            addVerticalSpacing(context, 40.2),
-                            Center(
-                              child: SmoothPageIndicator(
-                                controller:
-                                    controller.pageController, // PageController
-                                count: controller.onboardingList.length,
-                                effect: const ExpandingDotsEffect(
-                                  radius: 10,
-                                  expansionFactor: 2,
-                                  dotColor: Color(0xffC5CAE8),
-                                  activeDotColor: AppColors.red,
-                                  dotHeight: 10,
-                                  dotWidth: 10,
-                                ), // your preferred effect
-                              ),
-                            ),
-                            addVerticalSpacing(context, 30),
-                          ],
+                      addVerticalSpacing(9.9),
+                      AppText(
+                        isBody: false,
+                        text: controller.onboardingList[index].text.toString(),
+                        textAlign: TextAlign.center,
+                        fontSize: 100,
+                        color: AppColors.white,
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      addVerticalSpacing(2),
+                      AppText(
+                        isBody: true,
+                        text: controller.onboardingList[index].pre.toString(),
+                        textAlign: TextAlign.center,
+                        fontSize: 86,
+                        color: AppColors.white,
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      addVerticalSpacing(14.2),
+                      Center(
+                        child: SmoothPageIndicator(
+                          controller:
+                              controller.pageController, // PageController
+                          count: controller.onboardingList.length,
+                          effect: const ExpandingDotsEffect(
+                            radius: 10,
+                            expansionFactor: 2,
+                            dotColor: Color(0xffC5CAE8),
+                            activeDotColor: AppColors.red,
+                            dotHeight: 10,
+                            dotWidth: 10,
+                          ), // your preferred effect
                         ),
                       ),
+                      addVerticalSpacing(3),
                     ],
                   ),
                 );
@@ -95,7 +84,7 @@ class OnboardingView
             ),
           ),
           Positioned(
-            top: 60,
+            top: 6.heightAdjusted,
             left: 5,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -117,12 +106,11 @@ class OnboardingView
             ),
           ),
           Positioned(
-            bottom: 40,
+            top: 85.heightAdjusted,
             left: 40,
             child: SmallButton(
               text: "Skip",
-              widthPercent: 15,
-              heightPercent: 4,
+
               isCircular: false,
               textColor: AppColors.black,
               backgroundColor: AppColors.grey,
@@ -133,16 +121,15 @@ class OnboardingView
             ),
           ),
           Positioned(
-            bottom: 40,
-
+            top: 85.heightAdjusted,
             right: 40,
             child: SmallButton(
               backgroundColor: AppColors.primary,
               text: "Next",
               isCircular: false,
               textColor: AppColors.white,
-              widthPercent: 15,
-              heightPercent: 4,
+              // widthPercent: 15,
+              // heightPercent: 4,
               onPressed: () async {
                 controller.currentIndex == 2
                     ? navPush(context, RootRoutes.login)

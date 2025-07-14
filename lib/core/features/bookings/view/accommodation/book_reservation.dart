@@ -2,7 +2,6 @@ import 'package:country_code_picker/country_code_picker.dart';
 import 'package:ginilog_customer_app/core/components/architecture/mvc.dart';
 import 'package:ginilog_customer_app/core/components/utils/app_buttons.dart';
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
-import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
@@ -20,17 +19,20 @@ class BookReservationScreenView
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(14)),
-        child: Padding(
-          padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-          child: const GlobalBackButton(backText: "", showBackButton: true),
+      appBar: buildFlexibleAppBar(
+        context: context,
+
+        title: AppText(
+          isBody: true,
+          text: "",
+          textAlign: TextAlign.start,
+          fontSize: 18,
+          color: AppColors.black,
+          fontStyle: FontStyle.normal,
+          fontWeight: FontWeight.w800,
         ),
       ),
-      body: Container(
-        height: getScreenHeight(context),
-        width: getScreenWidth(context),
-        color: AppColors.white,
+      body: SafeArea(
         child: SingleChildScrollView(
           child: Form(
             key: controller.formKey,
@@ -47,7 +49,7 @@ class BookReservationScreenView
                       Text(
                         "Complete the form below and book the accomodation",
                         style: TextStyle(
-                          fontSize: fontSized(context, 35),
+                          fontSize: 15.textSize,
                           color: AppColors.black,
                           fontWeight: FontWeight.w400,
                           fontFamily: "Mulish",
@@ -55,7 +57,7 @@ class BookReservationScreenView
                       ),
                     ],
                   ),
-                  addVerticalSpacing(context, 5),
+                  addVerticalSpacing(5),
                   GlobalTextField(
                     fieldName: 'First Name',
                     keyBoardType: TextInputType.name,
@@ -65,7 +67,7 @@ class BookReservationScreenView
                       controller.firstNameOnChanged(value!);
                     },
                   ),
-                  addVerticalSpacing(context, 5),
+                  addVerticalSpacing(2),
                   GlobalTextField(
                     fieldName: 'Last Name',
                     keyBoardType: TextInputType.name,
@@ -75,7 +77,7 @@ class BookReservationScreenView
                       controller.lastNameOnChanged(value!);
                     },
                   ),
-                  addVerticalSpacing(context, 5),
+                  addVerticalSpacing(2),
                   GlobalTextField(
                     fieldName: 'Email',
                     keyBoardType: TextInputType.emailAddress,
@@ -85,7 +87,7 @@ class BookReservationScreenView
                       controller.emailOnChanged(value!);
                     },
                   ),
-                  addVerticalSpacing(context, 5),
+                  addVerticalSpacing(2),
                   SizedBox(
                     height: 50,
                     child: GlobalTextField(
@@ -117,7 +119,7 @@ class BookReservationScreenView
                       },
                     ),
                   ),
-                  addVerticalSpacing(context, 5),
+                  addVerticalSpacing(2),
                   GlobalTextField(
                     fieldName: 'Number Of Guest',
                     keyBoardType: TextInputType.number,
@@ -127,7 +129,7 @@ class BookReservationScreenView
                       controller.numberOfGuestChanged(value!);
                     },
                   ),
-                  addVerticalSpacing(context, 5),
+                  addVerticalSpacing(2),
                   GlobalTextField(
                     fieldName: 'Start Date',
                     keyBoardType: TextInputType.text,
@@ -162,7 +164,7 @@ class BookReservationScreenView
                     },
                     onChanged: (String? value) {},
                   ),
-                  addVerticalSpacing(context, 5),
+                  addVerticalSpacing(2),
                   GlobalTextField(
                     fieldName: 'End Date',
                     keyBoardType: TextInputType.text,
@@ -199,7 +201,7 @@ class BookReservationScreenView
                     },
                     onChanged: (String? value) {},
                   ),
-                  addVerticalSpacing(context, 5),
+                  addVerticalSpacing(2),
                   GlobalTextField(
                     fieldName: 'Comments',
                     keyBoardType: TextInputType.multiline,
@@ -213,7 +215,7 @@ class BookReservationScreenView
                       controller.commentOnChanged(value!);
                     },
                   ),
-                  addVerticalSpacing(context, 5),
+                  addVerticalSpacing(3),
                   controller.isEmailChanged.isEmpty ||
                           controller.isFirstNameChanged.isEmpty ||
                           controller.isPhoneNoChanged.isEmpty ||
@@ -239,7 +241,7 @@ class BookReservationScreenView
                         btnColor: AppColors.primary,
                         isLoading: controller.isLoading,
                       ),
-                  addVerticalSpacing(context, 5),
+                  addVerticalSpacing(5),
                 ],
               ),
             ),

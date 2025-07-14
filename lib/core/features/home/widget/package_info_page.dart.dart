@@ -2,6 +2,7 @@ import 'package:ginilog_customer_app/core/components/utils/app_buttons.dart';
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
 import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
+import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/features/home_screen.dart';
 
@@ -93,24 +94,24 @@ class _LoginPageState extends State<PaymentConfirmationPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    addVerticalSpacing(context, 40),
+                    addVerticalSpacing(40),
                     Image.asset(
                       "assets/images/successful.png",
                       height: 65,
                       width: 65,
                       //color: AppColors.black,
                     ),
-                    addVerticalSpacing(context, 4),
+                    addVerticalSpacing(4),
                     const AppText(
                       isBody: true,
                       text: "Thank you for using our service",
                       textAlign: TextAlign.center,
-                      fontSize: 80,
+                      fontSize: 18,
                       color: Color.fromRGBO(48, 48, 48, 1),
                       fontStyle: FontStyle.normal,
                       fontWeight: FontWeight.w500,
                     ),
-                    addVerticalSpacing(context, 4),
+                    addVerticalSpacing(4),
                     const AppText(
                       isBody: true,
                       text: "Your payment has been successful",
@@ -120,7 +121,7 @@ class _LoginPageState extends State<PaymentConfirmationPage> {
                       fontStyle: FontStyle.normal,
                       fontWeight: FontWeight.w400,
                     ),
-                    addVerticalSpacing(context, 10),
+                    addVerticalSpacing(10),
                     AppButton(
                       onPressed: () async {
                         navigateAndRemoveUntilRoute(
@@ -137,7 +138,7 @@ class _LoginPageState extends State<PaymentConfirmationPage> {
                       btnColor: AppColors.primary,
                       isLoading: false,
                     ),
-                    addVerticalSpacing(context, 4),
+                    addVerticalSpacing(4),
                   ],
                 ),
               ),

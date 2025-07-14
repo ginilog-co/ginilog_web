@@ -53,124 +53,130 @@ class _LoginPageState extends ConsumerState<OrderLiveTrackingPage> {
     );
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(15)),
-        child: Padding(
-          padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-          child: GlobalBackButton(
-            backText: 'Live Order Tracking',
-            showBackButton: true,
-          ),
+      appBar: buildFlexibleAppBar(
+        context: context,
+
+        title: AppText(
+          isBody: true,
+          text: "Live Order Tracking",
+          textAlign: TextAlign.start,
+          fontSize: 18,
+          color: AppColors.black,
+          fontStyle: FontStyle.normal,
+          fontWeight: FontWeight.w800,
         ),
       ),
+
       key: key,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 10,
-        children: [
-          Expanded(
-            flex: 2,
-            child: GoogleMap(
-              initialCameraPosition: CameraPosition(
-                target: current,
-                zoom: 14.0,
-              ),
-              buildingsEnabled: false,
-              myLocationButtonEnabled: false,
-              compassEnabled: false,
-              markers: {
-                Marker(
-                  markerId: const MarkerId("currentLocation"),
-                  position: current,
-                  infoWindow: InfoWindow(
-                    title: "Current Location",
-                    snippet: order.currentLocation!,
-                  ),
-                  icon: BitmapDescriptor.defaultMarkerWithHue(
-                    BitmapDescriptor.hueRed,
-                  ),
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 10,
+          children: [
+            Expanded(
+              flex: 2,
+              child: GoogleMap(
+                initialCameraPosition: CameraPosition(
+                  target: current,
+                  zoom: 14.0,
                 ),
-              },
-              onMapCreated: (controller) {
-                mapController = controller;
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 10.0, right: 10),
-            child: const AppText(
-              isBody: false,
-              text: "Tracking Number",
-              textAlign: TextAlign.start,
-              fontSize: 35,
-              color: AppColors.black,
-              fontStyle: FontStyle.normal,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 10.0, right: 10),
-            child: Row(
-              spacing: 5,
-              children: [
-                SvgPicture.asset('assets/svgs/track_num_icon.svg', width: 20),
-                AppText(
-                  isBody: true,
-                  text: "TN: ${order.trackingNum}",
-                  textAlign: TextAlign.start,
-                  fontSize: 30,
-                  color: AppColors.green,
-                  fontStyle: FontStyle.normal,
-                  fontWeight: FontWeight.bold,
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: ListView.builder(
-              padding: EdgeInsets.only(left: 10, right: 10),
-              itemCount: orderDeliveryFlows(order.orderDeliveryFlows!).length,
-              itemBuilder: (context, index) {
-                final status =
-                    orderDeliveryFlows(order.orderDeliveryFlows!)[index];
-                DateTime dt2 = DateTime.parse(
-                  status.updatedAt!.toLocal().toString(),
-                );
-                String date = DateFormat(
-                  "E, MMM d hh:mm a",
-                ).format(dt2.toLocal());
-                return buildTrackFlow(
-                  status: status.orderStatus!,
-                  currentStatus: order.orderStatus!.name.firstCap,
-                  statusDate: date,
-                  location: status.currentLocation!,
-                  isLast:
-                      index ==
-                      order.orderDeliveryFlows!.length -
-                          1, // Check if it's the last item
-                );
-              },
-            ),
-          ),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: AppButton(
-                text: "Go Back",
-                onPressed: () async {
-                  navigateBack(context);
+                buildingsEnabled: false,
+                myLocationButtonEnabled: false,
+                compassEnabled: false,
+                markers: {
+                  Marker(
+                    markerId: const MarkerId("currentLocation"),
+                    position: current,
+                    infoWindow: InfoWindow(
+                      title: "Current Location",
+                      snippet: order.currentLocation!,
+                    ),
+                    icon: BitmapDescriptor.defaultMarkerWithHue(
+                      BitmapDescriptor.hueRed,
+                    ),
+                  ),
                 },
-                widthPercent: 70,
-                heightPercent: 5,
-                btnColor: AppColors.primary,
-                isLoading: false,
+                onMapCreated: (controller) {
+                  mapController = controller;
+                },
               ),
             ),
-          ),
-          addVerticalSpacing(context, 5),
-        ],
+            Padding(
+              padding: const EdgeInsets.only(left: 10.0, right: 10),
+              child: const AppText(
+                isBody: false,
+                text: "Tracking Number",
+                textAlign: TextAlign.start,
+                fontSize: 15,
+                color: AppColors.black,
+                fontStyle: FontStyle.normal,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 10.0, right: 10),
+              child: Row(
+                spacing: 5,
+                children: [
+                  SvgPicture.asset('assets/svgs/track_num_icon.svg', width: 20),
+                  AppText(
+                    isBody: true,
+                    text: "TN: ${order.trackingNum}",
+                    textAlign: TextAlign.start,
+                    fontSize: 15,
+                    color: AppColors.green,
+                    fontStyle: FontStyle.normal,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: ListView.builder(
+                padding: EdgeInsets.only(left: 10, right: 10),
+                itemCount: orderDeliveryFlows(order.orderDeliveryFlows!).length,
+                itemBuilder: (context, index) {
+                  final status =
+                      orderDeliveryFlows(order.orderDeliveryFlows!)[index];
+                  DateTime dt2 = DateTime.parse(
+                    status.updatedAt!.toLocal().toString(),
+                  );
+                  String date = DateFormat(
+                    "E, MMM d hh:mm a",
+                  ).format(dt2.toLocal());
+                  return buildTrackFlow(
+                    status: status.orderStatus!,
+                    currentStatus: order.orderStatus!.name.firstCap,
+                    statusDate: date,
+                    location: status.currentLocation!,
+                    isLast:
+                        index ==
+                        order.orderDeliveryFlows!.length -
+                            1, // Check if it's the last item
+                  );
+                },
+              ),
+            ),
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: AppButton(
+                  text: "Go Back",
+                  onPressed: () async {
+                    navigateBack(context);
+                  },
+                  widthPercent: 70,
+                  heightPercent: 5,
+                  btnColor: AppColors.primary,
+                  isLoading: false,
+                ),
+              ),
+            ),
+            addVerticalSpacing(5),
+          ],
+        ),
       ),
     );
   }
@@ -216,7 +222,7 @@ class _LoginPageState extends ConsumerState<OrderLiveTrackingPage> {
                 isBody: false,
                 text: "Package Status: ${status.name.firstCap}",
                 textAlign: TextAlign.start,
-                fontSize: 40,
+                fontSize: 15,
                 color:
                     status.name.firstCap == currentStatus
                         ? AppColors.grey
@@ -228,7 +234,7 @@ class _LoginPageState extends ConsumerState<OrderLiveTrackingPage> {
                 isBody: true,
                 text: statusDate,
                 textAlign: TextAlign.start,
-                fontSize: 25,
+                fontSize: 15,
                 color: AppColors.black,
                 fontStyle: FontStyle.normal,
                 fontWeight: FontWeight.bold,
@@ -239,7 +245,7 @@ class _LoginPageState extends ConsumerState<OrderLiveTrackingPage> {
                 textAlign: TextAlign.start,
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
-                fontSize: 25,
+                fontSize: 15,
                 color: AppColors.black,
                 fontStyle: FontStyle.normal,
                 fontWeight: FontWeight.bold,

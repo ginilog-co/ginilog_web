@@ -4,6 +4,7 @@ import 'package:ginilog_customer_app/core/components/utils/app_buttons.dart';
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
 import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
+import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/features/order_history/model/package_orders_model.dart';
 import 'package:ginilog_customer_app/core/features/order_history/view/order_details.dart';
@@ -28,7 +29,6 @@ class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
     final data3 = widget.order;
     // DateTime dt2 = DateTime.parse(data3.createdAt!.toLocal().toString());
     // String date = DateFormat("E, MMM d hh:mm a").format(dt2.toLocal());
-    TextScaler textScaler = MediaQuery.of(context).textScaler;
 
     return Padding(
       padding: const EdgeInsets.only(left: 5.0, right: 5.0, top: 5.0),
@@ -49,7 +49,7 @@ class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
         child: Card(
           elevation: 4,
           child: Container(
-            width: getScreenWidth(context),
+            width: SizeConfig.widthAdjusted(100),
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: const BorderRadius.all(Radius.circular(10)),
@@ -82,7 +82,7 @@ class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
                               children: [
                                 RichText(
                                   textAlign: TextAlign.start,
-                                  textScaler: textScaler,
+
                                   text: TextSpan(
                                     style: const TextStyle(color: Colors.black),
                                     children: [
@@ -91,7 +91,7 @@ class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.w400,
-                                          fontSize: fontSized(context, 35),
+                                          fontSize: 15.textSize,
                                           fontFamily: "Inter",
                                         ),
                                       ),
@@ -100,7 +100,7 @@ class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: fontSized(context, 35),
+                                          fontSize: 20.textSize,
                                           fontFamily: "Mulish",
                                         ),
                                       ),
@@ -111,14 +111,14 @@ class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
                                   isBody: true,
                                   text: "#${data3.trackingNum}",
                                   textAlign: TextAlign.start,
-                                  fontSize: 35,
+                                  fontSize: 15,
                                   color: AppColors.black,
                                   fontStyle: FontStyle.normal,
                                   fontWeight: FontWeight.bold,
                                 ),
                                 RichText(
                                   textAlign: TextAlign.start,
-                                  textScaler: textScaler,
+
                                   text: TextSpan(
                                     style: const TextStyle(color: Colors.black),
                                     children: [
@@ -127,7 +127,7 @@ class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.w400,
-                                          fontSize: fontSized(context, 35),
+                                          fontSize: 15.textSize,
                                           fontFamily: "Inter",
                                         ),
                                       ),
@@ -136,7 +136,7 @@ class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: fontSized(context, 35),
+                                          fontSize: 20.textSize,
                                           fontFamily: "Mulish",
                                         ),
                                       ),
@@ -161,7 +161,7 @@ class _ActiveOrderItemState extends ConsumerState<ActiveOrderItem> {
                             widthPercent: 15,
                             heightPercent: 4,
                             borderRadius: 20,
-                            fontSize: 32,
+                            fontSize: 13,
                             btnColor: AppColors.primary,
                             isLoading: false,
                           ),

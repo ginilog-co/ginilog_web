@@ -13,11 +13,12 @@ class ConfirmEmailAddressScreen extends StatefulWidget {
   final String email;
   final String password;
   final bool fromLogin;
-  const ConfirmEmailAddressScreen(
-      {super.key,
-      required this.email,
-      required this.fromLogin,
-      required this.password});
+  const ConfirmEmailAddressScreen({
+    super.key,
+    required this.email,
+    required this.fromLogin,
+    required this.password,
+  });
 
   @override
   State<ConfirmEmailAddressScreen> createState() =>
@@ -38,7 +39,7 @@ class ConfirmEmailAddressController extends State<ConfirmEmailAddressScreen> {
         setState(() {});
       },
     );
-    globals.stopWatchTimer!.setPresetMinuteTime(10);
+    globals.stopWatchTimer!.setPresetMinuteTime(1);
     globals.stopWatchTimer!.onStartTimer();
 
     super.initState();
@@ -51,8 +52,10 @@ class ConfirmEmailAddressController extends State<ConfirmEmailAddressScreen> {
         globals.stopWatchTimer!.onStartTimer();
       });
 
-      final res = await AuthService()
-          .sendVerificationCode(email: widget.email, cxt: context);
+      final res = await AuthService().sendVerificationCode(
+        email: widget.email,
+        cxt: context,
+      );
       printData("result", res.statusCode);
       showSnack();
       setState(() {
@@ -63,7 +66,8 @@ class ConfirmEmailAddressController extends State<ConfirmEmailAddressScreen> {
 
   showSnack() {
     return ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("New code sent to your email")));
+      const SnackBar(content: Text("New code sent to your email")),
+    );
   }
 
   getPin(value) {
@@ -86,26 +90,29 @@ class ConfirmEmailAddressController extends State<ConfirmEmailAddressScreen> {
     });
 
     final res = await AuthService().verifyEmail(
-        password: widget.password,
-        pin: pinPutController.text.trim(),
-        cxt: context);
+      password: widget.password,
+      pin: pinPutController.text.trim(),
+      cxt: context,
+    );
     printData("result", res.statusCode);
     if (res.statusCode == 201 || res.statusCode == 200) {
       setState(() {
         isLoading = false;
       });
       showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => const EmailSentDialog());
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const EmailSentDialog(),
+      );
     } else {
       setState(() {
         isLoading = false;
       });
       showDialog(
-          context: context,
-          barrierDismissible: true,
-          builder: (context) => const ErrorEmailSentDialog());
+        context: context,
+        barrierDismissible: true,
+        builder: (context) => const ErrorEmailSentDialog(),
+      );
     }
     setState(() {
       isLoading = false;

@@ -7,7 +7,6 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import '../routes/routers.dart';
-import '../widgets/responsive.dart';
 import 'colors.dart';
 
 Image imageFromBase64String(String base64String) {
@@ -21,53 +20,6 @@ Uint8List dataFromBase64String(String base64String) {
 String base64String(Uint8List data) {
   return base64Encode(data);
 }
-
-double getScreenHeight(BuildContext context) {
-  return MediaQuery.of(context).size.height;
-}
-
-double getScreenWidth(BuildContext context) {
-  return MediaQuery.of(context).size.width;
-}
-
-Widget addSeperator(Color color, double height) {
-  return Divider(color: color, height: height);
-}
-
-Widget addSeperatorDarkMode(bool darkMode, double height) {
-  return Divider(color: darkMode ? Colors.grey : Colors.grey, height: height);
-}
-
-Widget addVerticalSpacing(BuildContext context, double height) {
-  var heightEd = 14.0;
-  if (Responsive.isDesktop(context)) {
-    final width2 = (MediaQuery.of(context).size.height / 6) * (height / 100);
-    heightEd = width2;
-  } else if (Responsive.isTablet(context)) {
-    final width2 = (MediaQuery.of(context).size.height / 4) * (height / 100);
-    heightEd = width2;
-  } else {
-    final width2 = (MediaQuery.of(context).size.height / 2) * (height / 100);
-    heightEd = width2;
-  }
-  return SizedBox(height: heightEd);
-}
-
-Widget addHorizontalSpacing(double width) {
-  return SizedBox(width: width);
-}
-
-double getPercentageHeight(BuildContext context, double height) {
-  var heightPercentage = (height / 100) * getScreenHeight(context);
-  return heightPercentage;
-}
-
-double getPercentageWidth(BuildContext context, double width) {
-  var widthPercentage = (width / 100) * getScreenWidth(context);
-  return widthPercentage;
-}
-
-double buttonHeight = 50;
 
 String convertToTitleCase(String? text) {
   if (text == null) {

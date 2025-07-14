@@ -8,6 +8,7 @@ import 'package:ginilog_customer_app/core/components/utils/app_buttons.dart';
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
 import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
+import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
 import 'package:ginilog_customer_app/core/components/widgets/payment_page_widget.dart';
@@ -43,7 +44,7 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.only(top: 10, left: 8, right: 8),
-      height: getScreenHeight(context) * 0.45,
+      height: SizeConfig.heightAdjusted(100) * 0.45,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -59,13 +60,12 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
                 isBody: true,
                 text: "Choose Payment Method",
                 textAlign: TextAlign.start,
-                fontSize: 70,
+                fontSize: 10,
                 color: AppColors.black,
                 fontStyle: FontStyle.normal,
                 fontWeight: FontWeight.w800,
               ),
-              addHorizontalSpacing(10),
-              const Divider(),
+
               addHorizontalSpacing(10),
               GestureDetector(
                 onTap: () => Navigator.pop(context),
@@ -77,15 +77,15 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
               ),
             ],
           ),
-          addVerticalSpacing(context, 1.2),
+          addVerticalSpacing(1.2),
           const Divider(),
 
-          addVerticalSpacing(context, 5.2),
+          addVerticalSpacing(5.2),
 
           _buildPaymentOption("Pay with Paystack", 1),
           // SizedBox(height: 15),
           // _buildPaymentOption("Pay with Flutterwave", 2),
-          addVerticalSpacing(context, 10.2),
+          addVerticalSpacing(2.2),
           AppButton(
             text: "Continue",
             onPressed: handlePayment,
@@ -118,7 +118,7 @@ class _PaymentMethodBottomSheetState extends State<PaymentMethodBottomSheet> {
         child: Text(
           text,
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 16.textSize,
             color: selected == value ? Colors.white : Colors.black,
           ),
         ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
+import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
 import 'package:pinput/pinput.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
 
@@ -7,7 +9,6 @@ import '../../../components/architecture/mvc.dart';
 import '../../../components/helpers/globals.dart';
 import '../../../components/utils/app_buttons.dart';
 import '../../../components/utils/colors.dart';
-import '../../../components/utils/helper_functions.dart';
 import '../../../components/widgets/app_text.dart';
 import '../controller/confirm_email.dart';
 
@@ -21,11 +22,11 @@ class ConfirmEmailAddressView
 
   @override
   Widget build(BuildContext context) {
-    TextScaler textScaler = MediaQuery.of(context).textScaler;
     return Scaffold(
       backgroundColor: AppColors.white,
-      body: SingleChildScrollView(
-        child: SafeArea(
+      appBar: buildFlexibleAppBar(context: context),
+      body: SafeArea(
+        child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.only(
               right: 24.0,
@@ -52,7 +53,7 @@ class ConfirmEmailAddressView
                 const SizedBox(height: 8),
                 RichText(
                   textAlign: TextAlign.center,
-                  textScaler: textScaler,
+
                   text: TextSpan(
                     style: const TextStyle(color: Colors.black),
                     children: [
@@ -61,7 +62,7 @@ class ConfirmEmailAddressView
                         style: TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.w400,
-                          fontSize: fontSized(context, 18),
+                          fontSize: 18.textSize,
                           fontFamily: "Mulish",
                         ),
                       ),
@@ -73,7 +74,7 @@ class ConfirmEmailAddressView
                         style: TextStyle(
                           color: AppColors.primary,
                           fontWeight: FontWeight.w400,
-                          fontSize: fontSized(context, 22),
+                          fontSize: 18.textSize,
                           fontFamily: "Mulish",
                         ),
                       ),
@@ -139,7 +140,7 @@ class ConfirmEmailAddressView
                     );
                   },
                 ),
-                addVerticalSpacing(context, 5),
+                addVerticalSpacing(5),
 
                 AppButton(
                   borderRadius: 20,
@@ -148,11 +149,11 @@ class ConfirmEmailAddressView
                         ? null
                         : controller.resendCode();
                   },
-                  btnColor: AppColors.white,
+                  btnColor: AppColors.red,
                   text: "Send again",
                   fontSize: 20,
-                  heightPercent: 100,
-                  widthPercent: 6,
+                  heightPercent: 6,
+                  widthPercent: 50,
                 ),
               ],
             ),

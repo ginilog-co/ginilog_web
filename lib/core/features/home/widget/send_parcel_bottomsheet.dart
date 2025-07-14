@@ -53,7 +53,7 @@ class _SendParcelTypeBottomSheetState
     return Container(
       width: double.infinity,
       padding: EdgeInsets.only(top: 10, left: 8, right: 8),
-      height: getScreenHeight(context) * 0.65,
+      height: SizeConfig.heightAdjusted(100) * 0.65,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -69,13 +69,12 @@ class _SendParcelTypeBottomSheetState
                 isBody: true,
                 text: "Choose the Parcel Type",
                 textAlign: TextAlign.start,
-                fontSize: 30,
+                fontSize: 15,
                 color: AppColors.black,
                 fontStyle: FontStyle.normal,
                 fontWeight: FontWeight.w800,
               ),
-              addHorizontalSpacing(10),
-              const Divider(),
+
               addHorizontalSpacing(10),
               GestureDetector(
                 onTap: () => Navigator.pop(context),
@@ -87,10 +86,10 @@ class _SendParcelTypeBottomSheetState
               ),
             ],
           ),
-          addVerticalSpacing(context, 1.2),
+          addVerticalSpacing(1.2),
           const Divider(),
 
-          addVerticalSpacing(context, 1.2),
+          addVerticalSpacing(1.2),
 
           /// Contact Method Selector (GridView)
           Expanded(
@@ -98,12 +97,12 @@ class _SendParcelTypeBottomSheetState
               shrinkWrap: true,
               itemCount: sendParcelMethods.length,
               padding: EdgeInsets.symmetric(
-                vertical: getScreenWidth(context) / 200,
+                vertical: SizeConfig.widthAdjusted(100) / 200,
               ),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2, // Adjust to fit your design
-                crossAxisSpacing: getScreenWidth(context) / 100,
-                mainAxisSpacing: getScreenWidth(context) / 100,
+                crossAxisSpacing: SizeConfig.widthAdjusted(100) / 100,
+                mainAxisSpacing: SizeConfig.widthAdjusted(100) / 100,
                 childAspectRatio: 1.0, // Adjust for better spacing
               ),
               itemBuilder: (context, index) {
@@ -131,7 +130,7 @@ class _SendParcelTypeBottomSheetState
             ),
           ),
 
-          addVerticalSpacing(context, 5),
+          addVerticalSpacing(5),
 
           /// Continue Button
           Row(
@@ -178,7 +177,7 @@ class _SendParcelTypeBottomSheetState
               ),
             ],
           ),
-          addVerticalSpacing(context, 5),
+          addVerticalSpacing(5),
         ],
       ),
     );
@@ -211,20 +210,20 @@ class SendParcelMethodWidget extends StatelessWidget {
         ),
       ),
       child: Column(
-        spacing: getScreenWidth(context) / 80,
+        spacing: SizeConfig.widthAdjusted(100) / 80,
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Image.asset(
             method.image,
-            height: getScreenWidth(context) / 10,
-            width: getScreenWidth(context) / 10,
+            height: SizeConfig.widthAdjusted(100) / 10,
+            width: SizeConfig.widthAdjusted(100) / 10,
           ),
           AppText(
             isBody: false,
             text: method.sendParcelMethod,
             textAlign: TextAlign.center,
-            fontSize: 35,
+            fontSize: 15,
             color: isSelected ? AppColors.white : AppColors.black,
             fontStyle: FontStyle.normal,
             fontWeight: FontWeight.bold,
@@ -233,7 +232,7 @@ class SendParcelMethodWidget extends StatelessWidget {
             isBody: true,
             text: method.subtitle,
             textAlign: TextAlign.center,
-            fontSize: 35,
+            fontSize: 15,
             color: isSelected ? AppColors.white : AppColors.black,
             fontStyle: FontStyle.normal,
             fontWeight: FontWeight.w400,

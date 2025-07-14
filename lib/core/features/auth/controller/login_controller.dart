@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:ginilog_customer_app/core/components/extension/error_handling.dart';
 import 'package:ginilog_customer_app/core/components/helpers/globals.dart';
 import 'package:ginilog_customer_app/core/components/state/connectivity_state.dart';
 import 'package:ginilog_customer_app/core/components/utils/constants.dart';
@@ -37,6 +38,7 @@ class LoginScreensController extends ConsumerState<LoginScreens> {
   @override
   void initState() {
     super.initState();
+    isEmailChanged = globals.userEmail!;
     emailController = TextEditingController();
     passwordController = TextEditingController();
   }
@@ -99,68 +101,84 @@ class LoginScreensController extends ConsumerState<LoginScreens> {
         isLoading = true;
       });
       if (connectivityStatusProvider == ConnectivityStatus.isConnected) {
-        if (isChecked == true) {
-          final res = await AuthService().userLogin(
-              email: emailController.text.trim(),
-              password: passwordController.text.trim(),
-              cxt: context);
-          await globals.init();
-          await AuthService().updateDeviceToken();
-
-          if (res.statusCode == 200 || res.statusCode == 201) {
-            if (globals.isEmailVerified == false) {
-              setState(() {
-                isLoading = false;
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("New code sent to your email")));
-              navigateAndRemoveUntilRoute(
-                  context,
-                  ConfirmEmailAddressScreen(
-                    email: emailController.text,
-                    fromLogin: false,
-                    password: passwordController.text,
-                  ));
-            } else {
-              setState(() {
-                isLoading = false;
-              });
-
-              navigateAndReplaceRoute(
-                  context,
-                  const HomeScreenPage(
-                    imdex: 0,
-                  ));
-            }
+        final res = await AuthService().userLogin(
+          email:
+              emailController.text.isEmpty
+                  ? globals.userEmail!
+                  : emailController.text.trim(),
+          password: passwordController.text.trim(),
+          cxt: context,
+        );
+        await globals.init();
+        await AuthService().updateDeviceToken();
+        final errorMessage = getErrorMessageFromResponse(
+          res.statusCode,
+          res.body,
+        );
+        if (res.statusCode == 200 || res.statusCode == 201) {
+          if (globals.isEmailVerified == false) {
+            setState(() {
+              isLoading = false;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("New code sent to your email")),
+            );
+            navigateAndRemoveUntilRoute(
+              context,
+              ConfirmEmailAddressScreen(
+                email:
+                    emailController.text.isEmpty
+                        ? globals.userEmail!
+                        : emailController.text.trim(),
+                fromLogin: false,
+                password: passwordController.text,
+              ),
+            );
           } else {
             setState(() {
               isLoading = false;
             });
-            showCustomSnackbar(context,
-                title: "Invalid User",
-                content: res.body,
-                type: SnackbarType.error,
-                isTopPosition: false);
+
+            navigateAndReplaceRoute(context, const HomeScreenPage(imdex: 0));
           }
+        } else if (errorMessage == "User Email Not Yet Verify") {
+          setState(() {
+            isLoading = false;
+          });
+          navigateAndRemoveUntilRoute(
+            context,
+            ConfirmEmailAddressScreen(
+              email:
+                  emailController.text.isEmpty
+                      ? globals.userEmail!
+                      : emailController.text.trim(),
+              fromLogin: false,
+              password: passwordController.text,
+            ),
+          );
         } else {
           setState(() {
             isLoading = false;
           });
-          showCustomSnackbar(context,
-              title: "Terms of Service",
-              content: "Please accept terms & condition",
-              type: SnackbarType.error,
-              isTopPosition: false);
+          showCustomSnackbar(
+            context,
+            title: "Invalid User",
+            content: errorMessage,
+            type: SnackbarType.error,
+            isTopPosition: false,
+          );
         }
       } else {
         setState(() {
           isLoading = false;
         });
-        showCustomSnackbar(context,
-            title: "Network Connection",
-            content: "No Internet Connection",
-            type: SnackbarType.error,
-            isTopPosition: false);
+        showCustomSnackbar(
+          context,
+          title: "Network Connection",
+          content: "No Internet Connection",
+          type: SnackbarType.error,
+          isTopPosition: false,
+        );
       }
       setState(() {
         isLoading = false;
@@ -172,36 +190,33 @@ class LoginScreensController extends ConsumerState<LoginScreens> {
     var connectivityStatusProvider = ref.read(connectivityStatusProviders);
 
     if (connectivityStatusProvider == ConnectivityStatus.isConnected) {
-      if (isChecked == true) {
-        final res = await AuthService().signInWithGoogle();
-        if (res.statusCode == 200 || res.statusCode == 201) {
-          await globals.init();
-          await AuthService().updateDeviceToken();
-          navigateAndReplaceRoute(
-              context,
-              const HomeScreenPage(
-                imdex: 0,
-              ));
-        } else {
-          showCustomSnackbar(context,
-              title: "Authentication",
-              content: res.body,
-              type: SnackbarType.error,
-              isTopPosition: false);
-        }
+      final res = await AuthService().signInWithGoogle();
+      final errorMessage = getErrorMessageFromResponse(
+        res.statusCode,
+        res.body,
+      );
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        await globals.init();
+        await AuthService().updateDeviceToken();
+
+        navigateAndReplaceRoute(context, const HomeScreenPage(imdex: 0));
       } else {
-        showCustomSnackbar(context,
-            title: "Terms of Service",
-            content: "Please accept terms & condition",
-            type: SnackbarType.error,
-            isTopPosition: false);
+        showCustomSnackbar(
+          context,
+          title: "Authentication Error",
+          content: errorMessage,
+          type: SnackbarType.error,
+          isTopPosition: false,
+        );
       }
     } else {
-      showCustomSnackbar(context,
-          title: "Network Connection",
-          content: "No Internet Connection",
-          type: SnackbarType.error,
-          isTopPosition: false);
+      showCustomSnackbar(
+        context,
+        title: "Network Connection",
+        content: "No Internet Connection",
+        type: SnackbarType.error,
+        isTopPosition: false,
+      );
     }
     setState(() {
       isLoading = false;
@@ -212,45 +227,39 @@ class LoginScreensController extends ConsumerState<LoginScreens> {
     var connectivityStatusProvider = ref.read(connectivityStatusProviders);
 
     if (connectivityStatusProvider == ConnectivityStatus.isConnected) {
-      if (isChecked == true) {
-        final res = await AuthService().signInWithApple();
-        if (res.statusCode == 200 || res.statusCode == 201) {
-          await globals.init();
-          await AuthService().updateDeviceToken();
-          navigateAndReplaceRoute(
-              context,
-              const HomeScreenPage(
-                imdex: 0,
-              ));
-        } else {
-          showCustomSnackbar(context,
-              title: "Authentication",
-              content: res.body,
-              type: SnackbarType.error,
-              isTopPosition: false);
-        }
+      final res = await AuthService().signInWithApple();
+      final errorMessage = getErrorMessageFromResponse(
+        res.statusCode,
+        res.body,
+      );
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        await globals.init();
+        await AuthService().updateDeviceToken();
+        navigateAndReplaceRoute(context, const HomeScreenPage(imdex: 0));
       } else {
-        showCustomSnackbar(context,
-            title: "Terms of Service",
-            content: "Please accept terms & condition",
-            type: SnackbarType.error,
-            isTopPosition: false);
+        showCustomSnackbar(
+          context,
+          title: "Authentication Error",
+          content: errorMessage,
+          type: SnackbarType.error,
+          isTopPosition: false,
+        );
       }
     } else {
-      showCustomSnackbar(context,
-          title: "Network Connection",
-          content: "No Internet Connection",
-          type: SnackbarType.error,
-          isTopPosition: false);
+      showCustomSnackbar(
+        context,
+        title: "Network Connection",
+        content: "No Internet Connection",
+        type: SnackbarType.error,
+        isTopPosition: false,
+      );
     }
     setState(() {
       isLoading = false;
     });
   }
 
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email', 'profile'],
-  );
+  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
   google1() async {
     await _googleSignIn.signOut();
   }

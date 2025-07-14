@@ -11,10 +11,7 @@ import '../../../components/utils/package_export.dart';
 class CompanySelectPage extends ConsumerStatefulWidget {
   final String isSelectionType;
 
-  const CompanySelectPage({
-    super.key,
-    required this.isSelectionType,
-  });
+  const CompanySelectPage({super.key, required this.isSelectionType});
 
   @override
   _CountryPageState createState() => _CountryPageState();
@@ -30,22 +27,38 @@ class _CountryPageState extends ConsumerState<CompanySelectPage> {
     super.initState();
     final accountProviderd = ref.read(homeProvider.notifier);
     accountProviderd.getAllLogisticsData();
-    selectedLogistics = accountProviderd.allLogisticss
-        .where((item) => item.deliveryTypes!.any((cat) =>
-            cat.toLowerCase().contains(widget.isSelectionType.toLowerCase())))
-        .toList();
-    filteredLogistics = accountProviderd.allLogisticss
-        .where((item) => item.deliveryTypes!.any((cat) =>
-            cat.toLowerCase().contains(widget.isSelectionType.toLowerCase())))
-        .toList();
+    selectedLogistics =
+        accountProviderd.allLogisticss
+            .where(
+              (item) => item.deliveryTypes!.any(
+                (cat) => cat.toLowerCase().contains(
+                  widget.isSelectionType.toLowerCase(),
+                ),
+              ),
+            )
+            .toList();
+    filteredLogistics =
+        accountProviderd.allLogisticss
+            .where(
+              (item) => item.deliveryTypes!.any(
+                (cat) => cat.toLowerCase().contains(
+                  widget.isSelectionType.toLowerCase(),
+                ),
+              ),
+            )
+            .toList();
   }
 
   void _filterItems(String query) {
     setState(() {
-      filteredLogistics = selectedLogistics
-          .where((item) =>
-              item.companyName!.toLowerCase().contains(query.toLowerCase()))
-          .toList();
+      filteredLogistics =
+          selectedLogistics
+              .where(
+                (item) => item.companyName!.toLowerCase().contains(
+                  query.toLowerCase(),
+                ),
+              )
+              .toList();
     });
   }
 
@@ -71,32 +84,40 @@ class _CountryPageState extends ConsumerState<CompanySelectPage> {
           return ListTile(
             leading: CircleAvatar(
               backgroundColor: AppColors.grey,
-              backgroundImage:
-                  NetworkImage(filteredLogistics[index].companyLogo!),
+              backgroundImage: NetworkImage(
+                filteredLogistics[index].companyLogo!,
+              ),
             ),
             title: AppText(
-                isBody: true,
-                text: "${filteredLogistics[index].companyName}",
-                textAlign: TextAlign.start,
-                fontSize: 30,
-                color: AppColors.black.withAlpha(162),
-                fontStyle: FontStyle.normal,
-                fontWeight: FontWeight.w800),
+              isBody: true,
+              text: "${filteredLogistics[index].companyName}",
+              textAlign: TextAlign.start,
+              fontSize: 18,
+              color: AppColors.black.withAlpha(162),
+              fontStyle: FontStyle.normal,
+              fontWeight: FontWeight.w800,
+            ),
             subtitle: AppText(
-                isBody: false,
-                text: "${filteredLogistics[index].companyInfo}",
-                textAlign: TextAlign.start,
-                fontSize: 35,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 3,
-                color: AppColors.black.withValues(alpha: 4),
-                fontStyle: FontStyle.normal,
-                fontWeight: FontWeight.w500),
-            trailing:
-                Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 18),
+              isBody: false,
+              text: "${filteredLogistics[index].companyInfo}",
+              textAlign: TextAlign.start,
+              fontSize: 15,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 3,
+              color: AppColors.black.withValues(alpha: 4),
+              fontStyle: FontStyle.normal,
+              fontWeight: FontWeight.w500,
+            ),
+            trailing: Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.grey,
+              size: 18,
+            ),
             onTap: () {
               Navigator.pop(
-                  context, filteredLogistics[index]); // Send back item
+                context,
+                filteredLogistics[index],
+              ); // Send back item
             },
           );
         },

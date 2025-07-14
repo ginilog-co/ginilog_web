@@ -1,8 +1,8 @@
 import 'package:ginilog_customer_app/core/components/architecture/mvc.dart';
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
-import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
+import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
 import 'package:ginilog_customer_app/core/features/bookings/controller/bookings.dart';
 import 'package:ginilog_customer_app/core/features/bookings/state/booking_state.dart';
@@ -21,42 +21,43 @@ class BookingsScreenView
     final bookings = notifier.allAccomodations;
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(11)),
-        child: Padding(
-          padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-          child: Column(
-            children: [
-              const GlobalBackButton(
-                backText: 'Bookings',
-                showBackButton: false,
-              ),
-            ],
-          ),
+      appBar: buildFlexibleAppBar(
+        context: context,
+        showBackButton: false,
+        title: AppText(
+          isBody: true,
+          text: "Bookings",
+          textAlign: TextAlign.start,
+          fontSize: 18,
+          color: AppColors.black,
+          fontStyle: FontStyle.normal,
+          fontWeight: FontWeight.w800,
         ),
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await notifier.getAllAccomodationData(forceRefresh: true);
-        },
-        child: Builder(
-          builder: (context) {
-            // if (state is BookingFailure) {
-            //   return Center(child: Text("Error: ${state.error}"));
-            // }
-
-            if (isLoading) {
-              return ListView.builder(
-                itemCount: 4,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemBuilder: (context, index) {
-                  return buildBookingShimmerCard(context);
-                },
-              );
-            }
-
-            return BookingsListTab(allAccomodations: bookings);
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await notifier.getAllAccomodationData(forceRefresh: true);
           },
+          child: Builder(
+            builder: (context) {
+              // if (state is BookingFailure) {
+              //   return Center(child: Text("Error: ${state.error}"));
+              // }
+
+              if (isLoading) {
+                return ListView.builder(
+                  itemCount: 4,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemBuilder: (context, index) {
+                    return buildBookingShimmerCard(context);
+                  },
+                );
+              }
+
+              return BookingsListTab(allAccomodations: bookings);
+            },
+          ),
         ),
       ),
     );
@@ -68,7 +69,7 @@ Widget buildBookingShimmerCard(BuildContext context) {
     baseColor: Colors.grey.shade300,
     highlightColor: Colors.grey.shade100,
     child: Container(
-      width: getScreenWidth(context),
+      width: SizeConfig.widthAdjusted(100),
       margin: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.white,
@@ -79,7 +80,7 @@ Widget buildBookingShimmerCard(BuildContext context) {
         child: Column(
           children: [
             Container(
-              width: getScreenWidth(context),
+              width: SizeConfig.widthAdjusted(100),
               height: 200,
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -103,13 +104,13 @@ Widget buildBookingShimmerCard(BuildContext context) {
                 const SizedBox(height: 10),
                 Container(
                   height: 15,
-                  width: getScreenWidth(context) * 0.8,
+                  width: SizeConfig.widthAdjusted(100) * 0.8,
                   color: Colors.white,
                 ),
                 const SizedBox(height: 5),
                 Container(
                   height: 15,
-                  width: getScreenWidth(context) * 0.6,
+                  width: SizeConfig.widthAdjusted(100) * 0.6,
                   color: Colors.white,
                 ),
               ],

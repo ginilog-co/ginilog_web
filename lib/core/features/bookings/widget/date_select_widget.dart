@@ -1,8 +1,6 @@
 import 'package:ginilog_customer_app/core/components/utils/app_buttons.dart';
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
-import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
-import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/components/widgets/custom_snackbar.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -40,8 +38,6 @@ class _BookingDateSelectState extends State<BookingDateSelect> {
 
   @override
   Widget build(BuildContext context) {
-    TextScaler textScaler = MediaQuery.of(context).textScaler;
-
     DateTime? tempStart = selectedStartDate;
     DateTime? tempEnd = selectedEndDate;
     return Dialog(
@@ -60,7 +56,7 @@ class _BookingDateSelectState extends State<BookingDateSelect> {
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                addVerticalSpacing(context, 4),
+                addVerticalSpacing(4),
                 Row(
                   children: [
                     addHorizontalSpacing(5),
@@ -68,7 +64,7 @@ class _BookingDateSelectState extends State<BookingDateSelect> {
                     Expanded(
                       child: RichText(
                         textAlign: TextAlign.start,
-                        textScaler: textScaler,
+
                         text: TextSpan(
                           style: const TextStyle(color: Colors.black),
                           children: [
@@ -78,7 +74,7 @@ class _BookingDateSelectState extends State<BookingDateSelect> {
                               style: TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.w400,
-                                fontSize: fontSized(context, 45),
+                                fontSize: 18.textSize,
                                 fontFamily: "Inter",
                               ),
                             ),
@@ -87,7 +83,7 @@ class _BookingDateSelectState extends State<BookingDateSelect> {
                               style: TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.bold,
-                                fontSize: fontSized(context, 45),
+                                fontSize: 18.textSize,
                                 fontFamily: "Mulish",
                               ),
                             ),
@@ -215,7 +211,7 @@ class _BookingDateSelectState extends State<BookingDateSelect> {
                   btnColor: AppColors.primary,
                   isLoading: false,
                 ),
-                addVerticalSpacing(context, 4),
+                addVerticalSpacing(4),
               ],
             ),
           );

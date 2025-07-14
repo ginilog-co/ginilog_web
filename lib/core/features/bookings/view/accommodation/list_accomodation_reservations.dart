@@ -1,6 +1,6 @@
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
-import 'package:ginilog_customer_app/core/components/utils/helper_functions.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
+import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/components/widgets/input.dart';
 import 'package:ginilog_customer_app/core/features/bookings/model/accomodation_reservations_response_model.dart';
@@ -78,129 +78,122 @@ class _AccomodationReservationListState
 
   @override
   Widget build(BuildContext context) {
-    TextScaler textScaler = MediaQuery.of(context).textScaler;
-    return Scaffold(
-      backgroundColor: AppColors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            accomodationReservations.isEmpty
-                ? SizedBox.shrink()
-                : Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: SerachInput(
-                    hintText: "Type an accomodation name or location here",
-                    labelText: "",
-                    readOnly: false,
-                    prefixIcon: Icons.search,
-                    prefix: Icon(
-                      Icons.search,
-                      size: 40,
-                      color: AppColors.grey.withValues(),
-                    ),
-                    keyboard: TextInputType.text,
-                    styleColor: AppColors.black,
-                    labelColor: AppColors.black,
-                    hintStyleColor: AppColors.black,
-                    onChanged: (value) {
-                      setState(() {
-                        searchQuery = value!;
-                      });
-                      _applyFilters();
-                    },
-                    validator: (value) {
-                      return null;
-                    },
-                    toggleEye: () {},
-                    onSaved: (value) {},
-                    onTap: () {},
-                  ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        accomodationReservations.isEmpty
+            ? SizedBox.shrink()
+            : Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: SerachInput(
+                hintText: "Type an accomodation name or location here",
+                labelText: "",
+                readOnly: false,
+                prefixIcon: Icons.search,
+                prefix: Icon(
+                  Icons.search,
+                  size: 20,
+                  color: AppColors.grey.withValues(),
                 ),
-            // Locality Filter Chips
-            accomodationReservations.isEmpty
-                ? SizedBox.shrink()
-                : SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
-                  ),
-                  child: Row(
-                    children:
-                        locality.map((locality) {
-                          bool isSelected = selectedLocality == locality;
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 5),
-                            child: ChoiceChip(
-                              showCheckmark: false,
-                              label: Text(locality, textScaler: textScaler),
-                              selected: isSelected,
-                              onSelected: (bool selected) {
-                                if (selected) {
-                                  _filterByLocality(locality);
-                                }
-                              },
-                              selectedColor: AppColors.primary,
-                              backgroundColor: AppColors.white,
-                              side: BorderSide(
-                                color:
-                                    isSelected
-                                        ? Colors.transparent
-                                        : AppColors.grey,
-                              ),
-                              labelStyle: TextStyle(
-                                color: isSelected ? Colors.white : Colors.black,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                  ),
-                ),
+                keyboard: TextInputType.text,
+                styleColor: AppColors.black,
+                labelColor: AppColors.black,
+                hintStyleColor: AppColors.black,
+                onChanged: (value) {
+                  setState(() {
+                    searchQuery = value!;
+                  });
+                  _applyFilters();
+                },
+                validator: (value) {
+                  return null;
+                },
+                toggleEye: () {},
+                onSaved: (value) {},
+                onTap: () {},
+              ),
+            ),
+        // Locality Filter Chips
+        accomodationReservations.isEmpty
+            ? SizedBox.shrink()
+            : SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              child: Row(
+                children:
+                    locality.map((locality) {
+                      bool isSelected = selectedLocality == locality;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                        child: ChoiceChip(
+                          showCheckmark: false,
+                          label: Text(locality),
+                          selected: isSelected,
+                          onSelected: (bool selected) {
+                            if (selected) {
+                              _filterByLocality(locality);
+                            }
+                          },
+                          selectedColor: AppColors.primary,
+                          backgroundColor: AppColors.white,
+                          side: BorderSide(
+                            color:
+                                isSelected
+                                    ? Colors.transparent
+                                    : AppColors.grey,
+                          ),
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.white : Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+              ),
+            ),
 
-            filteredTickets.isEmpty
-                ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      addVerticalSpacing(context, 55),
-                      const AppText(
-                        isBody: false,
-                        text: "Nothing to show here",
-                        textAlign: TextAlign.start,
-                        fontSize: 38,
-                        color: AppColors.black,
-                        fontStyle: FontStyle.normal,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      const AppText(
-                        isBody: true,
-                        text:
-                            "We don't have any Accomodation Reservations at the moment",
-                        textAlign: TextAlign.center,
-                        fontSize: 30,
-                        color: AppColors.black,
-                        fontStyle: FontStyle.normal,
-                        fontWeight: FontWeight.normal,
-                      ),
-                    ],
+        filteredTickets.isEmpty
+            ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  addVerticalSpacing(5),
+                  const AppText(
+                    isBody: false,
+                    text: "Nothing to show here",
+                    textAlign: TextAlign.start,
+                    fontSize: 18,
+                    color: AppColors.black,
+                    fontStyle: FontStyle.normal,
+                    fontWeight: FontWeight.bold,
                   ),
-                )
-                : ListView.builder(
-                  itemCount: filteredTickets.length,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemBuilder:
-                      (context, index) => AccomodationReservationWidget(
-                        accomodationReservation: filteredTickets[index],
-                      ),
-                ),
-          ],
-        ),
-      ),
+                  const AppText(
+                    isBody: true,
+                    text:
+                        "We don't have any Accomodation Reservations at the moment",
+                    textAlign: TextAlign.center,
+                    fontSize: 15,
+                    color: AppColors.black,
+                    fontStyle: FontStyle.normal,
+                    fontWeight: FontWeight.normal,
+                  ),
+                ],
+              ),
+            )
+            : Expanded(
+              child: ListView.builder(
+                itemCount: filteredTickets.length,
+                shrinkWrap: true,
+                physics: const ScrollPhysics(),
+                itemBuilder:
+                    (context, index) => AccomodationReservationWidget(
+                      accomodationReservation: filteredTickets[index],
+                    ),
+              ),
+            ),
+      ],
     );
   }
 }

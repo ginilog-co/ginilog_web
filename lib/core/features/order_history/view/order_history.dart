@@ -1,7 +1,7 @@
 import 'package:ginilog_customer_app/core/components/architecture/mvc.dart';
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
-import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
+import 'package:ginilog_customer_app/core/components/widgets/app_text.dart';
 import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
 import 'package:ginilog_customer_app/core/features/order_history/controller/order_history.dart';
 import 'package:ginilog_customer_app/core/features/order_history/model/package_orders_model.dart';
@@ -37,79 +37,85 @@ class OrderHistoryScreenView
         }).toList();
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(SizeConfig.heightAdjusted(22)),
-        child: Padding(
-          padding: EdgeInsets.only(top: SizeConfig.heightAdjusted(10)),
-          child: Column(
-            children: [
-              const GlobalBackButton(
-                backText: 'My Orders',
-                showBackButton: false,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(4, (index) {
-                  return ElevatedButton(
-                    onPressed: () {
-                      controller.selectTabb(index);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      elevation: 0,
-                      backgroundColor:
-                          controller.tabController.index == index
-                              ? Colors.red
-                              : Colors.white,
-                      foregroundColor:
-                          controller.tabController.index == index
-                              ? Colors.white
-                              : AppColors.grey2,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+      appBar: buildFlexibleAppBar(
+        context: context,
+        showBackButton: false,
+        title: AppText(
+          isBody: true,
+          text: "My Orders",
+          textAlign: TextAlign.start,
+          fontSize: 18,
+          color: AppColors.black,
+          fontStyle: FontStyle.normal,
+          fontWeight: FontWeight.w800,
+        ),
+        bottomWidget: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: List.generate(4, (index) {
+                return ElevatedButton(
+                  onPressed: () {
+                    controller.selectTabb(index);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    elevation: 0,
+                    backgroundColor:
+                        controller.tabController.index == index
+                            ? Colors.red
+                            : Colors.white,
+                    foregroundColor:
+                        controller.tabController.index == index
+                            ? Colors.white
+                            : AppColors.grey2,
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text(
-                      ['Pending', 'In-transit', 'Completed', 'All'][index],
-                    ),
-                  );
-                }),
-              ),
-            ],
-          ),
+                  ),
+                  child: Text(
+                    ['Pending', 'In-transit', 'Completed', 'All'][index],
+                  ),
+                );
+              }),
+            ),
+          ],
         ),
       ),
-      body: Builder(
-        builder: (context) {
-          if (isLoading) {
-            return CircularProgressIndicator(
-              color: AppColors.primary,
-              strokeWidth: 2.0,
+
+      body: SafeArea(
+        child: Builder(
+          builder: (context) {
+            if (isLoading) {
+              return CircularProgressIndicator(
+                color: AppColors.primary,
+                strokeWidth: 2.0,
+              );
+            }
+            return TabBarView(
+              physics: NeverScrollableScrollPhysics(),
+              controller: controller.tabController,
+              children: [
+                OngoingTab(
+                  ongoingOrder: pending,
+                  userPhone: controller.userPhone,
+                ),
+                OngoingTab(
+                  ongoingOrder: ongoingOrder,
+                  userPhone: controller.userPhone,
+                ),
+                CompletedTab(
+                  completedOrder: completedOrder,
+                  userPhone: controller.userPhone,
+                ),
+                AllOrderListTab(
+                  allOrder: data,
+                  userPhone: controller.userPhone,
+                ),
+              ],
             );
-          }
-          return TabBarView(
-            physics: NeverScrollableScrollPhysics(),
-            controller: controller.tabController,
-            children: [
-              OngoingTab(
-                ongoingOrder: pending,
-                userPhone: controller.userPhone,
-              ),
-              OngoingTab(
-                ongoingOrder: ongoingOrder,
-                userPhone: controller.userPhone,
-              ),
-              CompletedTab(
-                completedOrder: completedOrder,
-                userPhone: controller.userPhone,
-              ),
-              AllOrderListTab(allOrder: data, userPhone: controller.userPhone),
-            ],
-          );
-        },
+          },
+        ),
       ),
     );
   }

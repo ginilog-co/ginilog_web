@@ -1,8 +1,8 @@
 // ignore_for_file: prefer_const_constructors, constant_identifier_names, annotate_overrides, overridden_fields, use_key_in_widget_constructors, must_be_immutable
 
 import 'package:ginilog_customer_app/core/components/utils/package_export.dart';
+import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import '../utils/colors.dart';
-import 'app_text.dart';
 
 class SerachInput extends StatelessWidget {
   final String? hintText;
@@ -97,7 +97,7 @@ class SerachInput extends StatelessWidget {
       readOnly: readOnly,
       style: TextStyle(
         color: styleColor ?? AppColors.white,
-        fontSize: fontSized(context, 122),
+        fontSize: 25.textSize,
       ),
       decoration: InputDecoration(
         prefixIcon: prefix,
@@ -154,10 +154,11 @@ class GlobalTextField extends StatefulWidget {
   final Function(String?)? onChanged;
   final bool readOnly;
   final double? borderRadius;
-  final Function? onTap;
+  final VoidCallback? onTap;
   final Widget? prefix;
   final Widget? suffix;
   final bool isNotePad;
+  final String? confirmPasswordMatch;
   GlobalTextField({
     super.key,
     required this.fieldName,
@@ -177,6 +178,7 @@ class GlobalTextField extends StatefulWidget {
     this.prefix,
     this.suffix,
     this.isNotePad = false,
+    this.confirmPasswordMatch,
   });
 
   @override
@@ -186,7 +188,6 @@ class GlobalTextField extends StatefulWidget {
 class _GlobalTextFieldState extends State<GlobalTextField> {
   @override
   Widget build(BuildContext context) {
-    //  TextScaler textScaler = MediaQuery.of(context).textScaler;
     return TextFormField(
       controller: widget.textController,
       keyboardType: widget.keyBoardType,
@@ -194,114 +195,124 @@ class _GlobalTextFieldState extends State<GlobalTextField> {
       focusNode: widget.focusNode,
       onChanged: widget.onChanged,
       readOnly: widget.readOnly,
-      onTap: widget.onTap as void Function()?,
+      onTap: widget.onTap,
       enabled: true,
-      maxLines: widget.isNotePad == true ? 10 : 1,
-      minLines: widget.isNotePad == true ? 6 : 1,
+      maxLines: widget.isNotePad ? 10 : 1,
+      minLines: widget.isNotePad ? 6 : 1,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       textAlign: widget.isCenterText ? TextAlign.center : TextAlign.start,
       textCapitalization:
           widget.keyBoardType == TextInputType.name
               ? TextCapitalization.sentences
               : TextCapitalization.none,
-      inputFormatters: [
-        widget.removeSpace
-            ? FilteringTextInputFormatter.deny(RegExp(r"\s\b|\b\s"))
-            : LengthLimitingTextInputFormatter(widget.maxLength),
-        widget.keyBoardType == TextInputType.phone
-            ? FilteringTextInputFormatter.deny(RegExp(r'^0+'))
-            : LengthLimitingTextInputFormatter(widget.maxLength),
-        LengthLimitingTextInputFormatter(widget.maxLength),
-        widget.keyBoardType == TextInputType.number
-            ? FilteringTextInputFormatter.digitsOnly
-            : LengthLimitingTextInputFormatter(widget.maxLength),
-      ],
+      inputFormatters: _buildInputFormatters(),
       style: TextStyle(
         color: AppColors.black,
         fontFamily: "Mulish",
-        fontSize: fontSized(context, 35),
+        fontSize: 17.textSize,
       ),
       decoration: InputDecoration(
         floatingLabelBehavior: FloatingLabelBehavior.auto,
         labelText: widget.fieldName,
         isDense: true,
-        contentPadding: const EdgeInsets.only(top: 15, bottom: 15, left: 5),
+        contentPadding: EdgeInsets.symmetric(
+          vertical: 2.heightAdjusted,
+          horizontal: 2.widthAdjusted,
+        ),
         suffixIcon:
-            widget.isEyeVisible == true
-                ? Visibility(
-                  visible: widget.isEyeVisible,
-                  child: IconButton(
-                    onPressed:
-                        () => setState(
-                          () => widget.obscureText = !widget.obscureText,
-                        ),
-                    icon:
-                        widget.obscureText
-                            ? Icon(
-                              Icons.visibility_outlined,
-                              color: AppColors.black,
-                              size: 25,
-                            )
-                            : Icon(
-                              Icons.visibility_off_outlined,
-                              color: AppColors.black,
-                              size: 25,
-                            ),
+            widget.isEyeVisible
+                ? IconButton(
+                  onPressed: () {
+                    setState(() {
+                      widget.obscureText = !widget.obscureText;
+                    });
+                  },
+                  icon: Icon(
+                    widget.obscureText
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    color: AppColors.black,
+                    size: 25,
                   ),
                 )
                 : widget.suffix,
         prefix: widget.prefix,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(widget.borderRadius ?? 5),
-          borderSide: BorderSide(color: AppColors.darkBlue, width: 1),
-          gapPadding: 40,
+          borderSide: BorderSide(color: AppColors.grey2, width: 0.5),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(widget.borderRadius ?? 5),
-          borderSide: BorderSide(color: AppColors.grey2, width: 1.5),
+          borderSide: BorderSide(color: AppColors.grey2, width: 0.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(widget.borderRadius ?? 5),
-          borderSide: const BorderSide(color: Colors.red, width: 1),
+          borderSide: const BorderSide(color: Colors.red, width: 0.5),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(widget.borderRadius ?? 5),
-          borderSide: BorderSide(color: AppColors.darkBlue, width: 1),
+          borderSide: BorderSide(color: AppColors.primary, width: 0.5),
         ),
       ),
-      validator: (value) {
-        if (widget.isOptional && value!.isEmpty) {
-          return null;
-        }
-
-        if (value!.isEmpty) {
-          return 'This input is empty';
-        } else if (widget.obscureText == true) {
-          final passwordRegex = RegExp(
-            r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{8,}$',
-          );
-          if (!passwordRegex.hasMatch(value)) {
-            return 'Password must contain uppercase, lowercase, and number';
-          }
-        } else if (widget.keyBoardType == TextInputType.emailAddress) {
-          String trimValue = widget.textController.text.trim();
-          if (EmailValidator.validate(trimValue) == false) {
-            return 'Not a valid email';
-          }
-        } else if (widget.keyBoardType == TextInputType.phone) {
-          if (value.length != 10) {
-            return 'Phone number must be 10 digits';
-          }
-        } else if (widget.keyBoardType == TextInputType.number) {
-          final numberOnlyRegex = RegExp(r'^\d+$');
-          if (!numberOnlyRegex.hasMatch(value)) {
-            return 'Only digits are allowed. No special characters.';
-          }
-        } else {
-          return null;
-        }
-        return null;
-      },
+      validator: (value) => _validateField(value),
     );
+  }
+
+  List<TextInputFormatter> _buildInputFormatters() {
+    List<TextInputFormatter> formatters = [];
+
+    if (widget.removeSpace) {
+      formatters.add(FilteringTextInputFormatter.deny(RegExp(r"\s\b|\b\s")));
+    }
+
+    if (widget.keyBoardType == TextInputType.phone) {
+      formatters.add(FilteringTextInputFormatter.deny(RegExp(r'^0+')));
+    }
+
+    if (widget.keyBoardType == TextInputType.number) {
+      formatters.add(FilteringTextInputFormatter.digitsOnly);
+    }
+
+    formatters.add(LengthLimitingTextInputFormatter(widget.maxLength));
+
+    return formatters;
+  }
+
+  String? _validateField(String? value) {
+    if (widget.isOptional && (value == null || value.isEmpty)) {
+      return null;
+    }
+
+    if (value == null || value.isEmpty) {
+      return 'This input is empty';
+    }
+
+    if (widget.obscureText) {
+      // Confirm password match check (only for confirm password field)
+      if (widget.confirmPasswordMatch != null &&
+          value != widget.confirmPasswordMatch) {
+        return 'Passwords do not match';
+      }
+    }
+
+    if (widget.keyBoardType == TextInputType.emailAddress) {
+      String trimmed = value.trim();
+      if (!EmailValidator.validate(trimmed)) {
+        return 'Not a valid email';
+      }
+    }
+
+    if (widget.keyBoardType == TextInputType.phone && value.length != 10) {
+      return 'Phone number must be 10 digits';
+    }
+
+    if (widget.keyBoardType == TextInputType.number) {
+      final numberOnlyRegex = RegExp(r'^\d+$');
+      if (!numberOnlyRegex.hasMatch(value)) {
+        return 'Only digits are allowed. No special characters.';
+      }
+    }
+
+    return null;
   }
 }
