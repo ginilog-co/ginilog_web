@@ -46,19 +46,13 @@ namespace Ginilog_Company_WebDasboard.Models
         public string? StaffCode { get; set; }
         [Required(AllowEmptyStrings = false, ErrorMessage = "Phone Number required")]
         public string? PhoneNo { get; set; }
-        [Required(AllowEmptyStrings = false, ErrorMessage = "Phone Number required")]
-        public string? State { get; set; }
-        [Required(AllowEmptyStrings = false, ErrorMessage = "State Number required")]
-        public string? Locality { get; set; }
-        [Required(AllowEmptyStrings = false, ErrorMessage = "City Number required")]
+        [Required(AllowEmptyStrings = false, ErrorMessage = "Address Number required")]
         public string? Address { get; set; }
         [Required(AllowEmptyStrings = false, ErrorMessage = "Branch Number required")]
         public string? Branch { get; set; }
         [Required(AllowEmptyStrings = false, ErrorMessage = "Company Name required")]
         public string? CompanyName { get; set; }
         [Required(AllowEmptyStrings = false, ErrorMessage = "Company UserName required")]
-        public string? CompanyUserName { get; set; }
-        [Required(AllowEmptyStrings = false, ErrorMessage = "Company Type required")]
         public string? CompanyType { get; set; }
     }
     public class AddMainAdminRequest

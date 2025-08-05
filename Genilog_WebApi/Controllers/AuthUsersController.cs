@@ -596,6 +596,12 @@ namespace Genilog_WebApi.Controllers
             else
             {
                 await newUsersRepository.DeleteAsync(id);
+                var token = await userRepository.GetAllDeviceTokenAsync();
+                token = token.Where(x => x.UserId == user.Id);
+                foreach (var item in token)
+                {
+                    await userRepository.DeleteDeviceTokenModelAsync(item.DeviceTokenId!);
+                }
                 var error = new ErrorModel()
                 {
                     Message = "Deleted Successfully",

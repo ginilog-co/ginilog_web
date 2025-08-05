@@ -80,6 +80,7 @@
                                         <input asp-for="Email" type="email" class="form-control form-control-lg border-left-0" placeholder="Email">
                                        
                                     </div>
+                                    <span class="text-danger">@ViewBag.UserError</span>
                                     <span asp-validation-for="Email" class="text-danger"></span>
                                 </div>
 
@@ -94,6 +95,7 @@
                                         <input asp-for="PhoneNo" type="tel" class="form-control form-control-lg border-left-0" placeholder="Phone Number">
                                        
                                     </div>
+                                    <span class="text-danger">@ViewBag.UserError</span>
                                     <span asp-validation-for="PhoneNo" class="text-danger"></span>
                                 </div>
 
@@ -126,22 +128,8 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label>Company UserName</label>
-                                    <div class="input-group">
-                                        <div class="input-group-prepend bg-transparent">
-                                            <span class="input-group-text bg-transparent border-right-0">
-                                                <i class="mdi mdi-account-outline text-primary"></i>
-                                            </span>
-                                        </div>
-                                        <input asp-for="CompanyUserName" type="text" class="form-control form-control-lg border-left-0" placeholder="Company UserName">
-                                       
-                                    </div>
-                                    <span asp-validation-for="CompanyUserName" class="text-danger"></span>
-                                </div>
-
-                                <div class="form-group">
                                     <label>Sex</label>
-                                    <select asp-for="Sex" class="form-control form-control-lg" id="exampleFormControlSelect2">
+                                    <select asp-for="Sex" class="form-control form-control-lg border-left-0" id="exampleFormControlSelect2">
                                         <option value="">Choose Gender</option>
                                         <option value="Male">Male</option>
                                         <option value="Female">Female</option>
@@ -151,7 +139,7 @@
 
                                 <div class="form-group">
                                     <label>Company Type</label>
-                                    <select asp-for="CompanyType" class="form-control form-control-lg" id="exampleFormControlSelect2">
+                                    <select asp-for="CompanyType" class="form-control form-control-lg border-left-0" id="exampleFormControlSelect2">
                                         <option value="">Choose Company Type</option>
                                         <option value="Logistics">Logistics</option>
                                         <option value="Accommodation">Accommodation</option>
@@ -201,33 +189,8 @@
                                     <span asp-validation-for="Branch" class="text-danger"></span>
                                 </div>
 
-                                <div class="form-group">
-                                    <label>City</label>
-                                    <div class="input-group">
-                                        <div class="input-group-prepend bg-transparent">
-                                            <span class="input-group-text bg-transparent border-right-0">
-                                                <i class="mdi mdi-lock-outline text-primary"></i>
-                                            </span>
-                                        </div>
-                                        <input asp-for="Locality" type="text" class="form-control form-control-lg border-left-0" id="exampleInputPassword" placeholder="City">
-                                        <span asp-validation-for="Locality" class="text-danger"></span>
-                                    </div>
-                                    <span asp-validation-for="Locality" class="text-danger"></span>
-                                </div>
+                         
 
-                                <div class="form-group">
-                                    <label>State</label>
-                                    <div class="input-group">
-                                        <div class="input-group-prepend bg-transparent">
-                                            <span class="input-group-text bg-transparent border-right-0">
-                                                <i class="mdi mdi-lock-outline text-primary"></i>
-                                            </span>
-                                        </div>
-                                        <input asp-for="State" type="text" class="form-control form-control-lg border-left-0" id="exampleInputPassword" placeholder="State">
-                                      
-                                    </div>
-                                    <span asp-validation-for="State" class="text-danger"></span>
-                                </div>
 
                                 <div class="mb-4">
                                     <div class="form-check">
