@@ -70,6 +70,10 @@ namespace Genilog_landing_page.Controllers
             return View();
         }
 
-       
+        public IActionResult TermsOfService()
+        {
+            return View();
+        }
+
     }
 }

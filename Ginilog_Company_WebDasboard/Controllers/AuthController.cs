@@ -47,7 +47,7 @@ namespace Ginilog_Company_WebDasboard.Controllers
         {
             LocationDataDetail data = new();
             using var httpClient = new HttpClient();
-            using var response = await httpClient.GetAsync($"https://maps.googleapis.com/maps/api/place/details/json?placeid={id}&key=AIzaSyCuU7j9XnHs31-I6NE7cz_SxOw3lzScFuo");
+            using var response = await httpClient.GetAsync($"https://maps.googleapis.com/maps/api/place/details/json?placeid={id}&key=AIzaSyA1WkH5DbnyUVLhPtqo_qj3Bmr0uKPolSw");
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 string apiResponse = await response.Content.ReadAsStringAsync();
@@ -375,7 +375,7 @@ namespace Ginilog_Company_WebDasboard.Controllers
                         AdminType = "Manager",
                         FirstName =requset.FirstName,
                         SurName =requset.SurName,
-                        StaffCode =requset.StaffCode,
+                        StaffCode ="Staff",
                         CompanyName =requset.CompanyName,
                         CompanyUserName =requset.CompanyName,
                         CompanyType=errors,

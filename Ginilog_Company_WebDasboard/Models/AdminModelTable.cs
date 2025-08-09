@@ -42,8 +42,6 @@ namespace Ginilog_Company_WebDasboard.Models
         public string? Password { get; set; }
         [Required(AllowEmptyStrings = false, ErrorMessage = "Sex required")]
         public string? Sex { get; set; }
-        [Required(AllowEmptyStrings = false, ErrorMessage = "Staff Code required")]
-        public string? StaffCode { get; set; }
         [Required(AllowEmptyStrings = false, ErrorMessage = "Phone Number required")]
         public string? PhoneNo { get; set; }
         [Required(AllowEmptyStrings = false, ErrorMessage = "Address Number required")]
