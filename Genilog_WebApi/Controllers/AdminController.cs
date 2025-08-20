@@ -48,8 +48,7 @@ namespace Genilog_WebApi.Controllers
             if (user != null)
             {
                 var userD = await usersRepository.GetAsync(user.Id);
-                if (user.UserType == "Super_Admin"|| user.UserType == "Admin" || user.UserType == "Manager" 
-                    || user.UserType == "StaffAdmin" || user.UserType == "Staff")
+                if (user.UserType == "Super_Admin"|| user.UserType == "Admin" )
                 {
                     //generate jwt token
                     var token = tokenHandler.CreateTokenAsync(user);
