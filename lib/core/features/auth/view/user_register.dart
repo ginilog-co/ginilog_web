@@ -1,4 +1,3 @@
-import 'package:country_code_picker/country_code_picker.dart';
 import 'package:ginilog_customer_app/core/components/utils/size_config.dart';
 import 'package:ginilog_customer_app/core/components/widgets/back_icon.dart';
 import 'package:flutter/gestures.dart';
@@ -40,7 +39,7 @@ class RegisterScreenView
                       Text(
                         "Create an Account",
                         style: TextStyle(
-                          fontSize: 20.textSize,
+                          fontSize: 18.textSize,
                           color: AppColors.black,
                           fontWeight: FontWeight.bold,
                           fontFamily: "Inter",
@@ -61,7 +60,7 @@ class RegisterScreenView
                   Text(
                     "First Name",
                     style: TextStyle(
-                      fontSize: 20.textSize,
+                      fontSize: 18.textSize,
                       color: AppColors.black,
                       fontWeight: FontWeight.w200,
                       fontFamily: "Inter",
@@ -80,7 +79,7 @@ class RegisterScreenView
                   Text(
                     "Last Name",
                     style: TextStyle(
-                      fontSize: 20.textSize,
+                      fontSize: 18.textSize,
                       color: AppColors.black,
                       fontWeight: FontWeight.w200,
                       fontFamily: "Inter",
@@ -99,7 +98,7 @@ class RegisterScreenView
                   Text(
                     "Email Address",
                     style: TextStyle(
-                      fontSize: 20.textSize,
+                      fontSize: 18.textSize,
                       color: AppColors.black,
                       fontWeight: FontWeight.w200,
                       fontFamily: "Inter",
@@ -115,75 +114,27 @@ class RegisterScreenView
                     },
                   ),
                   addVerticalSpacing(1),
-                  Row(
-                    children: [
-                      Container(
-                        height: 6.8.heightAdjusted,
-                        decoration: BoxDecoration(
-                          border: Border(
-                            top: BorderSide(color: AppColors.grey2, width: 0.5),
-                            bottom: BorderSide(
-                              color: AppColors.grey2,
-                              width: 0.5,
-                            ),
-                            left: BorderSide(
-                              color: AppColors.grey2,
-                              width: 0.5,
-                            ),
-                            right: BorderSide(
-                              color: AppColors.grey2,
-                              width: 0.5,
-                            ),
-                            // left is intentionally omitted
-                          ),
-                          borderRadius: BorderRadius.only(
-                            topRight: Radius.circular(5),
-                            topLeft: Radius.circular(5),
-                            bottomRight: Radius.circular(5),
-                            bottomLeft: Radius.circular(5),
-                          ),
-                        ),
-                        child: CountryCodePicker(
-                          showDropDownButton: true,
-                          padding: EdgeInsets.all(0),
-                          flagWidth: 12,
-                          showFlag: false,
-                          onChanged: (CountryCode country) {
-                            controller.phoneNoCountryCodeChanged(
-                              country.dialCode!,
-                            );
-                          },
-                          initialSelection: 'NG', // Default country
-                          favorite: [
-                            '+1',
-                            '+91',
-                            '+44',
-                          ], // Prioritize commonly used codes
-                          showCountryOnly: true,
-                          showOnlyCountryWhenClosed: false,
-                          alignLeft: false,
-                        ),
-                      ),
-                      addHorizontalSpacing(1),
-                      Expanded(
-                        child: GlobalTextField(
-                          fieldName: 'Phone Number',
-                          keyBoardType: TextInputType.phone,
-                          obscureText: false,
-                          maxLength: 10,
-                          textController: controller.phoneNo,
-                          onChanged: (String? value) {
-                            controller.phoneNoChanged(value!);
-                          },
-                        ),
-                      ),
-                    ],
+                  Text(
+                    "Phone Number",
+                    style: TextStyle(
+                      fontSize: 18.textSize,
+                      color: AppColors.black,
+                      fontWeight: FontWeight.w200,
+                      fontFamily: "Inter",
+                    ),
+                  ),
+                  GlobalPhoneTextField(
+                    fieldName: 'Phone Number',
+                    textController: controller.phoneNo,
+                    onChanged: (value) {
+                      controller.phoneNoChanged(value!.completeNumber);
+                    },
                   ),
                   addVerticalSpacing(1),
                   Text(
                     "Password",
                     style: TextStyle(
-                      fontSize: 20.textSize,
+                      fontSize: 18.textSize,
                       color: AppColors.black,
                       fontWeight: FontWeight.w200,
                       fontFamily: "Inter",
@@ -280,7 +231,7 @@ class RegisterScreenView
                         onPressed: () {},
                         widthPercent: 100,
                         heightPercent: 6,
-                        fontSize: 35,
+                        fontSize: 15,
                         btnColor: AppColors.grey,
                         isLoading: controller.isLoading,
                       )
@@ -291,7 +242,7 @@ class RegisterScreenView
                         },
                         widthPercent: 100,
                         heightPercent: 6,
-                        fontSize: 35,
+                        fontSize: 15,
                         btnColor: AppColors.primary,
                         isLoading: controller.isLoading,
                       ),

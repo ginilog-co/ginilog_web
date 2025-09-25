@@ -112,10 +112,85 @@ class AuthService {
     ).join();
   }
 
+  // Future<http.Response> signInWithApple() async {
+  //   try {
+  //     final rawNonce = generateNonce();
+  //     final nonce = sha256ofString(rawNonce);
+  //     final appleCredential = await SignInWithApple.getAppleIDCredential(
+  //       scopes: [
+  //         AppleIDAuthorizationScopes.email,
+  //         AppleIDAuthorizationScopes.fullName,
+  //       ],
+  //       nonce: nonce,
+  //     );
+  //     printData("Auth Code", appleCredential.authorizationCode);
+  //     final oauthCredential = OAuthProvider(
+  //       "apple.com",
+  //     ).credential(idToken: appleCredential.identityToken, rawNonce: rawNonce);
+  //     User? firebaseUser =
+  //         (await firebaseAuth.signInWithCredential(oauthCredential)).user;
+  //     String fullName = firebaseUser?.displayName ?? "";
+  //     List<String> nameParts = fullName.split(" ");
+  //     String firstName = nameParts.isNotEmpty ? nameParts.first : "";
+  //     String lastName =
+  //         nameParts.length > 1 ? nameParts.sublist(1).join(" ") : "";
+  //     Map<String, String> headers = {
+  //       'Content-Type': 'application/json',
+  //       'Accept': 'application/json',
+  //     };
+  //     var url = Uri.parse("${Endpoints.baseUrl}AuthUsers/auth-login");
+  //     final msg = jsonEncode({
+  //       "email": firebaseUser?.email,
+  //       "idToken": firebaseUser?.uid,
+  //       "externalId": firebaseUser?.uid,
+  //       "firstName": firstName,
+  //       "lastName": lastName.isNotEmpty ? lastName : "LastName",
+  //       "profilePicture": firebaseUser?.photoURL ?? "",
+  //       "phoneNo": firebaseUser?.phoneNumber ?? "0",
+  //     });
+  //     http.Response response = await http.post(
+  //       url,
+  //       body: msg,
+  //       headers: headers,
+  //     );
+  //     printData("Status code", response.statusCode);
+
+  //     if (response.statusCode == 200 || response.statusCode == 201) {
+  //       LoginResponseModel loginResponseModel = LoginResponseModel.fromJson(
+  //         jsonDecode(response.body),
+  //       );
+  //       setToLocalStorage(name: "token", data: loginResponseModel.token);
+  //       setToLocalStorage(name: "userPassword", data: firebaseUser?.uid);
+  //       setToLocalStorage(name: "userEmail", data: loginResponseModel.email);
+  //       setToLocalStorage(name: "userId", data: loginResponseModel.userId);
+  //       setToLocalStorage(name: "userName", data: loginResponseModel.fullName);
+  //       setToLocalStorage(
+  //         name: "profilePicture",
+  //         data: loginResponseModel.profileImage,
+  //       );
+  //       setBoolToLocalStorage(name: "isHomeLoaded", data: true);
+  //       setBoolToLocalStorage(
+  //         name: "isEmailVerified",
+  //         data: loginResponseModel.emailVerified,
+  //       );
+  //       await globals.init();
+  //       return response;
+  //     } else {
+  //       printData("Authenticate", 'Failed to authenticate');
+  //       return response;
+  //     }
+  //   } catch (error) {
+  //     printData("Authenticate", 'Error signing in with Google: $error');
+  //     return Future.error(handleHttpError(error));
+  //   }
+  // }
+
   Future<http.Response> signInWithApple() async {
     try {
       final rawNonce = generateNonce();
       final nonce = sha256ofString(rawNonce);
+
+      // Request Apple credentials
       final appleCredential = await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
@@ -123,31 +198,45 @@ class AuthService {
         ],
         nonce: nonce,
       );
-      printData("Auth Code", appleCredential.authorizationCode);
+      printData("Apple Identity Token", appleCredential.identityToken);
+      printData("Apple Auth Code", appleCredential.authorizationCode);
+      // Build OAuthCredential for Firebase
       final oauthCredential = OAuthProvider(
         "apple.com",
       ).credential(idToken: appleCredential.identityToken, rawNonce: rawNonce);
+
+      // Sign in to Firebase
       User? firebaseUser =
           (await firebaseAuth.signInWithCredential(oauthCredential)).user;
-      String fullName = firebaseUser?.displayName ?? "";
+
+      if (firebaseUser == null) {
+        throw Exception("Firebase user is null after Apple sign-in.");
+      }
+
+      // Extract user details
+      String fullName = firebaseUser.displayName ?? "";
       List<String> nameParts = fullName.split(" ");
       String firstName = nameParts.isNotEmpty ? nameParts.first : "";
       String lastName =
           nameParts.length > 1 ? nameParts.sublist(1).join(" ") : "";
+
+      // Send details to your backend
       Map<String, String> headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       };
+
       var url = Uri.parse("${Endpoints.baseUrl}AuthUsers/auth-login");
       final msg = jsonEncode({
-        "email": firebaseUser?.email,
-        "idToken": firebaseUser?.uid,
-        "externalId": firebaseUser?.uid,
+        "email": firebaseUser.email,
+        "idToken": appleCredential.identityToken, // ✅ FIX: real Apple token
+        "externalId": firebaseUser.uid, // ✅ Firebase UID
         "firstName": firstName,
         "lastName": lastName.isNotEmpty ? lastName : "LastName",
-        "profilePicture": firebaseUser?.photoURL ?? "",
-        "phoneNo": firebaseUser?.phoneNumber ?? "0",
+        "profilePicture": firebaseUser.photoURL ?? "",
+        "phoneNo": firebaseUser.phoneNumber ?? "0",
       });
+
       http.Response response = await http.post(
         url,
         body: msg,
@@ -159,8 +248,10 @@ class AuthService {
         LoginResponseModel loginResponseModel = LoginResponseModel.fromJson(
           jsonDecode(response.body),
         );
+
+        // Save locally
         setToLocalStorage(name: "token", data: loginResponseModel.token);
-        setToLocalStorage(name: "userPassword", data: firebaseUser?.uid);
+        setToLocalStorage(name: "userPassword", data: firebaseUser.uid);
         setToLocalStorage(name: "userEmail", data: loginResponseModel.email);
         setToLocalStorage(name: "userId", data: loginResponseModel.userId);
         setToLocalStorage(name: "userName", data: loginResponseModel.fullName);
@@ -174,13 +265,13 @@ class AuthService {
           data: loginResponseModel.emailVerified,
         );
         await globals.init();
-        return response;
       } else {
         printData("Authenticate", 'Failed to authenticate');
-        return response;
       }
+
+      return response;
     } catch (error) {
-      printData("Authenticate", 'Error signing in with Google: $error');
+      printData("Authenticate", 'Error signing in with Apple: $error');
       return Future.error(handleHttpError(error));
     }
   }

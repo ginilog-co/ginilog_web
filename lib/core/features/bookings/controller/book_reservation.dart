@@ -240,7 +240,7 @@ class BookReservationScreenController
               customerName:
                   "${fistNameTec.text.trim()} ${lastNameTEC.text.trim()}",
               customerEmail: email.text.trim(),
-              customerPhoneNumber: "$selectedCountryCode${phoneNo.text.trim()}",
+              customerPhoneNumber: isPhoneNoChanged,
               numberOfGuests: int.parse(numberOfGuest.text.trim()),
               comment: comment.text.isEmpty ? "" : comment.text.trim(),
               reservationStartDate: reservationStartDate.text.trim(),

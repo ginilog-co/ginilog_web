@@ -194,7 +194,7 @@ class RegisterScreenController extends ConsumerState<RegisterScreen> {
             lastName: lastNameTEC.text.trim(),
             email: email.text.trim(),
             password: password.text.trim(),
-            phoneNo: "$selectedCountryCode${phoneNo.text.trim()}",
+            phoneNo: isPhoneNoChanged,
           );
           var response = await AuthService().register(
             registerModel: userRegisterModel,

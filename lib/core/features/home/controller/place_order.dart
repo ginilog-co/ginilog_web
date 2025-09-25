@@ -548,7 +548,7 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
           packageImageLists: imageUrls,
           // Sender
           senderName: senderName.text.trim(),
-          senderPhoneNo: originPhoneNoTec.text.trim(),
+          senderPhoneNo: isOriginPhoneNoChanged,
           senderEmail: senderEmail.text.trim(),
           senderAddress: originAddress.text.trim(),
           senderState: originStateController.text.trim(),
@@ -560,7 +560,7 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
           // Receiver
           recieverName: receiverName.text.trim(),
           recieverEmail: receiverEmail.text.trim(),
-          recieverPhoneNo: destinationPhoneNoTec.text.trim(),
+          recieverPhoneNo: isDestinationPhoneNoChanged,
           recieverAddress: destinationAddress.text.trim(),
           recieverState: destinationStateController.text.trim(),
           recieverLocality: destinationCityController.text.trim(),

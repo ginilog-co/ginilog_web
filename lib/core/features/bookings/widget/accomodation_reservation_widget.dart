@@ -64,7 +64,7 @@ class _AccomodationReservationWidgetState
                         isBody: true,
                         text: "Check In: ${data3.checkInTime}",
                         textAlign: TextAlign.start,
-                        fontSize: 55,
+                        fontSize: 18,
                         color: AppColors.black,
                         fontStyle: FontStyle.normal,
                         fontWeight: FontWeight.w500,

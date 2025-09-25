@@ -151,7 +151,7 @@ class ConfirmEmailAddressView
                   },
                   btnColor: AppColors.red,
                   text: "Send again",
-                  fontSize: 20,
+                  fontSize: 18,
                   heightPercent: 6,
                   widthPercent: 50,
                 ),

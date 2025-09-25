@@ -88,37 +88,14 @@ class BookReservationScreenView
                     },
                   ),
                   addVerticalSpacing(2),
-                  SizedBox(
-                    height: 50,
-                    child: GlobalTextField(
-                      prefix: CountryCodePicker(
-                        padding: EdgeInsets.all(0),
-                        flagWidth: 12,
-                        showFlag: true,
-                        onChanged: (CountryCode country) {
-                          controller.phoneNoCountryCodeChanged(
-                            country.dialCode!,
-                          );
-                        },
-                        initialSelection: 'US', // Default country
-                        favorite: [
-                          '+1',
-                          '+91',
-                          '+44',
-                        ], // Prioritize commonly used codes
-                        showCountryOnly: true,
-                        showOnlyCountryWhenClosed: false,
-                        alignLeft: false,
-                      ),
-                      fieldName: 'Phone Number',
-                      keyBoardType: TextInputType.phone,
-                      obscureText: false,
-                      textController: controller.phoneNo,
-                      onChanged: (String? value) {
-                        controller.phoneNoChanged(value!);
-                      },
-                    ),
+                  GlobalPhoneTextField(
+                    fieldName: 'Phone Number',
+                    textController: controller.phoneNo,
+                    onChanged: (value) {
+                      controller.phoneNoChanged(value!.completeNumber);
+                    },
                   ),
+
                   addVerticalSpacing(2),
                   GlobalTextField(
                     fieldName: 'Number Of Guest',

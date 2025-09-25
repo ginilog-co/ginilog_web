@@ -37,7 +37,7 @@ class SizeConfig {
   /// Scales font size based on device width and text scaling settings.
   static double text(double fontSize) {
     double minFontSize = screenWidth < 350 ? 10.0 : 12.0;
-    double maxFontSize = screenWidth > 600 ? 26.0 : 24.0;
+    double maxFontSize = screenWidth > 600 ? 46.0 : 44.0;
     double baseSize =
         ((fontSize * screenWidth) / 375); // 375 = reference iPhone width
 

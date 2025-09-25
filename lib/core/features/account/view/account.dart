@@ -66,7 +66,7 @@ class _LoginPageState extends ConsumerState<AccountPage> {
       backgroundColor: AppColors.white,
       appBar: buildFlexibleAppBar(
         context: context,
-
+        showBackButton: false,
         title: AppText(
           isBody: true,
           text: "My Profile",

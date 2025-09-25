@@ -158,7 +158,7 @@ class PlaceOrderScreenView
                               style: TextStyle(
                                 color: AppColors.black,
                                 fontFamily: "Mulish",
-                                fontSize: 20.textSize,
+                                fontSize: 15.textSize,
                               ),
                               textEditingController: controller.originAddress,
                               googleAPIKey:
@@ -169,7 +169,7 @@ class PlaceOrderScreenView
                                 labelStyle: TextStyle(
                                   color: AppColors.black,
                                   fontFamily: "Mulish",
-                                  fontSize: 20.textSize,
+                                  fontSize: 15.textSize,
                                 ),
                                 border: OutlineInputBorder(),
                               ),
@@ -224,15 +224,16 @@ class PlaceOrderScreenView
                               },
                             ),
                             addVerticalSpacing(0.05),
-                            GlobalTextField(
+                            GlobalPhoneTextField(
                               fieldName: 'Phone Number',
-                              keyBoardType: TextInputType.phone,
-                              obscureText: false,
                               textController: controller.originPhoneNoTec,
-                              onChanged: (String? value) {
-                                controller.originPhoneNoOnChanged(value!);
+                              onChanged: (value) {
+                                controller.originPhoneNoOnChanged(
+                                  value!.completeNumber,
+                                );
                               },
                             ),
+
                             Text(
                               "Destination Details",
 
@@ -247,7 +248,7 @@ class PlaceOrderScreenView
                               style: TextStyle(
                                 color: AppColors.black,
                                 fontFamily: "Mulish",
-                                fontSize: 20.textSize,
+                                fontSize: 15.textSize,
                               ),
                               textEditingController:
                                   controller.destinationAddress,
@@ -259,7 +260,7 @@ class PlaceOrderScreenView
                                 labelStyle: TextStyle(
                                   color: AppColors.black,
                                   fontFamily: "Mulish",
-                                  fontSize: 20.textSize,
+                                  fontSize: 15.textSize,
                                 ),
                                 border: OutlineInputBorder(),
                               ),
@@ -314,15 +315,16 @@ class PlaceOrderScreenView
                               },
                             ),
                             addVerticalSpacing(0.05),
-                            GlobalTextField(
-                              fieldName: 'Receiver Phone Number',
-                              keyBoardType: TextInputType.phone,
-                              obscureText: false,
+                            GlobalPhoneTextField(
+                              fieldName: 'Phone Number',
                               textController: controller.destinationPhoneNoTec,
-                              onChanged: (String? value) {
-                                controller.destinationPhoneNoOnChanged(value!);
+                              onChanged: (value) {
+                                controller.destinationPhoneNoOnChanged(
+                                  value!.completeNumber,
+                                );
                               },
                             ),
+
                             Text(
                               "Package Details",
 

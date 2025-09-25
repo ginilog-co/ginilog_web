@@ -358,7 +358,7 @@ class _ViewCustomerBookReceiptPageState
                   isBody: true,
                   text: "Charges",
                   textAlign: TextAlign.start,
-                  fontSize: 45,
+                  fontSize: 18,
                   color: AppColors.black,
                   fontStyle: FontStyle.normal,
                   maxLines: 1,

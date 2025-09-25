@@ -34,7 +34,7 @@ class ForgotPasswordView
                     isBody: false,
                     text: "Forgot Password",
                     textAlign: TextAlign.center,
-                    fontSize: 28,
+                    fontSize: 18,
                     color: AppColors.black,
                     fontStyle: FontStyle.normal,
                     fontWeight: FontWeight.bold,
@@ -43,7 +43,7 @@ class ForgotPasswordView
                     isBody: true,
                     text: "Enter your email address",
                     textAlign: TextAlign.start,
-                    fontSize: 28,
+                    fontSize: 18,
                     color: AppColors.black,
                     fontStyle: FontStyle.normal,
                     fontWeight: FontWeight.w400,
@@ -53,7 +53,7 @@ class ForgotPasswordView
                     isBody: false,
                     text: "Email Address",
                     textAlign: TextAlign.start,
-                    fontSize: 25,
+                    fontSize: 15,
                     color: AppColors.black,
                     fontStyle: FontStyle.normal,
                     fontWeight: FontWeight.w400,
@@ -76,7 +76,7 @@ class ForgotPasswordView
                         },
                         widthPercent: 100,
                         heightPercent: 6,
-                        fontSize: 20,
+                        fontSize: 15,
                         isLoading: controller.isLoading,
                       )
                       : AppButton(
@@ -84,7 +84,7 @@ class ForgotPasswordView
                         onPressed: () {},
                         widthPercent: 100,
                         heightPercent: 6,
-                        fontSize: 20,
+                        fontSize: 15,
                         btnColor: AppColors.grey,
                         isLoading: false,
                       ),
@@ -108,7 +108,7 @@ class ForgotPasswordView
                               fontWeight: FontWeight.w500,
                               fontFamily: "Mulish",
                               color: AppColors.primary,
-                              fontSize: 25.textSize,
+                              fontSize: 18.textSize,
                             ),
                             recognizer:
                                 TapGestureRecognizer()

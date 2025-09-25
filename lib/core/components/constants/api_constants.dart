@@ -4,6 +4,12 @@ import 'dart:io';
 import '../utils/package_export.dart';
 import '../utils/constants.dart';
 
+/// Global background handler (must be a top-level function)
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  debugPrint("📩 Background Message received: ${message.messageId}");
+  // You could add background data handling here (like saving to Hive/DB)
+}
+
 class PushNotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
@@ -12,6 +18,9 @@ class PushNotificationService {
   String deviceToken = '';
 
   Future initialize() async {
+    // 🔹 Register background handler
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
     if (Platform.isIOS) {
       // Request iOS permissions
       NotificationSettings settings = await _fcm.requestPermission(
@@ -44,22 +53,19 @@ class PushNotificationService {
     }
 
     // Get FCM token
-    // String? token = await _fcm.getToken();
-    // if (token != null) {
-    //   deviceToken = token;
-    //   setToLocalStorage(name: "deviceToken", data: token);
-    //   debugPrint("📲 FCM Token: $token");
-    // }
     await _fcm.getToken().then((token) {
-      deviceToken = token!;
-      printData("Token Device", token);
-      setToLocalStorage(name: "deviceToken", data: token);
+      if (token != null) {
+        deviceToken = token;
+        printData("Token Device", token);
+        setToLocalStorage(name: "deviceToken", data: token);
+      }
     });
 
     // Check if app was opened via notification
     RemoteMessage? initialMessage = await _fcm.getInitialMessage();
 
     void handleMessage(RemoteMessage message) {
+      debugPrint("🔔 Notification tapped with data: ${message.data}");
       if (message.data['type'] == 'home') {
         // Navigate to home route
         // AppNavigator.pushNamedReplacement(homeRoute);
@@ -82,6 +88,7 @@ class PushNotificationService {
 
     // Foreground message listener (Android/iOS)
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+      debugPrint("📨 Foreground Message received: ${message.messageId}");
       await showNotification(message);
     });
 
@@ -110,6 +117,7 @@ class PushNotificationService {
     );
   }
 
+  /// Show local notification when a push is received in foreground
   Future showNotification(RemoteMessage message) async {
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       'fcm_default_channel',
@@ -132,7 +140,7 @@ class PushNotificationService {
         importance: Importance.max,
         playSound: true,
         priority: Priority.high,
-        ongoing: true,
+        ongoing: false, // 👈 set false so it’s dismissible
         color: Colors.deepOrangeAccent,
         channelDescription: channel.description,
         styleInformation: const BigTextStyleInformation(''),

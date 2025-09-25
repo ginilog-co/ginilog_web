@@ -35,6 +35,7 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
     final advertData = advert.advertisements;
 
     return Scaffold(
+      backgroundColor: AppColors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
