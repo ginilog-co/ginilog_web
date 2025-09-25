@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>701313096073-br9p343ad3ril913q8g1ab0atmbrhi8p.apps.googleusercontent.com</string>
+	<string>701313096073-eds2u5jg73q074gdh9mp8o8h3e6lrada.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.701313096073-br9p343ad3ril913q8g1ab0atmbrhi8p</string>
+	<string>com.googleusercontent.apps.701313096073-eds2u5jg73q074gdh9mp8o8h3e6lrada</string>
 	<key>ANDROID_CLIENT_ID</key>
 	<string>701313096073-d19t5f3agrt7c4qp30o1rdlshi2iapuf.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
@@ -15,7 +15,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.app.ginilogCustomerApp</string>
+	<string>com.ginilog.ginilogCustomerApp</string>
 	<key>PROJECT_ID</key>
 	<string>ginilog-e3c8a</string>
 	<key>STORAGE_BUCKET</key>
@@ -31,6 +31,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:701313096073:ios:80a0fd48c622a94b83e958</string>
+	<string>1:701313096073:ios:1f228bf76730f3b383e958</string>
 </dict>
 </plist>
