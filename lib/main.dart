@@ -160,6 +160,7 @@ class _MyAppState extends ConsumerState<MyApp> {
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeNotifierProvider);
     ref.watch(connectivityStatusProviders);
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(
         statusBarColor: Colors.transparent,
@@ -170,26 +171,31 @@ class _MyAppState extends ConsumerState<MyApp> {
           return OrientationBuilder(
             builder: (context, orientation) {
               SizeConfig.init(context);
-              return UpgradeAlert(
-                showReleaseNotes: false,
-                dialogStyle: UpgradeDialogStyle.cupertino,
-                upgrader: Upgrader(),
-                child: MaterialApp(
-                  debugShowCheckedModeBanner: false,
-                  title: 'Ginilog',
-                  themeMode: themeMode,
-                  theme: ThemeData.light(), // Light theme
-                  darkTheme: ThemeData.dark(), // Dark theme
-                  navigatorObservers: [
-                    routeObserver,
-                  ], // 👈 Enables route lifecycle listening
-                  onGenerateRoute: router.generateRoute,
-                  initialRoute: route,
-                  navigatorKey: widget.navigatorKey,
-                  builder: (BuildContext context, Widget? child) {
-                    return Stack(children: [child!]);
-                  },
-                ),
+              return MaterialApp(
+                debugShowCheckedModeBanner: false,
+                title: 'Ginilog',
+                themeMode: themeMode,
+                theme: ThemeData.light(), // Light theme
+                darkTheme: ThemeData.dark(), // Dark theme
+                navigatorObservers: [
+                  routeObserver,
+                ], // 👈 Enables route lifecycle listening
+                onGenerateRoute: router.generateRoute,
+                initialRoute: route,
+                navigatorKey: widget.navigatorKey,
+                builder: (BuildContext context, Widget? child) {
+                  return Stack(
+                    children: [
+                      /// ✅ Wrap the content with UpgradeAlert
+                      UpgradeAlert(
+                        showReleaseNotes: false,
+                        dialogStyle: UpgradeDialogStyle.cupertino,
+                        upgrader: Upgrader(),
+                        child: child!,
+                      ),
+                    ],
+                  );
+                },
               );
             },
           );

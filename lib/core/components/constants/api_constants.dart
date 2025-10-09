@@ -29,7 +29,7 @@ class PushNotificationService {
         badge: true,
         carPlay: true,
         criticalAlert: true,
-        provisional: true,
+        provisional: false,
         sound: true,
       );
 

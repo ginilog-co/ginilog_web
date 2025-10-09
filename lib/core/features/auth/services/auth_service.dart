@@ -96,12 +96,8 @@ class AuthService {
   }
 
   //Apple SignIn
-  String sha256ofString(String input) {
-    final bytes = utf8.encode(input);
-    final digest = sha256.convert(bytes);
-    return digest.toString();
-  }
 
+  /// Generate a secure random nonce
   String generateNonce([int length = 32]) {
     const charset =
         '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
@@ -112,6 +108,12 @@ class AuthService {
     ).join();
   }
 
+  /// Hash a string using SHA256
+  String sha256ofString(String input) {
+    final bytes = utf8.encode(input);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
   // Future<http.Response> signInWithApple() async {
   //   try {
   //     final rawNonce = generateNonce();
