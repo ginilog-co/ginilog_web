@@ -1,4 +1,3 @@
-import 'package:country_code_picker/country_code_picker.dart';
 import 'package:ginilog_customer_app/core/components/architecture/mvc.dart';
 import 'package:ginilog_customer_app/core/components/utils/app_buttons.dart';
 import 'package:ginilog_customer_app/core/components/utils/colors.dart';

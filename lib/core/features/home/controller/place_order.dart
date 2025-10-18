@@ -299,6 +299,11 @@ class PlaceOrderScreenController extends ConsumerState<PlaceOrderScreen> {
       backgroundColor: AppColors.white,
       context: context,
       isScrollControlled: true, // Makes BottomSheet expandable
+      useSafeArea: true,
+      constraints: BoxConstraints(
+        maxWidth:
+            MediaQuery.of(context).size.width, // 👈 full width even on iPad
+      ),
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {

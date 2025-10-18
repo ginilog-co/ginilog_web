@@ -47,12 +47,23 @@
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+
+	<!-- ✅ REQUIRED PRIVACY USAGE DESCRIPTIONS -->
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>This app uses the local network to enable debugging and communication.</string>
-   <key>NSLocationWhenInUseUsageDescription</key>
-   <string>We use your location to help you find nearby accommodations and track your deliveries while the app is in use.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We use your location to help you find nearby accommodations and track your deliveries while the app is in use.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>We use your location to provide accurate delivery tracking and enable background updates even when the app is not active.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app uses your camera to capture parcel images and scan QR codes for delivery verification.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need access to your photo library to upload parcel images or proof of delivery.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We use your microphone for voice calls and audio features within delivery tracking.</string>
 	<key>NSPushNotificationsUsageDescription</key>
-	<string>We use push notifications to keep you updated.</string>
+	<string>We use push notifications to keep you updated about deliveries and promotions.</string>
+
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>
@@ -78,6 +89,6 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>aps-environment</key>
-    <string>development</string>
+	<string>development</string>
 </dict>
 </plist>

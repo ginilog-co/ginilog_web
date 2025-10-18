@@ -202,7 +202,15 @@ class HomeScreenView extends StatelessView<HomeScreen, HomeScreenController> {
                           onTap: () {
                             showModalBottomSheet(
                               context: context,
+
                               isScrollControlled: true,
+                              useSafeArea: true,
+                              constraints: BoxConstraints(
+                                maxWidth:
+                                    MediaQuery.of(
+                                      context,
+                                    ).size.width, // 👈 full width even on iPad
+                              ),
                               backgroundColor: Colors.transparent,
                               builder:
                                   (context) => SendParcelTypeBottomSheet(

@@ -174,7 +174,7 @@ class GlobalTextField extends StatefulWidget {
     this.isOptional = false,
     this.readOnly = false,
     this.onChanged,
-    this.maxLength = 35,
+    this.maxLength = 19935,
     this.borderRadius,
     this.onTap,
     this.prefix,

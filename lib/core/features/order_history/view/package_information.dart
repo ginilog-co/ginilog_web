@@ -486,6 +486,13 @@ class _PackageInformationPageState
                             showModalBottomSheet(
                               context: context,
                               isScrollControlled: true,
+                              useSafeArea: true,
+                              constraints: BoxConstraints(
+                                maxWidth:
+                                    MediaQuery.of(
+                                      context,
+                                    ).size.width, // 👈 full width even on iPad
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.vertical(
                                   top: Radius.circular(20),
