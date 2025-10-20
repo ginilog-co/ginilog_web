@@ -11,6 +11,7 @@ import '../../../components/widgets/app_text.dart';
 import '../../../components/widgets/input.dart';
 import '../controller/login_controller.dart';
 import '../controller/user_controller.dart';
+import 'dart:io' show Platform;
 
 class RegisterScreenView
     extends StatelessView<RegisterScreen, RegisterScreenController> {
@@ -304,18 +305,43 @@ class RegisterScreenView
                     ],
                   ),
                   addVerticalSpacing(5),
-                  Center(
-                    child: IconButton(
-                      onPressed: () async {
-                        controller.google();
-                      },
-                      icon: SvgPicture.asset(
-                        'assets/svgs/google.svg',
-                        height: 30,
-                        width: 30,
+                  Platform.isIOS
+                      ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        spacing: 5,
+                        children: [
+                          IconButton(
+                            onPressed: () async {
+                              controller.google();
+                            },
+                            icon: SvgPicture.asset(
+                              'assets/svgs/google.svg',
+                              height: 10.imageSize,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () async {
+                              controller.apple();
+                            },
+                            icon: SvgPicture.asset(
+                              'assets/svgs/apple.svg',
+                              height: 10.imageSize,
+                            ),
+                          ),
+                        ],
+                      )
+                      : Center(
+                        child: IconButton(
+                          onPressed: () async {
+                            controller.google();
+                          },
+                          icon: SvgPicture.asset(
+                            'assets/svgs/google.svg',
+                            height: 10.imageSize,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
                   addVerticalSpacing(5),
                 ],
               ),

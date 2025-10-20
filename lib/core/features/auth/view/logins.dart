@@ -11,6 +11,7 @@ import '../../../components/widgets/input.dart';
 import '../controller/forgot_password.dart';
 import '../controller/login_controller.dart';
 import '../controller/user_controller.dart';
+import 'dart:io' show Platform;
 
 class LoginScreensView
     extends StatelessView<LoginScreens, LoginScreensController> {
@@ -230,17 +231,43 @@ class LoginScreensView
                     ],
                   ),
                   addVerticalSpacing(2),
-                  Center(
-                    child: IconButton(
-                      onPressed: () async {
-                        controller.google();
-                      },
-                      icon: SvgPicture.asset(
-                        'assets/svgs/google.svg',
-                        height: 10.imageSize,
+                  Platform.isIOS
+                      ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        spacing: 5,
+                        children: [
+                          IconButton(
+                            onPressed: () async {
+                              controller.google();
+                            },
+                            icon: SvgPicture.asset(
+                              'assets/svgs/google.svg',
+                              height: 10.imageSize,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () async {
+                              controller.apple();
+                            },
+                            icon: SvgPicture.asset(
+                              'assets/svgs/apple.svg',
+                              height: 10.imageSize,
+                            ),
+                          ),
+                        ],
+                      )
+                      : Center(
+                        child: IconButton(
+                          onPressed: () async {
+                            controller.google();
+                          },
+                          icon: SvgPicture.asset(
+                            'assets/svgs/google.svg',
+                            height: 10.imageSize,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
                   addVerticalSpacing(2),
                 ],
               ),
