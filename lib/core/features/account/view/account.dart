@@ -14,6 +14,7 @@ import 'package:ginilog_customer_app/core/features/account/view/privacy_policy_s
 import 'package:ginilog_customer_app/core/features/account/view/terms_of_service.dart';
 import 'package:ginilog_customer_app/core/features/auth/controller/login_controller.dart';
 import 'package:ginilog_customer_app/core/features/account/view/notification_page.dart';
+import 'package:ginilog_customer_app/core/features/auth/view/delete_account.dart';
 
 import '../../../components/utils/colors.dart';
 import '../../../components/utils/package_export.dart';
@@ -322,6 +323,25 @@ class _LoginPageState extends ConsumerState<AccountPage> {
                                 ),
                               ),
                             ),
+                      );
+                    },
+                  ),
+                ),
+                Card(
+                  color: AppColors.white,
+                  shape: RoundedRectangleBorder(),
+                  child: CustomListTile(
+                    title: "Delete Account",
+                    subtitle: "Delete This Account",
+                    imageUrl:
+                        "assets/images/logout_icon.png", // Replace with actual image
+                    onTap: () {
+                      navigateToRoute(
+                        context,
+                        DeleteAccountPage(
+                          imageUrl: user.profilePicture!,
+                          name: "${user.firstName} ${user.lastName}",
+                        ),
                       );
                     },
                   ),

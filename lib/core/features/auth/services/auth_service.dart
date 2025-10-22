@@ -187,7 +187,7 @@ class AuthService {
   //   }
   // }
 
-  Future<http.Response> signInWithApple() async {
+  Future<http.Response> signInWithApple1() async {
     try {
       final rawNonce = generateNonce();
       final nonce = sha256ofString(rawNonce);
@@ -266,6 +266,102 @@ class AuthService {
           name: "isEmailVerified",
           data: loginResponseModel.emailVerified,
         );
+        await globals.init();
+      } else {
+        printData("Authenticate", 'Failed to authenticate');
+      }
+
+      return response;
+    } catch (error) {
+      printData("Authenticate", 'Error signing in with Apple: $error');
+      return Future.error(handleHttpError(error));
+    }
+  }
+
+  Future<http.Response> signInWithApple() async {
+    try {
+      final rawNonce = generateNonce();
+      final nonce = sha256ofString(rawNonce);
+
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: nonce,
+      );
+
+      final oauthCredential = OAuthProvider("apple.com").credential(
+        idToken: appleCredential.identityToken,
+        rawNonce: rawNonce,
+        accessToken: appleCredential.authorizationCode,
+      );
+      printData("Apple Identity Token", appleCredential.identityToken);
+      printData("Apple Auth Code", appleCredential.authorizationCode);
+      printData("oauth", oauthCredential);
+      User? firebaseUser =
+          (await firebaseAuth.signInWithCredential(oauthCredential)).user;
+
+      if (firebaseUser == null) {
+        throw Exception("Firebase user is null after Apple sign-in.");
+      }
+
+      // Get Firebase ID token if needed
+      final firebaseIdToken = await firebaseUser.getIdToken();
+
+      // Extract names
+      String firstName = appleCredential.givenName ?? "";
+      String lastName = appleCredential.familyName ?? "";
+      if (firstName.isEmpty && lastName.isEmpty) {
+        List<String> nameParts = (firebaseUser.displayName ?? "").split(" ");
+        firstName = nameParts.isNotEmpty ? nameParts.first : "";
+        lastName = nameParts.length > 1 ? nameParts.sublist(1).join(" ") : "";
+      }
+
+      final url = Uri.parse("${Endpoints.baseUrl}AuthUsers/auth-login");
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+
+      final msg = jsonEncode({
+        "email": firebaseUser.email ?? appleCredential.email ?? "",
+        "idToken": firebaseIdToken, // or appleCredential.identityToken
+        "externalId": firebaseUser.uid,
+        "firstName": firstName,
+        "lastName": lastName.isNotEmpty ? lastName : "",
+        "profilePicture": firebaseUser.photoURL ?? "",
+        "phoneNo": firebaseUser.phoneNumber ?? "0",
+      });
+
+      final response = await http.post(url, body: msg, headers: headers);
+      printData("Status code", response.statusCode);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final loginResponseModel = LoginResponseModel.fromJson(
+          jsonDecode(response.body),
+        );
+
+        // Save locally
+        await Future.wait([
+          setToLocalStorage(name: "token", data: loginResponseModel.token),
+          setToLocalStorage(name: "userPassword", data: firebaseUser.uid),
+          setToLocalStorage(name: "userEmail", data: loginResponseModel.email),
+          setToLocalStorage(name: "userId", data: loginResponseModel.userId),
+          setToLocalStorage(
+            name: "userName",
+            data: loginResponseModel.fullName,
+          ),
+          setToLocalStorage(
+            name: "profilePicture",
+            data: loginResponseModel.profileImage,
+          ),
+          setBoolToLocalStorage(name: "isHomeLoaded", data: true),
+          setBoolToLocalStorage(
+            name: "isEmailVerified",
+            data: loginResponseModel.emailVerified,
+          ),
+        ]);
         await globals.init();
       } else {
         printData("Authenticate", 'Failed to authenticate');
