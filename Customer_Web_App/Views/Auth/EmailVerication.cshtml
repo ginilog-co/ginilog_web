@@ -1,0 +1,249 @@
+﻿@model Customer_Web_App.Models.EmailVerification
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Email Verification</title>
+
+    <!-- Your CSS file -->
+    <link rel="stylesheet" href="~/forms/forms_style.css" />
+
+    <!-- Optional: icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="shortcut icon" href="~/images/favicon1.png" />
+</head>
+
+<body>
+    <div class="page">
+        <!-- Brand Panel (desktop only) -->
+        <aside class="brand">
+            <div class="brand-inner">
+                <img class="logo" src="~/images/logo1.svg" alt="Logo" />
+                <h1>Verify your email</h1>
+                <p>Enter the 5-digit code we sent to your email to continue.</p>
+            </div>
+        </aside>
+
+        <!-- Form Panel -->
+        <main class="form">
+            <div class="card">
+                <!-- Mobile header -->
+                <div class="mobile-head">
+                    <img class="mobile-logo" src="~/images/logo1.svg" alt="Logo" />
+                    <h2>Email Verification</h2>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab active" type="button">Verify</button>
+                </div>
+
+                <section class="panel">
+                    <!-- Change asp-action to your verify endpoint -->
+                    <form asp-action="VerifyEmailCode" method="post" id="verifyForm">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <!-- Optional: show user email -->
+                        <div class="row" style="margin-bottom: 12px;">
+                            <span class="muted">
+                                Code sent to:
+                                <strong>@(ViewBag.Email ?? "yourname@email.com")</strong>
+                            </span>
+                        </div>
+
+                        <!-- OTP Boxes -->
+                        <div class="field">
+                            <label for="otp-0">Verification Code</label>
+
+                            <!-- This uses your same field structure -->
+                            <div class="otp" role="group" aria-label="5-digit verification code">
+                                <input id="otp-0" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 1" />
+                                <input id="otp-1" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 2" />
+                                <input id="otp-2" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 3" />
+                                <input id="otp-3" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 4" />
+                                <input id="otp-4" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 5" />
+                            </div>
+
+                            <!-- Hidden combined code to send to backend -->
+                            <input type="hidden" asp-for="Token" id="codeValue" />
+
+                            <span class="text-danger" id="otpError"></span>
+                        </div>
+
+                        <div class="row" style="margin-top: 8px;">
+                            <span class="muted" id="timerText">You can resend in <strong>30s</strong></span>
+                        </div>
+
+                        <button class="btn primary" type="submit">Verify</button>
+
+                        <!-- Resend button -->
+                     
+
+                        <form asp-action="ResendEmailVerication" asp-controller="Auth" method="post" style="margin-top:10px;">
+                            <button class="btn outline" type="submit" id="resendBtn">
+                                <i class="fa-solid fa-rotate-right"></i>
+                                Resend email
+                            </button>
+                        </form>
+
+
+                        <p class="muted" id="msg" style="margin-top: 10px;"></p>
+                    </form>
+                </section>
+
+                <p class="bottom">
+                    Back to
+                    <a href="~/Auth/SignIn">Sign in</a>
+                </p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        (function () {
+            const inputs = Array.from(document.querySelectorAll(".otp input"));
+            const hidden = document.getElementById("codeValue");
+            const form = document.getElementById("verifyForm");
+
+            const otpError = document.getElementById("otpError");
+            const msg = document.getElementById("msg");
+
+            const resendBtn = document.getElementById("resendBtn");
+            const timerText = document.getElementById("timerText");
+
+            const isDigit = (v) => /^[0-9]$/.test(v);
+
+            function getCode() {
+                return inputs.map(i => i.value.trim()).join("");
+            }
+
+            function setMessage(text) {
+                msg.textContent = text || "";
+            }
+
+            function setError(text) {
+                otpError.textContent = text || "";
+            }
+
+            inputs.forEach((input, idx) => {
+                input.addEventListener("input", () => {
+                    const val = input.value.trim();
+                    if (!val) return;
+
+                    if (!isDigit(val)) {
+                        input.value = "";
+                        return;
+                    }
+
+                    if (idx < inputs.length - 1) inputs[idx + 1].focus();
+
+                    hidden.value = getCode();
+                    setError("");
+                    setMessage("");
+                });
+
+                input.addEventListener("keydown", (e) => {
+                    if (e.key === "Backspace") {
+                        if (input.value) {
+                            input.value = "";
+                            hidden.value = getCode();
+                            return;
+                        }
+                        if (idx > 0) {
+                            inputs[idx - 1].focus();
+                            inputs[idx - 1].value = "";
+                            hidden.value = getCode();
+                        }
+                    }
+
+                    if (e.key === "ArrowLeft" && idx > 0) inputs[idx - 1].focus();
+                    if (e.key === "ArrowRight" && idx < inputs.length - 1) inputs[idx + 1].focus();
+                });
+
+                input.addEventListener("paste", (e) => {
+                    const text = (e.clipboardData || window.clipboardData).getData("text");
+                    const digits = text.replace(/\D/g, "").slice(0, inputs.length);
+                    if (!digits.length) return;
+
+                    e.preventDefault();
+                    digits.split("").forEach((d, i) => inputs[i].value = d);
+
+                    inputs[Math.min(digits.length, inputs.length - 1)].focus();
+                    hidden.value = getCode();
+                    setError("");
+                    setMessage("");
+                });
+            });
+
+            inputs[0].focus();
+
+            // Validate before submit
+            form.addEventListener("submit", (e) => {
+                const code = getCode();
+                hidden.value = code;
+
+                if (code.length !== 5) {
+                    e.preventDefault();
+                    setError("Please enter the 5-digit code.");
+                    return;
+                }
+            });
+
+            // Resend logic (replace with your MVC endpoint)
+            let countdown = 30;
+            let canResend = false;
+
+            function updateTimerUI() {
+                if (canResend) {
+                    timerText.innerHTML = `Didn’t get it? <strong>You can resend now</strong>`;
+                    resendBtn.disabled = false;
+                } else {
+                    timerText.innerHTML = `You can resend in <strong>${countdown}s</strong>`;
+                    resendBtn.disabled = true;
+                }
+            }
+
+            function startCountdown(seconds) {
+                countdown = seconds;
+                canResend = false;
+                updateTimerUI();
+
+                const interval = setInterval(() => {
+                    countdown--;
+                    if (countdown <= 0) {
+                        clearInterval(interval);
+                        canResend = true;
+                        updateTimerUI();
+                    } else {
+                        updateTimerUI();
+                    }
+                }, 1000);
+            }
+
+            resendBtn.addEventListener("click", async () => {
+                if (!canResend) return;
+
+                setMessage("Resending email...");
+                resendBtn.disabled = true;
+
+                // ✅ Replace with your resend endpoint
+                // Example:
+                // await fetch("/Auth/ResendVerificationEmail", { method: "POST" });
+
+                setTimeout(() => {
+                    setMessage("Verification email resent ✅");
+                    startCountdown(30);
+                }, 700);
+            });
+
+            startCountdown(30);
+        })();
+    </script>
+</body>
+</html>
+

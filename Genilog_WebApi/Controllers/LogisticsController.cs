@@ -48,7 +48,7 @@ namespace Genilog_WebApi.Controllers
 
         // This Is Gas Station SECTION
         [HttpGet]
-        [Authorize]
+       // [Authorize]
         public async Task<IActionResult> GetAllCompanyAsync([FromQuery] FilterLocationData data)
         {
             var events = await companyRepository.GetAllAsync();
@@ -87,7 +87,7 @@ namespace Genilog_WebApi.Controllers
 
         [HttpGet]
         [Route("{id:guid}")]
-        [Authorize]
+       // [Authorize]
         [ActionName("GetCompanyAsync")]
         public async Task<IActionResult> GetCompanyAsync(Guid id)
         {

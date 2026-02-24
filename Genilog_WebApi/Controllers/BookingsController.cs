@@ -599,7 +599,7 @@ namespace Genilog_WebApi.Controllers
         // This Is HOTEL SECTION
         [HttpGet]
         [Route("accomodation")]
-        [Authorize]
+      // [Authorize]
         public async Task<IActionResult> GetAllAccomodationAsync([FromQuery] FilterLocationData data)
         {
             var events = await accomodationRepository.GetAllAsync();
@@ -637,7 +637,7 @@ namespace Genilog_WebApi.Controllers
         [HttpGet]
         [Route("accomodation/{id:guid}")]
         [ActionName("GetAccomodationAsync")]
-        [Authorize]
+       // [Authorize]
         public async Task<IActionResult> GetAccomodationAsync(Guid id)
         {
             var contacts = await accomodationRepository.GetAsync(id);
@@ -1040,32 +1040,43 @@ namespace Genilog_WebApi.Controllers
         //Reservations Book
         [HttpGet]
         [Route("accomodation-reservations")]
-        [Authorize]
+        // [Authorize]
         public async Task<IActionResult> GetAllBookAccomodationReservationAsync([FromQuery] FilterData data)
         {
             var events = await accomodationRepository.GetAllBookAccomodationReservationAsync();
-            events = [.. events.OrderByDescending(x => x.CreatedAt)];
-            var allPosts = events.AsQueryable();
 
-            if (!string.IsNullOrEmpty(data.AnyItem))
+            // in-memory ordering
+            var allPosts = events.OrderByDescending(x => x.CreatedAt).AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(data.AnyItem))
             {
-                allPosts = allPosts.Where(x =>(x.AdminId!.ToString()==data.AnyItem || x.AccomodationId!.ToString() == data.AnyItem));
-                var userDto = mapper.Map<List<BookAccomodationReservatioModelDto>>(allPosts);
+                var search = data.AnyItem.Trim();
+                var like = $"%{search}%";
+
+                allPosts = allPosts.Where(x =>
+                    x.AdminId.ToString().Contains(search) ||
+                    x.AccomodationId.ToString().Contains(search) ||
+                    (x.AccomodationName ?? "").Contains(search) ||
+                    (x.AccomodationState ?? "").Contains(search) ||
+                    (x.RoomType ?? "").Contains(search) ||
+                    (x.AccomodationType ?? "").Contains(search) ||
+                    (x.Location ?? "").Contains(search) ||
+                    (x.AccomodationLocality ?? "").Contains(search)
+                );
+
+                var filtered = allPosts.ToList(); // in-memory
+                var userDto = mapper.Map<List<BookAccomodationReservatioModelDto>>(filtered);
                 return Ok(userDto);
             }
-           
-            else
-            {
-                events = [.. events.OrderByDescending(x => x.CreatedAt)];
-                var userDto = mapper.Map<List<BookAccomodationReservatioModelDto>>(events);
-                return Ok(userDto);
-            }
+
+            var dto = mapper.Map<List<BookAccomodationReservatioModelDto>>(events.OrderByDescending(x => x.CreatedAt).ToList());
+            return Ok(dto);
         }
 
         [HttpGet]
         [Route("accomodation-reservations/{id:guid}")]
         [ActionName("GetBookAccomodationReservationAsync")]
-        [Authorize]
+       // [Authorize]
         public async Task<IActionResult> GetBookAccomodationReservationAsync(Guid id)
         {
             var contacts = await accomodationRepository.GetBookAccomodationReservationAsync(id);

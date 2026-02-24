@@ -3,12 +3,8 @@ using Genilog_WebApi.Key;
 using Genilog_WebApi.Model;
 using Genilog_WebApi.Model.WalletModel;
 using Genilog_WebApi.Repository.LogisticsRepo;
-using Genilog_WebApi.Repository.NotificationRepo;
 using Genilog_WebApi.Repository.WalletRepo;
-using Google.Cloud.Firestore;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Net;
@@ -26,11 +22,6 @@ namespace Genilog_WebApi.Controllers
         private readonly IRidersRepository ridersRepository = ridersRepository;
         private readonly IWalletRepository walletRepository = walletRepository;
 
-
-    
-
-      
-  
         //paystack
         [HttpPost("initialize")]
         public async Task<IActionResult> InitializePayment([FromBody] PaymentRequest paymentRequest)

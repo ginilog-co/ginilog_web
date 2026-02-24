@@ -1,0 +1,164 @@
+﻿@model Customer_Web_App.Models.HomeModelData
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!--================Banner Area =================-->
+<section class="banner_area">
+    <div class="booking_table d_flex align-items-center">
+        <div class="overlay bg-parallax" data-stellar-ratio="0.9" data-stellar-vertical-offset="0" data-background=""></div>
+        <div class="container">
+            <div class="banner_content text-center">
+                <h6>Ginilog</h6>
+                <h2>Relax Your Mind</h2>
+                <p>We help customers find and reserve comfortable stays while also offering efficient package delivery and tracking services — all in one convenient place.</p>
+            </div>
+        </div>
+    </div>
+    <div class="hotel_booking_area position">
+        <div class="container">
+            <div class="hotel_booking_table">
+                <div class="col-md-3">
+                </div>
+                <div class="col-md-9">
+                    <div class="boking_table">
+                   
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <div class="book_tabel_item">
+
+                                    <form asp-controller="Logistics" asp-action="OrderList" method="get">
+                                        <div class="tracking-group">
+                                            <input type="text"
+                                                   name="id"
+                                                   class="form-control"
+                                                   placeholder="Enter Tracking Number"
+                                                   required />
+
+                                            <button type="submit" class="book_now_btn button_hover">
+                                                Track Package
+                                            </button>
+                                        </div>
+                                    </form>
+
+
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!--================Banner Area =================-->
+
+<!--================ Accomodation Area  =================-->
+<section class="latest_blog_area custom_gap">
+    <div class="container">
+        <div class="section_title text-center">
+            <h2 class="title_color">Accomodations</h2>
+            <p>Some of the accomodation bookings close to you </p>
+        </div>
+        <div class="row mb_30">
+
+                 @foreach (var data3 in Model.AccomodationDataModel!)
+            {
+                <div class="col-lg-4 col-md-6">
+                    <div class="single-recent-blog-post">
+                        <div class="thumb fixed-img">
+                            <img class="img-fluid" src="@data3.AccomodationImages![0]" alt="post">
+                        </div>
+                        <div class="details">
+                            <div class="tags">
+                                <a href="@Url.Action("AccomodationList", "Home", new { id = data3.AccomodationType })" class="button_hover tag_btn">@data3.AccomodationType</a>
+
+                                <a class="button_hover tag_btn"> ₦@String.Format("{0:N0}", data3.BookingAmount)</a>
+                            </div>
+                            <a href="@Url.Action("AccomodationDetails", "Home", new { id = data3.Id })"><h4 class="sec_h4">@data3.AccomodationName</h4></a>
+                            <p class="one-line-text">@data3.AccomodationDescription</p>
+                            <p class="one-line-text">@data3.Location</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+<!--================ Accomodation Area  =================-->
+
+<hr />
+
+<!--================ Accomodation Reservation Area  =================-->
+<section class="accomodation_area custom_gap">
+    <div class="container">
+        <div class="section_title text-center">
+            <h2 class="title_color">Available Rooms Bookings</h2>
+            <p>We all live in an age that belongs to the young at heart. Life that is becoming extremely fast, </p>
+        </div>
+        <div class="row mb_30">
+
+           @foreach (var data3 in Model.BookAccomodationReservatioModel!)
+            {
+                <div class="col-lg-3 col-sm-6">
+                    <div class="accomodation_item text-center">
+                        <div class="hotel_img fixed-img">
+                            <img src="@data3.AccomodationImage" alt="">
+
+                            <a class="btn theme_btn button_hover"
+                               asp-controller="Home"
+                               asp-action="AddCustomerReservation"
+                               asp-route-id="@(data3.Id)">
+                                Book Now
+                            </a>
+                        </div>
+                        <a href="#"><h4 class="sec_h4">@data3.AccomodationName (Type: @data3.RoomType)</h4></a>
+                        <h5>₦@String.Format("{0:N0}", data3.RoomPrice)<small>/night (Room: @data3.RoomNumber)</small></h5>
+                        <p class="one-line-text">@data3.AccomodationLocality @data3.AccomodationState</p>
+                    </div>
+                </div>
+            }
+       
+        </div>
+    </div>
+</section>
+<!--================ Accomodation Area  =================-->
+<hr />
+<!--================ Logistics Area  =================-->
+<section class="accomodation_area custom_gap">
+    <div class="container">
+        <div class="section_title text-center">
+            <h2 class="title_color">Logistics Listings</h2>
+            <p>Send your </p>
+        </div>
+        <div class="row mb_30">
+
+                 @foreach (var data3 in Model.CompanyModelData!)
+            {
+                <div class="col-lg-3 col-sm-6">
+                    <div class="accomodation_item text-center">
+                        <div class="hotel_img fixed-img">
+                            <img src="@data3.CompanyLogo" alt="">
+                            <a class="btn theme_btn button_hover"
+                               asp-controller="Logistics"
+                               asp-action="AddOrder"
+                               asp-route-id="@(data3.Id)">
+                                Send
+                            </a>
+                        </div>
+                        <a href="#"><h4 class="sec_h4">@data3.CompanyName</h4></a>
+                    </div>
+                </div>
+            }
+
+        </div>
+    </div>
+</section>
+<!--================ Logistics Area  =================-->
+
+
+
+
