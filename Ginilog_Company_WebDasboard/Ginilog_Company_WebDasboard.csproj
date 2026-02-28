@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\designs\css\.DS_Store" />
+    <None Include="wwwroot\designs\css\maps\.DS_Store" />
+    <None Include="wwwroot\designs\fonts\.DS_Store" />
+    <None Include="wwwroot\designs\fonts\karla\.DS_Store" />
+    <None Include="wwwroot\designs\images\.DS_Store" />
+    <None Include="wwwroot\designs\images\auth\.DS_Store" />
+    <None Include="wwwroot\designs\images\faces\.DS_Store" />
+    <None Include="wwwroot\designs\js\.DS_Store" />
+    <None Include="wwwroot\designs\scss\.DS_Store" />
+    <None Include="wwwroot\designs\scss\components\.DS_Store" />
+    <None Include="wwwroot\designs\scss\components\plugin-overrides\.DS_Store" />
+    <None Include="wwwroot\designs\scss\mixins\.DS_Store" />
+    <None Include="wwwroot\designs\vendors\.DS_Store" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
+  </ItemGroup>
+
+</Project>

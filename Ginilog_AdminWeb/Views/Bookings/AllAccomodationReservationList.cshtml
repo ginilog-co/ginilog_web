@@ -1,0 +1,72 @@
+﻿@model IEnumerable<Ginilog_AdminWeb.Models.BookingsModel.BookAccomodationReservatioModel>
+
+@{
+    ViewData["Title"] = "AllAccomodationReservationList";
+    Layout = "~/Views/Shared/_NewLayout.cshtml";
+}
+
+<!-- Blank Start -->
+<div class="row">
+    <div class="col-12 grid-margin">
+        <div class="card">
+
+            <div class="card-body">
+
+                <div style="padding-top:20px"></div>
+
+                <h6 class="mb-4">Search Here</h6>
+                <form asp-controller="Bookings" asp-action="AllAccomodationReservationList" method="get">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="id" placeholder="Search: Email, Name, location" aria-label="Recipient's username" aria-describedby="basic-addon2">
+                            <div class="input-group-append">
+                                <button class="btn btn-sm btn-primary" type="submit">Search</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <div style="padding-top:20px"></div>
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th> Accomodation Name </th>
+                                <th> Ticket Num </th>
+                                <th> Maximum No Of Guest </th>
+                                <th> Room Number </th>
+                                <th> Room Type </th>
+                                <th> RoomPrice </th>
+                                <th> Accomodation Locality </th>
+                                <th> Date </th>
+                                <th> Details </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td> @item.AccomodationName </td>
+                                    <td> @item.TicketNum </td>
+                                    <td> @item.MaximumNoOfGuest </td>
+                                    <td> @item.RoomNumber </td>
+                                    <td> @item.RoomType </td>
+                                    <td> &#8358;@item.RoomPrice.ToString("N2") </td>
+                                    <td> @item.AccomodationLocality </td>
+                                    <td>@item.CreatedAt</td>
+                                    <td><a href="@Url.Action("AccomodationReservationDetails", "Bookings", new { id = item!.Id })" class="btn btn-outline-info">View</a><td>
+                                    <td><a href="@Url.Action("DeleteBookReservation", "Bookings", new { id = item!.Id })" class="btn btn-danger">Delete</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Blank End -->

@@ -1,0 +1,95 @@
+﻿@model Ginilog_AdminWeb.Models.AdminModelTable
+
+@{
+    ViewData["Title"] = "UserProfile";
+}
+
+
+
+
+#
+<!-- Navbar Start -->
+<nav class="navbar navbar-expand bg-secondary navbar-dark sticky-top px-4 py-0">
+    <a href="~/Home/Index" class="navbar-brand d-flex d-lg-none me-4">
+        <h2 class="text-primary mb-0"><i class="fa fa-user-edit"></i></h2>
+    </a>
+    <a href="#" class="sidebar-toggler flex-shrink-0">
+        <i class="fa fa-bars"></i>
+    </a>
+
+    <div class="navbar-nav align-items-center ms-auto">
+       
+      
+
+        <div class="nav-item dropdown">
+            <button type="button" data-bs-toggle="modal" data-bs-target="#deleteModal" class="btn btn-danger m-2">
+                <span class="d-none d-lg-inline-flex">Edit</span>
+            </button>
+
+        </div>
+        <div class="nav-item dropdown">
+            @if (Model.ImagePath != "")
+            {
+                <img class="rounded-circle" style="width: 40px; height: 40px;" src="@Model.ImagePath" alt="profile">
+            }
+            @if (Model.ImagePath == "")
+            {
+                <img class="rounded-circle" style="width: 40px; height: 40px;" alt="profile" src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp">
+            }
+            @if (Model.ImagePath == null)
+            {
+                <img class="rounded-circle" style="width: 40px; height: 40px;" alt="profile" src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp">
+            }
+
+        </div>
+
+
+    </div>
+</nav>
+
+<!-- Sales Chart Start -->
+<div class="container-fluid pt-4 px-4">
+    <div class="row g-4">
+        <div class="col-sm-12 col-xl-6">
+            <div class="bg-secondary text-center rounded p-4">
+                <div class="form-floating mb-3">
+                    <input value="@Model!.FirstName @Model.SurName" readonly type="text" class="form-control" id="floatingInput">
+                    <label for="floatingInput">Name</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input value="@Model.Email" readonly type="text" class="form-control" id="floatingInput">
+                    <label for="floatingInput">Email</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input value="@Model.PhoneNo" readonly type="text" class="form-control" id="floatingInput">
+                    <label for="floatingInput">Phone Number</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input value="@Model.StaffCode" readonly type="text" class="form-control" id="floatingInput">
+                    <label for="floatingInput">Staff Code</label>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-12 col-xl-6">
+            <div class="bg-secondary text-center rounded p-4">
+                <div class="form-floating mb-3">
+                    <input value="@Model!.Address" readonly type="text" class="form-control" id="floatingInput">
+                    <label for="floatingInput">Active Address</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input value="@Model.Locality" readonly type="text" class="form-control" id="floatingInput">
+                    <label for="floatingInput">City</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input value="@Model.State" readonly type="text" class="form-control" id="floatingInput">
+                    <label for="floatingInput">State</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input value="@Model.Branch" readonly type="text" class="form-control" id="floatingInput">
+                    <label for="floatingInput">Branch</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Sales Chart End -->

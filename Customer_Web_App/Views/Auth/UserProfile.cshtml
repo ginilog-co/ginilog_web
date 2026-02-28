@@ -1,0 +1,305 @@
+﻿@model Customer_Web_App.Models.UsersDataModel.UserDetailsModel
+
+@{
+    ViewData["Title"] = "UserProfile";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!--================Breadcrumb Area =================-->
+<section class="">
+   
+</section>
+<!--================Breadcrumb Area =================-->
+
+<section style="background-color:white" class="breadcrumb_area d-flex">
+    <div class="container">
+
+        <!-- TOP ROW: Profile card + Profile info -->
+        <div class="row g-4">
+
+            <!-- Left: Profile Card -->
+            <div class="col-12 col-lg-4">
+                <div class="card profile-card h-100">
+                    <div class="card-body text-center">
+
+                        <div class="profile-avatar-wrap">
+                            <img src="@Model.UserModelTable?.ProfilePicture" alt="Profile" class="profile-avatar" />
+                        </div>
+
+                        <h4 class="mt-3 mb-1">@Model.UserModelTable?.FirstName @Model.UserModelTable?.LastName</h4>
+                        <p class="text-muted mb-2">@Model.UserModelTable?.Email</p>
+
+                        <div class="d-flex justify-content-center gap-2 mt-3 profile-actions">
+                            <a asp-controller="Auth" asp-action="EditProfile" class="btn theme_btn button_hover">
+                                <i class="fa-solid fa-pen-to-square"></i> Edit Profile
+                            </a>
+                            <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-secondary profile-outline">
+                                <i class="fa-solid fa-right-from-bracket"></i> Logout
+                            </a>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <!-- Quick Stats -->
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="stat">
+                                    <div class="stat-number">@Model.CustomerBookedReservations!.Count()</div>
+                                    <div class="stat-label">Bookings</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat">
+                                    <div class="stat-number">@Model.OrderModelDatas!.Count()</div>
+                                    <div class="stat-label">Parcels</div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Profile Information -->
+            <div class="col-12 col-lg-8">
+                <div class="card profile-card h-100">
+                    <div class="card-body">
+
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                            <h5 class="mb-0">Profile Information</h5>
+                            <span class="badge badge-soft">
+                                <i class="fa-solid fa-shield-halved"></i> Verified Account
+                            </span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="info-block">
+                                    <div class="info-title">Full Name</div>
+                                    <div class="info-text">@Model.UserModelTable?.FirstName @Model.UserModelTable?.LastName</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <div class="info-block">
+                                    <div class="info-title">Email</div>
+                                    <div class="info-text">@Model.UserModelTable?.Email</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <div class="info-block">
+                                    <div class="info-title">Phone Number</div>
+                                    <div class="info-text">@Model.UserModelTable?.PhoneNo</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <div class="info-block">
+                                    <div class="info-title">Location</div>
+                                    <div class="info-text">@Model.UserModelTable?.Address</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <div class="info-block">
+                                    <div class="info-title">Referral</div>
+                                    <div class="info-text">@Model.UserModelTable?.ReferralCode</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <div class="info-block">
+                                    <div class="info-title">UserStatus</div>
+                                    <div class="info-text">@Model.UserModelTable?.UserStatus</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <div class="info-block">
+                                    <div class="info-title">Sex</div>
+                                    <div class="info-text">@Model.UserModelTable?.Sex</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <div class="info-block">
+                                    <div class="info-title">State</div>
+                                    <div class="info-text">@Model.UserModelTable?.State</div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- ✅ SECOND ROW (FULL WIDTH): Recent sections start under profile (no empty space) -->
+        <div class="row mt-4 g-4">
+
+            <!-- Recent Activity -->
+            <div class="col-12 col-lg-4">
+                <div class="card profile-card h-100">
+                    <div class="card-body">
+
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                            <h5 class="mb-0">Recent Activity</h5>
+                            <a asp-controller="Auth" asp-action="Activity" class="link">View all</a>
+                        </div>
+
+                        @if (Model?.NotificationModels != null && Model.NotificationModels.Any())
+                        {
+                            <ul class="activity-list">
+                                @foreach (var a in Model.NotificationModels.Take(6))
+                                {
+                                    <li class="activity-item">
+                                        <div class="activity-icon">
+                                            <i class="fa-solid fa-bolt"></i>
+                                        </div>
+                                        <div class="activity-content">
+                                            <div class="activity-title">@a.Title</div>
+                                            <div class="activity-sub">@a.Body</div>
+                                        </div>
+                                        <div class="activity-time">@a.CreatedAt.ToString("dd MMM")</div>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p class="text-muted mb-0">No recent activity yet.</p>
+                        }
+
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Recent Bookings -->
+            <div class="col-12 col-lg-4">
+                <div class="card profile-card h-100">
+                    <div class="card-body">
+
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                            <h5 class="mb-0">Recent Bookings</h5>
+                            <a asp-controller="Booking" asp-action="MyBookings" class="link">View all</a>
+                        </div>
+
+                        @if (Model?.CustomerBookedReservations != null && Model.CustomerBookedReservations.Any())
+                        {
+                            <div class="booking-list">
+                                @foreach (var b in Model.CustomerBookedReservations.Take(3))
+                                {
+                                    <article class="booking-card-ui booking-card-mini">
+                                        <div class="booking-left">
+                                            <div class="booking-code">@b.TicketNum</div>
+
+                                            <div class="booking-meta">
+                                                <div class="meta-row">
+                                                    <span class="meta-label">Room:</span>
+                                                    <span class="meta-value">@b.RoomNumber</span>
+                                                </div>
+
+                                                <div class="meta-row">
+                                                    <span class="meta-label">Accommodation:</span>
+                                                    <span class="meta-value strong">@b.AccomodationName</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="booking-dates">
+                                                <span class="meta-label">From:</span>
+                                                <span class="meta-value strong">@b.ReservationStartDate</span>
+                                                <span class="meta-label">to:</span>
+                                                <span class="meta-value strong">@b.ReservationEndDate</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="booking-right">
+                                            <a class="btn-view"
+                                               asp-controller="Booking"
+                                               asp-action="BookingDetails"
+                                               asp-route-id="@b.Id">
+                                                View
+                                            </a>
+                                        </div>
+                                    </article>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted mb-0">No recent bookings yet.</p>
+                        }
+
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Recent Orders -->
+            <div class="col-12 col-lg-4">
+                <div class="card profile-card h-100">
+                    <div class="card-body">
+
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                            <h5 class="mb-0">Recent Orders</h5>
+                            <a asp-controller="Logistics" asp-action="OrderList" class="link">View all</a>
+                        </div>
+
+                        @if (Model?.OrderModelDatas != null && Model.OrderModelDatas.Any())
+                        {
+                            <div class="booking-list">
+                                @foreach (var b in Model.OrderModelDatas.Take(3))
+                                {
+                                    <article class="booking-card-ui booking-card-mini">
+                                        <div class="booking-left">
+                                            <div class="booking-code">@b.TrackingNum</div>
+
+                                            <div class="booking-meta">
+                                                <div class="meta-row">
+                                                    <span class="meta-label">Parcel:</span>
+                                                    <span class="meta-value">@b.ItemName</span>
+                                                </div>
+
+                                                <div class="meta-row">
+                                                    <span class="meta-label">Company:</span>
+                                                    <span class="meta-value strong">@b.CompanyName</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="booking-dates">
+                                                <span class="meta-label">Should arrive:</span>
+                                                <span class="meta-value strong">@b.ExpectedDeliveryTime</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="booking-right">
+                                            <a class="btn-view"
+                                               asp-controller="Order"
+                                               asp-action="OrderDetails"
+                                               asp-route-id="@b.Id">
+                                                View
+                                            </a>
+                                        </div>
+                                    </article>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted mb-0">No recent orders yet.</p>
+                        }
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+

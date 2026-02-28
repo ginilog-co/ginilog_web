@@ -1,0 +1,98 @@
+﻿@model IEnumerable<Customer_Web_App.Models.LogisticsModel.OrderModelData>
+
+@{
+    ViewData["Title"] = "OrderList";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!--================Breadcrumb Area =================-->
+<section class="breadcrumb_area d-flex align-items-center justify-content-center">
+    <div class="overlay bg-parallax"
+         data-stellar-ratio="0.8"
+         data-stellar-vertical-offset="0"
+         data-background="">
+    </div>
+
+    <div class="container text-center">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="book_tabel_item">
+
+                    <form asp-action="AccomodationReservationList" method="get">
+                        <div class="tracking-group">
+                            <input type="text"
+                                   name="id"
+                                   class="form-control"
+                                   placeholder="Search Accommodation here"
+                                   required />
+
+                            <button type="submit" class="book_now_btn button_hover">
+                                Search
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<div style="padding-top:20px"></div>
+<!--================ Accomodation Area  =================-->
+<section class="accomodation_area custom_gap">
+    <div class="container">
+        <div class="section_title text-center">
+            <h2 class="title_color">Track your orders here</h2>
+            <p>We all live in an age that belongs to the young at heart. Life that is becoming extremely fast, </p>
+        </div>
+        <div class="row mb_30">
+            @if (Model != null && Model.Any())
+            {
+                 <div class="booking-list">
+                        @foreach (var b in Model)
+                        {
+                            <article class="booking-card-ui booking-card-mini">
+                                <div class="booking-left">
+                                    <div class="booking-code">@b.TrackingNum</div>
+
+                                    <div class="booking-meta">
+                                        <div class="meta-row">
+                                            <span class="meta-label">Parcel:</span>
+                                            <span class="meta-value">@b.ItemName</span>
+                                        </div>
+
+                                        <div class="meta-row">
+                                            <span class="meta-label">Company:</span>
+                                            <span class="meta-value strong">@b.CompanyName</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="booking-dates">
+                                        <span class="meta-label">Should arrive:</span>
+                                        <span class="meta-value strong">@b.ExpectedDeliveryTime</span>
+                                    </div>
+                                </div>
+
+                                <div class="booking-right">
+                                    <a class="btn-view"
+                                       asp-controller="Order"
+                                       asp-action="OrderDetails"
+                                       asp-route-id="@b.Id">
+                                        View
+                                    </a>
+                                </div>
+                            </article>
+                        }
+                    </div>
+            }
+            else
+            {
+                <p class="text-muted mb-0">No Order yet.</p>
+            }
+
+        </div>
+    </div>
+</section>
+<div style="padding-top:20px"></div>
+<!--================ Accomodation Area  =================-->>
+

@@ -1,0 +1,164 @@
+﻿@model Ginilog_AdminWeb.Models.AdminModelTable
+
+@{
+    ViewData["Title"] = "ManagerDetails";
+    Layout = "~/Views/Shared/_NewLayout.cshtml";
+}
+<!-- Delete Modal -->
+<div id="deleteModal" class="custom-modal">
+    <div class="custom-modal-content">
+        <div class="custom-modal-header">
+            <h5 style="color:black" class="modal-title">Confirm Delete</h5>
+            <span style="color:black" class="custom-modal-close" onclick="closeModal()">&times;</span>
+        </div>
+        <div class="custom-modal-body">
+            <p style="color:black">   Are you sure you want to delete this Admin?</p>
+
+        </div>
+        <div class="custom-modal-footer">
+            <button onclick="closeModal()" class="btn-secondary">Cancel</button>
+            <a href="@Url.Action("DeleteAdminConfirm", "Home", new { id = Model.Id })" class="btn-danger">Delete</a>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 grid-margin">
+        <div class="card">
+            <div class="card-body">
+
+                <div class="row px-0 mx-0">
+                    <div class="col-12 grid-margin px-0">
+                        <div class="d-flex justify-content-end gap-2 px-0">
+
+                            <div class="col-auto mb-2">
+                                <button class="nav-link btn btn-danger create-new-button" onclick="openModal()">Delete</button>
+                            </div>
+                            @if(Model.CompanyType!.Contains("Logistics"))
+                            {
+                                <div class="col-auto mb-2">
+                                    <a href="~/Logistics/LogCompanyDetails/@Model.ManagerId" class="nav-link btn btn-primary create-new-button">View Logistic</a>
+                                </div>
+                            }
+                            @if (Model.CompanyType!.Contains("Accommodation"))
+                            {
+                                <div class="col-auto mb-2">
+                                    <a href="~/Bookings/AccommodationDetails/@Model.ManagerId" class="nav-link btn btn-secondary create-new-button">View Accommodation</a>
+                                </div>
+                            }
+                            <div class="col-auto mb-2">
+                                @if (Model.ImagePath != "")
+                                {
+                                    <img class="rounded-circle" style="width: 40px; height: 40px;" src="@Model.ImagePath" alt="profile">
+                                }
+                                @if (Model.ImagePath == "")
+                                {
+                                    <img class="rounded-circle" style="width: 40px; height: 40px;" alt="profile" src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp">
+                                }
+                                @if (Model.ImagePath == null)
+                                {
+                                    <img class="rounded-circle" style="width: 40px; height: 40px;" alt="profile" src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp">
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-sm-12 col-xl-4">
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input style="color: black; background-color: white;" value="@Model.Email" readonly type="email" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Name</label>
+                                <input style="color: black; background-color: white;" value="@Model.FirstName @Model.SurName" readonly type="text" class="form-control readonly-white">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <input style="color: black; background-color: white;" value="@Model.PhoneNo" readonly type="text" class="form-control readonly-white">
+                            </div> 
+                            <div class="form-group">
+                                <label>Admin Type</label>
+                                <input style="color: black; background-color: white;" value="@Model.AdminType" readonly type="text" class="form-control readonly-white">
+                            </div> 
+                            <div class="form-group">
+                                <label>Company UserName</label>
+                                <input style="color: black; background-color: white;" value="@Model.CompanyUserName" readonly type="text" class="form-control readonly-white">
+                            </div> 
+                          
+                          
+                        </div>
+
+                    </div>
+                    <div class="col-sm-12 col-xl-4">
+                        <div class="card-body">
+
+                            <div class="form-group">
+                                <label>Company Name</label>
+                                <input style="color: black; background-color: white;" value="@Model.CompanyName" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Staff Code</label>
+                                <input style="color: black; background-color: white;" value="@Model.StaffCode" readonly type="text" class="form-control readonly-white">
+
+                            </div>
+
+                            <div class="form-group">
+                                <label>Sex</label>
+                                <input style="color: black; background-color: white;" value="@Model.Sex" readonly type="text" class="form-control readonly-white">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Address</label>
+                                <input style="color: black; background-color: white;" value="@Model.Address" readonly type="text" class="form-control readonly-white">
+                            </div>
+
+                            <div class="form-group">
+                                <label>State</label>
+                                <input style="color: black; background-color: white;" value="@Model.State" readonly type="text" class="form-control readonly-white">
+                            </div>
+                          
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-xl-4">
+                        <div class="card-body">
+
+                            <div class="form-group">
+                                <label>Locality</label>
+                                <input style="color: black; background-color: white;" value="@Model.Locality" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Branch</label>
+                                <input style="color: black; background-color: white;" value="@Model.Branch" readonly type="text" class="form-control readonly-white">
+                            </div><div class="form-group">
+                                <label>Company Types</label>
+                                @foreach (var item in Model.CompanyType!)
+                                {
+
+                                    <p><button class="btn btn-outline-success">@item</button></p>
+
+                                }
+                            </div>
+                            <div class="form-group">
+                                <label>CreatedAt</label>
+                                <input style="color: black; background-color: white;" value="@Model.CreatedAt" readonly type="text" class="form-control readonly-white">
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+
+
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+
+

@@ -1,0 +1,139 @@
+﻿@model Ginilog_AdminWeb.Models.BookingsModel.AddPaymentCustomerBookedReservation
+
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Admin - Ginilog Admin Panel</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+    <!-- plugins:css -->
+    <link rel="stylesheet" href="~/new/assets/vendors/mdi/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="~/new/assets/vendors/css/vendor.bundle.base.css">
+    <!-- endinject -->
+    <!-- Plugin css for this page -->
+    <link rel="stylesheet" href="~/new/assets/vendors/jvectormap/jquery-jvectormap.css">
+    <link rel="stylesheet" href="~/new/assets/vendors/flag-icon-css/css/flag-icon.min.css">
+    <link rel="stylesheet" href="~/new/assets/vendors/owl-carousel-2/owl.carousel.min.css">
+    <link rel="stylesheet" href="~/new/assets/vendors/owl-carousel-2/owl.theme.default.min.css">
+    <!-- End plugin css for this page -->
+    <!-- inject:css -->
+    <!-- endinject -->
+    <!-- Layout styles -->
+    <link rel="stylesheet" href="~/new/assets/css/style.css">
+    <!-- End layout styles -->
+    <link rel="shortcut icon" href="~/new/assets/images/favicon1.png" />
+</head>
+<body>
+
+
+
+
+    <!-- Spinner End -->
+    <div class="content-wrapper">
+
+        <div style="padding-top:20px"></div>
+        <p>
+            <a asp-action="AllAccomodationReservationListt" class="btn btn-outline-primarym-2">Back to List</a>
+        </p>
+        <h6 class="mb-4">Add Customer Reservation</h6>
+        <form asp-action="AddCustomerReservation" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group">
+                <label>Choose Payment Channel</label>
+                <select asp-for="PaymentChannel" class="form-control p_input" aria-label="Floating label select example">
+                    <option selected>Choose Payment Channel</option>
+                    <option value="Paystack">Paystack</option>
+                    <option value="Flutterwave">Flutterwave</option>
+                    <option value="Cash">Cash</option>
+                </select>
+
+                <span asp-validation-for="PaymentChannel" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Customer Name</label>
+                <input hidden asp-for="ReservationId" value="@ViewBag.ReservationId" type="text" class="form-control p_input" placeholder="Accomodation Name">
+                <input asp-for="CustomerName" type="text" class="form-control p_input" placeholder="Customer Name">
+                <span asp-validation-for="CustomerName" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Customer Phone Number</label>
+                <input asp-for="CustomerPhoneNumber" type="tel" maxlength="11" pattern="\d{10,11}" class="form-control p_input" placeholder="MaximumNoOfGuest">
+                <span asp-validation-for="CustomerPhoneNumber" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Customer Email</label>
+                <input asp-for="CustomerEmail" type="email" class="form-control p_input" placeholder="Customer Email">
+                <span asp-validation-for="CustomerEmail" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Number Of Guests</label>
+                <input asp-for="NumberOfGuests" type="number" class="form-control p_input" placeholder="Number Of Guests">
+                <span asp-validation-for="NumberOfGuests" class="text-danger"></span>
+            </div> 
+            <div class="form-group">
+                <label>Reservation Start Date</label>
+                <input asp-for="ReservationStartDate" type="date" class="form-control p_input" placeholder="Reservation Start Date">
+                <span asp-validation-for="ReservationStartDate" class="text-danger"></span>
+                <span class="text-danger">@ViewBag.UserError</span>
+            </div>
+            <div class="form-group">
+                <label>Reservation End Date</label>
+                <input asp-for="ReservationEndDate" type="date" class="form-control p_input" placeholder="Reservation End Date">
+                <span asp-validation-for="ReservationEndDate" class="text-danger"></span>
+                <span class="text-danger">@ViewBag.UserError</span>
+            </div>
+
+            
+            <div class="form-group">
+                <label>Comment</label>
+                <textarea asp-for="Comment" class="form-control p_input" id="floatingPassword" placeholder="Comment,"></textarea>
+                <span asp-validation-for="Comment" class="text-danger"></span>
+            </div>
+            <span class="text-danger">@ViewBag.UserError</span>
+            <button type="submit" class="btn btn-primary btn-block enter-btn">Add Now</button>
+        </form>
+    </div>
+
+
+
+    <!-- plugins:js -->
+    <script src="~/new/assets/vendors/js/vendor.bundle.base.js"></script>
+    <!-- endinject -->
+    <!-- Plugin js for this page -->
+    <script src="~/new/assets/vendors/chart.js/Chart.min.js"></script>
+    <script src="~/new/assets/vendors/progressbar.js/progressbar.min.js"></script>
+    <script src="~/new/assets/vendors/jvectormap/jquery-jvectormap.min.js"></script>
+    <script src="~/new/assets/vendors/jvectormap/jquery-jvectormap-world-mill-en.js"></script>
+    <script src="~/new/assets/vendors/owl-carousel-2/owl.carousel.min.js"></script>
+    <!-- End plugin js for this page -->
+    <!-- inject:js -->
+    <script src="~/new/assets/js/off-canvas.js"></script>
+    <script src="~/new/assets/js/hoverable-collapse.js"></script>
+    <script src="~/new/assets/js/misc.js"></script>
+    <script src="~/new/assets/js/settings.js"></script>
+    <script src="~/new/assets/js/todolist.js"></script>
+    <!-- endinject -->
+    <!-- Custom js for this page -->
+    <script src="~/new/assets/js/dashboard.js"></script>
+    <!-- End custom js for this page -->
+    @section Scripts {
+        @{
+            await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        }
+    }
+</body>
+</html>
+
+
+

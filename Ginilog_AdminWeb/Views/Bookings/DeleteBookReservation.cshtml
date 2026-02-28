@@ -1,0 +1,91 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Delete - Ginilog  Admin Dashboard</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+
+    <!-- Favicon -->
+    <link href="~/design/img/favicon.ico" rel="icon">
+    <style>
+        /* Center the confirmation box */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f3f4f6;
+        }
+
+        .confirmation-box {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+            .confirmation-box h2 {
+                color: #e74c3c;
+                margin-top: 0;
+            }
+
+            .confirmation-box p {
+                margin: 15px 0;
+                color: #555;
+            }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .button {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #fff;
+        }
+
+            .button.cancel {
+                background-color: #95a5a6;
+            }
+
+            .button.delete {
+                background-color: #e74c3c;
+            }
+
+            .button:hover {
+                opacity: 0.9;
+            }
+    </style>
+</head>
+<body>
+
+    <div class="confirmation-box">
+        <h2>Confirm Deletion</h2>
+        <p>Are you sure you want to delete this item? This action cannot be undone.</p>
+
+        <div class="button-group">
+            <a style="text-decoration:none" href="~/Bookings/AllAccomodationReservationList" class="button cancel">Cancel</a>
+            <a style="text-decoration:none" href="/Bookings/DeleteBookReservationConfirm/@ViewBag.Id" class="button delete">Delete</a>
+        </div>
+    </div>
+
+
+</body>
+</html>

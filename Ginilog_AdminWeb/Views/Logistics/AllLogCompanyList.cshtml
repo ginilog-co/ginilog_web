@@ -1,0 +1,82 @@
+﻿@model IEnumerable<Ginilog_AdminWeb.Models.LogisticsModel.CompanyModelData>
+
+@{
+    ViewData["Title"] = "AllLogCompanyList";
+    Layout = "~/Views/Shared/_NewLayout.cshtml";
+}
+
+
+<!-- Blank Start -->
+<div class="row">
+    <div class="col-12 grid-margin">
+        <div class="card">
+
+            <div class="card-body">
+
+                <div style="padding-top:20px"></div>
+                <p>
+
+                    <a class="btn btn-secondary create-new-button" asp-action="AddLogCompany">Add Company</a>
+
+                </p>
+                <h6 class="mb-4">Search Here</h6>
+                <form asp-controller="Logistics" asp-action="AllLogCompanyList" method="get">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="id" placeholder="Search: Email, FirstName or LastName" aria-label="Recipient's username" aria-describedby="basic-addon2">
+                            <div class="input-group-append">
+                                <button class="btn btn-sm btn-primary" type="submit">Search</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <div style="padding-top:20px"></div>
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Company Email</th>
+                                <th>Company Name</th>
+                                <th>Phone Number</th>
+                                <th>Company Address</th>
+                                <th>No Of Trucks</th>
+                                <th>No Of Bikes</th>
+                                <th>Value Charge</th>
+                                <th>City</th>
+                                <th>State</th>
+                                <th>Date</th>
+                                <th>View</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@item!.CompanyEmail</td>
+                                    <td>@item!.CompanyName</td>
+                                    <td>@item!.PhoneNumber</td>
+                                    <td>@item!.CompanyAddress</td>
+                                    <td>@item!.NoOfTrucks</td>
+                                    <td>@item!.NofOfBikes</td>
+                                    <td>@item!.ValueCharge</td>
+                                    <td>@item!.Locality</td>
+                                    <td>@item!.State</td>
+                                    <td>@item!.CreatedAt</td>
+                                    <td><a href="@Url.Action("LogCompanyDetails", "Logistics", new { id = item!.Id })" class="btn btn-outline-info">View</a>
+                                    <td><a href="@Url.Action("DeleteLogCompany", "Logistics", new { id = item!.Id })" class="btn btn-danger">Delete</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Blank End -->

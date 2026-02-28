@@ -1,0 +1,84 @@
+﻿@model IEnumerable<Customer_Web_App.Models.BookingsModel.BookAccomodationReservatioModel>
+
+@{
+    ViewData["Title"] = "AccomodationReservationList";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<!--================Breadcrumb Area =================-->
+<section class="breadcrumb_area d-flex align-items-center justify-content-center">
+    <div class="overlay bg-parallax"
+         data-stellar-ratio="0.8"
+         data-stellar-vertical-offset="0"
+         data-background="">
+    </div>
+
+    <div class="container text-center">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="book_tabel_item">
+
+                    <form asp-action="AccomodationReservationList" method="get">
+                        <div class="tracking-group">
+                            <input type="text"
+                                   name="id"
+                                   class="form-control"
+                                   placeholder="Search Accommodation here"
+                                   required />
+
+                            <button type="submit" class="book_now_btn button_hover">
+                                Search
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<div style="padding-top:20px"></div>
+<!--================ Accomodation Area  =================-->
+<section class="accomodation_area custom_gap">
+    <div class="container">
+        <div class="section_title text-center">
+            <h2 class="title_color">Available Rooms Bookings</h2>
+            <p>We all live in an age that belongs to the young at heart. Life that is becoming extremely fast, </p>
+        </div>
+        <div class="row mb_30">
+            @if (Model != null && Model.Any())
+            {
+
+            @foreach (var data3 in Model)
+            {
+                <div class="col-lg-3 col-sm-6">
+                    <div class="accomodation_item text-center">
+                        <div class="hotel_img fixed-img">
+                            <img src="@data3.AccomodationImage" alt="">
+                            <a class="btn theme_btn button_hover"
+                               asp-controller="Home"
+                               asp-action="AddCustomerReservation"
+                               asp-route-id="@(data3.Id)">
+                                Book Now
+                            </a>
+                        </div>
+                        <a href="#"><h4 class="sec_h4">@data3.AccomodationName (Type: @data3.RoomType)</h4></a>
+                        <h5>₦@String.Format("{0:N0}", data3.RoomPrice)<small>/night (Room: @data3.RoomNumber)</small></h5>
+                        <p class="one-line-text">@data3.AccomodationLocality @data3.AccomodationState</p>
+                    </div>
+                </div>
+            }
+
+
+            }
+            else
+            {
+            <p class="text-muted mb-0">No Accomodation Reservation yet.</p>
+            }
+
+        </div>
+    </div>
+</section>
+<div style="padding-top:20px"></div>
+<!--================ Accomodation Area  =================-->>

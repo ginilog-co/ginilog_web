@@ -1,0 +1,298 @@
+﻿@model Ginilog_AdminWeb.Models.LogisticsModel.AllCompanyModelData
+
+@{
+    ViewData["Title"] = "Company Details";
+    Layout = "~/Views/Shared/_NewLayout.cshtml";
+}
+
+<!-- Delete Modal -->
+<div id="deleteModal" class="custom-modal">
+    <div class="custom-modal-content">
+        <div class="custom-modal-header">
+            <h5 style="color:black" class="modal-title">Confirm Delete</h5>
+            <span style="color:black" class="custom-modal-close" onclick="closeModal()">&times;</span>
+        </div>
+        <div class="custom-modal-body">
+            <p style="color:black">   Are you sure you want to delete this Item?</p>
+
+        </div>
+        <div class="custom-modal-footer">
+            <button onclick="closeModal()" class="btn-secondary">Cancel</button>
+            <a href="@Url.Action("DeleteLogCompanyConfirm", "Logistics", new { id = Model!.CompanyModelData!.Id })" class="btn-danger">Delete</a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 grid-margin">
+        <div class="card">
+            <div class="card-body">
+                <div class="row px-0 mx-0">
+                    <div class="col-12 grid-margin px-0">
+                        <div class="d-flex justify-content-end gap-2 px-0">
+
+                            <div class="col-auto mb-2">
+                                <button class="nav-link btn btn-danger create-new-button" onclick="openModal()">Delete</button>
+                            </div>
+                            <div class="col-auto mb-2">
+                                <a href="~/Home/ManagerDetails/@Model.CompanyModelData.AdminId" class="nav-link btn btn-primary create-new-button">View Manager</a>
+                            </div>
+                            <div class="col-auto mb-2">
+                                <a href="~/Logistics/AddOrder/@Model.CompanyModelData.Id" class="nav-link btn btn-secondary create-new-button">Create Order</a>
+                            </div>
+                            <div class="col-auto mb-2">
+                                @if (Model.CompanyModelData.CompanyLogo != "")
+                                {
+                                    <img class="rounded-circle" style="width: 40px; height: 40px;" src="@Model.CompanyModelData.CompanyLogo" alt="profile">
+                                }
+                                @if (Model.CompanyModelData.CompanyLogo == "")
+                                {
+                                    <img class="rounded-circle" style="width: 40px; height: 40px;" alt="profile" src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp">
+                                }
+                                @if (Model.CompanyModelData.CompanyLogo == null)
+                                {
+                                    <img class="rounded-circle" style="width: 40px; height: 40px;" alt="profile" src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp">
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <!-- Sales Chart Start -->
+
+                <div class="row g-4">
+                    <div class="col-sm-12 col-xl-4">
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Company Email</label>
+                                <input style="color: black; background-color: white;" value="@Model.CompanyModelData.CompanyEmail" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Company Name</label>
+                                <input style="color: black; background-color: white;" value="@Model.CompanyModelData.CompanyName" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Company Info</label>
+                                <input style="color: black; background-color: white;" value="@Model.CompanyModelData.CompanyInfo" readonly type="text" class="form-control readonly-white"/>
+                            </div>
+                            <div class="form-group">
+                                <label>Company RegNo</label>
+                                <input style="color: black; background-color: white;" value="@Model.CompanyModelData.CompanyRegNo" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Value Charge</label>
+                                <input style="color: black; background-color: white;" value="&#8358;@Model.CompanyModelData.ValueCharge.ToString("N2")" readonly type="text" class="form-control readonly-white">
+
+                            </div>
+                            <div class="form-group">
+                                <label>No Of Trucks</label>
+                                <input style="color: black; background-color: white;" value="@Model.CompanyModelData.NoOfTrucks" readonly type="text" class="form-control readonly-white">
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="col-sm-12 col-xl-4">
+                        <div class="card-body">
+
+                            <div class="form-group">
+                                <label>No of Bikes</label>
+                                <input style="color: black; background-color: white;" value="@Model.CompanyModelData.NofOfBikes" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Company Address</label>
+                                <input style="color: black; background-color: white;" value="@Model.CompanyModelData.CompanyAddress" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Post Codes</label>
+                                <input style="color: black; background-color: white;" value="@Model.CompanyModelData.PostCodes" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Locality</label>
+                                <input style="color: black; background-color: white;" value="@Model.CompanyModelData.Locality" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>State</label>
+                                <input style="color: black; background-color: white;" value="@Model.CompanyModelData.State" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Latitude</label>
+                                <input style="color: black; background-color: white;" value="@Model.CompanyModelData.Latitude" readonly type="text" class="form-control readonly-white">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-12 col-xl-4">
+                        <div class="card-body">
+
+                            <div class="form-group">
+                                <label>Longitude</label>
+                                <input style="color: black; background-color: white;" value="@Model.CompanyModelData.Longitude" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Bank Name</label>
+                                <input style="color: black; background-color: white;" value="@Model.CompanyModelData.BankName" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Account Name</label>
+                                <input style="color: black; background-color: white;" value="@Model.CompanyModelData.AccountName" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Account Number</label>
+                                <input style="color: black; background-color: white;" value="@Model.CompanyModelData.AccountNumber" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Rating</label>
+                                <input style="color: black; background-color: white;" value="@Model.CompanyModelData.Rating" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>CreatedAt</label>
+                                <input style="color: black; background-color: white;" value="@Model.CompanyModelData.CreatedAt" readonly type="text" class="form-control readonly-white">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="row">
+                    <div class="col-md-6 grid-margin stretch-card">
+                        <div style="padding-top:20px"></div>
+
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr class="text-white">
+                                        <th>Delivery Types</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.CompanyModelData.DeliveryTypes!)
+                                    {
+                                        <tr>
+                                            <td> <p><a class="btn btn-outline-success">@item</a></p><span style="padding-left:10px"> </span></td>
+
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                    <div class="col-md-6 grid-margin stretch-card">
+  
+                        <div style="padding-top:20px"></div>
+
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr class="text-white">
+                                        <th>Service Areas</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.CompanyModelData.ServiceAreas!)
+                                    {
+                                        <tr>
+                                            <td> <p><a class="btn btn-outline-success">@item</a></p><span style="padding-left:10px"> </span></td>
+
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+               </div>
+
+                <div style="padding-top:20px"></div>
+                <h6>Company Orders</h6>
+                <div style="padding-top:20px"></div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th> Tracking Num </th>
+                                <th> Item Name </th>
+                                <th> Sender Name </th>
+                                <th> Reciever Name </th>
+                                <th> Company Name </th>
+                                <th> Shipping Cost </th>
+                                <th> Item Cost </th>
+                                <th> Order Status </th>
+                                <th> Date </th>
+                                <th> Details </th>
+                                <th> Delete </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.OrderModelData!.Take(5))
+                            {
+                                <tr>
+                                    <td> @item.TrackingNum </td>
+                                    <td> @item.ItemName </td>
+                                    <td> @item.SenderName </td>
+                                    <td> @item.RecieverName </td>
+                                    <td> @item.CompanyName </td>
+                                    <td> &#8358;@item.ShippingCost.ToString("N2") </td>
+                                    <td> &#8358;@item.ItemCost.ToString("N2") </td>
+                                    <td><div class="badge badge-outline-success">@item.OrderStatus</div></td>
+                                    <th>@item.CreatedAt</th>
+                                    <td><a href="@Url.Action("OrderDetails", "Logistics", new { id = item!.Id })" class="btn btn-outline-info">View</a><td>
+                                    <td><a href="@Url.Action("DeleteOrder", "Logistics", new { id = item!.Id })" class="btn btn-danger">Delete</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <div style="padding-top:20px"></div>
+                    <p><a href="@Url.Action("OrderList", "Logistics", new { id = Model.CompanyModelData!.Id })" class="btn btn-danger">View All Order</a></p>
+                </div>
+
+                <div style="padding-top:20px"></div>
+                <h6>Users Rating</h6>
+                <div style="padding-top:20px"></div>
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>User Name</th>
+                                <th>Rating Num</th>
+                                <th>Review Message</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.CompanyModelData.CompanyReviewModels!)
+                            {
+                                <tr>
+
+                                    <td>@item.UserName</td>
+                                    <td>
+                                        <span class="rating-stars">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                if (i <= @item.RatingNum)
+                                                {
+                                                    <span class="star filled">★</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="star">★</span>
+                                                }
+                                            }
+                                        </span>
+                                    </td>
+                                    <td>@item.ReviewMessage</td>
+                                    <td>@item!.CreatedAt</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>

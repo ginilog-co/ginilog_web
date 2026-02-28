@@ -1,0 +1,272 @@
+﻿@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="shortcut icon" href="~/images/favicon1.png" />
+    <title>@ViewData["Title"] - Customer_Web_App</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="~/design/css/bootstrap.css">
+    <link rel="stylesheet" href="~/design/vendors/linericon/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="~/design/vendors/owl-carousel/owl.carousel.min.css">
+    <link rel="stylesheet" href="~/design/vendors/bootstrap-datepicker/bootstrap-datetimepicker.min.css">
+    <link rel="stylesheet" href="~/design/vendors/nice-select/css/nice-select.css">
+    <link rel="stylesheet" href="~/design/vendors/owl-carousel/owl.carousel.min.css">
+    <!-- main css -->
+    <link rel="stylesheet" href="~/design/css/style.css">
+    <link rel="stylesheet" href="~/design/css/responsive.css">
+
+    <style>
+        .custom_gap {
+            padding: 20px 0;
+        }
+
+        .one-line-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .fixed-img {
+            width: 100%;
+            height: 250px; /* 👈 change this height if you want */
+            overflow: hidden;
+        }
+
+            .fixed-img img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover; /* 👈 keeps image ratio and crops nicely */
+            }
+
+        .input-group .book_now_btn {
+            border-radius: 0;
+            height: 55px;
+        }
+
+        .input-group .form-control {
+            height: 55px;
+        }
+
+        .tracking-group {
+            display: flex;
+            width: 100%;
+        }
+
+            .tracking-group .form-control {
+                flex: 1;
+                height: 55px;
+                border-radius: 4px 0 0 4px;
+            }
+
+            .tracking-group .book_now_btn {
+                width: auto !important; /* 🔥 override template width:100% */
+                padding: 0 25px;
+                height: 55px;
+                border-radius: 0 4px 4px 0;
+            }
+
+        .profile-card {
+            border-radius: 14px;
+            box-shadow: 0 6px 25px rgba(0,0,0,0.05);
+        }
+
+        .profile-avatar {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .stat-number {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #777;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .compact-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+            .compact-list li {
+                padding: 8px 0;
+                border-bottom: 1px solid #eee;
+            }
+
+                .compact-list li:last-child {
+                    border-bottom: none;
+                }
+
+    </style>
+</head>
+<body>
+
+
+    <!--================Header Area =================-->
+    <header class="header_area">
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <!-- Brand and toggle get grouped for better mobile display -->
+                <a class="navbar-brand logo_h" href="index.html"><img src="~/images/logo1.svg" alt=""></a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <!-- Collect the nav links, forms, and other content for toggling -->
+                <div class="collapse navbar-collapse offset" id="navbarSupportedContent">
+                    <ul class="nav navbar-nav menu_nav ml-auto">
+
+                        <li class="nav-item @(currentController == "Home" && currentAction == "Index" ? "active" : "")">
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+
+                        <li class="nav-item @(currentController == "Home" && currentAction == "AccomodationList" ? "active" : "")">
+                            <a class="nav-link" asp-controller="Home" asp-action="AccomodationList">Accomodation</a>
+                        </li>
+
+                        <li class="nav-item @(currentController == "Logistics" ? "active" : "")">
+                            <a class="nav-link" asp-controller="Logistics" asp-action="Index">Send A Parcel</a>
+                        </li>
+                        @if (ViewBag.Login == "Login")
+                            {
+                            <li class="nav-item @(currentController == "Auth" && currentAction == "Profile" ? "active" : "")">
+                                <a class="nav-link" asp-controller="Auth" asp-action="UserProfile">Profile</a>
+                            </li>
+                            }
+                        @if (ViewBag.Login == "" || ViewBag.Login==null)
+                        {
+                            <li class="nav-item @(currentController == "Auth" && currentAction == "SignIn" ? "active" : "")">
+                                <a class="nav-link" asp-controller="Auth" asp-action="SignIn">Login</a>
+                            </li>
+
+                            <li class="nav-item @(currentController == "Auth" && currentAction == "SignUp" ? "active" : "")">
+                                <a class="nav-link" asp-controller="Auth" asp-action="SignUp">SignUp</a>
+                            </li>
+                        }
+                            
+
+                    
+
+                    </ul>
+                </div>
+
+             
+
+
+            </nav>
+        </div>
+    </header>
+    <!--================Header Area =================-->
+
+   
+            @RenderBody()
+      
+
+
+    <!--================ start footer Area  =================-->
+    <footer class="footer-area section_gap">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 col-md-6 col-sm-6">
+                    <div class="single-footer-widget">
+                        <h6 class="footer_title">About Ginilog</h6>
+                        <p>
+                            Ginilog is a modern service platform that provides seamless accommodation bookings and reliable
+                            logistics solutions. We help customers find and reserve comfortable stays while also offering efficient
+                            package delivery and tracking services — all in one convenient place.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6 col-sm-6">
+                    <div class="single-footer-widget">
+                        <h6 class="footer_title">Navigation Links</h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <ul class="list_style">
+                                    <li><a href="#">Home</a></li>
+                                    <li><a href="#">Services</a></li>
+                                </ul>
+                            </div>
+                            <div class="col-6">
+                                <ul class="list_style">
+                                    <li><a href="#">Pricing</a></li>
+                                    <li><a href="#">Contact</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6 col-sm-6">
+                    <div class="single-footer-widget instafeed">
+                        <h6 class="footer_title">InstaFeed</h6>
+                        <ul class="list_style instafeed d-flex flex-wrap">
+                            <li><img src="~/design/image/instagram/Image-01.jpg" alt=""></li>
+                            <li><img src="~/design/image/instagram/Image-02.jpg" alt=""></li>
+                            <li><img src="~/design/image/instagram/Image-03.jpg" alt=""></li>
+                            <li><img src="~/design/image/instagram/Image-04.jpg" alt=""></li>
+                            <li><img src="~/design/image/instagram/Image-05.jpg" alt=""></li>
+                            <li><img src="~/design/image/instagram/Image-06.jpg" alt=""></li>
+                            <li><img src="~/design/image/instagram/Image-07.jpg" alt=""></li>
+                            <li><img src="~/design/image/instagram/Image-08.jpg" alt=""></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border_line"></div>
+            <div class="row footer-bottom d-flex justify-content-between align-items-center">
+                <p class="col-lg-8 col-sm-12 footer-text m-0">
+                    <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+                    Copyright &copy;<script>document.write(new Date().getFullYear());</script> All rights reserved
+                    <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+                </p>
+                <div class="col-lg-4 col-sm-12 footer-social">
+                    <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#"><i class="fa-brands fa-x-twitter"></i></a>
+                    <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
+                </div>
+
+            </div>
+        </div>
+    </footer>
+    <!--================ End footer Area  =================-->
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="~/design/js/jquery-3.2.1.min.js"></script>
+    <script src="~/design/js/popper.js"></script>
+    <script src="~/design/js/bootstrap.min.js"></script>
+    <script src="~/design/vendors/owl-carousel/owl.carousel.min.js"></script>
+    <script src="~/design/js/jquery.ajaxchimp.min.js"></script>
+    <script src="~/design/js/mail-script.js"></script>
+    <script src="~/design/vendors/bootstrap-datepicker/bootstrap-datetimepicker.min.js"></script>
+    <script src="~/design/vendors/nice-select/js/jquery.nice-select.js"></script>
+    <script src="~/design/js/mail-script.js"></script>
+    <script src="~/design/js/stellar.js"></script>
+    <script src="~/design/vendors/lightbox/simpleLightbox.min.js"></script>
+    <script src="~/design/js/custom.js"></script>
+</body>
+</html>

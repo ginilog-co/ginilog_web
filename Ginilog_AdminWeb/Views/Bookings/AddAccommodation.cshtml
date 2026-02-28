@@ -1,0 +1,307 @@
+﻿@model Ginilog_AdminWeb.Models.BookingsModel.AddAccomodation
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Admin - Ginilog Admin Panel</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+    <!-- plugins:css -->
+    <link rel="stylesheet" href="~/new/assets/vendors/mdi/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="~/new/assets/vendors/css/vendor.bundle.base.css">
+    <!-- endinject -->
+    <!-- Plugin css for this page -->
+    <link rel="stylesheet" href="~/new/assets/vendors/jvectormap/jquery-jvectormap.css">
+    <link rel="stylesheet" href="~/new/assets/vendors/flag-icon-css/css/flag-icon.min.css">
+    <link rel="stylesheet" href="~/new/assets/vendors/owl-carousel-2/owl.carousel.min.css">
+    <link rel="stylesheet" href="~/new/assets/vendors/owl-carousel-2/owl.theme.default.min.css">
+    <!-- End plugin css for this page -->
+    <!-- inject:css -->
+    <!-- endinject -->
+    <!-- Layout styles -->
+    <link rel="stylesheet" href="~/new/assets/css/style.css">
+    <!-- End layout styles -->
+    <link rel="shortcut icon" href="~/new/assets/images/favicon1.png" />
+
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1WkH5DbnyUVLhPtqo_qj3Bmr0uKPolSw&libraries=places"></script>
+    <script>
+        // your initAutocomplete function goes here
+
+                function initAutocomplete() {
+            const autocompleteInput = document.getElementById('autocomplete');
+            const autocomplete = new google.maps.places.Autocomplete(autocompleteInput, {
+                types: ['geocode']
+            });
+
+            autocomplete.setFields(['place_id']);
+
+            autocomplete.addListener('place_changed', function () {
+                const place = autocomplete.getPlace();
+                const placeId = place.place_id;
+
+                // Set hidden input value
+                document.getElementById('PlaceId').value = placeId;
+            });
+        }
+
+        google.maps.event.addDomListener(window, 'load', initAutocomplete);
+    </script>
+</head>
+<body>
+
+
+
+
+    <!-- Spinner End -->
+    <div class="content-wrapper">
+
+        <div style="padding-top:20px"></div>
+        <p>
+            <a asp-action="AllAccommodationList" class="btn btn-outline-primarym-2">Back to List</a>
+        </p>
+        <h6 class="mb-4">Add Accommodation</h6>
+        <form asp-action="AddAccommodation" enctype="multipart/form-data" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label>Manager List *</label>
+                <select id="managerSelect" asp-for="ManagerId" asp-items="ViewBag.Managers" class="form-control p_input" aria-label="Floating label select example">
+                    <option value="">-- Select Manager --</option>
+                </select>
+                <span asp-validation-for="ManagerId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Accomodation Name</label>
+                <input asp-for="AccomodationName" type="text" class="form-control p_input"
+                       placeholder="Accomodation Name">
+                <span asp-validation-for="AccomodationName" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Accomodation Email</label>
+                <input asp-for="AccomodationEmail" type="email" class="form-control p_input"
+                       placeholder="Accomodation Email">
+                <span asp-validation-for="AccomodationEmail" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Accomodation PhoneNo</label>
+                <input asp-for="AccomodationPhoneNo" type="tel" maxlength="11" pattern="\d{10,11}" class="form-control p_input"
+                       placeholder="Accomodation PhoneNo">
+                <span asp-validation-for="AccomodationPhoneNo" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Accomodation Website</label>
+                <input asp-for="AccomodationWebsite" type="url" class="form-control p_input"
+                       placeholder="Accomodation Website">
+                <span asp-validation-for="AccomodationWebsite" class="text-danger"></span>
+            </div>
+
+
+            <div class="form-group">
+                <label>Check In Time</label>
+                <input asp-for="HourStart" type="time" class="form-control p_input"
+                       placeholder="Check In Time">
+                <span asp-validation-for="HourStart" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Check Out Time</label>
+                <input asp-for="HourEnd" type="time" class="form-control p_input"
+                       placeholder="Check Out Time">
+                <span asp-validation-for="HourEnd" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Accomodation Description</label>
+                <textarea asp-for="AccomodationDescription" class="form-control p_input" id="floatingPassword" placeholder="Accomodation Description"></textarea>
+                <span asp-validation-for="AccomodationDescription" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Accomodation Type</label>
+                <select asp-for="AccomodationType" class="form-control p_input" aria-label="Floating label select example">
+                    <option selected>Accomodation Type</option>
+                    <option value="Hotel">Hotel</option>
+                    <option value="Service Apartment">Service Apartment</option>
+                    <option value="ComfortBnB">ComfortBnB</option>
+                </select>
+
+                <span asp-validation-for="AccomodationType" class="text-danger"></span>
+            </div>
+
+
+
+            <div class="form-group">
+                <label>Booking Amount</label>
+                <input asp-for="BookingAmount" type="number" class="form-control p_input"
+                       placeholder="Booking Amount">
+                <span asp-validation-for="BookingAmount" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>No Of Rooms</label>
+                <input asp-for="NoOfRooms" type="number" class="form-control p_input"
+                       placeholder="No Of Rooms">
+                <span asp-validation-for="NoOfRooms" class="text-danger"></span>
+            </div>
+
+
+            <div class="form-group">
+                <label>Facilities</label>
+                <textarea asp-for="Facilities" class="form-control p_input" id="floatingPassword" placeholder="List Facilities and Separate by commas ,"></textarea>
+                <span asp-validation-for="Facilities" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Location</label>
+                <input id="autocomplete" type="text" class="form-control p_input" placeholder="Start typing an address...">
+                <!-- Hidden fields to hold extracted data -->
+                <input type="hidden" asp-for="Location" id="PlaceId" />
+                <span asp-validation-for="Location" class="text-danger"></span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Day</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Closed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Monday</td>
+                            <td><input type="time" asp-for="TimeSchedule!.Monday!.HourStart" class="form-control p_input"></td>
+                            <td><input type="time" asp-for="TimeSchedule!.Monday!.HourEnd" class="form-control p_input" /></td>
+                            <td><div class="form-check form-switch"><input type="checkbox" asp-for="TimeSchedule!.Monday!.IsClosed" class="form-check-input" /></div></td>
+                        </tr>
+                        <tr>
+                            <td>Tuesday</td>
+                            <td><input type="time" asp-for="TimeSchedule!.Tuesday!.HourStart" class="form-control p_input"></td>
+                            <td><input type="time" asp-for="TimeSchedule!.Tuesday!.HourEnd" class="form-control p_input" /></td>
+                            <td><div class="form-check form-switch"><input type="checkbox" asp-for="TimeSchedule!.Tuesday!.IsClosed" class="form-check-input" /></div></td>
+                        </tr>
+                        <tr>
+                            <td>Wednesday</td>
+                            <td><input type="time" asp-for="TimeSchedule!.Wednesday!.HourStart" class="form-control p_input"></td>
+                            <td><input type="time" asp-for="TimeSchedule!.Wednesday!.HourEnd" class="form-control p_input" /></td>
+                            <td><div class="form-check form-switch"><input type="checkbox" asp-for="TimeSchedule!.Wednesday!.IsClosed" class="form-check-input" /></div></td>
+                        </tr>
+                        <tr>
+                            <td>Thursday</td>
+                            <td><input type="time" asp-for="TimeSchedule!.Thursday!.HourStart" class="form-control p_input"></td>
+                            <td><input type="time" asp-for="TimeSchedule!.Thursday!.HourEnd" class="form-control p_input" /></td>
+                            <td><div class="form-check form-switch"><input type="checkbox" asp-for="TimeSchedule!.Thursday!.IsClosed" class="form-check-input" /></div></td>
+                        </tr>
+                        <tr>
+                            <td>Friday</td>
+                            <td><input type="time" asp-for="TimeSchedule!.Friday!.HourStart" class="form-control p_input"></td>
+                            <td><input type="time" asp-for="TimeSchedule!.Friday!.HourEnd" class="form-control p_input" /></td>
+                            <td><div class="form-check form-switch"><input type="checkbox" asp-for="TimeSchedule!.Friday!.IsClosed" class="form-check-input" /></div></td>
+                        </tr>
+                        <tr>
+                            <td>Saturday</td>
+                            <td><input type="time" asp-for="TimeSchedule!.Saturday!.HourStart" class="form-control p_input"></td>
+                            <td><input type="time" asp-for="TimeSchedule!.Saturday!.HourEnd" class="form-control p_inputl" /></td>
+                            <td><div class="form-check form-switch"><input type="checkbox" asp-for="TimeSchedule!.Saturday!.IsClosed" class="form-check-input" /></div></td>
+                        </tr>
+                        <tr>
+                            <td>Sunday</td>
+                            <td><input type="time" asp-for="TimeSchedule!.Sunday!.HourStart" class="form-control p_input"></td>
+                            <td><input type="time" asp-for="TimeSchedule!.Sunday!.HourEnd" class="form-control p_input" /></td>
+                            <td><div class="form-check form-switch"><input type="checkbox" asp-for="TimeSchedule!.Sunday!.IsClosed" class="form-check-input" /></div></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+
+            <div class="form-group">
+                <label>Logo Upload</label>
+                <input id="LogoUpload" asp-for="LogoUpload" type="file" accept="image/*" class="form-control p_input"
+                       placeholder="Logo Upload">
+                <span asp-validation-for="LogoUpload" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Accommodation Image List</label>
+                <input id="ImageList" asp-for="ImageList" type="file" accept="image/*" multiple class="form-control p_input"
+                       placeholder="Image List">
+                <span asp-validation-for="ImageList" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block enter-btn">Add Now</button>
+        </form>
+    </div>
+
+
+
+    <!-- plugins:js -->
+    <script src="~/new/assets/vendors/js/vendor.bundle.base.js"></script>
+    <!-- endinject -->
+    <!-- Plugin js for this page -->
+    <script src="~/new/assets/vendors/chart.js/Chart.min.js"></script>
+    <script src="~/new/assets/vendors/progressbar.js/progressbar.min.js"></script>
+    <script src="~/new/assets/vendors/jvectormap/jquery-jvectormap.min.js"></script>
+    <script src="~/new/assets/vendors/jvectormap/jquery-jvectormap-world-mill-en.js"></script>
+    <script src="~/new/assets/vendors/owl-carousel-2/owl.carousel.min.js"></script>
+    <!-- End plugin js for this page -->
+    <!-- inject:js -->
+    <script src="~/new/assets/js/off-canvas.js"></script>
+    <script src="~/new/assets/js/hoverable-collapse.js"></script>
+    <script src="~/new/assets/js/misc.js"></script>
+    <script src="~/new/assets/js/settings.js"></script>
+    <script src="~/new/assets/js/todolist.js"></script>
+    <!-- endinject -->
+    <!-- Custom js for this page -->
+    <script src="~/new/assets/js/dashboard.js"></script>
+    <!-- End custom js for this page -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+            function matchCustom(params, data) {
+          // If there is no search term, return all results
+          if ($.trim(params.term) === '') {
+            return data;
+          }
+
+          // Do case-insensitive match
+          if (data.text.toLowerCase().indexOf(params.term.toLowerCase()) > -1) {
+            return data;
+          }
+
+          // Return `null` if the term should not be displayed
+          return null;
+        }
+
+        $(document).ready(function () {
+          $('#managerSelect').select2({
+            placeholder: "-- Select Manager --",
+            allowClear: true,
+             matcher: matchCustom
+          });
+        });
+
+
+            
+    </script>
+
+    @section Scripts {
+        @{
+            await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        }
+    }
+</body>
+</html>
+
+
+

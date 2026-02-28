@@ -1,0 +1,150 @@
+﻿@model Ginilog_Company_WebDasboard.Models.BookingsModel.CustomerBookedReservation
+
+@{
+    ViewData["Title"] = "CustomerReservationDetails";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<div class="content-wrapper">
+<div class="row">
+    <div class="col-12 grid-margin">
+       
+            <div class="card-body">
+
+
+                <div class="row px-0 mx-0">
+                    <div class="col-12 grid-margin px-0">
+                        <div class="d-flex justify-content-end gap-2 px-0">
+
+                            <div class="col-auto mb-2">
+                                @if (Model.AccomodationImage != "")
+                                {
+                                    <img class="rounded-circle" style="width: 40px; height: 40px;" src="@Model.AccomodationImage" alt="profile">
+                                }
+                                @if (Model.AccomodationImage == "")
+                                {
+                                    <img class="rounded-circle" style="width: 40px; height: 40px;" alt="profile" src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp">
+                                }
+                                @if (Model.AccomodationImage == null)
+                                {
+                                    <img class="rounded-circle" style="width: 40px; height: 40px;" alt="profile" src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp">
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <!-- Sales Chart Start -->
+
+                <div class="row g-4">
+                    <div class="col-sm-12 col-xl-4">
+                        <div class="card">
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Accomodation Name</label>
+                                <input style="color: black; background-color: white;" value="@Model.AccomodationName" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Accomodation Type</label>
+                                <input style="color: black; background-color: white;" value="@Model.AccomodationType" readonly type="text" class="form-control readonly-white">
+                            </div>
+
+
+                            <div class="form-group">
+                                <label>Ticket Num</label>
+                                <input style="color: black; background-color: white;" value="@Model.TicketNum" readonly type="text" class="form-control readonly-white">
+
+                            </div>
+                            <div class="form-group">
+                                <label>Number Of Guests</label>
+                                <input style="color: black; background-color: white;" value="@Model.NumberOfGuests" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>TotalCost</label>
+                                <input style="color: black; background-color: white;" value="&#8358;@Model.TotalCost.ToString("N2")" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Accomodation Location</label>
+                                <input style="color: black; background-color: white;" value="@Model.AccomodationLocation" readonly type="text" class="form-control readonly-white">
+                            </div>
+                        </div>
+
+                    </div>
+                    </div>
+                    <div class="col-sm-12 col-xl-4">
+                        <div class="card">
+                        <div class="card-body">
+
+
+                            <div class="form-group">
+                                <label>Customer Name</label>
+                                <input style="color: black; background-color: white;" value="@Model.CustomerName" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Customer Phone Number</label>
+                                <input style="color: black; background-color: white;" value="@Model.CustomerPhoneNumber" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Customer Email</label>
+                                <input style="color: black; background-color: white;" value="@Model.CustomerEmail" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Room Number</label>
+                                <p style="color: black; background-color: white;">@Model.Comment</p>
+                            </div>
+                            <div class="form-group">
+                                <label>Room Number</label>
+                                <input style="color: black; background-color: white;" value="@Model.RoomNumber" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Reservation Start Date</label>
+                                <input style="color: black; background-color: white;" value="@Model.ReservationStartDate" readonly type="text" class="form-control readonly-white">
+                            </div>
+                           
+                        </div>
+                    </div>
+                    </div>
+
+                    <div class="col-sm-12 col-xl-4">
+                        <div class="card">
+                        <div class="card-body">
+
+                                <div class="form-group">
+                                    <label>Reservation End Date</label>
+                                    <input style="color: black; background-color: white;" value="@Model.ReservationEndDate" readonly type="text" class="form-control readonly-white">
+                                </div>
+                            <div class="form-group">
+                                <label>No Of Days</label>
+                                <input style="color: black; background-color: white;" value="@Model.NoOfDays" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Trnx Reference</label>
+                                <input style="color: black; background-color: white;" value="@Model.TrnxReference" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>Payment Channel</label>
+                                <input style="color: black; background-color: white;" value="@Model.PaymentChannel" readonly type="text" class="form-control readonly-white">
+                            </div>
+
+                            <div class="form-group">
+                                <label>CreatedAt</label>
+                                <input style="color: black; background-color: white;" value="@Model.CreatedAt" readonly type="text" class="form-control readonly-white">
+                            </div>
+                            <div class="form-group">
+                                <label>UpdatedAt</label>
+                                <input style="color: black; background-color: white;" value="@Model.UpdateddAt" readonly type="text" class="form-control readonly-white">
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+
+        </div>
+    </div>
+
+</div>
+</div>

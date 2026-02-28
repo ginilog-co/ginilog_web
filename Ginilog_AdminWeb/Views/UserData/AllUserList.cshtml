@@ -1,0 +1,75 @@
+﻿@model IEnumerable<Ginilog_AdminWeb.Models.UsersDataModel.UserModelTable>
+
+@{
+    ViewData["Title"] = "AllUserList";
+    Layout = "~/Views/Shared/_NewLayout.cshtml";
+}
+
+<!-- Blank Start -->
+<div class="row">
+    <div class="col-12 grid-margin">
+        <div class="card">
+
+            <div class="card-body">
+                <p>Users List</p>
+                <div style="padding-top:20px"></div>
+               
+                <h6 class="mb-4">Search Here</h6>
+                <form asp-controller="UserData" asp-action="AllUserList" method="get">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="id" placeholder="Search: Email, FirstName or LastName" aria-label="Recipient's username" aria-describedby="basic-addon2">
+                            <div class="input-group-append">
+                                <button class="btn btn-sm btn-primary" type="submit">Search</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <div style="padding-top:20px"></div>
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone Number</th>
+                                <th>Sex</th>
+                                <th>MoneyBox Balance</th>
+                                <th>City</th>
+                                <th>State</th>
+                                <th>LastLoginAt</th>
+                                <th>Date</th>
+                                <th>View</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr class="feedback-item">
+                                    <td>@item!.FirstName @item.LastName</td>
+                                    <td>@item!.Email</td>
+                                    <td>@item!.PhoneNo</td>
+                                    <td>@item!.Sex</td>
+                                    <td>&#8358;@item!.MoneyBoxBalance.ToString("N2")</td>
+                                    <td>@item!.Locality</td>
+                                    <td>@item!.State</td>
+                                    <td>@item!.LastLoginAt</td>
+                                    <td>@item!.CreatedAt</td>
+                                    <td><a href="@Url.Action("UserDetails", "UserData", new { id = item!.Id })" class="btn btn-outline-info">View</a></td>
+                                    <td><a href="@Url.Action("DeleteUser", "UserData", new { id = item!.Id })" class="btn btn-danger">Delete</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Blank End -->

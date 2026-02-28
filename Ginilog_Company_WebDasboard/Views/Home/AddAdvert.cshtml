@@ -1,0 +1,111 @@
+﻿@model Ginilog_Company_WebDasboard.Models.AddAdvert
+
+@{
+    ViewData["Title"] = "AddAdvert";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Company - Ginilog Admin Panel</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+    <!-- base:css -->
+    <link rel="stylesheet" href="~/designs/vendors/mdi/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="~/designs/vendors/feather/feather.css">
+    <link rel="stylesheet" href="~/designs/vendors/base/vendor.bundle.base.css">
+    <!-- endinject -->
+    <!-- plugin css for this page -->
+    <link rel="stylesheet" href="~/designs/vendors/flag-icon-css/css/flag-icon.min.css" />
+    <link rel="stylesheet" href="~/designs/vendors/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="~/designs/vendors/jquery-bar-rating/fontawesome-stars-o.css">
+    <link rel="stylesheet" href="~/designs/vendors/jquery-bar-rating/fontawesome-stars.css">
+    <!-- End plugin css for this page -->
+    <!-- inject:css -->
+    <link rel="stylesheet" href="~/designs/css/style.css">
+    <!-- endinject -->
+    <link rel="shortcut icon" href="~/designs/images/favicon1.png" />
+
+</head>
+<body>
+
+    <div class="content-wrapper">
+        <div style="padding-top:20px"></div>
+
+        <h6 class="mb-4">Add an Advert</h6>
+        <hr />
+        <form asp-action="AddAdvert" enctype="multipart/form-data" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group">
+                <label>Advert Image</label>
+                <input id="LogoUpload" asp-for="AdvertImage" type="file" accept="image/*" class="form-control" placeholder="Advert Image" />
+                <span asp-validation-for="AdvertImage" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Advert Name</label>
+                <input asp-for="AdvertName" type="text" class="form-control" placeholder="Advert Name or Title" />
+                <span asp-validation-for="AdvertName" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Advert Type</label>
+                <select asp-for="AdvertType" class="form-control p_input" aria-label="Floating label select example">
+                    <option value="Logistics Advert">Logistics Advert</option>
+                    <option value="Bookings Advert">Bookings Advert</option>
+                    <option value="Promo Advert">Promo Advert</option>
+                </select>
+                <span asp-validation-for="AdvertType" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Advert Description</label>
+                <textarea asp-for="AdvertItemDescription" class="form-control" placeholder="Advert Description"></textarea>
+                <span asp-validation-for="AdvertItemDescription" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Advert Days</label>
+                <input asp-for="AdvertDays4" type="number" class="form-control" placeholder="Advert Days" />
+                <span asp-validation-for="AdvertDays4" class="text-danger"></span>
+            </div>
+          
+            <button type="submit" class="btn btn-primary btn-block enter-btn">Add Now</button>
+        </form>
+    </div>
+
+    <!-- base:js -->
+    <script src="~/designs/vendors/base/vendor.bundle.base.js"></script>
+    <!-- endinject -->
+    <!-- Plugin js for this page-->
+    <!-- End plugin js for this page-->
+    <!-- inject:js -->
+    <script src="~/designs/js/off-canvas.js"></script>
+    <script src="~/designs/js/hoverable-collapse.js"></script>
+    <script src="~/designs/js/template.js"></script>
+    <!-- endinject -->
+    <!-- plugin js for this page -->
+    <script src="~/designs/vendors/chart.js/Chart.min.js"></script>
+    <script src="~/designs/vendors/jquery-bar-rating/jquery.barrating.min.js"></script>
+    <!-- End plugin js for this page -->
+    <!-- Custom js for this page-->
+    <script src="~/designs/js/dashboard.js"></script>
+    <script>
+
+
+
+    </script>
+
+    @section Scripts {
+        @{
+            await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        }
+    }
+</body>
+</html>
+
+

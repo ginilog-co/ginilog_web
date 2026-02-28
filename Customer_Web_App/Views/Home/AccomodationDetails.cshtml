@@ -1,0 +1,247 @@
+﻿@model Customer_Web_App.Models.BookingsModel.AccomodationDataModel
+
+@{
+    ViewData["Title"] = "AccomodationDetails";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="section_gap accomodation-details">
+    <div class="container">
+
+        <!-- Top bar -->
+        <div class="acc-topbar">
+            <a href="javascript:history.back()" class="acc-back" aria-label="Back">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <h2 class="acc-top-title">
+                @(Model?.AccomodationName ?? Model?.AccomodationName ?? "Accommodation")
+            </h2>
+            <div class="acc-top-spacer"></div>
+        </div>
+
+        @{
+            var images = Model?.AccomodationImages ?? new List<string>(); // Change "Images" if your property name differs
+            var firstImage = images.Any()
+            ? images.First()
+            : "https://images.unsplash.com/photo-1505693314120-0d443867891c?q=80&w=1600&auto=format&fit=crop";
+        }
+
+        <!-- Hero -->
+        <div class="acc-hero">
+            <img id="accHeroImg"
+                 src="@firstImage"
+                 alt="Accommodation image" />
+        </div>
+
+        <!-- Thumbnails -->
+        @if (images.Any())
+        {
+            <div class="acc-thumbs" aria-label="Gallery thumbnails">
+                @for (int i = 0; i < images.Count; i++)
+                {
+                    var img = images[i];
+
+                    <button type="button"
+                            class="acc-thumb @(i == 0 ? "active" : "")"
+                            data-src="@img">
+                        <img src="@img" alt="thumb @(i + 1)" />
+                    </button>
+                }
+            </div>
+        }
+
+
+
+        <!-- Title + Logo -->
+        <div class="acc-title-row">
+            <div>
+                <h3 class="acc-title">
+                    @(Model?.AccomodationName ?? Model?.AccomodationName ?? "Saints Comfort")
+                </h3>
+            </div>
+
+            <div class="acc-logo">
+                <img src="@(Model?.AccomodationLogo ?? "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Emblem-hotel.svg/512px-Emblem-hotel.svg.png")"
+                     alt="Logo" />
+            </div>
+        </div>
+
+        <!-- Info -->
+        <div class="acc-info">
+            <div class="acc-info-line">
+                <span class="acc-info-icon"><i class="fa-solid fa-location-dot"></i></span>
+                <div class="acc-info-text">
+                    @(Model?.Location ?? Model?.Location ?? "Chime Avenue New Haven, Enugu North, Enugu")
+                </div>
+            </div>
+
+            <div class="acc-subtext">
+                Opens Monday - Sunday
+                @* If you have open days/time on model, replace the above with your data *@
+            </div>
+
+            <div class="acc-subtext">
+                Booking Price:
+                <span class="acc-price">
+                    @(
+                                        Model?.BookingAmount != null
+                            ? $"₦{Model.BookingAmount:n2}"
+                            : "₦100.00"
+                     )
+                </span>
+            </div>
+        </div>
+
+        <!-- Description (accordion) -->
+        <div class="acc-section open" id="descSection">
+            <div class="acc-section-head" id="descToggle" role="button" tabindex="0" aria-expanded="true">
+                <h4 class="acc-section-title">Description</h4>
+                <span class="acc-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+            </div>
+
+            <div class="acc-section-body" id="descBody">
+                @(Model?.AccomodationDescription ?? "We've collected some amazing examples of accomodation designs & images from our global design community")
+            </div>
+        </div>
+
+        <!-- CTA (Normal Position) -->
+        <div class="acc-cta" id="ctaSection">
+            <a class="acc-btn"
+               id="availabilityBtn"
+               asp-controller="Home"
+               asp-action="AccomodationReservationList"
+               asp-route-id="@(Model?.Id)">
+                Find Availability
+            </a>
+        </div>
+
+        <!-- Floating Version -->
+        <div class="floating-cta" id="floatingCta">
+            <a class="acc-btn floating-btn"
+               asp-controller="Home"
+               asp-action="AccomodationReservationList"
+               asp-route-id="@(Model?.Id)">
+                Find Availability
+            </a>
+        </div>
+
+
+        <!-- Facilities -->
+        <div class="acc-section" style="margin-top: 22px;">
+            <h4 class="acc-section-title">ComfortBnB Facilities</h4>
+
+            <div class="acc-chips">
+                @* Replace this with your real list e.g. Model.Facilities *@
+                <span class="acc-chip">Swimming pool</span>
+                <span class="acc-chip">Parking Space</span>
+            </div>
+        </div>
+
+        <!-- Reviews -->
+        <div class="acc-reviews-head">
+            <h4 class="acc-section-title" style="margin:0;">Reviews</h4>
+            <a href="#addReview" class="acc-add-review">Add ReView</a>
+        </div>
+
+        <div class="acc-rating-rows" id="ratingRows">
+            @* Static UI like screenshot. If you have counts, you can inject dynamic values *@
+
+            <div class="acc-rating-row">
+                <div class="acc-stars"><i class="fa-solid fa-star"></i><span>1</span></div>
+                <div class="acc-bar"><span style="width:0%"></span></div>
+                <div class="acc-count">0</div>
+            </div>
+
+            <div class="acc-rating-row">
+                <div class="acc-stars"><i class="fa-solid fa-star"></i><span>2</span></div>
+                <div class="acc-bar"><span style="width:0%"></span></div>
+                <div class="acc-count">0</div>
+            </div>
+
+            <div class="acc-rating-row">
+                <div class="acc-stars"><i class="fa-solid fa-star"></i><span>3</span></div>
+                <div class="acc-bar"><span style="width:0%"></span></div>
+                <div class="acc-count">0</div>
+            </div>
+
+            <div class="acc-rating-row">
+                <div class="acc-stars"><i class="fa-solid fa-star"></i><span>4</span></div>
+                <div class="acc-bar"><span style="width:0%"></span></div>
+                <div class="acc-count">0</div>
+            </div>
+
+            <div class="acc-rating-row">
+                <div class="acc-stars"><i class="fa-solid fa-star"></i><span>5</span></div>
+                <div class="acc-bar"><span style="width:100%"></span></div>
+                <div class="acc-count">1</div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+
+<script>
+    // Gallery: thumbnails -> hero
+    (function () {
+        const hero = document.getElementById("accHeroImg");
+        const thumbs = document.querySelectorAll(".acc-thumb");
+        thumbs.forEach(t => {
+            t.addEventListener("click", () => {
+                thumbs.forEach(x => x.classList.remove("active"));
+                t.classList.add("active");
+                const src = t.getAttribute("data-src");
+                if (src) hero.src = src;
+            });
+        });
+    })();
+
+    // Description accordion
+    (function () {
+        const section = document.getElementById("descSection");
+        const toggle = document.getElementById("descToggle");
+
+        function setOpen(open) {
+            section.classList.toggle("open", open);
+            section.classList.toggle("collapsed", !open);
+            toggle.setAttribute("aria-expanded", String(open));
+        }
+
+        setOpen(true);
+
+        toggle.addEventListener("click", () => {
+            const isCollapsed = section.classList.contains("collapsed");
+            setOpen(isCollapsed);
+        });
+
+        toggle.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                const isCollapsed = section.classList.contains("collapsed");
+                setOpen(isCollapsed);
+            }
+        });
+    })();
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const ctaSection = document.getElementById("ctaSection");
+        const floatingCta = document.getElementById("floatingCta");
+
+        function checkScroll() {
+            const rect = ctaSection.getBoundingClientRect();
+
+            // If original button is out of view
+            if (rect.bottom < 0) {
+                floatingCta.classList.add("show");
+            } else {
+                floatingCta.classList.remove("show");
+            }
+        }
+
+        window.addEventListener("scroll", checkScroll);
+    });
+</script>
+

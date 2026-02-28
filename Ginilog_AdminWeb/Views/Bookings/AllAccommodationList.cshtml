@@ -1,0 +1,94 @@
+﻿@model IEnumerable<Ginilog_AdminWeb.Models.BookingsModel.AccomodationDataModel>
+
+@{
+    ViewData["Title"] = "AllAccommodationList";
+    Layout = "~/Views/Shared/_NewLayout.cshtml";
+}
+
+<!-- Blank Start -->
+<div class="row">
+    <div class="col-12 grid-margin">
+        <div class="card">
+
+            <div class="card-body">
+
+                <div style="padding-top:20px"></div>
+                <p>
+
+                    <a class="btn btn-secondary create-new-button" asp-action="AddAccommodation">Add Accommodation</a>
+
+                </p>
+                <h6 class="mb-4">Search Here</h6>
+                <form asp-controller="Bookings" asp-action="AllAccommodationList" method="get">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="id" placeholder="Search: Email, Name, location" aria-label="Recipient's username" aria-describedby="basic-addon2">
+                            <div class="input-group-append">
+                                <button class="btn btn-sm btn-primary" type="submit">Search</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <div style="padding-top:20px"></div>
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Logo Pic</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone Number</th>
+                                <th>Accomodation Type</th>
+                                <th>No Of Rooms</th>
+                                <th>Booking Amount</th>
+                                <th>City</th>
+                                <th>State</th>
+                                <th>Date</th>
+                                <th>View</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        @if (item.AccomodationLogo != "")
+                                        {
+                                            <img class="rounded-circle" style="width: 40px; height: 40px;" src="@item.AccomodationLogo" alt="profile">
+                                        }
+                                        @if (item.AccomodationLogo == "")
+                                        {
+                                            <img class="rounded-circle" style="width: 40px; height: 40px;" alt="profile" src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp">
+                                        }
+                                        @if (item.AccomodationLogo == null)
+                                        {
+                                            <img class="rounded-circle" style="width: 40px; height: 40px;" alt="profile" src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp">
+                                        }<span style="padding-left:10px"> </span>
+                                    </td>
+                                    <td>@item!.AccomodationName</td>
+                                    <td>@item!.AccomodationEmail</td>
+                                    <td>@item!.AccomodationPhoneNo</td>
+                                    <td>@item!.AccomodationType</td>
+                                    <td>@item!.NoOfRooms</td>
+                                    <td>@item!.BookingAmount</td>
+                                    <td>@item!.Locality</td>
+                                    <td>@item!.State</td>
+                                    <td>@item!.CreatedAt</td>
+                                    <td><a href="@Url.Action("AccommodationDetails", "Bookings", new { id = item!.Id })" class="btn btn-outline-info">View</a>
+                                    <td><a href="@Url.Action("DeleteAccommodation", "Bookings", new { id = item!.Id })" class="btn btn-danger">Delete</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Blank End -->

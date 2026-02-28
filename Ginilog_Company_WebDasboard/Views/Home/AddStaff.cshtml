@@ -1,0 +1,189 @@
+﻿@model Ginilog_Company_WebDasboard.Models.AddStaffDataTable
+
+@{
+   
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Staff - Ginilog Admin Panel</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+    <link rel="stylesheet" href="~/designs/vendors/mdi/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="~/designs/vendors/feather/feather.css">
+    <link rel="stylesheet" href="~/designs/vendors/base/vendor.bundle.base.css">
+    <!-- endinject -->
+    <!-- plugin css for this page -->
+    <link rel="stylesheet" href="~/designs/vendors/flag-icon-css/css/flag-icon.min.css" />
+    <link rel="stylesheet" href="~/designs/vendors/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="~/designs/vendors/jquery-bar-rating/fontawesome-stars-o.css">
+    <link rel="stylesheet" href="~/designs/vendors/jquery-bar-rating/fontawesome-stars.css">
+    <!-- End plugin css for this page -->
+    <!-- inject:css -->
+    <link rel="stylesheet" href="~/designs/css/style.css">
+    <!-- endinject -->
+    <link rel="shortcut icon" href="~/designs/images/favicon1.png" />
+</head>
+<body>
+
+
+
+
+    <div class="content-wrapper">
+
+        <div style="padding-top:20px"></div>
+        <p>
+            <a asp-action="AllStaffData" class="btn btn-outline-primarym-2">Back to List</a>
+        </p>
+        <h6 class="mb-4">Add A Staff</h6>
+        <form asp-action="AddStaff" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label>Choose Staff Type</label>
+                <select asp-for="AdminType" class="form-control p_input"
+                        aria-label="Floating label select example">
+                    <option selected>Choose Staff Type</option>
+                    <option value="Staff_Admin">Staff_Admin</option>
+                    <option value="Staff">Staff</option>
+                </select>
+
+                <span asp-validation-for="AdminType" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>First Name</label>
+                <input asp-for="FirstName" type="text" class="form-control"
+                       placeholder="First Name">
+
+                <span asp-validation-for="FirstName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Last Name</label>
+                <input asp-for="SurName" type="text" class="form-control" id="floatingInput"
+                       placeholder="Last Name">
+                <span asp-validation-for="SurName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input asp-for="Email" type="email" class="form-control" id="floatingInput"
+                       placeholder="examle@gmail.com">
+
+                <span asp-validation-for="Email" class="text-danger"></span>
+                <span class="text-danger">@ViewBag.UserError</span>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <div class="input-group">
+                    <input asp-for="Password" type="password" class="form-control p_input" id="floatingPassword" placeholder="Password">
+                    <div class="input-group-append">
+                        <button onclick="togglePasswordVisibility()" class="btn btn-sm btn-primary" type="button" style="z-index: 1;"> <i id="visibilityIcon" class="bi bi-eye"></i></button>
+                    </div>
+                </div>
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input asp-for="PhoneNo" type="tel" maxlength="11" pattern="\d{10,11}" class="form-control" id="floatingInput"
+                       placeholder="Phone Number">
+
+                <span asp-validation-for="PhoneNo" class="text-danger"></span>
+                <span class="text-danger">@ViewBag.UserError</span>
+            </div>
+
+
+            <div class="form-group">
+                <label>Choose Gender</label>
+                <select asp-for="Sex" class="form-control p_input" id="floatingSelect"
+                        aria-label="Floating label select example">
+                    <option selected>Choose Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                </select>
+
+                <span asp-validation-for="Sex" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Staff Code</label>
+                <input asp-for="StaffCode" type="text" class="form-control" id="floatingInput"
+                       placeholder="Staff Code">
+                <span asp-validation-for="StaffCode" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Staff Address</label>
+                <input asp-for="Address" type="text" class="form-control" id="floatingInput"
+                       placeholder="Address">
+                <span asp-validation-for="Address" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Branch</label>
+                <input asp-for="Branch" type="text" class="form-control" id="floatingInput"
+                       placeholder="Branch">
+                <span asp-validation-for="Branch" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>City</label>
+                <input asp-for="Locality" type="text" class="form-control" id="floatingInput"
+                       placeholder="City">
+                <span asp-validation-for="Locality" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>State</label>
+                <input asp-for="State" type="text" class="form-control" id="floatingInput"
+                       placeholder="City">
+                <span asp-validation-for="State" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block enter-btn">Add Now</button>
+        </form>
+    </div>
+
+
+
+    <!-- base:js -->
+    <script src="~/designs/vendors/base/vendor.bundle.base.js"></script>
+    <!-- endinject -->
+    <!-- Plugin js for this page-->
+    <!-- End plugin js for this page-->
+    <!-- inject:js -->
+    <script src="~/designs/js/off-canvas.js"></script>
+    <script src="~/designs/js/hoverable-collapse.js"></script>
+    <script src="~/designs/js/template.js"></script>
+    <!-- endinject -->
+    <!-- plugin js for this page -->
+    <script src="~/designs/vendors/chart.js/Chart.min.js"></script>
+    <script src="~/designs/vendors/jquery-bar-rating/jquery.barrating.min.js"></script>
+    <!-- End plugin js for this page -->
+    <!-- Custom js for this page-->
+    <script src="~/designs/js/dashboard.js"></script>
+    <!-- End custom js for this page-->
+
+
+    <script>
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById("floatingPassword");
+            const visibilityIcon = document.getElementById("visibilityIcon");
+
+            // Toggle the password visibility
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                visibilityIcon.classList.replace("bi-eye", "bi-eye-slash");
+            } else {
+                passwordInput.type = "password";
+                visibilityIcon.classList.replace("bi-eye-slash", "bi-eye");
+            }
+        }
+    </script>
+
+    @section Scripts {
+        @{
+            await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        }
+    }
+</body>
+</html>
