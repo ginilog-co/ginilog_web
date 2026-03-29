@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Facebook, Twitter, Instagram, Linkedin, Mail } from "lucide-react";
 
 const quickLinks = [
-  { href: "/landing-page", label: "Home" },
-  { href: "/landing-page#contact", label: "Contact" },
+  { href: "/", label: "Home" },
+  { href: "/#contact", label: "Contact" },
 ];
 
 const legalLinks = [

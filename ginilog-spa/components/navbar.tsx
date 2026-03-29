@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 const navLinks = [
-  { href: "/landing-page", label: "Home" },
-  { href: "/landing-page#contact", label: "Contact Us" },
+  { href: "/", label: "Home" },
+  { href: "/#contact", label: "Contact Us" },
 ];
 
 export function Navbar() {
@@ -17,7 +16,7 @@ export function Navbar() {
     <nav className="bg-white border-b sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <Link href="/landing-page" className="text-xl font-bold text-primary">
+          <Link href="/" className="text-xl font-bold text-primary">
             GINILOG
           </Link>
 
