@@ -30,7 +30,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
                       policy =>
                       {
-                          policy.WithOrigins("https://localhost:7001", "https://api-data.ginilog.com").
+                          policy.WithOrigins("https://localhost:3000", "https://api-data.ginilog.com").
                          // policy.AllowAnyOrigin().
                          AllowAnyHeader()
                          .AllowAnyMethod()
@@ -68,6 +68,7 @@ builder.Services.AddSwaggerGen(options =>
         {securityScheme,Array.Empty<string>() }
     });
 });
+
 builder.Services.ConfigureSwaggerGen(setup =>
 {
     setup.SwaggerDoc("v1", new OpenApiInfo
@@ -76,6 +77,7 @@ builder.Services.ConfigureSwaggerGen(setup =>
         Version = "v1"
     });
 });
+
 FirebaseApp.Create(new AppOptions()
 {
     Credential = GoogleCredential.FromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json")),
