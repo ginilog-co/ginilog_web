@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: ginilog-api
+    runtime: dotnet
+    buildCommand: dotnet restore Genilog_WebApi.csproj && dotnet build Genilog_WebApi.csproj -c Release
+    startCommand: dotnet Genilog_WebApi/bin/Release/net8.0/Genilog_WebApi.dll
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:10000
+    healthCheckPath: /api/Health

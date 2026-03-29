@@ -30,7 +30,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
                       policy =>
                       {
-                          policy.WithOrigins("https://localhost:3000", "https://api-data.ginilog.com").
+                          policy.WithOrigins("https://ginilog.onrender.com", "https://localhost:3000", "https://api-data.ginilog.com").
                          // policy.AllowAnyOrigin().
                          AllowAnyHeader()
                          .AllowAnyMethod()
