@@ -1,4 +1,3 @@
-
 using FirebaseAdmin;
 using Genilog_WebApi.DataContext;
 using Genilog_WebApi.Repository;
@@ -30,7 +29,13 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
                       policy =>
                       {
-                          policy.WithOrigins("https://ginilog.onrender.com", "https://localhost:3000", "https://api-data.ginilog.com").
+                          policy.WithOrigins(
+                                "https://ginilog.onrender.com",
+                                "https://localhost:3000",
+                                "https://api-data.ginilog.com",
+                                "https://*.vercel.app",           // Vercel frontend URLs
+                                "https://ginilog-api.onrender.com" // Render API URL
+                                ).
                          // policy.AllowAnyOrigin().
                          AllowAnyHeader()
                          .AllowAnyMethod()

@@ -1,12 +1,27 @@
 services:
   - type: web
     name: ginilog-api
-    runtime: dotnet
-    buildCommand: dotnet restore Genilog_WebApi.csproj && dotnet build Genilog_WebApi.csproj -c Release
-    startCommand: dotnet Genilog_WebApi/bin/Release/net8.0/Genilog_WebApi.dll
+    runtime: docker
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
       - key: ASPNETCORE_URLS
         value: http://0.0.0.0:10000
+      - key: ConnectionStrings__Genilog_Data_Context
+        sync: false
+      - key: Jwt__Key
+        sync: false
+      - key: Jwt__Issuer
+        sync: false
+      - key: Jwt__Audience
+        sync: false
+      - key: Payment__PaystackSK
+        sync: false
+      - key: Payment__Monnify
+        sync: false
+      - key: MailSettings__Password
+        sync: false
+      - key: Twilio__AuthToken
+        sync: false
     healthCheckPath: /api/Health

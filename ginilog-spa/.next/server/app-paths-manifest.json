@@ -1,7 +1,5 @@
 {
   "/page": "app/page.js",
-  "/customer-portal/login/page": "app/customer-portal/login/page.js",
-  "/customer-portal/register/page": "app/customer-portal/register/page.js",
   "/customer-portal/dashboard/page": "app/customer-portal/dashboard/page.js",
   "/customer-portal/orders/page": "app/customer-portal/orders/page.js",
   "/customer-portal/profile/page": "app/customer-portal/profile/page.js",
