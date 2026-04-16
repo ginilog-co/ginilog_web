@@ -23,8 +23,12 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-[600px] bg-gray-900">
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/50" />
+      <section className="relative h-[600px] bg-gray-900 overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url('/carousel-1.jpg')" }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/30" />
         <div className="container mx-auto px-4 h-full flex items-center relative z-10">
           <div className="max-w-2xl text-white">
             <h5 className="text-sm font-semibold tracking-wider uppercase mb-4">Welcome to GINILOG</h5>
@@ -35,7 +39,7 @@ export default function LandingPage() {
               Efficient and tailored to your unique needs. Founded by a team of innovative minds 
               who recognized the growing complexity in coordinating logistics and accommodation.
             </p>
-            <Link href="/customer-portal">
+            <Link href="/customer-portal/login">
               <Button size="lg" className="bg-primary hover:bg-primary/90">
                 Get Started
               </Button>
@@ -48,8 +52,12 @@ export default function LandingPage() {
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="relative h-[400px] bg-gray-200 rounded-lg overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/40" />
+            <div className="relative h-[400px] rounded-lg overflow-hidden shadow-xl">
+              <img 
+                src="/about.jpg" 
+                alt="Ginilog Platform" 
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               <h6 className="text-sm font-semibold tracking-wider uppercase text-primary mb-2">About Us</h6>
@@ -87,8 +95,8 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-3 gap-8">
             {/* Logistics */}
             <div className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow">
-              <div className="h-48 bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
-                <Truck className="h-16 w-16 text-primary" />
+              <div className="h-48 rounded-lg mb-4 overflow-hidden">
+                <img src="/service-1.jpg" alt="Logistics" className="w-full h-full object-cover" />
               </div>
               <h4 className="text-xl font-semibold mb-3">Logistics Solutions</h4>
               <p className="text-gray-600 mb-4">
@@ -104,8 +112,8 @@ export default function LandingPage() {
 
             {/* Delivery */}
             <div className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow">
-              <div className="h-48 bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
-                <Package className="h-16 w-16 text-primary" />
+              <div className="h-48 rounded-lg mb-4 overflow-hidden">
+                <img src="/service-2.jpg" alt="Delivery" className="w-full h-full object-cover" />
               </div>
               <h4 className="text-xl font-semibold mb-3">Delivery Solutions</h4>
               <p className="text-gray-600 mb-4">
@@ -121,8 +129,8 @@ export default function LandingPage() {
 
             {/* Bookings */}
             <div className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow">
-              <div className="h-48 bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
-                <Hotel className="h-16 w-16 text-primary" />
+              <div className="h-48 rounded-lg mb-4 overflow-hidden">
+                <img src="/service-3.jpg" alt="Bookings" className="w-full h-full object-cover" />
               </div>
               <h4 className="text-xl font-semibold mb-3">Bookings Solution</h4>
               <p className="text-gray-600 mb-4">
@@ -177,8 +185,12 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-            <div className="relative h-[400px] bg-gray-200 rounded-lg overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/40" />
+            <div className="relative h-[400px] rounded-lg overflow-hidden shadow-xl">
+              <img 
+                src="/communityEngage.png" 
+                alt="Community Engagement" 
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
         </div>

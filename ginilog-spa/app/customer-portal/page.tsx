@@ -13,9 +13,10 @@ const accommodations = [
     accomodationType: "Hotel",
     location: "Lagos, Nigeria",
     bookingAmount: 45000,
-    accomodationImages: ["/images/hotel1.jpg"],
+    accomodationImages: ["/service-1.jpg"],
     accomodationDescription: "Luxury hotel with modern amenities",
     rating: 4.5,
+    image: "/service-1.jpg",
   },
   {
     id: "2",
@@ -23,9 +24,10 @@ const accommodations = [
     accomodationType: "Apartment",
     location: "Abuja, Nigeria",
     bookingAmount: 35000,
-    accomodationImages: ["/images/hotel2.jpg"],
+    accomodationImages: ["/service-2.jpg"],
     accomodationDescription: "Spacious apartments with city views",
     rating: 4.2,
+    image: "/service-2.jpg",
   },
   {
     id: "3",
@@ -33,9 +35,10 @@ const accommodations = [
     accomodationType: "Resort",
     location: "Calabar, Nigeria",
     bookingAmount: 55000,
-    accomodationImages: ["/images/hotel3.jpg"],
+    accomodationImages: ["/service-3.jpg"],
     accomodationDescription: "Beachfront resort with pool access",
     rating: 4.8,
+    image: "/service-3.jpg",
   },
 ];
 
@@ -46,7 +49,7 @@ const roomBookings = [
     roomType: "Deluxe Suite",
     roomNumber: 101,
     roomPrice: 25000,
-    accomodationImage: "/images/room1.jpg",
+    accomodationImage: "/service-4.jpg",
     accomodationLocality: "Victoria Island",
     accomodationState: "Lagos",
   },
@@ -56,7 +59,7 @@ const roomBookings = [
     roomType: "Standard Room",
     roomNumber: 205,
     roomPrice: 18000,
-    accomodationImage: "/images/room2.jpg",
+    accomodationImage: "/service-5.jpg",
     accomodationLocality: "Maitama",
     accomodationState: "Abuja",
   },
@@ -66,7 +69,7 @@ const roomBookings = [
     roomType: "Ocean View",
     roomNumber: 301,
     roomPrice: 35000,
-    accomodationImage: "/images/room3.jpg",
+    accomodationImage: "/service-6.jpg",
     accomodationLocality: "Marina",
     accomodationState: "Calabar",
   },
@@ -76,7 +79,7 @@ const roomBookings = [
     roomType: "Executive Room",
     roomNumber: 405,
     roomPrice: 22000,
-    accomodationImage: "/images/room4.jpg",
+    accomodationImage: "/service-1.jpg",
     accomodationLocality: "Ikeja",
     accomodationState: "Lagos",
   },
@@ -86,28 +89,28 @@ const logisticsCompanies = [
   {
     id: "1",
     companyName: "Swift Logistics",
-    companyLogo: "/images/logistics1.jpg",
+    companyLogo: "/service-1.jpg",
     companyInfo: "Fast and reliable delivery services",
     valueCharge: 1500,
   },
   {
     id: "2",
     companyName: "Express Delivery",
-    companyLogo: "/images/logistics2.jpg",
+    companyLogo: "/service-2.jpg",
     companyInfo: "Nationwide coverage with tracking",
     valueCharge: 2000,
   },
   {
     id: "3",
     companyName: "Prime Couriers",
-    companyLogo: "/images/logistics3.jpg",
+    companyLogo: "/service-3.jpg",
     companyInfo: "Same-day delivery specialists",
     valueCharge: 3000,
   },
   {
     id: "4",
     companyName: "Trusty Transport",
-    companyLogo: "/images/logistics4.jpg",
+    companyLogo: "/service-4.jpg",
     companyInfo: "Secure handling for fragile items",
     valueCharge: 1800,
   },
@@ -126,18 +129,15 @@ export default function CustomerPortalHome() {
             <Link href="/customer-portal" className="text-gray-900 font-medium">
               Home
             </Link>
-            <Link href="/customer-portal/app/accommodations" className="text-gray-600 hover:text-gray-900">
-              Accommodations
-            </Link>
-            <Link href="/customer-portal/app/logistics" className="text-gray-600 hover:text-gray-900">
-              Send A Parcel
+            <Link href="/customer-portal/dashboard" className="text-gray-600 hover:text-gray-900">
+              Dashboard
             </Link>
           </nav>
           <div className="flex items-center gap-4">
-            <Link href="/customer-portal/app/login">
+            <Link href="/customer-portal/login">
               <Button variant="outline">Sign In</Button>
             </Link>
-            <Link href="/customer-portal/app/register">
+            <Link href="/customer-portal/register">
               <Button>Get Started</Button>
             </Link>
           </div>
@@ -161,7 +161,7 @@ export default function CustomerPortalHome() {
 
           {/* Tracking Search Form */}
           <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-2">
-            <form className="flex items-center gap-2" action="/customer-portal/app/logistics" method="get">
+            <form className="flex items-center gap-2" action="/customer-portal/dashboard" method="get">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
@@ -191,11 +191,12 @@ export default function CustomerPortalHome() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {accommodations.map((accommodation) => (
               <Card key={accommodation.id} className="overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow">
-                <div className="relative h-48 bg-gray-200">
-                  <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                    <Home className="h-12 w-12" />
-                  </div>
-                  {/* Placeholder for actual images */}
+                <div className="relative h-48 overflow-hidden">
+                  <img 
+                    src={accommodation.image || "/service-1.jpg"} 
+                    alt={accommodation.accomodationName} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  />
                   <div className="absolute top-4 right-4 bg-white/90 px-3 py-1 rounded-full text-sm font-medium">
                     {accommodation.accomodationType}
                   </div>
@@ -229,12 +230,14 @@ export default function CustomerPortalHome() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {roomBookings.map((room) => (
               <Card key={room.id} className="overflow-hidden group">
-                <div className="relative h-48 bg-gray-200">
-                  <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                    <Home className="h-10 w-10" />
-                  </div>
+                <div className="relative h-48 overflow-hidden">
+                  <img 
+                    src={room.accomodationImage} 
+                    alt={room.accomodationName} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                    <Link href={`/customer-portal/app/accommodations`}>
+                    <Link href={`/customer-portal/register`}>
                       <Button className="opacity-0 group-hover:opacity-100 transition-opacity">
                         Book Now
                       </Button>
@@ -267,12 +270,14 @@ export default function CustomerPortalHome() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {logisticsCompanies.map((company) => (
               <Card key={company.id} className="overflow-hidden group">
-                <div className="relative h-40 bg-gray-100">
-                  <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                    <Truck className="h-12 w-12" />
-                  </div>
+                <div className="relative h-40 overflow-hidden">
+                  <img 
+                    src={company.companyLogo} 
+                    alt={company.companyName} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                    <Link href={`/customer-portal/app/logistics`}>
+                    <Link href={`/customer-portal/register`}>
                       <Button className="opacity-0 group-hover:opacity-100 transition-opacity">
                         Send
                       </Button>
@@ -333,8 +338,8 @@ export default function CustomerPortalHome() {
               <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
               <ul className="space-y-2">
                 <li><Link href="/customer-portal" className="text-gray-400 hover:text-white">Home</Link></li>
-                <li><Link href="/customer-portal/app/accommodations" className="text-gray-400 hover:text-white">Accommodations</Link></li>
-                <li><Link href="/customer-portal/app/logistics" className="text-gray-400 hover:text-white">Logistics</Link></li>
+                <li><Link href="/customer-portal/login" className="text-gray-400 hover:text-white">Sign In</Link></li>
+                <li><Link href="/customer-portal/register" className="text-gray-400 hover:text-white">Get Started</Link></li>
               </ul>
             </div>
             <div>

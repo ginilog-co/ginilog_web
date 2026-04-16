@@ -6,10 +6,14 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
+    "/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/page.js"
+    ],
     "/customer-portal/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/css/app/customer-portal/layout.css",
       "static/chunks/app/customer-portal/layout.js"
     ],
     "/customer-portal/page": [
@@ -17,10 +21,41 @@
       "static/chunks/main-app.js",
       "static/chunks/app/customer-portal/page.js"
     ],
-    "/_not-found/page": [
+    "/admin-dashboard/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/_not-found/page.js"
+      "static/css/app/admin-dashboard/layout.css",
+      "static/chunks/app/admin-dashboard/layout.js"
+    ],
+    "/admin-dashboard/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/admin-dashboard/page.js"
+    ],
+    "/customer-portal/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/customer-portal/login/page.js"
+    ],
+    "/customer-portal/register/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/customer-portal/register/page.js"
+    ],
+    "/customer-portal/dashboard/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/customer-portal/dashboard/page.js"
+    ],
+    "/customer-portal/orders/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/customer-portal/orders/page.js"
+    ],
+    "/customer-portal/profile/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/customer-portal/profile/page.js"
     ]
   }
 }

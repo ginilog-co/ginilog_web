@@ -31,19 +31,11 @@ export function Navbar() {
               </Link>
             ))}
             <Link
-              href="/customer-portal"
+              href="/customer-portal/login"
               className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors"
             >
               Customer Portal
             </Link>
-            <a
-              href="https://manager-web.ginilog.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-secondary text-white px-4 py-2 rounded hover:bg-secondary/90 transition-colors"
-            >
-              Manage Services
-            </a>
           </div>
 
           <button
@@ -69,19 +61,11 @@ export function Navbar() {
                 </Link>
               ))}
               <Link
-                href="/customer-portal"
+                href="/customer-portal/login"
                 className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors text-center"
               >
                 Customer Portal
               </Link>
-              <a
-                href="https://manager-web.ginilog.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-secondary text-white px-4 py-2 rounded hover:bg-secondary/90 transition-colors text-center"
-              >
-                Manage Services
-              </a>
             </div>
           </div>
         )}

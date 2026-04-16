@@ -8,7 +8,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   const hideMarketingChrome =
-    pathname.startsWith("/customer-portal") || pathname.startsWith("/admin-dashboard");
+    pathname.startsWith("/customer-portal") || 
+    pathname.startsWith("/admin-dashboard") ||
+    pathname.startsWith("/admin-login");
 
   if (hideMarketingChrome) {
     return <main>{children}</main>;

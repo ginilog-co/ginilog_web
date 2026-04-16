@@ -1,18 +1,16 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "../globals.css";
-
-const inter = Inter({ subsets: ["latin"] });
-
-export const metadata: Metadata = {
-  title: "Customer Portal - Ginilog",
-  description: "Access your Ginilog account and manage your logistics and accommodation services",
+export const metadata = {
+  title: "GINILOG - Customer Portal",
+  description: "Customer portal for GINILOG logistics and accommodation services",
 };
 
-export default function CustomerPortalLayout({
+export default function CustomerLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
-  return <div className={inter.className}>{children}</div>;
+}) {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {children}
+    </div>
+  );
 }
