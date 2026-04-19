@@ -81,10 +81,27 @@ builder.Services.ConfigureSwaggerGen(setup =>
     });
 });
 
-FirebaseApp.Create(new AppOptions()
+// Initialize Firebase with error handling
+try
 {
-    Credential = GoogleCredential.FromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Key", "ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json")),
-});
+    var firebaseCredentialPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Key", "ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
+    if (File.Exists(firebaseCredentialPath))
+    {
+        FirebaseApp.Create(new AppOptions()
+        {
+            Credential = GoogleCredential.FromFile(firebaseCredentialPath),
+        });
+        Console.WriteLine("Firebase initialized successfully.");
+    }
+    else
+    {
+        Console.WriteLine($"Warning: Firebase credential file not found at {firebaseCredentialPath}");
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Warning: Firebase initialization failed: {ex.Message}");
+}
 
 builder.Services.AddDbContext<Genilog_Data_Context>(options =>
 {

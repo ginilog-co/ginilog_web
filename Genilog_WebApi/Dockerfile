@@ -24,6 +24,9 @@ RUN mkdir -p /app/Key
 # Copy published files
 COPY --from=publish /app/publish .
 
+# Copy Firebase credentials explicitly
+COPY --from=build /src/Key/ /app/Key/
+
 # Expose port (Render uses 10000 by default)
 EXPOSE 10000
 
