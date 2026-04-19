@@ -319,6 +319,12 @@ namespace Genilog_WebApi.Repository.PlacesRepo
 #pragma warning restore CS8603 // Possible null reference return.
         }
 
+        public async Task<CustomerBookedReservation?> GetCustomerBookedReservationByTicketNumAsync(string ticketNum)
+        {
+            return await mAAP_Context.CustomerBookedReservations!
+                .FirstOrDefaultAsync(x => x.TicketNum == ticketNum);
+        }
+
         public async Task<CustomerBookedReservation> UpdateCustomerBookedReservationAsync(Guid id, CustomerBookedReservation dataInfo)
         {
             var dataValue = await mAAP_Context.CustomerBookedReservations!

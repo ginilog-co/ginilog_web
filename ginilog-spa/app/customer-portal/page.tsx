@@ -1,9 +1,13 @@
+"use client";
+
 import Link from "next/link";
-import Image from "next/image";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Package, Home, Truck } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Search, Package, Home, Truck, Loader2, MapPin, Calendar, User, Phone, Mail, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { trackParcelOrBooking, OrderTrackingResult, BookingTrackingResult } from "@/lib/api";
 
 // Mock data based on traditional web app models
 const accommodations = [
@@ -117,6 +121,51 @@ const logisticsCompanies = [
 ];
 
 export default function CustomerPortalHome() {
+  const [searchId, setSearchId] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [trackingResult, setTrackingResult] = useState<{
+    type: 'order' | 'booking';
+    data: OrderTrackingResult | BookingTrackingResult;
+  } | null>(null);
+
+  const handleTracking = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchId.trim()) return;
+
+    setIsSearching(true);
+    setSearchError(null);
+    setTrackingResult(null);
+
+    try {
+      const result = await trackParcelOrBooking(searchId.trim());
+      setTrackingResult(result);
+    } catch (err) {
+      setSearchError(err instanceof Error ? err.message : "Tracking failed. Please try again.");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusColors: Record<string, string> = {
+      'Open': 'bg-blue-100 text-blue-800',
+      'Accepted': 'bg-yellow-100 text-yellow-800',
+      'Picked': 'bg-purple-100 text-purple-800',
+      'Ongoing': 'bg-orange-100 text-orange-800',
+      'Delivered': 'bg-green-100 text-green-800',
+      'Completed': 'bg-green-100 text-green-800',
+      'Closed': 'bg-gray-100 text-gray-800',
+      'Rejected': 'bg-red-100 text-red-800',
+      'pending': 'bg-yellow-100 text-yellow-800',
+      'confirmed': 'bg-green-100 text-green-800',
+      'checked_in': 'bg-blue-100 text-blue-800',
+      'checked_out': 'bg-gray-100 text-gray-800',
+      'cancelled': 'bg-red-100 text-red-800',
+    };
+    return statusColors[status] || 'bg-gray-100 text-gray-800';
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -160,22 +209,209 @@ export default function CustomerPortalHome() {
           </div>
 
           {/* Tracking Search Form */}
-          <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-2">
-            <form className="flex items-center gap-2" action="/customer-portal/dashboard" method="get">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
-                  type="text"
-                  name="id"
-                  placeholder="Enter Tracking Number"
-                  className="pl-10 h-14 text-lg border-0 focus-visible:ring-0"
-                  required
-                />
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white rounded-lg shadow-lg p-2">
+              <form onSubmit={handleTracking} className="flex items-center gap-2">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    type="text"
+                    value={searchId}
+                    onChange={(e) => setSearchId(e.target.value)}
+                    placeholder="Enter Tracking Number or Booking Reference"
+                    className="pl-10 h-14 text-lg border-0 focus-visible:ring-0"
+                    required
+                  />
+                </div>
+                <Button type="submit" size="lg" className="h-14 px-8" disabled={isSearching}>
+                  {isSearching ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Tracking...
+                    </>
+                  ) : (
+                    "Track"
+                  )}
+                </Button>
+              </form>
+            </div>
+
+            {/* Error Message */}
+            {searchError && (
+              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5" />
+                  <span>{searchError}</span>
+                </div>
               </div>
-              <Button type="submit" size="lg" className="h-14 px-8">
-                Track Package
-              </Button>
-            </form>
+            )}
+
+            {/* Tracking Results */}
+            {trackingResult && trackingResult.type === 'order' && (
+              <div className="mt-6 bg-white rounded-lg shadow-lg overflow-hidden">
+                <div className="bg-gradient-to-r from-primary to-red-800 p-4 text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold">Parcel Tracking</h3>
+                      <p className="text-white/80 text-sm">Tracking #: {(trackingResult.data as OrderTrackingResult).trackingNum}</p>
+                    </div>
+                    <Badge className={`${getStatusBadge((trackingResult.data as OrderTrackingResult).orderStatus)} text-sm px-3 py-1`}>
+                      {(trackingResult.data as OrderTrackingResult).orderStatus}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="p-6 space-y-6">
+                  {/* Item Details */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                        <Package className="h-4 w-4 text-primary" />
+                        Item Details
+                      </h4>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <p><span className="font-medium">Name:</span> {(trackingResult.data as OrderTrackingResult).itemName}</p>
+                        <p><span className="font-medium">Description:</span> {(trackingResult.data as OrderTrackingResult).itemDescription}</p>
+                        <p><span className="font-medium">Weight:</span> {(trackingResult.data as OrderTrackingResult).itemWeight} kg</p>
+                        <p><span className="font-medium">Quantity:</span> {(trackingResult.data as OrderTrackingResult).itemQuantity}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                        <Truck className="h-4 w-4 text-primary" />
+                        Shipping Details
+                      </h4>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <p><span className="font-medium">Company:</span> {(trackingResult.data as OrderTrackingResult).companyName}</p>
+                        <p><span className="font-medium">Rider:</span> {(trackingResult.data as OrderTrackingResult).riderName || 'Not assigned'}</p>
+                        <p><span className="font-medium">Expected Delivery:</span> {(trackingResult.data as OrderTrackingResult).expectedDeliveryTime || 'Pending'}</p>
+                        <p><span className="font-medium">Current Location:</span> {(trackingResult.data as OrderTrackingResult).currentLocation || 'Not available'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sender & Receiver */}
+                  <div className="grid md:grid-cols-2 gap-4 pt-4 border-t">
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-gray-900">Sender Information</h4>
+                      <div className="text-sm text-gray-600">
+                        <p className="font-medium">{(trackingResult.data as OrderTrackingResult).senderName}</p>
+                        <p>{(trackingResult.data as OrderTrackingResult).senderAddress}</p>
+                        <p>{(trackingResult.data as OrderTrackingResult).senderState}, {(trackingResult.data as OrderTrackingResult).senderLocality}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-gray-900">Receiver Information</h4>
+                      <div className="text-sm text-gray-600">
+                        <p className="font-medium">{(trackingResult.data as OrderTrackingResult).recieverName}</p>
+                        <p>{(trackingResult.data as OrderTrackingResult).recieverAddress}</p>
+                        <p>{(trackingResult.data as OrderTrackingResult).recieverState}, {(trackingResult.data as OrderTrackingResult).recieverLocality}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Delivery Timeline */}
+                  {(trackingResult.data as OrderTrackingResult).orderDeliveryFlows && (trackingResult.data as OrderTrackingResult).orderDeliveryFlows.length > 0 && (
+                    <div className="pt-4 border-t">
+                      <h4 className="font-semibold text-gray-900 mb-4">Delivery Timeline</h4>
+                      <div className="space-y-3">
+                        {(trackingResult.data as OrderTrackingResult).orderDeliveryFlows.map((flow, index) => (
+                          <div key={flow.id} className="flex items-start gap-3">
+                            <div className="flex flex-col items-center">
+                              <div className={`w-3 h-3 rounded-full ${index === 0 ? 'bg-primary' : 'bg-gray-300'}`} />
+                              {index < (trackingResult.data as OrderTrackingResult).orderDeliveryFlows.length - 1 && (
+                                <div className="w-0.5 h-8 bg-gray-200 mt-1" />
+                              )}
+                            </div>
+                            <div className="flex-1 pb-4">
+                              <p className="font-medium text-sm">{flow.orderStatus}</p>
+                              <p className="text-xs text-gray-500">{flow.currentLocation}</p>
+                              <p className="text-xs text-gray-400">{new Date(flow.updatedAt).toLocaleString()}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Booking Result */}
+            {trackingResult && trackingResult.type === 'booking' && (
+              <div className="mt-6 bg-white rounded-lg shadow-lg overflow-hidden">
+                <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-4 text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold">Accommodation Booking</h3>
+                      <p className="text-white/80 text-sm">Ref #: {(trackingResult.data as BookingTrackingResult).bookingRefNo}</p>
+                    </div>
+                    <Badge className={`${getStatusBadge((trackingResult.data as BookingTrackingResult).bookingStatus)} text-sm px-3 py-1`}>
+                      {(trackingResult.data as BookingTrackingResult).bookingStatus}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="p-6 space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                        <Home className="h-4 w-4 text-primary" />
+                        Accommodation Details
+                      </h4>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <p className="font-medium text-base">{(trackingResult.data as BookingTrackingResult).accomodationName}</p>
+                        <p>{(trackingResult.data as BookingTrackingResult).accomodationType}</p>
+                        <p>Room: {(trackingResult.data as BookingTrackingResult).roomType} (#{(trackingResult.data as BookingTrackingResult).roomNumber})</p>
+                        <p>{(trackingResult.data as BookingTrackingResult).accomodationAddress}</p>
+                        <p>{(trackingResult.data as BookingTrackingResult).accomodationLocality}, {(trackingResult.data as BookingTrackingResult).accomodationState}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        Stay Details
+                      </h4>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <p><span className="font-medium">Check-in:</span> {new Date((trackingResult.data as BookingTrackingResult).checkInDate).toLocaleDateString()}</p>
+                        <p><span className="font-medium">Check-out:</span> {new Date((trackingResult.data as BookingTrackingResult).checkOutDate).toLocaleDateString()}</p>
+                        <p><span className="font-medium">Nights:</span> {(trackingResult.data as BookingTrackingResult).numberOfNights}</p>
+                        <p><span className="font-medium">Guests:</span> {(trackingResult.data as BookingTrackingResult).numberOfGuests}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Guest Info */}
+                  <div className="pt-4 border-t">
+                    <h4 className="font-semibold text-gray-900 mb-3">Guest Information</h4>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <p className="font-medium">{(trackingResult.data as BookingTrackingResult).guestName}</p>
+                      <p>{(trackingResult.data as BookingTrackingResult).guestEmail}</p>
+                      <p>{(trackingResult.data as BookingTrackingResult).guestPhoneNo}</p>
+                    </div>
+                  </div>
+
+                  {/* Payment Info */}
+                  <div className="pt-4 border-t">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-600">Total Amount</p>
+                        <p className="text-2xl font-bold text-primary">₦{(trackingResult.data as BookingTrackingResult).totalAmount?.toLocaleString()}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-600">Payment Status</p>
+                        <Badge className={(trackingResult.data as BookingTrackingResult).paymentStatus ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                          {(trackingResult.data as BookingTrackingResult).paymentStatus ? 'Paid' : 'Pending'}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>

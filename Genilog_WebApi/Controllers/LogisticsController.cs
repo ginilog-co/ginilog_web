@@ -1711,5 +1711,27 @@ namespace Genilog_WebApi.Controllers
         }
 
         #endregion
+
+        #region Public Tracking
+        // Public endpoint for tracking orders without authentication
+        [HttpGet("track-order")]
+        [AllowAnonymous]
+        public async Task<IActionResult> TrackOrderByTrackingNum([FromQuery] string trackingNum)
+        {
+            if (string.IsNullOrWhiteSpace(trackingNum))
+            {
+                return BadRequest(new ErrorModel { Message = "Tracking number is required", Status = true });
+            }
+
+            var order = await companyRepository.GetOrderByTrackingNumAsync(trackingNum);
+            if (order == null)
+            {
+                return NotFound(new ErrorModel { Message = "Order not found with this tracking number", Status = true });
+            }
+
+            var orderDto = mapper.Map<OrderModelDataDto>(order);
+            return Ok(orderDto);
+        }
+        #endregion
     }
 }

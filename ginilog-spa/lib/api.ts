@@ -178,3 +178,129 @@ export async function getProfile(): Promise<UserProfile> {
 export async function logout(): Promise<void> {
   clearAuthData();
 }
+
+// Tracking Types
+export interface OrderTrackingResult {
+  id: string;
+  trackingNum: string;
+  itemName: string;
+  itemDescription: string;
+  itemCost: number;
+  itemWeight: number;
+  itemQuantity: number;
+  packageType: string;
+  expectedDeliveryTime: string;
+  orderStatus: string;
+  senderName: string;
+  senderPhoneNo: string;
+  senderEmail: string;
+  senderAddress: string;
+  senderState: string;
+  senderLocality: string;
+  recieverName: string;
+  recieverPhoneNo: string;
+  recieverEmail: string;
+  recieverAddress: string;
+  recieverState: string;
+  recieverLocality: string;
+  companyName: string;
+  companyPhoneNo: string;
+  riderName: string;
+  currentLocation: string;
+  currentLatitude: number;
+  currentLongitude: number;
+  shippingCost: number;
+  vatCost: number;
+  paymentStatus: boolean;
+  orderStatusDate: string;
+  createdAt: string;
+  updatedAt: string;
+  packageImageLists: string[];
+  orderDeliveryFlows: Array<{
+    id: string;
+    orderStatus: string;
+    currentLocation: string;
+    updatedAt: string;
+  }>;
+}
+
+export interface BookingTrackingResult {
+  id: string;
+  bookingRefNo: string;
+  accomodationName: string;
+  accomodationType: string;
+  roomType: string;
+  roomNumber: number;
+  bookingStatus: string;
+  checkInDate: string;
+  checkOutDate: string;
+  numberOfNights: number;
+  numberOfGuests: number;
+  guestName: string;
+  guestEmail: string;
+  guestPhoneNo: string;
+  totalAmount: number;
+  paymentStatus: boolean;
+  accomodationAddress: string;
+  accomodationLocality: string;
+  accomodationState: string;
+  companyName: string;
+  companyPhoneNo: string;
+  qrCode: string;
+  createdAt: string;
+  updatedAt: string;
+  accomodationImages: string[];
+}
+
+// Tracking API functions - Public (no auth required)
+export async function trackOrder(trackingNumber: string): Promise<OrderTrackingResult> {
+  // Try to get order by tracking number from the public endpoint
+  const response = await fetch(`${API_URL}/api/Logistics/track-order?trackingNum=${encodeURIComponent(trackingNumber)}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "Tracking number not found" }));
+    throw new Error(error.message || "Order not found");
+  }
+
+  return response.json();
+}
+
+export async function trackBooking(bookingRef: string): Promise<BookingTrackingResult> {
+  // Try to get booking by reference number from the public endpoint
+  const response = await fetch(`${API_URL}/api/Bookings/track-booking?bookingRef=${encodeURIComponent(bookingRef)}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "Booking reference not found" }));
+    throw new Error(error.message || "Booking not found");
+  }
+
+  return response.json();
+}
+
+// Search both orders and bookings by tracking/reference number
+export async function trackParcelOrBooking(searchId: string): Promise<{ type: 'order' | 'booking'; data: OrderTrackingResult | BookingTrackingResult }> {
+  try {
+    // First try to find as order
+    const orderData = await trackOrder(searchId);
+    return { type: 'order', data: orderData };
+  } catch (orderError) {
+    // If not found as order, try as booking
+    try {
+      const bookingData = await trackBooking(searchId);
+      return { type: 'booking', data: bookingData };
+    } catch (bookingError) {
+      // If neither found, throw error
+      throw new Error("No parcel or booking found with this tracking/reference number");
+    }
+  }
+}

@@ -2465,5 +2465,27 @@ namespace Genilog_WebApi.Controllers
 
 
         #endregion
+
+        #region Public Tracking
+        // Public endpoint for tracking bookings without authentication
+        [HttpGet("track-booking")]
+        [AllowAnonymous]
+        public async Task<IActionResult> TrackBookingByTicketNum([FromQuery] string ticketRef)
+        {
+            if (string.IsNullOrWhiteSpace(ticketRef))
+            {
+                return BadRequest(new ErrorModel { Message = "Booking reference is required", Status = true });
+            }
+
+            var booking = await accomodationRepository.GetCustomerBookedReservationByTicketNumAsync(ticketRef);
+            if (booking == null)
+            {
+                return NotFound(new ErrorModel { Message = "Booking not found with this reference number", Status = true });
+            }
+
+            var bookingDto = mapper.Map<CustomerBookedReservationDto>(booking);
+            return Ok(bookingDto);
+        }
+        #endregion
     }
 }

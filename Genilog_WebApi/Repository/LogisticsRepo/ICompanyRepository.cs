@@ -19,6 +19,7 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
         // Order
         Task<IEnumerable<OrderModelData>> GetAllOrderAsync();
         Task<OrderModelData> GetOrderAsync(Guid id);
+        Task<OrderModelData?> GetOrderByTrackingNumAsync(string trackingNum);
         Task<OrderModelData> AddOrderAsync(OrderModelData region);
         Task<OrderModelData> DeleteOrderAsync(Guid id);
         Task<OrderModelData> UpdateOrderAsync(Guid id, OrderModelData region);

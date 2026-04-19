@@ -34,6 +34,7 @@ namespace Genilog_WebApi.Repository.PlacesRepo
         // Customer
         Task<IEnumerable<CustomerBookedReservation>> GetAllCustomerBookedReservationAsync();
         Task<CustomerBookedReservation> GetCustomerBookedReservationAsync(Guid id);
+        Task<CustomerBookedReservation?> GetCustomerBookedReservationByTicketNumAsync(string ticketNum);
         Task<CustomerBookedReservation> AddCustomerBookedReservationAsync(CustomerBookedReservation region);
         Task<CustomerBookedReservation> DeleteCustomerBookedReservationAsync(Guid id);
         Task<CustomerBookedReservation> UpdateCustomerBookedReservationAsync(Guid id, CustomerBookedReservation region);

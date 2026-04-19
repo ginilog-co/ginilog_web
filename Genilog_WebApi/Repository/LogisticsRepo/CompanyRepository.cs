@@ -146,6 +146,13 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
+        public async Task<OrderModelData?> GetOrderByTrackingNumAsync(string trackingNum)
+        {
+            return await mAAP_Context.OrderModelDatas!
+                 .Include(x => x.OrderDeliveryFlows)
+                .FirstOrDefaultAsync(x => x.TrackingNum == trackingNum);
+        }
+
         public async Task<OrderModelData> AddOrderAsync(OrderModelData dataInfo)
         {
             dataInfo.Id = Guid.NewGuid();
