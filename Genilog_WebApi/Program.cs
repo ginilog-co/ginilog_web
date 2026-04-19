@@ -31,16 +31,14 @@ builder.Services.AddCors(options =>
                       {
                           policy.WithOrigins(
                                 "https://ginilog.onrender.com",
-                                "https://localhost:3000",
+                                "http://localhost:3000",
                                 "https://api-data.ginilog.com",
-                                "https://*.vercel.app",           // Vercel frontend URLs
-                                "https://ginilog-api.onrender.com" // Render API URL
-                                ).
-                         // policy.AllowAnyOrigin().
-                         AllowAnyHeader()
+                                "https://ginilog-web.vercel.app",  // Your Vercel frontend
+                                "https://ginilog-web.onrender.com" // Render API URL
+                                )
+                         .AllowAnyHeader()
                          .AllowAnyMethod()
                          .AllowCredentials(); // Important for SignalR
-                          // WithMethods("POST", "PUT", "DELETE", "GET");
                       });
 });
 
