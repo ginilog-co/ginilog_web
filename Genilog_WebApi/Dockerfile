@@ -3,16 +3,16 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 # Copy csproj and restore dependencies
-COPY Genilog_WebApi.csproj ./
-RUN dotnet restore Genilog_WebApi.csproj
+COPY Genilog_WebApi/Genilog_WebApi.csproj ./
+RUN dotnet restore ./Genilog_WebApi.csproj
 
 # Copy entire project and build
-COPY . ./
-RUN dotnet build Genilog_WebApi.csproj -c Release -o /app/build
+COPY Genilog_WebApi/ ./
+RUN dotnet build ./Genilog_WebApi.csproj -c Release -o /app/build
 
 # Publish stage
 FROM build AS publish
-RUN dotnet publish Genilog_WebApi.csproj -c Release -o /app/publish
+RUN dotnet publish ./Genilog_WebApi.csproj -c Release -o /app/publish
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
