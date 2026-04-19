@@ -1,6 +1,5 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
   "/page": "app/page.js",
-  "/customer-portal/login/page": "app/customer-portal/login/page.js",
-  "/customer-portal/register/page": "app/customer-portal/register/page.js"
+  "/customer-portal/register/page": "app/customer-portal/register/page.js",
+  "/customer-portal/login/page": "app/customer-portal/login/page.js"
 }

@@ -33,9 +33,17 @@ export default function CustomerRegister() {
       return;
     }
 
-    // Validate password length
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters");
+    // Validate password complexity (must have uppercase, lowercase, and number)
+    const passwordRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{8,}$/;
+    if (!passwordRegex.test(formData.password)) {
+      setError("Password must be at least 8 characters with uppercase, lowercase, and number");
+      return;
+    }
+
+    // Validate phone format (must start with +)
+    const phoneRegex = /^\+[0-9]+$/;
+    if (!phoneRegex.test(formData.phone)) {
+      setError("Phone number must start with + (e.g., +2348000000000)");
       return;
     }
 

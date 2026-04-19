@@ -83,7 +83,7 @@ builder.Services.ConfigureSwaggerGen(setup =>
 
 FirebaseApp.Create(new AppOptions()
 {
-    Credential = GoogleCredential.FromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json")),
+    Credential = GoogleCredential.FromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Key", "ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json")),
 });
 
 builder.Services.AddDbContext<Genilog_Data_Context>(options =>
