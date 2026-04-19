@@ -32,7 +32,7 @@ const mockUser = {
   firstName: "John",
   lastName: "Doe",
   email: "john.doe@example.com",
-  userType: "logistics", // or "accommodation"
+  userType: "User",
   avatar: null,
 };
 
@@ -182,15 +182,9 @@ export default function CustomerDashboard() {
             <Link href="/customer-portal" className="text-gray-900 font-medium">
               Dashboard
             </Link>
-            {user.userType === "accommodation" ? (
-              <Link href="/customer-portal/orders" className="text-gray-600 hover:text-gray-900">
-                My Bookings
-              </Link>
-            ) : (
-              <Link href="/customer-portal/orders" className="text-gray-600 hover:text-gray-900">
-                My Orders
-              </Link>
-            )}
+            <Link href="/customer-portal/orders" className="text-gray-600 hover:text-gray-900">
+              My Orders & Bookings
+            </Link>
             <Link href="/customer-portal/profile" className="text-gray-600 hover:text-gray-900">
               Profile
             </Link>
@@ -210,7 +204,7 @@ export default function CustomerDashboard() {
                   <p className="text-sm font-medium text-gray-900">
                     {user.firstName} {user.lastName}
                   </p>
-                  <p className="text-xs text-gray-500 capitalize">{user.userType} Customer</p>
+                  <p className="text-xs text-gray-500">GINILOG Customer</p>
                 </div>
               </div>
 
@@ -231,481 +225,206 @@ export default function CustomerDashboard() {
             Welcome back, {user.firstName}!
           </h1>
           <p className="text-gray-600 mt-1">
-            {user.userType === "accommodation" 
-              ? "Manage your bookings and find new accommodations."
-              : "Track your packages and manage your deliveries."}
+            Manage your bookings, track packages, and access all GINILOG services.
           </p>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {user.userType === "accommodation" ? (
-            <>
-              <Card className="bg-primary text-white">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-white/80 text-sm">Active Bookings</p>
-                      <p className="text-3xl font-bold mt-1">2</p>
-                    </div>
-                    <Building2 className="h-8 w-8 text-white/80" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-500 text-sm">Total Spent</p>
-                      <p className="text-3xl font-bold mt-1 text-gray-900">₦195,000</p>
-                    </div>
-                    <CreditCard className="h-8 w-8 text-primary" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-500 text-sm">Upcoming Check-in</p>
-                      <p className="text-lg font-bold mt-1 text-gray-900">Feb 15, 2024</p>
-                    </div>
-                    <Calendar className="h-8 w-8 text-primary" />
-                  </div>
-                </CardContent>
-              </Card>
-            </>
-          ) : (
-            <>
-              <Card className="bg-primary text-white">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-white/80 text-sm">Active Orders</p>
-                      <p className="text-3xl font-bold mt-1">3</p>
-                    </div>
-                    <Package className="h-8 w-8 text-white/80" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-500 text-sm">Total Delivered</p>
-                      <p className="text-3xl font-bold mt-1 text-gray-900">24</p>
-                    </div>
-                    <CheckCircle className="h-8 w-8 text-green-600" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-500 text-sm">In Transit</p>
-                      <p className="text-3xl font-bold mt-1 text-gray-900">1</p>
-                    </div>
-                    <TruckIcon className="h-8 w-8 text-primary" />
-                  </div>
-                </CardContent>
-              </Card>
-            </>
-          )}
+        {/* Quick Actions - Unified for all users */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <Card className="bg-primary text-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white/80 text-sm">Active Bookings</p>
+                  <p className="text-3xl font-bold mt-1">2</p>
+                </div>
+                <Building2 className="h-8 w-8 text-white/80" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-500 text-sm">Active Orders</p>
+                  <p className="text-3xl font-bold mt-1 text-gray-900">3</p>
+                </div>
+                <Package className="h-8 w-8 text-primary" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-500 text-sm">Total Spent</p>
+                  <p className="text-3xl font-bold mt-1 text-gray-900">₦225,000</p>
+                </div>
+                <CreditCard className="h-8 w-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-500 text-sm">In Transit</p>
+                  <p className="text-3xl font-bold mt-1 text-gray-900">1</p>
+                </div>
+                <TruckIcon className="h-8 w-8 text-primary" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {user.userType === "accommodation" ? (
-          // Accommodation Customer Dashboard
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-8">
-              {/* My Bookings */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>My Bookings</CardTitle>
-                  <Link href="/customer-portal/orders">
-                    <Button variant="outline" size="sm">
-                      View All
-                    </Button>
-                  </Link>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {accommodationBookings.map((booking) => (
-                      <div
-                        key={booking.id}
-                        className="flex items-start gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="h-20 w-20 rounded-lg overflow-hidden flex-shrink-0">
-                          <img 
-                            src={booking.image} 
-                            alt={booking.accommodationName} 
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <h3 className="font-semibold text-gray-900">{booking.accommodationName}</h3>
-                              <p className="text-sm text-gray-500">{booking.roomType}</p>
-                              <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
-                                <MapPin className="h-4 w-4" />
-                                {booking.location}
-                              </div>
-                            </div>
-                            <Badge className={getStatusColor(booking.status)}>
-                              {getStatusLabel(booking.status)}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center justify-between mt-3">
-                            <div className="text-sm text-gray-500">
-                              <span className="font-medium text-gray-900">
-                                {new Date(booking.checkIn).toLocaleDateString()}
-                              </span>
-                              {" → "}
-                              <span className="font-medium text-gray-900">
-                                {new Date(booking.checkOut).toLocaleDateString()}
-                              </span>
-                            </div>
-                            <p className="font-semibold text-primary">
-                              ₦{booking.amount.toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
+        {/* Unified Dashboard - All Services Available */}
+        <div className="space-y-8">
+          {/* Services Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Accommodation Section */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-t-lg">
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  <CardTitle className="text-white">Accommodation</CardTitle>
+                </div>
+                <Link href="/customer-portal/accommodations">
+                  <Button variant="secondary" size="sm">Explore</Button>
+                </Link>
+              </CardHeader>
+              <CardContent className="p-6">
+                <p className="text-gray-600 mb-4">Book hotels, apartments, and resorts for your stays.</p>
+                <div className="space-y-3">
+                  {accommodationBookings.slice(0, 2).map((booking) => (
+                    <div key={booking.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50">
+                      <div className="h-16 w-16 rounded-lg overflow-hidden flex-shrink-0">
+                        <img src={booking.image} alt={booking.accommodationName} className="h-full w-full object-cover" />
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900">{booking.accommodationName}</h4>
+                        <p className="text-sm text-gray-500">{booking.location}</p>
+                        <Badge className={getStatusColor(booking.status)}>{getStatusLabel(booking.status)}</Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-              {/* Recommended Accommodations */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>Recommended For You</CardTitle>
-                  <Link href="#">
-                    <Button variant="outline" size="sm">
-                      Explore All
-                    </Button>
-                  </Link>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {recommendedAccommodations.map((acc) => (
-                      <div
-                        key={acc.id}
-                        className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                      >
-                        <div className="h-32 overflow-hidden">
-                          <img 
-                            src={acc.image} 
-                            alt={acc.name} 
-                            className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-300"
-                          />
+            {/* Logistics Section */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-primary to-red-800 text-white rounded-t-lg">
+                <div className="flex items-center gap-2">
+                  <Truck className="h-5 w-5" />
+                  <CardTitle className="text-white">Logistics</CardTitle>
+                </div>
+                <Link href="/customer-portal/logistics">
+                  <Button variant="secondary" size="sm">Send Package</Button>
+                </Link>
+              </CardHeader>
+              <CardContent className="p-6">
+                <p className="text-gray-600 mb-4">Send packages and track deliveries nationwide.</p>
+                <div className="space-y-3">
+                  {logisticsOrders.slice(0, 2).map((order) => (
+                    <div key={order.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50">
+                      <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Package className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-semibold text-gray-900">{order.id}</h4>
+                          <Badge className={getStatusColor(order.status)}>{getStatusLabel(order.status)}</Badge>
                         </div>
-                        <div className="p-4">
-                          <div className="flex items-center gap-1 mb-1">
-                            <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                            <span className="text-sm font-medium">{acc.rating}</span>
-                          </div>
-                          <h3 className="font-semibold text-gray-900">{acc.name}</h3>
-                          <p className="text-sm text-gray-500">{acc.location}</p>
-                          <div className="flex items-center justify-between mt-2">
-                            <Badge variant="secondary">{acc.type}</Badge>
-                            <p className="text-primary font-semibold">
-                              ₦{acc.price.toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Quick Book</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form className="space-y-4">
-                    <div>
-                      <Label className="text-sm text-gray-600">Location</Label>
-                      <div className="relative mt-1">
-                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input placeholder="Where to?" className="pl-10" />
+                        <p className="text-sm text-gray-500">{order.from} → {order.to}</p>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label className="text-sm text-gray-600">Check-in</Label>
-                        <Input type="date" />
-                      </div>
-                      <div>
-                        <Label className="text-sm text-gray-600">Check-out</Label>
-                        <Input type="date" />
-                      </div>
-                    </div>
-                    <Button className="w-full bg-primary hover:bg-primary/90">
-                      Search Accommodations
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Activity</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 text-sm">
-                      <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="text-gray-900">Booking confirmed</p>
-                        <p className="text-gray-500 text-xs">2 hours ago</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                        <Star className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="text-gray-900">Left a review</p>
-                        <p className="text-gray-500 text-xs">1 day ago</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        ) : (
-          // Logistics Customer Dashboard
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-8">
-              {/* Track Package */}
-              <Card className="bg-gradient-to-r from-primary to-red-800 text-white">
-                <CardContent className="p-6">
-                  <h2 className="text-xl font-semibold mb-4">Track Your Package</h2>
-                  <form onSubmit={handleTracking} className="flex gap-3">
-                    <div className="flex-1 relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                      <Input
-                        type="text"
-                        placeholder="Enter tracking number (e.g., GNL-001-2024)"
-                        className="pl-10 h-12 bg-white text-gray-900 border-0"
-                        value={trackingNumber}
-                        onChange={(e) => setTrackingNumber(e.target.value)}
-                      />
-                    </div>
-                    <Button 
-                      type="submit" 
-                      className="h-12 px-6 bg-white text-primary hover:bg-gray-100"
-                    >
-                      Track
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
 
-              {/* My Orders */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>My Orders</CardTitle>
-                  <Link href="/customer-portal/orders">
-                    <Button variant="outline" size="sm">
-                      View All
-                    </Button>
-                  </Link>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {logisticsOrders.map((order) => (
-                      <div
-                        key={order.id}
-                        className="flex items-start gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <Package className="h-6 w-6 text-primary" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-gray-900">{order.id}</h3>
-                                <Badge className={getStatusColor(order.status)}>
-                                  {getStatusLabel(order.status)}
-                                </Badge>
-                              </div>
-                              <p className="text-sm text-gray-500">{order.company}</p>
-                            </div>
-                            <p className="font-semibold text-primary">
-                              ₦{order.amount.toLocaleString()}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-6 mt-2 text-sm text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <MapPin className="h-4 w-4" />
-                              {order.from} → {order.to}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Calendar className="h-4 w-4" />
-                              {new Date(order.date).toLocaleDateString()}
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between mt-3">
-                            <div className="text-sm text-gray-500">
-                              To: <span className="font-medium text-gray-900">{order.receiver}</span>
-                            </div>
-                            <Link href="#" className="text-primary text-sm hover:underline flex items-center gap-1">
-                              Details <ChevronRight className="h-4 w-4" />
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+          {/* Quick Actions Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Home className="h-6 w-6 text-blue-600" />
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Send New Package */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Send a New Package</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                    {logisticsCompanies.map((company) => (
-                      <div
-                        key={company.id}
-                        className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-                      >
-                        <div className="h-16 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
-                          <Truck className="h-8 w-8 text-primary" />
-                        </div>
-                        <h3 className="font-semibold text-gray-900 text-center">{company.name}</h3>
-                        <div className="flex items-center justify-center gap-1 mt-1">
-                          <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                          <span className="text-sm">{company.rating}</span>
-                        </div>
-                        <p className="text-center text-primary font-semibold mt-2">
-                          From ₦{company.price.toLocaleString()}
-                        </p>
-                        <Button className="w-full mt-3 bg-primary hover:bg-primary/90" size="sm">
-                          Send
-                        </Button>
-                      </div>
-                    ))}
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Find Stays</h3>
+                    <p className="text-sm text-gray-500">Search accommodations</p>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Quick Send</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form className="space-y-4">
-                    <div>
-                      <Label className="text-sm text-gray-600">From</Label>
-                      <div className="relative mt-1">
-                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input placeholder="Pickup location" className="pl-10" />
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-sm text-gray-600">To</Label>
-                      <div className="relative mt-1">
-                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input placeholder="Delivery location" className="pl-10" />
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-sm text-gray-600">Package Weight</Label>
-                      <Input type="number" placeholder="Weight in kg" />
-                    </div>
-                    <Button className="w-full bg-primary hover:bg-primary/90">
-                      Get Quote
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Delivery Stats</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Success Rate</span>
-                      <span className="font-semibold text-gray-900">98.5%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-green-500 h-2 rounded-full" style={{ width: "98.5%" }} />
-                    </div>
-                    
-                    <div className="flex items-center justify-between mt-4">
-                      <span className="text-gray-600">Avg. Delivery Time</span>
-                      <span className="font-semibold text-gray-900">2.3 days</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between mt-4">
-                      <span className="text-gray-600">Total Spent</span>
-                      <span className="font-semibold text-primary">₦108,300</span>
-                    </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <Package className="h-6 w-6 text-primary" />
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Activity</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 text-sm">
-                      <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="text-gray-900">Package delivered</p>
-                        <p className="text-gray-500 text-xs">Order #GNL-002-2024</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                        <TruckIcon className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="text-gray-900">Package in transit</p>
-                        <p className="text-gray-500 text-xs">Order #GNL-001-2024</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
-                        <Clock className="h-4 w-4 text-yellow-600" />
-                      </div>
-                      <div>
-                        <p className="text-gray-900">New order pending</p>
-                        <p className="text-gray-500 text-xs">Order #GNL-003-2024</p>
-                      </div>
-                    </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Send Package</h3>
+                    <p className="text-sm text-gray-500">Book logistics service</p>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <Search className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Track Item</h3>
+                    <p className="text-sm text-gray-500">Track orders & bookings</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        )}
+
+          {/* Recent Activity */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-sm">
+                  <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-gray-900">Booking confirmed - Grand Hotel</p>
+                    <p className="text-gray-500 text-xs">2 hours ago</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                    <TruckIcon className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-gray-900">Package in transit - Order #GNL-001</p>
+                    <p className="text-gray-500 text-xs">5 hours ago</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
+                    <Clock className="h-4 w-4 text-yellow-600" />
+                  </div>
+                  <div>
+                    <p className="text-gray-900">New order pending - Order #GNL-003</p>
+                    <p className="text-gray-500 text-xs">1 day ago</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </main>
     </div>
   );
