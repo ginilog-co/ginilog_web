@@ -2,22 +2,41 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
+import { login, LoginRequest } from "@/lib/api";
 
 export default function CustomerLogin() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log("Login submitted:", formData);
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const credentials: LoginRequest = {
+        Email_PhoneNo: formData.email,
+        Password: formData.password,
+      };
+
+      await login(credentials);
+      router.push("/customer-portal/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -59,6 +78,11 @@ export default function CustomerLogin() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
+                  {error}
+                </div>
+              )}
               <div>
                 <Label htmlFor="email" className="text-gray-700">Email</Label>
                 <div className="relative mt-1">
@@ -109,9 +133,17 @@ export default function CustomerLogin() {
 
               <Button 
                 type="submit" 
+                disabled={isLoading}
                 className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-medium"
               >
-                Sign In
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing In...
+                  </>
+                ) : (
+                  "Sign In"
+                )}
               </Button>
             </form>
 

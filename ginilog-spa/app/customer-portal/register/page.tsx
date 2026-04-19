@@ -2,17 +2,22 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Mail, Lock, User, Phone, Building2, Package } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Phone, Building2, Package, Loader2 } from "lucide-react";
+import { register, RegisterRequest } from "@/lib/api";
 
 type UserType = "accommodation" | "logistics" | null;
 
 export default function CustomerRegister() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
   const [userType, setUserType] = useState<UserType>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -27,10 +32,41 @@ export default function CustomerRegister() {
     setStep(2);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle registration logic here
-    console.log("Registration submitted:", { ...formData, userType });
+    setError(null);
+
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    // Validate password length
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const userData: RegisterRequest = {
+        FirstName: formData.firstName,
+        LastName: formData.lastName,
+        Email: formData.email,
+        PhoneNo: formData.phone,
+        Password: formData.password,
+      };
+
+      await register(userData);
+      // Redirect to login after successful registration
+      router.push("/customer-portal/login");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -124,6 +160,11 @@ export default function CustomerRegister() {
             ) : (
               // Step 2: Registration Form
               <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
+                    {error}
+                  </div>
+                )}
                 <div className="flex items-center gap-2 mb-4">
                   <button
                     type="button"
@@ -262,9 +303,17 @@ export default function CustomerRegister() {
 
                 <Button 
                   type="submit" 
+                  disabled={isLoading}
                   className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-medium"
                 >
-                  Create Account
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating Account...
+                    </>
+                  ) : (
+                    "Create Account"
+                  )}
                 </Button>
               </form>
             )}
