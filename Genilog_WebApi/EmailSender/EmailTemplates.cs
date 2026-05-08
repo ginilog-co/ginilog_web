@@ -5,11 +5,27 @@ namespace Genilog_WebApi.EmailSender
 {
     public class EmailTemplates
     {
+        private static string SmtpHost => Environment.GetEnvironmentVariable("MailSettings__Host") ?? "smtp-relay.brevo.com";
+        private static int SmtpPort => int.TryParse(Environment.GetEnvironmentVariable("MailSettings__Port"), out var p) ? p : 587;
+        private static string SmtpUser => Environment.GetEnvironmentVariable("MailSettings__Mail") ?? "";
+        private static string SmtpPass => Environment.GetEnvironmentVariable("MailSettings__Password") ?? "";
+        private static string FromAddress => Environment.GetEnvironmentVariable("MailSettings__Mail") ?? "ginilogco@gmail.com";
+        private static string FromName => "Ginilog";
+
+        private static SmtpClient BuildSmtpClient() => new SmtpClient
+        {
+            Host = SmtpHost,
+            Port = SmtpPort,
+            EnableSsl = true,
+            DeliveryMethod = SmtpDeliveryMethod.Network,
+            UseDefaultCredentials = false,
+            Credentials = new NetworkCredential(SmtpUser, SmtpPass)
+        };
+
         public static void SendEmailVerificationCode(string emailId, string activationcode, string username)
         {
-            var fromMail = new MailAddress("verification@ginilog.com", "Ginilog App");
+            var fromMail = new MailAddress(FromAddress, FromName);
             var toMail = new MailAddress(emailId);
-            var frontEmailPassword = "Ginilog21$";
             string subject = "Verify Your Email Address";
 
             string body = $@"
@@ -88,15 +104,7 @@ namespace Genilog_WebApi.EmailSender
                Copyright © Ginilog Ltd. All Rights Reserved.
              ";
 
-            var smtp = new SmtpClient
-            {
-                Host = "mail.ginilog.com",
-                Port = 8889,
-                EnableSsl = false,
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(fromMail.Address, frontEmailPassword)
-            };
+            var smtp = BuildSmtpClient();
 
             using var message = new MailMessage(fromMail, toMail)
             {
@@ -111,9 +119,8 @@ namespace Genilog_WebApi.EmailSender
 
         public static void SendChangePasswordCodeEmail(string emailId, string activationcode, string username)
         {
-            var fromMail = new MailAddress("verification@ginilog.com", "Ginilog App");
+            var fromMail = new MailAddress(FromAddress, FromName);
             var toMail = new MailAddress(emailId);
-            var frontEmailPassword = "Ginilog21$";
             string subject = "Password Recovery Code";
 
             string companyHeader = @"
@@ -171,15 +178,7 @@ namespace Genilog_WebApi.EmailSender
              </body>
              </html>";
 
-            var smtp = new SmtpClient
-            {
-                Host = "mail.ginilog.com",
-                Port = 8889,
-                EnableSsl = false,
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(fromMail.Address, frontEmailPassword)
-            };
+            var smtp = BuildSmtpClient();
 
             using var message = new MailMessage(fromMail, toMail)
             {
@@ -193,9 +192,8 @@ namespace Genilog_WebApi.EmailSender
 
         public static void SendEmail(string emailId, string content, string title, string username, string link)
         {
-            var fromMail = new MailAddress("support@ginilog.com", "Ginilog App");
+            var fromMail = new MailAddress(FromAddress, FromName);
             var toMail = new MailAddress(emailId);
-            var frontEmailPassword = "Ginilog21$";
             string subject = $"{title}";
 
             string companyHeader = @"
@@ -250,15 +248,7 @@ namespace Genilog_WebApi.EmailSender
             </html>";
 
 
-            var smtp = new SmtpClient
-            {
-                Host = "mail.ginilog.com",
-                Port = 8889,
-                EnableSsl = false,
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(fromMail.Address, frontEmailPassword)
-            };
+            var smtp = BuildSmtpClient();
 
             using var message = new MailMessage(fromMail, toMail)
             {

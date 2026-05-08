@@ -78,7 +78,7 @@ export function Navbar() {
                 className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors text-center"
                 onClick={() => setIsOpen(false)}
               >
-                Customer Portal
+                Get Started
               </Link>
             </div>
           </div>
