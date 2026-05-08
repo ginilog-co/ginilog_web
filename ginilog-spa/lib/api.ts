@@ -830,3 +830,32 @@ export async function updateReservation(id: string, data: Record<string, unknown
   });
   return response.json();
 }
+
+export async function getAllCustomerReservations(): Promise<any[]> {
+  const response = await fetchWithAuth("Bookings/accomodation-reservations-customer", {
+    method: "GET",
+  });
+  return response.json();
+}
+
+export async function updateCustomerReservation(id: string, data: Record<string, unknown>): Promise<any> {
+  const response = await fetchWithAuth(`Bookings/accomodation-reservations-customer/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
+
+export async function getAllStaff(): Promise<any[]> {
+  const response = await fetchWithAuth("Admin/staff-users", {
+    method: "GET",
+  });
+  return response.json();
+}
+
+export async function getAllAdverts(): Promise<any[]> {
+  const response = await fetchWithAuth("Admin/advert", {
+    method: "GET",
+  });
+  return response.json();
+}

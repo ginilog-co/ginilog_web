@@ -8,18 +8,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Truck, Hotel, Users, LogOut, Bell, Search, User, Loader2, AlertCircle,
-  Package, Building2, ArrowLeft,
+  Package, Building2, ArrowLeft, Megaphone, UserCheck, TrendingUp,
 } from "lucide-react";
 import {
   getStoredUser, logout, adminGetProfile,
-  getAllOrders, getAllReservations, getAllUsers,
-  updateOrderStatus, updateReservation,
+  getAllOrders, getAllCustomerReservations, getAllUsers,
+  updateOrderStatus, updateCustomerReservation,
+  getAllStaff, getAllAdverts,
 } from "@/lib/api";
 
-const ORDER_STATUSES = ["Pending", "Processing", "In_Transit", "Delivered", "Cancelled"];
+const ORDER_STATUSES = ["Open", "Accepted", "Picked", "Ongoing", "Completed", "Delivered", "Closed", "Cancelled", "Rejected"];
 const BOOKING_STATUSES = ["Pending", "Confirmed", "Completed", "Cancelled"];
 
-type Tab = "logistics" | "accommodation" | "users";
+type Tab = "logistics" | "accommodation" | "staff" | "adverts" | "users";
 
 export default function CompanyDashboard() {
   const router = useRouter();
@@ -28,6 +29,8 @@ export default function CompanyDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
   const [reservations, setReservations] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [staff, setStaff] = useState<any[]>([]);
+  const [adverts, setAdverts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -41,16 +44,20 @@ export default function CompanyDashboard() {
     }
     const fetchData = async () => {
       try {
-        const [profile, allOrders, allReservations, allUsers] = await Promise.all([
+        const [profile, allOrders, allReservations, allUsers, allStaff, allAdverts] = await Promise.all([
           adminGetProfile().catch(() => null),
           getAllOrders().catch(() => []),
-          getAllReservations().catch(() => []),
+          getAllCustomerReservations().catch(() => []),
           getAllUsers().catch(() => []),
+          getAllStaff().catch(() => []),
+          getAllAdverts().catch(() => []),
         ]);
         setAdminProfile(profile);
         setOrders(allOrders || []);
         setReservations(allReservations || []);
         setUsers(allUsers || []);
+        setStaff(allStaff || []);
+        setAdverts(allAdverts || []);
       } catch (err) {
         setError("Failed to load company data.");
         console.error(err);
@@ -60,6 +67,18 @@ export default function CompanyDashboard() {
     };
     fetchData();
   }, [router]);
+
+  const isManager = adminProfile?.adminType === "Manager";
+
+  // Revenue statistics (mirrors C# OrderStatistics)
+  const today = new Date().toISOString().split("T")[0];
+  const totalRevenue = orders.reduce((s, o) => s + (o.shippingCost || 0), 0);
+  const todayOrderList = orders.filter((o) => o.createdAt && o.createdAt.startsWith(today));
+  const todayRevenue = todayOrderList.reduce((s, o) => s + (o.shippingCost || 0), 0);
+  const completedOrderList = orders.filter((o) => ["Completed", "Delivered", "Closed"].includes(o.orderStatus || ""));
+  const completedRevenue = completedOrderList.reduce((s, o) => s + (o.shippingCost || 0), 0);
+  const pendingOrderList = orders.filter((o) => ["Open", "Picked", "Ongoing", "Accepted"].includes(o.orderStatus || ""));
+  const pendingRevenue = pendingOrderList.reduce((s, o) => s + (o.shippingCost || 0), 0);
 
   const handleOrderStatusChange = async (id: string, newStatus: string) => {
     setUpdatingId(id);
@@ -76,7 +95,7 @@ export default function CompanyDashboard() {
   const handleBookingStatusChange = async (id: string, newStatus: string) => {
     setUpdatingId(id);
     try {
-      await updateReservation(id, { BookingStatus: newStatus });
+      await updateCustomerReservation(id, { BookingStatus: newStatus });
       setReservations((prev) => prev.map((r) => r.id === id ? { ...r, bookingStatus: newStatus } : r));
     } catch (err) {
       console.error(err);
@@ -87,9 +106,9 @@ export default function CompanyDashboard() {
 
   const getStatusBadge = (status: string) => {
     const s = (status || "").toLowerCase();
-    if (s === "delivered" || s === "confirmed" || s === "completed") return "bg-green-100 text-green-800";
-    if (s === "in_transit" || s === "processing") return "bg-blue-100 text-blue-800";
-    if (s === "cancelled") return "bg-red-100 text-red-800";
+    if (["delivered", "confirmed", "completed", "closed"].includes(s)) return "bg-green-100 text-green-800";
+    if (["in_transit", "processing", "ongoing", "picked", "accepted"].includes(s)) return "bg-blue-100 text-blue-800";
+    if (s === "cancelled" || s === "rejected") return "bg-red-100 text-red-800";
     return "bg-yellow-100 text-yellow-800";
   };
 
@@ -107,7 +126,25 @@ export default function CompanyDashboard() {
       !search ||
       (r.bookingRefNo || "").toLowerCase().includes(search.toLowerCase()) ||
       (r.accomodationName || "").toLowerCase().includes(search.toLowerCase()) ||
-      (r.guestName || "").toLowerCase().includes(search.toLowerCase())
+      (r.guestName || "").toLowerCase().includes(search.toLowerCase()) ||
+      (r.customerName || "").toLowerCase().includes(search.toLowerCase())
+  );
+
+  const filteredStaff = staff.filter(
+    (s) =>
+      !search ||
+      (s.firstName || "").toLowerCase().includes(search.toLowerCase()) ||
+      (s.surName || "").toLowerCase().includes(search.toLowerCase()) ||
+      (s.email || "").toLowerCase().includes(search.toLowerCase()) ||
+      (s.companyName || "").toLowerCase().includes(search.toLowerCase())
+  );
+
+  const filteredAdverts = adverts.filter(
+    (a) =>
+      !search ||
+      (a.advertName || "").toLowerCase().includes(search.toLowerCase()) ||
+      (a.advertType || "").toLowerCase().includes(search.toLowerCase()) ||
+      (a.advertItemDescription || "").toLowerCase().includes(search.toLowerCase())
   );
 
   const filteredUsers = users.filter(
@@ -126,6 +163,14 @@ export default function CompanyDashboard() {
     );
   }
 
+  const tabs: { key: Tab; label: string; icon: any; managerOnly?: boolean }[] = [
+    { key: "logistics", label: "Parcel Orders", icon: Truck },
+    { key: "accommodation", label: "Bookings List", icon: Building2 },
+    { key: "staff", label: "Staff List", icon: UserCheck, managerOnly: true },
+    { key: "adverts", label: "Advert List", icon: Megaphone },
+    { key: "users", label: "Users", icon: Users },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -137,10 +182,15 @@ export default function CompanyDashboard() {
               className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
-              {<span className="text-sm hidden sm:block">Back to Super Admin</span>}
+              <span className="text-sm hidden sm:block">Back to Super Admin</span>
             </Link>
             <div className="w-px h-6 bg-gray-700" />
-            <h1 className="text-lg font-bold">Company Portal</h1>
+            <div>
+              <h1 className="text-lg font-bold">Company Portal</h1>
+              {adminProfile?.companyName && (
+                <p className="text-xs text-gray-400">Hi, welcome back! {adminProfile.companyName}</p>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <button className="p-2 hover:bg-gray-800 rounded-lg">
@@ -156,9 +206,9 @@ export default function CompanyDashboard() {
               </div>
               <div className="hidden md:block">
                 <p className="text-sm font-medium">
-                  {adminProfile?.firstName || "Admin"} {adminProfile?.lastName || ""}
+                  {adminProfile?.firstName || "Admin"} {adminProfile?.surName || adminProfile?.lastName || ""}
                 </p>
-                <p className="text-xs text-gray-400">Company Admin</p>
+                <p className="text-xs text-gray-400">{adminProfile?.adminType || "Company Admin"}</p>
               </div>
             </div>
             <Button
@@ -174,7 +224,54 @@ export default function CompanyDashboard() {
       </header>
 
       <main className="p-6 max-w-7xl mx-auto">
-        {/* Summary Cards */}
+
+        {/* Revenue Statistics Cards (mirrors C# Manager stats) */}
+        {orders.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <TrendingUp className="h-4 w-4 text-green-600" />
+                  <p className="text-xs text-gray-500 uppercase font-medium">Revenue</p>
+                </div>
+                <p className="text-xl font-bold text-gray-900">₦{totalRevenue.toLocaleString()}</p>
+                <p className="text-sm text-green-600">{orders.length} orders</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <TrendingUp className="h-4 w-4 text-green-600" />
+                  <p className="text-xs text-gray-500 uppercase font-medium">Today's Revenue</p>
+                </div>
+                <p className="text-xl font-bold text-gray-900">₦{todayRevenue.toLocaleString()}</p>
+                <p className="text-sm text-green-600">{todayOrderList.length} today</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Package className="h-4 w-4 text-red-500" />
+                  <p className="text-xs text-gray-500 uppercase font-medium">Completed</p>
+                </div>
+                <p className="text-xl font-bold text-gray-900">₦{completedRevenue.toLocaleString()}</p>
+                <p className="text-sm text-red-500">{completedOrderList.length} packages</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Truck className="h-4 w-4 text-green-600" />
+                  <p className="text-xs text-gray-500 uppercase font-medium">Pending Orders</p>
+                </div>
+                <p className="text-xl font-bold text-gray-900">₦{pendingRevenue.toLocaleString()}</p>
+                <p className="text-sm text-green-600">{pendingOrderList.length} pending</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Summary Count Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <Card
             className="cursor-pointer hover:shadow-md transition-shadow"
@@ -223,26 +320,22 @@ export default function CompanyDashboard() {
         {/* Tab Navigation + Search */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div className="flex border-b border-gray-200 overflow-x-auto">
-            {(
-              [
-                { key: "logistics" as Tab, label: "Logistics Orders", icon: Truck },
-                { key: "accommodation" as Tab, label: "Accommodation", icon: Building2 },
-                { key: "users" as Tab, label: "Users", icon: Users },
-              ]
-            ).map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => { setActiveTab(tab.key); setSearch(""); }}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
-                  activeTab === tab.key
-                    ? "border-primary text-primary"
-                    : "border-transparent text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                <tab.icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            ))}
+            {tabs
+              .filter((t) => !t.managerOnly || isManager)
+              .map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => { setActiveTab(tab.key); setSearch(""); }}
+                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+                    activeTab === tab.key
+                      ? "border-primary text-primary"
+                      : "border-transparent text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <tab.icon className="h-4 w-4" />
+                  {tab.label}
+                </button>
+              ))}
           </div>
           <div className="relative w-full sm:w-56 flex-shrink-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -263,11 +356,11 @@ export default function CompanyDashboard() {
           </div>
         )}
 
-        {/* Logistics Orders Tab */}
+        {/* Parcel Orders Tab */}
         {activeTab === "logistics" && (
           <Card>
-            <CardHeader>
-              <CardTitle>Logistics Orders ({filteredOrders.length})</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Order List ({filteredOrders.length})</CardTitle>
             </CardHeader>
             <CardContent>
               {filteredOrders.length === 0 ? (
@@ -280,14 +373,13 @@ export default function CompanyDashboard() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b bg-gray-50">
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">Tracking #</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">Item</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">Sender</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">Receiver</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">Company</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">Shipping</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Tracking Num</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Item Name</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Sender Name</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Receiver Name</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Shipping Cost</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-600">Item Cost</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">Status</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Order Status</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-600">Date</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-600">Update Status</th>
                       </tr>
@@ -299,12 +391,11 @@ export default function CompanyDashboard() {
                           <td className="py-3 px-4">{order.itemName}</td>
                           <td className="py-3 px-4">{order.senderName}</td>
                           <td className="py-3 px-4">{order.recieverName}</td>
-                          <td className="py-3 px-4">{order.companyName || "—"}</td>
                           <td className="py-3 px-4">₦{(order.shippingCost || 0).toLocaleString()}</td>
                           <td className="py-3 px-4">₦{(order.itemCost || 0).toLocaleString()}</td>
                           <td className="py-3 px-4">
                             <Badge className={getStatusBadge(order.orderStatus)}>
-                              {order.orderStatus || "Pending"}
+                              {order.orderStatus || "Open"}
                             </Badge>
                           </td>
                           <td className="py-3 px-4 text-gray-500">
@@ -315,7 +406,7 @@ export default function CompanyDashboard() {
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
                               <select
-                                value={order.orderStatus || "Pending"}
+                                value={order.orderStatus || "Open"}
                                 onChange={(e) => handleOrderStatusChange(order.id, e.target.value)}
                                 className="text-xs border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
                               >
@@ -333,11 +424,11 @@ export default function CompanyDashboard() {
           </Card>
         )}
 
-        {/* Accommodation Bookings Tab */}
+        {/* Bookings List Tab */}
         {activeTab === "accommodation" && (
           <Card>
-            <CardHeader>
-              <CardTitle>Accommodation Bookings ({filteredReservations.length})</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Customer Reservation List ({filteredReservations.length})</CardTitle>
             </CardHeader>
             <CardContent>
               {filteredReservations.length === 0 ? (
@@ -350,14 +441,15 @@ export default function CompanyDashboard() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b bg-gray-50">
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">Accommodation</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">Guest</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">Contact</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">Ref #</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">Check-in</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">Check-out</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">Nights</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">Amount</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Accommodation Name</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Customer Name</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Ticket Num</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Reservation Start Date</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Reservation End Date</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Total Cost</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">No Of Days</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Room Number</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Date</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-600">Status</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-600">Update Status</th>
                       </tr>
@@ -366,13 +458,18 @@ export default function CompanyDashboard() {
                       {filteredReservations.map((res) => (
                         <tr key={res.id} className="border-b hover:bg-gray-50">
                           <td className="py-3 px-4">{res.accomodationName}</td>
-                          <td className="py-3 px-4">{res.guestName}</td>
-                          <td className="py-3 px-4 text-gray-500 text-xs">{res.guestPhoneNo || res.guestEmail || "—"}</td>
-                          <td className="py-3 px-4 font-mono text-xs">{res.bookingRefNo || res.id?.slice(0, 8)}</td>
-                          <td className="py-3 px-4">{res.checkInDate ? new Date(res.checkInDate).toLocaleDateString() : "—"}</td>
-                          <td className="py-3 px-4">{res.checkOutDate ? new Date(res.checkOutDate).toLocaleDateString() : "—"}</td>
-                          <td className="py-3 px-4">{res.numberOfNights || "—"}</td>
-                          <td className="py-3 px-4 font-medium text-primary">₦{(res.totalAmount || 0).toLocaleString()}</td>
+                          <td className="py-3 px-4">{res.guestName || res.customerName || "—"}</td>
+                          <td className="py-3 px-4 font-mono text-xs">{res.bookingRefNo || res.ticketNum || res.id?.slice(0, 8)}</td>
+                          <td className="py-3 px-4">{res.checkInDate ? new Date(res.checkInDate).toLocaleDateString() : res.reservationStartDate || "—"}</td>
+                          <td className="py-3 px-4">{res.checkOutDate ? new Date(res.checkOutDate).toLocaleDateString() : res.reservationEndDate || "—"}</td>
+                          <td className="py-3 px-4 font-medium text-primary">₦{(res.totalAmount || res.totalCost || 0).toLocaleString()}</td>
+                          <td className="py-3 px-4">{res.numberOfNights || res.noOfDays || "—"}</td>
+                          <td className="py-3 px-4">
+                            <Badge className="bg-gray-100 text-gray-700">{res.roomNumber || "—"}</Badge>
+                          </td>
+                          <td className="py-3 px-4 text-gray-500">
+                            {res.createdAt ? new Date(res.createdAt).toLocaleDateString() : "—"}
+                          </td>
                           <td className="py-3 px-4">
                             <Badge className={getStatusBadge(res.bookingStatus)}>
                               {res.bookingStatus || "Pending"}
@@ -390,6 +487,104 @@ export default function CompanyDashboard() {
                                 {BOOKING_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                               </select>
                             )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Staff List Tab (Manager only) */}
+        {activeTab === "staff" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Staff List ({filteredStaff.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {filteredStaff.length === 0 ? (
+                <div className="text-center py-12">
+                  <UserCheck className="h-12 w-12 text-gray-200 mx-auto mb-3" />
+                  <p className="text-gray-500">No staff found.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-gray-50">
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Name</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Email</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Phone</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Role</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Company</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Branch</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Joined</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredStaff.map((s) => (
+                        <tr key={s.id} className="border-b hover:bg-gray-50">
+                          <td className="py-3 px-4 font-medium">{s.firstName} {s.surName}</td>
+                          <td className="py-3 px-4 text-gray-500">{s.email}</td>
+                          <td className="py-3 px-4">{s.phoneNo || "—"}</td>
+                          <td className="py-3 px-4">
+                            <Badge className="bg-blue-100 text-blue-800">{s.adminType || "—"}</Badge>
+                          </td>
+                          <td className="py-3 px-4">{s.companyName || "—"}</td>
+                          <td className="py-3 px-4">{s.branch || "—"}</td>
+                          <td className="py-3 px-4 text-gray-500">
+                            {s.createdAt ? new Date(s.createdAt).toLocaleDateString() : "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Advert List Tab */}
+        {activeTab === "adverts" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Advert List ({filteredAdverts.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {filteredAdverts.length === 0 ? (
+                <div className="text-center py-12">
+                  <Megaphone className="h-12 w-12 text-gray-200 mx-auto mb-3" />
+                  <p className="text-gray-500">No adverts found.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-gray-50">
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Advert Name</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Type</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Description</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Days</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Trans Ref</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredAdverts.map((a) => (
+                        <tr key={a.id} className="border-b hover:bg-gray-50">
+                          <td className="py-3 px-4 font-medium">{a.advertName}</td>
+                          <td className="py-3 px-4">
+                            <Badge className="bg-purple-100 text-purple-800">{a.advertType || "—"}</Badge>
+                          </td>
+                          <td className="py-3 px-4 text-gray-500 max-w-xs truncate">{a.advertItemDescription || "—"}</td>
+                          <td className="py-3 px-4">{a.advertDays4 || "—"}</td>
+                          <td className="py-3 px-4 font-mono text-xs">{a.transRef || "—"}</td>
+                          <td className="py-3 px-4 text-gray-500">
+                            {a.createdAt ? new Date(a.createdAt).toLocaleDateString() : "—"}
                           </td>
                         </tr>
                       ))}
