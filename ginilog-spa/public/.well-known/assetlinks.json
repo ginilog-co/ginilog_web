@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.app.ginilog_customer_app",
+    "sha256_cert_fingerprints": ["3F:13:F7:E7:10:62:67:D3:B1:E7:52:95:44:E9:A9:41:32:4A:71:84:F4:6E:21:E6:83:45:8E:4E:39:A0:33:45"]
+  }
+}]
