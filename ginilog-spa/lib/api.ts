@@ -375,7 +375,14 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}): Promi
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: "An error occurred" }));
-    throw new Error(error.message || `HTTP error! status: ${response.status}`);
+    // ASP.NET Core ModelState returns { errors: { Field: ["msg"] } } — flatten to readable string
+    if (error.errors && typeof error.errors === "object") {
+      const messages = Object.values(error.errors as Record<string, string[]>)
+        .flat()
+        .join(" ");
+      throw new Error(messages || error.title || `HTTP error! status: ${response.status}`);
+    }
+    throw new Error(error.message || error.title || `HTTP error! status: ${response.status}`);
   }
 
   return response;

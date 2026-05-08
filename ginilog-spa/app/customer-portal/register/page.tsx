@@ -40,10 +40,11 @@ export default function CustomerRegister() {
       return;
     }
 
-    // Validate phone format (must start with +)
+    // Strip spaces from phone then validate
+    const cleanedPhone = formData.phone.replace(/\s+/g, "");
     const phoneRegex = /^\+[0-9]+$/;
-    if (!phoneRegex.test(formData.phone)) {
-      setError("Phone number must start with + (e.g., +2348000000000)");
+    if (!phoneRegex.test(cleanedPhone)) {
+      setError("Phone number must start with + and contain only digits (e.g., +2348000000000)");
       return;
     }
 
@@ -54,7 +55,7 @@ export default function CustomerRegister() {
         FirstName: formData.firstName,
         LastName: formData.lastName,
         Email: formData.email,
-        PhoneNo: formData.phone,
+        PhoneNo: cleanedPhone,
         Password: formData.password,
       };
 
