@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -317,7 +317,7 @@ export default function CustomerPortalHome() {
                     <div className="pt-4 border-t">
                       <h4 className="font-semibold text-gray-900 mb-4">Delivery Timeline</h4>
                       <div className="space-y-3">
-                        {(trackingResult.data as OrderTrackingResult).orderDeliveryFlows.map((flow, index) => (
+                        {(trackingResult.data as OrderTrackingResult).orderDeliveryFlows.map((flow: { id: Key | null | undefined; orderStatus: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; currentLocation: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; updatedAt: string | number | Date; }, index: number) => (
                           <div key={flow.id} className="flex items-start gap-3">
                             <div className="flex flex-col items-center">
                               <div className={`w-3 h-3 rounded-full ${index === 0 ? 'bg-primary' : 'bg-gray-300'}`} />

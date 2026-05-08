@@ -1,4 +1,5 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+// Empty string → relative URLs → Next.js rewrites proxy to backend (no CORS)
+const API_URL = typeof window !== "undefined" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000");
 
 // Types matching backend models
 export interface LoginRequest {
@@ -85,6 +86,109 @@ export interface UserProfile {
 export interface ApiError {
   message: string;
   status: boolean;
+}
+
+export interface GoogleAuthRequest {
+  Email: string;
+  ExternalId: string;
+  FirstName?: string;
+  LastName?: string;
+  ProfilePicture?: string;
+}
+
+export interface UpdateUserRequest {
+  FirstName?: string;
+  LastName?: string;
+  PhoneNo?: string;
+  Sex?: string;
+  Address?: string;
+  ProfilePicture?: string;
+  PostCodes?: string;
+  Locality?: string;
+  State?: string;
+  Latitude?: number;
+  Longitude?: number;
+  UserStatus?: boolean;
+}
+
+export interface DeliveryAddress {
+  id: string;
+  userName: string;
+  phoneNo: string;
+  address: string;
+  addressPostCodes: string;
+  houseNo: string;
+  locality: string;
+  state: string;
+  latitude: number;
+  longitude: number;
+}
+
+export interface AddDeliveryAddressRequest {
+  UserName: string;
+  PhoneNo: string;
+  Address: string;
+  AddressPostCodes?: string;
+  HouseNo?: string;
+  Locality?: string;
+  State?: string;
+  Latitude?: number;
+  Longitude?: number;
+}
+
+export interface EmailVerificationRequest {
+  Token: string;
+  Password: string;
+}
+
+export interface ResetPasswordRequest {
+  Token: string;
+  Password: string;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  body: string;
+  isRead: boolean;
+  notificationType: string;
+  imageUrl: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateNotificationRequest {
+  Title?: string;
+  Body?: string;
+  IsRead?: boolean;
+  NotificationType?: string;
+}
+
+export interface AddFeedbackRequest {
+  Name: string;
+  PhoneNo: string;
+  Email: string;
+  Feedback: string;
+}
+
+export interface Airline {
+  id: string;
+  airlineName: string;
+  airlineLogo: string;
+  airlineInfo: string;
+  valueCharge: number;
+}
+
+export interface FlightTicket {
+  id: string;
+  flightNumber: string;
+  departureLocation: string;
+  arrivalLocation: string;
+  departureTime: string;
+  arrivalTime: string;
+  ticketCost: number;
+  airlineName: string;
 }
 
 export interface Accommodation {
@@ -400,7 +504,7 @@ export async function trackOrder(trackingNumber: string): Promise<OrderTrackingR
 }
 
 export async function trackBooking(bookingRef: string): Promise<BookingTrackingResult> {
-  const response = await fetch(`${API_URL}/api/Bookings/track-booking?bookingRef=${encodeURIComponent(bookingRef)}`, {
+  const response = await fetch(`${API_URL}/api/Bookings/track-booking?ticketRef=${encodeURIComponent(bookingRef)}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -427,4 +531,263 @@ export async function trackParcelOrBooking(searchId: string): Promise<{ type: 'o
       throw new Error("No parcel or booking found with this tracking/reference number");
     }
   }
+}
+
+// Auth — additional endpoints
+export async function googleAuth(data: GoogleAuthRequest): Promise<LoginResponse> {
+  const response = await fetchWithAuth("AuthUsers/auth-login", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  const loginData = await response.json();
+  setAuthData(loginData);
+  return loginData;
+}
+
+export async function updateProfile(data: UpdateUserRequest): Promise<UserProfile> {
+  const response = await fetchWithAuth("AuthUsers/update-user", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
+
+export async function updateDeviceToken(deviceToken: string): Promise<any> {
+  const response = await fetchWithAuth("AuthUsers/update-device-token", {
+    method: "PUT",
+    body: JSON.stringify({ DeviceToken: deviceToken }),
+  });
+  return response.json();
+}
+
+export async function getDeliveryAddresses(): Promise<DeliveryAddress[]> {
+  const response = await fetchWithAuth("AuthUsers/delivery-address", {
+    method: "GET",
+  });
+  return response.json();
+}
+
+export async function addNewAddress(data: AddDeliveryAddressRequest): Promise<UserProfile> {
+  const response = await fetchWithAuth("AuthUsers/add-new-address", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
+
+export async function updateDeliveryAddress(id: string, data: AddDeliveryAddressRequest): Promise<UserProfile> {
+  const response = await fetchWithAuth(`AuthUsers/update-delivery-address/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
+
+export async function deleteDeliveryAddress(id: string): Promise<void> {
+  await fetchWithAuth(`AuthUsers/delete-delivery-address/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function verifyEmail(data: EmailVerificationRequest): Promise<LoginResponse> {
+  const response = await fetchWithAuth("AuthUsers/email-verification", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  const loginData = await response.json();
+  setAuthData(loginData);
+  return loginData;
+}
+
+export async function requestEmailVerificationToken(email: string): Promise<string> {
+  const response = await fetchWithAuth("AuthUsers/email-verification-request-token", {
+    method: "POST",
+    body: JSON.stringify({ Email: email }),
+  });
+  return response.json();
+}
+
+export async function forgotPassword(email: string): Promise<string> {
+  const response = await fetchWithAuth("AuthUsers/forgot-password-request-token", {
+    method: "POST",
+    body: JSON.stringify({ Email: email }),
+  });
+  return response.json();
+}
+
+export async function resetPassword(data: ResetPasswordRequest): Promise<string> {
+  const response = await fetchWithAuth("AuthUsers/reset-password", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
+
+export async function verifyPhoneNumber(otp: string): Promise<string> {
+  const response = await fetchWithAuth("AuthUsers/phone-no-verification", {
+    method: "POST",
+    body: JSON.stringify({ Otp: otp }),
+  });
+  return response.json();
+}
+
+export async function enableTwoFactor(id: string): Promise<string> {
+  const response = await fetchWithAuth(`AuthUsers/two-factor-enabled/${id}`, {
+    method: "POST",
+  });
+  return response.json();
+}
+
+// Logistics — additional endpoints
+export async function getCompanyById(id: string): Promise<Company> {
+  const response = await fetchWithAuth(`Logistics/${id}`, {
+    method: "GET",
+  });
+  return response.json();
+}
+
+export async function getOrderById(id: string): Promise<OrderTrackingResult> {
+  const response = await fetchWithAuth(`Logistics/package-orders/${id}`, {
+    method: "GET",
+  });
+  return response.json();
+}
+
+// Bookings — additional endpoints
+export async function getAirlines(): Promise<Airline[]> {
+  const response = await fetchWithAuth("Bookings/airline", {
+    method: "GET",
+  });
+  return response.json();
+}
+
+export async function getAirlineById(id: string): Promise<Airline> {
+  const response = await fetchWithAuth(`Bookings/airline/${id}`, {
+    method: "GET",
+  });
+  return response.json();
+}
+
+export async function getFlightTickets(): Promise<FlightTicket[]> {
+  const response = await fetchWithAuth("Bookings/airline-flight-ticket", {
+    method: "GET",
+  });
+  return response.json();
+}
+
+export async function getAccommodationById(id: string): Promise<Accommodation> {
+  const response = await fetchWithAuth(`Bookings/accomodation/${id}`, {
+    method: "GET",
+  });
+  return response.json();
+}
+
+export async function getCustomerBookingById(id: string): Promise<BookingTrackingResult> {
+  const response = await fetchWithAuth(`Bookings/accomodation-reservations-customer/${id}`, {
+    method: "GET",
+  });
+  return response.json();
+}
+
+export async function cancelCustomerBooking(id: string): Promise<void> {
+  await fetchWithAuth(`Bookings/accomodation-reservations-customer/${id}`, {
+    method: "DELETE",
+  });
+}
+
+// Payment — Flutterwave
+export async function initializeFlutterwavePayment(amount: number, email: string, fullName: string): Promise<any> {
+  const response = await fetchWithAuth("Wallet/initialize-flutterwave", {
+    method: "POST",
+    body: JSON.stringify({ Amount: amount, Email: email, FullName: fullName }),
+  });
+  return response.json();
+}
+
+// Notifications API functions
+export async function getNotifications(): Promise<Notification[]> {
+  const response = await fetchWithAuth("Notifications", {
+    method: "GET",
+  });
+  return response.json();
+}
+
+export async function getNotificationById(id: string): Promise<Notification> {
+  const response = await fetchWithAuth(`Notifications/${id}`, {
+    method: "GET",
+  });
+  return response.json();
+}
+
+export async function markNotificationRead(id: string, data: UpdateNotificationRequest): Promise<Notification> {
+  const response = await fetchWithAuth(`Notifications/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
+
+// Info / Feedback API functions
+export async function submitFeedback(data: AddFeedbackRequest): Promise<any> {
+  const response = await fetchWithAuth("Info/feedback", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
+
+// Admin Auth
+export async function adminLogin(credentials: LoginRequest): Promise<LoginResponse> {
+  const response = await fetchWithAuth("Admin/login", {
+    method: "POST",
+    body: JSON.stringify(credentials),
+  });
+  const data = await response.json();
+  setAuthData(data);
+  return data;
+}
+
+export async function adminGetProfile(): Promise<any> {
+  const response = await fetchWithAuth("Admin/profile", {
+    method: "GET",
+  });
+  return response.json();
+}
+
+// Admin Data
+export async function getAllUsers(): Promise<any[]> {
+  const response = await fetchWithAuth("AuthUsers", {
+    method: "GET",
+  });
+  return response.json();
+}
+
+export async function getAllOrders(): Promise<any[]> {
+  const response = await fetchWithAuth("Logistics/package-orders", {
+    method: "GET",
+  });
+  return response.json();
+}
+
+export async function updateOrderStatus(id: string, data: Record<string, unknown>): Promise<any> {
+  const response = await fetchWithAuth(`Logistics/package-orders/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
+
+export async function getAllReservations(): Promise<any[]> {
+  const response = await fetchWithAuth("Bookings/accomodation-reservations", {
+    method: "GET",
+  });
+  return response.json();
+}
+
+export async function updateReservation(id: string, data: Record<string, unknown>): Promise<any> {
+  const response = await fetchWithAuth(`Bookings/accomodation-reservations/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  return response.json();
 }

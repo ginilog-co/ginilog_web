@@ -1,193 +1,163 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  LayoutDashboard, 
-  Package, 
-  Hotel, 
-  Users, 
-  Settings, 
-  LogOut, 
-  Bell, 
-  Search,
-  ArrowUpRight,
-  ArrowDownLeft,
-  Mail,
-  MessageSquare,
-  User
+import {
+  LayoutDashboard, Package, Hotel, Users, Settings, LogOut, Bell,
+  Search, ArrowUpRight, MessageSquare, User, Building2, Truck,
+  Loader2, AlertCircle,
 } from "lucide-react";
-import { useState } from "react";
+import {
+  getStoredUser, logout, adminGetProfile,
+  getAllUsers, getAllOrders, getAllReservations,
+  updateOrderStatus, updateReservation,
+} from "@/lib/api";
 
-// Mock data matching traditional admin dashboard
-const statsData = [
-  {
-    title: "Total Revenue",
-    value: "₦12,450,000",
-    subValue: "1,234",
-    trend: "up",
-    color: "success",
-  },
-  {
-    title: "Today's Revenue",
-    value: "₦850,000",
-    subValue: "85",
-    trend: "up",
-    color: "success",
-  },
-  {
-    title: "Completed Packages",
-    value: "₦8,320,000",
-    subValue: "642",
-    trend: "down",
-    color: "danger",
-  },
-  {
-    title: "Pending Orders",
-    value: "₦1,240,000",
-    subValue: "156",
-    trend: "up",
-    color: "success",
-  },
-];
-
-const recentOrders = [
-  {
-    id: "GNL-001-2024",
-    trackingNum: "TRK-001-ABC",
-    itemName: "Electronics Package",
-    senderName: "John Doe",
-    receiverName: "Jane Smith",
-    companyName: "Swift Logistics",
-    shippingCost: 3500,
-    itemCost: 150000,
-    status: "Delivered",
-    date: "2024-01-15",
-  },
-  {
-    id: "GNL-002-2024",
-    trackingNum: "TRK-002-DEF",
-    itemName: "Documents",
-    senderName: "Mike Johnson",
-    receiverName: "Sarah Williams",
-    companyName: "Express Delivery",
-    shippingCost: 2000,
-    itemCost: 0,
-    status: "In Transit",
-    date: "2024-01-14",
-  },
-  {
-    id: "GNL-003-2024",
-    trackingNum: "TRK-003-GHI",
-    itemName: "Fashion Items",
-    senderName: "Alice Brown",
-    receiverName: "Bob Davis",
-    companyName: "Prime Couriers",
-    shippingCost: 4500,
-    itemCost: 75000,
-    status: "Pending",
-    date: "2024-01-13",
-  },
-  {
-    id: "GNL-004-2024",
-    trackingNum: "TRK-004-JKL",
-    itemName: "Food Items",
-    senderName: "Charlie Wilson",
-    receiverName: "Diana Moore",
-    companyName: "Trusty Transport",
-    shippingCost: 2800,
-    itemCost: 25000,
-    status: "Delivered",
-    date: "2024-01-12",
-  },
-];
-
-const recentReservations = [
-  {
-    id: "RES-001",
-    accommodationName: "Grand Hotel",
-    customerName: "John Doe",
-    ticketNum: "TCK-001",
-    startDate: "2024-02-15",
-    endDate: "2024-02-20",
-    totalCost: 125000,
-    noOfDays: 5,
-    roomNumber: "101",
-    date: "2024-01-10",
-  },
-  {
-    id: "RES-002",
-    accommodationName: "Sunset Apartments",
-    customerName: "Jane Smith",
-    ticketNum: "TCK-002",
-    startDate: "2024-03-10",
-    endDate: "2024-03-12",
-    totalCost: 70000,
-    noOfDays: 2,
-    roomNumber: "205",
-    date: "2024-01-09",
-  },
-  {
-    id: "RES-003",
-    accommodationName: "Beach Resort",
-    customerName: "Mike Johnson",
-    ticketNum: "TCK-003",
-    startDate: "2024-02-25",
-    endDate: "2024-03-01",
-    totalCost: 275000,
-    noOfDays: 4,
-    roomNumber: "301",
-    date: "2024-01-08",
-  },
-];
-
-const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/admin-dashboard", active: true },
-  { icon: Package, label: "Orders", href: "#" },
-  { icon: Hotel, label: "Bookings", href: "#" },
-  { icon: Users, label: "Users", href: "#" },
-  { icon: Mail, label: "Messages", href: "#" },
-  { icon: Settings, label: "Settings", href: "#" },
-];
+const ORDER_STATUSES = ["Pending", "Processing", "In_Transit", "Delivered", "Cancelled"];
+const BOOKING_STATUSES = ["Pending", "Confirmed", "Completed", "Cancelled"];
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [adminProfile, setAdminProfile] = useState<any>(null);
+  const [users, setUsers] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [reservations, setReservations] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [orderSearch, setOrderSearch] = useState("");
+  const [bookingSearch, setBookingSearch] = useState("");
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const stored = getStoredUser();
+    if (!stored) {
+      router.push("/admin-dashboard/admin-login");
+      return;
+    }
+    const fetchData = async () => {
+      try {
+        const [profile, allUsers, allOrders, allReservations] = await Promise.all([
+          adminGetProfile().catch(() => null),
+          getAllUsers().catch(() => []),
+          getAllOrders().catch(() => []),
+          getAllReservations().catch(() => []),
+        ]);
+        setAdminProfile(profile);
+        setUsers(allUsers || []);
+        setOrders(allOrders || []);
+        setReservations(allReservations || []);
+      } catch (err) {
+        setError("Failed to load dashboard data.");
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [router]);
+
+  const handleOrderStatusChange = async (orderId: string, newStatus: string) => {
+    setUpdatingId(orderId);
+    try {
+      await updateOrderStatus(orderId, { OrderStatus: newStatus });
+      setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, orderStatus: newStatus } : o));
+    } catch (err) {
+      console.error("Failed to update order:", err);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleBookingStatusChange = async (bookingId: string, newStatus: string) => {
+    setUpdatingId(bookingId);
+    try {
+      await updateReservation(bookingId, { BookingStatus: newStatus });
+      setReservations((prev) => prev.map((r) => r.id === bookingId ? { ...r, bookingStatus: newStatus } : r));
+    } catch (err) {
+      console.error("Failed to update booking:", err);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const totalRevenue =
+    orders.reduce((sum, o) => sum + (o.shippingCost || 0) + (o.itemCost || 0), 0) +
+    reservations.reduce((sum, r) => sum + (r.totalAmount || 0), 0);
+
+  const stats = [
+    { title: "Total Users", value: users.length, icon: Users, color: "bg-blue-100 text-blue-600" },
+    { title: "Total Orders", value: orders.length, icon: Truck, color: "bg-primary/10 text-primary" },
+    { title: "Total Bookings", value: reservations.length, icon: Building2, color: "bg-purple-100 text-purple-600" },
+    { title: "Total Revenue", value: `₦${totalRevenue.toLocaleString()}`, icon: ArrowUpRight, color: "bg-green-100 text-green-600" },
+  ];
+
+  const filteredOrders = orders.filter(
+    (o) =>
+      !orderSearch ||
+      (o.trackingNum || "").toLowerCase().includes(orderSearch.toLowerCase()) ||
+      (o.itemName || "").toLowerCase().includes(orderSearch.toLowerCase()) ||
+      (o.senderName || "").toLowerCase().includes(orderSearch.toLowerCase())
+  );
+
+  const filteredReservations = reservations.filter(
+    (r) =>
+      !bookingSearch ||
+      (r.bookingRefNo || "").toLowerCase().includes(bookingSearch.toLowerCase()) ||
+      (r.accomodationName || "").toLowerCase().includes(bookingSearch.toLowerCase()) ||
+      (r.guestName || "").toLowerCase().includes(bookingSearch.toLowerCase())
+  );
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, string> = {
-      Delivered: "bg-green-100 text-green-800 border-green-200",
-      "In Transit": "bg-blue-100 text-blue-800 border-blue-200",
-      Pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-    };
-    return variants[status] || "bg-gray-100 text-gray-800";
+    const s = (status || "").toLowerCase();
+    if (s === "delivered" || s === "confirmed" || s === "completed") return "bg-green-100 text-green-800";
+    if (s === "in_transit" || s === "processing") return "bg-blue-100 text-blue-800";
+    if (s === "cancelled") return "bg-red-100 text-red-800";
+    return "bg-yellow-100 text-yellow-800";
   };
+
+  const navItems = [
+    { icon: LayoutDashboard, label: "Dashboard", href: "/admin-dashboard", active: true },
+    { icon: Package, label: "Orders", href: "#orders" },
+    { icon: Hotel, label: "Bookings", href: "#bookings" },
+    { icon: Users, label: "Users", href: "#users" },
+    { icon: Building2, label: "Company Portal", href: "/admin-dashboard/company" },
+    { icon: Settings, label: "Settings", href: "#" },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <aside 
+      <aside
         className={`bg-gray-900 text-white transition-all duration-300 ${
           isSidebarOpen ? "w-64" : "w-20"
-        }} fixed h-full z-40`}
+        } fixed h-full z-40`}
       >
-        {/* Logo */}
         <div className="h-16 flex items-center justify-center border-b border-gray-800">
           <Link href="/admin-dashboard" className="text-xl font-bold">
             {isSidebarOpen ? "GINILOG Admin" : "GNL"}
           </Link>
         </div>
-
-        {/* Navigation */}
         <nav className="mt-6 px-3">
           {navItems.map((item) => (
             <Link
               key={item.label}
               href={item.href}
               className={`flex items-center gap-3 px-3 py-3 rounded-lg mb-1 transition-colors ${
-                item.active 
-                  ? "bg-primary text-white" 
+                item.active
+                  ? "bg-primary text-white"
                   : "text-gray-400 hover:bg-gray-800 hover:text-white"
               }`}
             >
@@ -196,22 +166,20 @@ export default function AdminDashboard() {
             </Link>
           ))}
         </nav>
-
-        {/* Logout */}
         <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-gray-800">
-          <Link
-            href="/login"
-            className="flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+          <button
+            onClick={() => { logout(); router.push("/admin-dashboard/admin-login"); }}
+            className="flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition-colors w-full"
           >
             <LogOut className="h-5 w-5 flex-shrink-0" />
             {isSidebarOpen && <span className="text-sm font-medium">Logout</span>}
-          </Link>
+          </button>
         </div>
       </aside>
 
       {/* Main Content */}
       <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-20"}`}>
-        {/* Top Header */}
+        {/* Header */}
         <header className="bg-white border-b sticky top-0 z-30">
           <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4">
@@ -221,16 +189,7 @@ export default function AdminDashboard() {
               >
                 <LayoutDashboard className="h-5 w-5 text-gray-600" />
               </button>
-              <div className="relative hidden sm:block">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-64"
-                />
-              </div>
             </div>
-
             <div className="flex items-center gap-4">
               <button className="relative p-2 hover:bg-gray-100 rounded-lg">
                 <Bell className="h-5 w-5 text-gray-600" />
@@ -238,66 +197,46 @@ export default function AdminDashboard() {
               </button>
               <button className="relative p-2 hover:bg-gray-100 rounded-lg">
                 <MessageSquare className="h-5 w-5 text-gray-600" />
-                <span className="absolute top-1 right-1 h-2 w-2 bg-primary rounded-full" />
               </button>
               <div className="flex items-center gap-3 pl-4 border-l">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="h-5 w-5 text-primary" />
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                  {adminProfile?.profilePicture ? (
+                    <img src={adminProfile.profilePicture} alt="Admin" className="h-full w-full object-cover" />
+                  ) : (
+                    <User className="h-5 w-5 text-primary" />
+                  )}
                 </div>
                 <div className="hidden md:block">
-                  <p className="text-sm font-medium text-gray-900">Admin User</p>
-                  <Link href="/admin-dashboard/profile" className="text-xs text-gray-500 hover:text-primary">Super Admin</Link>
+                  <p className="text-sm font-medium text-gray-900">
+                    {adminProfile?.firstName || "Admin"} {adminProfile?.lastName || ""}
+                  </p>
+                  <p className="text-xs text-gray-500">Super Admin</p>
                 </div>
               </div>
             </div>
           </div>
         </header>
 
-        {/* Dashboard Content */}
         <main className="p-6">
-          {/* Action Buttons */}
-          <div className="flex flex-wrap gap-3 mb-6">
-            <Button className="bg-primary hover:bg-primary/90">
-              <Mail className="h-4 w-4 mr-2" />
-              Send Email
-            </Button>
-            <Button variant="outline" className="border-green-500 text-green-600 hover:bg-green-50">
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Feedback
-            </Button>
-            <Button variant="outline">
-              <Users className="h-4 w-4 mr-2" />
-              View Staff
-            </Button>
-          </div>
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-600 text-sm">
+              <AlertCircle className="h-4 w-4" />
+              <span>{error}</span>
+            </div>
+          )}
 
-          {/* Stats Cards */}
+          {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {statsData.map((stat, index) => (
-              <Card key={index} className="hover:shadow-md transition-shadow">
+            {stats.map((stat) => (
+              <Card key={stat.title} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-baseline gap-2">
-                        <h3 className="text-2xl font-bold text-gray-900">{stat.value}</h3>
-                        <span className={`text-sm font-medium ${
-                          stat.trend === "up" ? "text-green-600" : "text-red-600"
-                        }`}>
-                          {stat.subValue}
-                        </span>
-                      </div>
-                      <p className="text-gray-500 text-sm mt-1">{stat.title}</p>
+                    <div>
+                      <p className="text-gray-500 text-sm">{stat.title}</p>
+                      <h3 className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</h3>
                     </div>
-                    <div className={`p-3 rounded-lg ${
-                      stat.trend === "up" ? "bg-green-100" : "bg-red-100"
-                    }`}>
-                      {stat.trend === "up" ? (
-                        <ArrowUpRight className={`h-5 w-5 ${
-                          stat.trend === "up" ? "text-green-600" : "text-red-600"
-                        }`} />
-                      ) : (
-                        <ArrowDownLeft className="h-5 w-5 text-red-600" />
-                      )}
+                    <div className={`p-3 rounded-lg ${stat.color}`}>
+                      <stat.icon className="h-5 w-5" />
                     </div>
                   </div>
                 </CardContent>
@@ -305,118 +244,202 @@ export default function AdminDashboard() {
             ))}
           </div>
 
-          {/* Orders Table */}
-          <Card className="mb-8">
+          {/* Users Summary */}
+          <Card className="mb-8" id="users">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Order List</CardTitle>
-              <Button variant="outline" size="sm" className="border-green-500 text-green-600 hover:bg-green-50">
-                View All Orders
-              </Button>
+              <CardTitle>Registered Users ({users.length})</CardTitle>
+              <Link href="/admin-dashboard/company">
+                <Button variant="outline" size="sm">View Company Portal</Button>
+              </Link>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Tracking Num</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Item Name</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Sender Name</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Receiver Name</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Company Name</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Shipping Cost</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Item Cost</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Order Status</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Date</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentOrders.map((order) => (
-                      <tr key={order.id} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-4 text-sm">{order.trackingNum}</td>
-                        <td className="py-3 px-4 text-sm">{order.itemName}</td>
-                        <td className="py-3 px-4 text-sm">{order.senderName}</td>
-                        <td className="py-3 px-4 text-sm">{order.receiverName}</td>
-                        <td className="py-3 px-4 text-sm">{order.companyName}</td>
-                        <td className="py-3 px-4 text-sm">₦{order.shippingCost.toLocaleString()}</td>
-                        <td className="py-3 px-4 text-sm">₦{order.itemCost.toLocaleString()}</td>
-                        <td className="py-3 px-4">
-                          <Badge className={getStatusBadge(order.status)}>
-                            {order.status}
-                          </Badge>
-                        </td>
-                        <td className="py-3 px-4 text-sm">{order.date}</td>
-                        <td className="py-3 px-4">
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50">
-                              View
-                            </Button>
-                            <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50">
-                              Delete
-                            </Button>
-                          </div>
-                        </td>
+              {users.length === 0 ? (
+                <p className="text-center text-gray-500 py-6">No users yet.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-gray-50">
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Name</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Email</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Phone</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">State</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Status</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Joined</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {users.slice(0, 10).map((u) => (
+                        <tr key={u.id} className="border-b hover:bg-gray-50">
+                          <td className="py-3 px-4 font-medium">{u.firstName} {u.lastName}</td>
+                          <td className="py-3 px-4 text-gray-500">{u.email}</td>
+                          <td className="py-3 px-4">{u.phoneNo || "—"}</td>
+                          <td className="py-3 px-4">{u.state || "—"}</td>
+                          <td className="py-3 px-4">
+                            <Badge className={u.userStatus ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}>
+                              {u.userStatus ? "Active" : "Inactive"}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4 text-gray-500">
+                            {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {users.length > 10 && (
+                    <p className="text-center text-sm text-gray-500 pt-3">
+                      Showing 10 of {users.length} users. Visit Company Portal for full list.
+                    </p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Customer Reservations Table */}
-          <Card>
+          {/* Orders Table */}
+          <Card className="mb-8" id="orders">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Customer Reservation List</CardTitle>
-              <Button variant="outline" size="sm" className="border-green-500 text-green-600 hover:bg-green-50">
-                View All Reservations
-              </Button>
+              <CardTitle>All Orders ({orders.length})</CardTitle>
+              <div className="relative w-52">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search orders..."
+                  value={orderSearch}
+                  onChange={(e) => setOrderSearch(e.target.value)}
+                  className="pl-9 pr-3 py-1.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full"
+                />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Accommodation Name</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Customer Name</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Ticket Num</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Start Date</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">End Date</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Total Cost</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">No Of Days</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Room Number</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Date</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentReservations.map((reservation) => (
-                      <tr key={reservation.id} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-4 text-sm">{reservation.accommodationName}</td>
-                        <td className="py-3 px-4 text-sm">{reservation.customerName}</td>
-                        <td className="py-3 px-4 text-sm">{reservation.ticketNum}</td>
-                        <td className="py-3 px-4 text-sm">{reservation.startDate}</td>
-                        <td className="py-3 px-4 text-sm">{reservation.endDate}</td>
-                        <td className="py-3 px-4 text-sm font-medium text-primary">
-                          ₦{reservation.totalCost.toLocaleString()}
-                        </td>
-                        <td className="py-3 px-4 text-sm">{reservation.noOfDays}</td>
-                        <td className="py-3 px-4">
-                          <Badge variant="outline" className="text-green-600 border-green-200">
-                            {reservation.roomNumber}
-                          </Badge>
-                        </td>
-                        <td className="py-3 px-4 text-sm">{reservation.date}</td>
-                        <td className="py-3 px-4">
-                          <Button variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50">
-                            View
-                          </Button>
-                        </td>
+              {filteredOrders.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">No orders found.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-gray-50">
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Tracking #</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Item</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Sender</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Receiver</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Company</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Shipping</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Item Cost</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Status</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Date</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Update</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {filteredOrders.map((order) => (
+                        <tr key={order.id} className="border-b hover:bg-gray-50">
+                          <td className="py-3 px-4 font-mono text-xs">{order.trackingNum || order.id?.slice(0, 8)}</td>
+                          <td className="py-3 px-4">{order.itemName}</td>
+                          <td className="py-3 px-4">{order.senderName}</td>
+                          <td className="py-3 px-4">{order.recieverName}</td>
+                          <td className="py-3 px-4">{order.companyName || "—"}</td>
+                          <td className="py-3 px-4">₦{(order.shippingCost || 0).toLocaleString()}</td>
+                          <td className="py-3 px-4">₦{(order.itemCost || 0).toLocaleString()}</td>
+                          <td className="py-3 px-4">
+                            <Badge className={getStatusBadge(order.orderStatus)}>
+                              {order.orderStatus || "Pending"}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4 text-gray-500">
+                            {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "—"}
+                          </td>
+                          <td className="py-3 px-4">
+                            {updatingId === order.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                            ) : (
+                              <select
+                                value={order.orderStatus || "Pending"}
+                                onChange={(e) => handleOrderStatusChange(order.id, e.target.value)}
+                                className="text-xs border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
+                              >
+                                {ORDER_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                              </select>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Reservations Table */}
+          <Card id="bookings">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>All Reservations ({reservations.length})</CardTitle>
+              <div className="relative w-52">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search bookings..."
+                  value={bookingSearch}
+                  onChange={(e) => setBookingSearch(e.target.value)}
+                  className="pl-9 pr-3 py-1.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full"
+                />
               </div>
+            </CardHeader>
+            <CardContent>
+              {filteredReservations.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">No reservations found.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-gray-50">
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Accommodation</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Guest</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Ref #</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Check-in</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Check-out</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Nights</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Amount</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Status</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Update</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredReservations.map((res) => (
+                        <tr key={res.id} className="border-b hover:bg-gray-50">
+                          <td className="py-3 px-4">{res.accomodationName}</td>
+                          <td className="py-3 px-4">{res.guestName}</td>
+                          <td className="py-3 px-4 font-mono text-xs">{res.bookingRefNo || res.id?.slice(0, 8)}</td>
+                          <td className="py-3 px-4">{res.checkInDate ? new Date(res.checkInDate).toLocaleDateString() : "—"}</td>
+                          <td className="py-3 px-4">{res.checkOutDate ? new Date(res.checkOutDate).toLocaleDateString() : "—"}</td>
+                          <td className="py-3 px-4">{res.numberOfNights || "—"}</td>
+                          <td className="py-3 px-4 font-medium text-primary">₦{(res.totalAmount || 0).toLocaleString()}</td>
+                          <td className="py-3 px-4">
+                            <Badge className={getStatusBadge(res.bookingStatus)}>
+                              {res.bookingStatus || "Pending"}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4">
+                            {updatingId === res.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                            ) : (
+                              <select
+                                value={res.bookingStatus || "Pending"}
+                                onChange={(e) => handleBookingStatusChange(res.id, e.target.value)}
+                                className="text-xs border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
+                              >
+                                {BOOKING_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                              </select>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </main>

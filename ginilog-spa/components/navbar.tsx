@@ -6,7 +6,7 @@ import { Menu, X } from "lucide-react";
 
 const navLinks = [
   { href: "/", label: "Home" },
-  { href: "/#contact", label: "Contact Us" },
+  { href: "/contact", label: "Contact Us" },
 ];
 
 export function Navbar() {
@@ -20,7 +20,7 @@ export function Navbar() {
             GINILOG
           </Link>
 
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-6">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -31,10 +31,16 @@ export function Navbar() {
               </Link>
             ))}
             <Link
-              href="/customer-portal/login"
+              href="/admin-dashboard/company"
+              className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors text-center"
+            >
+              Manage Services
+            </Link>
+            <Link
+              href="/customer-portal"
               className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors"
             >
-              Customer Portal
+              Get Started
             </Link>
           </div>
 
@@ -61,8 +67,16 @@ export function Navbar() {
                 </Link>
               ))}
               <Link
-                href="/customer-portal/login"
+                href="/admin-dashboard/company"
                 className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors text-center"
+                onClick={() => setIsOpen(false)}
+              >
+                Manage Services
+              </Link>
+              <Link
+                href="/customer-portal"
+                className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors text-center"
+                onClick={() => setIsOpen(false)}
               >
                 Customer Portal
               </Link>

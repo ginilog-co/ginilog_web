@@ -29,16 +29,14 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
                       policy =>
                       {
-                          policy.WithOrigins(
-                                "https://ginilog.onrender.com",
-                                "http://localhost:3000",
-                                "https://api-data.ginilog.com",
-                                "https://ginilog-web.vercel.app",  // Your Vercel frontend
-                                "https://ginilog-web.onrender.com" // Render API URL
-                                )
-                         .AllowAnyHeader()
-                         .AllowAnyMethod()
-                         .AllowCredentials(); // Important for SignalR
+                        policy.WithOrigins(
+                            "http://localhost:3000",
+                            "https://ginilog-web.vercel.app",
+                            "https://api-data.ginilog.com"
+                        )
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials(); // Required for SignalR
                       });
 });
 
@@ -105,7 +103,7 @@ catch (Exception ex)
 
 builder.Services.AddDbContext<Genilog_Data_Context>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("Genilog_Data_Context"));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Genilog_Data_Context"));
 });
 
 // Repository Here

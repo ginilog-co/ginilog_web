@@ -6,20 +6,15 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Search, 
-  Package, 
-  Home, 
-  Truck, 
-  User, 
-  LogOut, 
-  Bell, 
-  MapPin, 
-  Calendar,
+import {
+  Search,
+  Package,
+  Home,
+  Truck,
+  User,
+  LogOut,
+  Bell,
   CreditCard,
-  ChevronRight,
-  Star,
   Clock,
   CheckCircle,
   TruckIcon,
@@ -27,12 +22,15 @@ import {
   Loader2
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { 
-  getProfile, 
-  getStoredUser, 
+import {
+  getProfile,
+  getStoredUser,
   UserProfile,
   getAccommodations,
   getCompanies,
+  getCustomerOrders,
+  getCustomerBookings,
+  logout,
   Accommodation,
   Company
 } from "@/lib/api";
@@ -42,6 +40,7 @@ export default function CustomerDashboard() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [accommodations, setAccommodations] = useState<Accommodation[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [trackingNumber, setTrackingNumber] = useState("");
 
@@ -53,14 +52,23 @@ export default function CustomerDashboard() {
           router.push("/customer-portal/login");
           return;
         }
-        const [profile, accoms, comps] = await Promise.all([
+        const [profile, accoms, comps, orders, bookings] = await Promise.all([
           getProfile(),
           getAccommodations(),
-          getCompanies()
+          getCompanies(),
+          getCustomerOrders(),
+          getCustomerBookings(),
         ]);
         setUser(profile);
         setAccommodations(accoms || []);
         setCompanies(comps || []);
+        const combined = [
+          ...(orders || []).map((o: any) => ({ ...o, kind: "logistics", label: o.itemName || "Package", ref: o.trackingNum || o.id })),
+          ...(bookings || []).map((b: any) => ({ ...b, kind: "accommodation", label: b.accomodationName || "Hotel", ref: b.bookingRefNo || b.id })),
+        ]
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 3);
+        setRecentActivity(combined);
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
       } finally {
@@ -70,30 +78,6 @@ export default function CustomerDashboard() {
 
     fetchDashboardData();
   }, [router]);
-
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "confirmed":
-      case "delivered":
-        return "bg-green-100 text-green-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "in_transit":
-        return "bg-blue-100 text-blue-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    if (!status) return "Unknown";
-    switch (status.toLowerCase()) {
-      case "in_transit":
-        return "In Transit";
-      default:
-        return status.charAt(0).toUpperCase() + status.slice(1);
-    }
-  };
 
   const handleTracking = (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,11 +140,14 @@ export default function CustomerDashboard() {
                 </div>
               </div>
 
-              <Link href="/customer-portal/login">
-                <Button variant="ghost" size="icon" className="text-gray-600">
-                  <LogOut className="h-5 w-5" />
-                </Button>
-              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-gray-600"
+                onClick={() => { logout(); router.push("/customer-portal/login"); }}
+              >
+                <LogOut className="h-5 w-5" />
+              </Button>
             </div>
           </div>
         </div>
@@ -356,35 +343,27 @@ export default function CustomerDashboard() {
               <CardTitle>Recent Activity</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-gray-900">Booking confirmed - Grand Hotel</p>
-                    <p className="text-gray-500 text-xs">2 hours ago</p>
-                  </div>
+              {recentActivity.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">No recent activity yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {recentActivity.map((item) => (
+                    <div key={item.id} className="flex items-center gap-3 text-sm">
+                      <div className={`h-8 w-8 rounded-full flex items-center justify-center ${item.kind === "accommodation" ? "bg-blue-100" : "bg-primary/10"}`}>
+                        {item.kind === "accommodation"
+                          ? <Building2 className="h-4 w-4 text-blue-600" />
+                          : <TruckIcon className="h-4 w-4 text-primary" />}
+                      </div>
+                      <div>
+                        <p className="text-gray-900">{item.label}</p>
+                        <p className="text-gray-500 text-xs">
+                          {item.orderStatus || item.bookingStatus || "Pending"} · {item.ref}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                    <TruckIcon className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-gray-900">Package in transit - Order #GNL-001</p>
-                    <p className="text-gray-500 text-xs">5 hours ago</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
-                    <Clock className="h-4 w-4 text-yellow-600" />
-                  </div>
-                  <div>
-                    <p className="text-gray-900">New order pending - Order #GNL-003</p>
-                    <p className="text-gray-500 text-xs">1 day ago</p>
-                  </div>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>

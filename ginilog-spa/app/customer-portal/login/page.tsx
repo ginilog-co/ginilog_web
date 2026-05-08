@@ -124,7 +124,7 @@ export default function CustomerLogin() {
 
               <div className="flex items-center justify-between">
                 <Link 
-                  href="/forgot-password" 
+                  href="/customer-portal/forgot-password"
                   className="text-sm text-primary hover:text-primary/80"
                 >
                   Forgot password?

@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Truck, Hotel, Globe, Shield, Clock, Headphones, Package, CheckCircle, CreditCard, Key, Calendar, User, Send } from "lucide-react";
+import { Truck, Hotel, Globe, Shield, Clock, Headphones, Package, CheckCircle, CreditCard, Key, Calendar, User, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { submitFeedback, AddFeedbackRequest } from "@/lib/api";
 
 export default function LandingPage() {
   const [formData, setFormData] = useState({
@@ -14,10 +15,30 @@ export default function LandingPage() {
     phone: "",
     message: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
+    setIsSubmitting(true);
+    setSubmitError(null);
+    setSubmitSuccess(false);
+    try {
+      const feedback: AddFeedbackRequest = {
+        Name: formData.name,
+        PhoneNo: formData.phone,
+        Email: formData.email,
+        Feedback: formData.message,
+      };
+      await submitFeedback(feedback);
+      setFormData({ name: "", email: "", phone: "", message: "" });
+      setSubmitSuccess(true);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Failed to send message. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -39,9 +60,9 @@ export default function LandingPage() {
               Efficient and tailored to your unique needs. Founded by a team of innovative minds 
               who recognized the growing complexity in coordinating logistics and accommodation.
             </p>
-            <Link href="/customer-portal/login">
+            <Link href="/customer-portal">
               <Button size="lg" className="bg-primary hover:bg-primary/90">
-                Get Started
+                Customer Portal
               </Button>
             </Link>
           </div>
@@ -72,14 +93,12 @@ export default function LandingPage() {
                 Want to manage your accommodation/logistics? Sign up as a manager to manage your 
                 accommodation/logistics services with us for free.
               </p>
-              <a 
-                href="https://manager-web.ginilog.com/" 
-                target="_blank" 
-                rel="noopener noreferrer"
+              <Link
+                href="/admin-dashboard/company"
                 className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-base font-medium text-white hover:bg-primary/90 transition-colors"
               >
                 Manage Services
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -295,9 +314,19 @@ export default function LandingPage() {
                     placeholder="Your message"
                   />
                 </div>
-                <Button type="submit" className="w-full">
-                  <Send className="h-4 w-4 mr-2" />
-                  Send Message
+                {submitSuccess && (
+                  <p className="text-sm text-green-600">Message sent! We'll get back to you soon.</p>
+                )}
+                {submitError && (
+                  <p className="text-sm text-red-600">{submitError}</p>
+                )}
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4 mr-2" />
+                  )}
+                  {isSubmitting ? "Sending..." : "Send Message"}
                 </Button>
               </form>
             </div>

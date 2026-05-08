@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Mail, Lock, User, Shield } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Shield, Loader2 } from "lucide-react";
+import { adminLogin, register, LoginRequest, RegisterRequest } from "@/lib/api";
 
 type AuthMode = "signin" | "signup";
 
@@ -14,6 +15,8 @@ export default function AdminAuth() {
   const router = useRouter();
   const [mode, setMode] = useState<AuthMode>("signin");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -23,11 +26,40 @@ export default function AdminAuth() {
     adminCode: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Admin auth submitted:", { mode, ...formData });
-    // Simulate successful login/signup and redirect to admin dashboard
-    router.push("/admin-dashboard");
+    setIsLoading(true);
+    setError(null);
+    try {
+      if (mode === "signin") {
+        const credentials: LoginRequest = { Email_PhoneNo: formData.email, Password: formData.password };
+        const data = await adminLogin(credentials);
+        const role = data.userType;
+        if (role === "Super_Admin") {
+          router.push("/admin-dashboard");
+        } else {
+          router.push("/admin-dashboard/company");
+        }
+      } else {
+        if (formData.password !== formData.confirmPassword) {
+          setError("Passwords do not match.");
+          return;
+        }
+        const data: RegisterRequest = {
+          FirstName: formData.firstName,
+          LastName: formData.lastName,
+          Email: formData.email,
+          PhoneNo: "",
+          Password: formData.password,
+        };
+        await register(data);
+        router.push("/admin-dashboard");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Authentication failed.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -39,7 +71,7 @@ export default function AdminAuth() {
           <div className="p-4 bg-primary/20 rounded-xl mb-6">
             <Shield className="h-12 w-12 text-primary" />
           </div>
-          <h1 className="text-4xl font-bold mb-4">GINILOG Admin</h1>
+          <h1 className="text-4xl font-bold mb-4">GINILOG</h1>
           <p className="text-xl text-center mb-6">
             {mode === "signin" ? "Welcome Back" : "Join Our Team"}
           </p>
@@ -74,7 +106,7 @@ export default function AdminAuth() {
             <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-xl mb-4">
               <Shield className="h-8 w-8 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">GINILOG Admin</h1>
+            <h1 className="text-2xl font-bold text-gray-900">GINILOG</h1>
             <p className="text-gray-600 mt-2">
               {mode === "signin" ? "Sign in to continue" : "Create admin account"}
             </p>
@@ -260,11 +292,18 @@ export default function AdminAuth() {
                 </div>
               )}
 
-              <Button 
-                type="submit" 
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
+                  {error}
+                </div>
+              )}
+              <Button
+                type="submit"
+                disabled={isLoading}
                 className="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white font-medium"
               >
-                {mode === "signin" ? "Sign In" : "Create Admin Account"}
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                {isLoading ? "Please wait..." : mode === "signin" ? "Sign In" : "Create Admin Account"}
               </Button>
             </form>
 

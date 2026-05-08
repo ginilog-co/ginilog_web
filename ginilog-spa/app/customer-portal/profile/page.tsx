@@ -8,13 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { User, Mail, Phone, MapPin, Camera, Save, Bell, LogOut, Loader2 } from "lucide-react";
-import { getProfile, getStoredUser, UserProfile } from "@/lib/api";
+import { getProfile, getStoredUser, UserProfile, updateProfile, UpdateUserRequest, logout } from "@/lib/api";
 
 export default function CustomerProfile() {
   const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -53,9 +55,23 @@ export default function CustomerProfile() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    // TODO: Implement updateProfile in api.ts
-    console.log("Profile update requested:", formData);
-    setTimeout(() => setIsSaving(false), 1000);
+    setSaveSuccess(false);
+    setSaveError(null);
+    try {
+      const updateData: UpdateUserRequest = {
+        FirstName: formData.firstName,
+        LastName: formData.lastName,
+        PhoneNo: formData.phone,
+        Address: formData.address,
+      };
+      const updated = await updateProfile(updateData);
+      setUser(updated);
+      setSaveSuccess(true);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Failed to save changes.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (isLoading) {
@@ -110,11 +126,14 @@ export default function CustomerProfile() {
                   </div>
                 </div>
               </Link>
-              <Link href="/customer-portal/login">
-                <Button variant="ghost" size="icon" className="text-gray-600">
-                  <LogOut className="h-5 w-5" />
-                </Button>
-              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-gray-600"
+                onClick={() => { logout(); router.push("/customer-portal/login"); }}
+              >
+                <LogOut className="h-5 w-5" />
+              </Button>
             </div>
           </div>
         </div>
@@ -217,6 +236,12 @@ export default function CustomerProfile() {
                     </div>
                   </div>
 
+                  {saveSuccess && (
+                    <p className="text-sm text-green-600">Profile updated successfully.</p>
+                  )}
+                  {saveError && (
+                    <p className="text-sm text-red-600">{saveError}</p>
+                  )}
                   <Button type="submit" className="w-full sm:w-auto" disabled={isSaving}>
                     {isSaving ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />

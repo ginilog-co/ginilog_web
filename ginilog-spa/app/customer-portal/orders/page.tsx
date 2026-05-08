@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Package, Home, Calendar, MapPin, Search, LogOut, Bell, User, Loader2 } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Package, Search, LogOut, Bell, User, Loader2, Truck, Hotel, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { getProfile, getStoredUser, UserProfile, getCustomerOrders, getCustomerBookings } from "@/lib/api";
+import { Badge } from "@/components/ui/badge";
+import { getProfile, getStoredUser, UserProfile, getCustomerOrders, getCustomerBookings, cancelCustomerBooking, logout } from "@/lib/api";
 
 export default function CustomerOrders() {
   const router = useRouter();
@@ -16,6 +16,7 @@ export default function CustomerOrders() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [orders, setOrders] = useState<any[]>([]);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -51,10 +52,22 @@ export default function CustomerOrders() {
   }, [router]);
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "confirmed": return "bg-green-100 text-green-800";
-      case "in_transit": return "bg-blue-100 text-blue-800";
-      default: return "bg-gray-100 text-gray-800";
+    const s = (status || "").toLowerCase();
+    if (s === "confirmed" || s === "delivered") return "bg-green-100 text-green-800";
+    if (s === "in_transit" || s === "processing") return "bg-blue-100 text-blue-800";
+    if (s === "cancelled") return "bg-red-100 text-red-800";
+    return "bg-gray-100 text-gray-800";
+  };
+
+  const handleCancelBooking = async (id: string) => {
+    setCancellingId(id);
+    try {
+      await cancelCustomerBooking(id);
+      setOrders((prev) => prev.filter((o) => o.id !== id));
+    } catch (err) {
+      console.error("Failed to cancel booking:", err);
+    } finally {
+      setCancellingId(null);
     }
   };
 
@@ -101,11 +114,14 @@ export default function CustomerOrders() {
                 </div>
               </div>
 
-              <Link href="/customer-portal/login">
-                <Button variant="ghost" size="icon" className="text-gray-600">
-                  <LogOut className="h-5 w-5" />
-                </Button>
-              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-gray-600"
+                onClick={() => { logout(); router.push("/customer-portal/login"); }}
+              >
+                <LogOut className="h-5 w-5" />
+              </Button>
             </div>
           </div>
         </div>
@@ -131,10 +147,76 @@ export default function CustomerOrders() {
               <div className="flex justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            ) : orders.length > 0 ? (
-              orders.map((order) => (
+            ) : orders.filter((o) =>
+                !searchTerm ||
+                (o.trackingNum || o.bookingRefNo || o.id || "")
+                  .toLowerCase()
+                  .includes(searchTerm.toLowerCase()) ||
+                (o.title || "").toLowerCase().includes(searchTerm.toLowerCase())
+              ).length > 0 ? (
+              orders
+                .filter((o) =>
+                  !searchTerm ||
+                  (o.trackingNum || o.bookingRefNo || o.id || "")
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase()) ||
+                  (o.title || "").toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                .map((order) => (
                 <Card key={order.id} className="hover:shadow-md transition-shadow">
-                  {/* ... order content ... */}
+                  <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        {order.type === "logistics" ? (
+                          <Truck className="h-5 w-5 text-primary" />
+                        ) : (
+                          <Hotel className="h-5 w-5 text-primary" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">{order.title}</p>
+                        <p className="text-sm text-gray-500">
+                          {order.trackingNum
+                            ? `Tracking: ${order.trackingNum}`
+                            : order.bookingRefNo
+                            ? `Ref: ${order.bookingRefNo}`
+                            : `ID: ${order.id}`}
+                        </p>
+                        {order.type === "accommodation" && order.checkInDate && (
+                          <p className="text-xs text-gray-400 mt-1">
+                            {new Date(order.checkInDate).toLocaleDateString()} →{" "}
+                            {new Date(order.checkOutDate).toLocaleDateString()}
+                          </p>
+                        )}
+                        {order.type === "logistics" && order.senderAddress && (
+                          <p className="text-xs text-gray-400 mt-1">
+                            {order.senderAddress} → {order.recieverAddress}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 sm:flex-shrink-0">
+                      <Badge className={getStatusColor(order.orderStatus || order.bookingStatus || "")}>
+                        {order.orderStatus || order.bookingStatus || "Pending"}
+                      </Badge>
+                      {order.type === "accommodation" &&
+                        (order.bookingStatus || "").toLowerCase() !== "cancelled" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            disabled={cancellingId === order.id}
+                            onClick={() => handleCancelBooking(order.id)}
+                          >
+                            {cancellingId === order.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <X className="h-4 w-4" />
+                            )}
+                          </Button>
+                        )}
+                    </div>
+                  </div>
                 </Card>
               ))
             ) : (
