@@ -1,0 +1,20 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAMID.com.yourcompany.ginilog",
+        "paths": [
+          "/product/*",
+          "/reset-password",
+          "/invite/*",
+          "/order/*",
+          "NOT /admin/*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["TEAMID.com.yourcompany.ginilog"]
+  }
+}

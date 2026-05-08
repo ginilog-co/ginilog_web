@@ -1,37 +1,70 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { User, Mail, Phone, MapPin, Camera, Save, Bell, LogOut } from "lucide-react";
-
-const mockUser = {
-  id: "1",
-  firstName: "John",
-  lastName: "Doe",
-  email: "john.doe@example.com",
-  userType: "logistics", // or "accommodation"
-  avatar: null,
-};
+import { User, Mail, Phone, MapPin, Camera, Save, Bell, LogOut, Loader2 } from "lucide-react";
+import { getProfile, getStoredUser, UserProfile } from "@/lib/api";
 
 export default function CustomerProfile() {
+  const router = useRouter();
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: "John",
-    lastName: "Doe",
-    email: "john.doe@example.com",
-    phone: "+234 800 000 0000",
-    address: "123 Business Way, Lagos, Nigeria",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    address: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const storedUser = getStoredUser();
+        if (!storedUser) {
+          router.push("/customer-portal/login");
+          return;
+        }
+        const profile = await getProfile();
+        setUser(profile);
+        setFormData({
+          firstName: profile.firstName || "",
+          lastName: profile.lastName || "",
+          email: profile.email || "",
+          phone: profile.phoneNo || "",
+          address: profile.address || "",
+        });
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [router]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Profile updated:", formData);
+    setIsSaving(true);
+    // TODO: Implement updateProfile in api.ts
+    console.log("Profile update requested:", formData);
+    setTimeout(() => setIsSaving(false), 1000);
   };
 
-  const [user] = useState(mockUser);
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
@@ -43,18 +76,12 @@ export default function CustomerProfile() {
             </Link>
 
           <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/customer-portal" className="text-gray-900 font-medium">
+            <Link href="/customer-portal/dashboard" className="text-gray-900 font-medium">
               Dashboard
             </Link>
-            {user.userType === "accommodation" ? (
-              <Link href="/customer-portal/orders" className="text-gray-600 hover:text-gray-900">
-                My Bookings
-              </Link>
-            ) : (
-              <Link href="/customer-portal/orders" className="text-gray-600 hover:text-gray-900">
-                My Orders
-              </Link>
-            )}
+            <Link href="/customer-portal/orders" className="text-gray-600 hover:text-gray-900">
+              My Orders & Bookings
+            </Link>
             <Link href="/customer-portal/profile" className="text-gray-600 hover:text-gray-900">
               Profile
             </Link>
@@ -68,14 +95,18 @@ export default function CustomerProfile() {
               
               <Link href="/customer-portal/profile">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <User className="h-5 w-5 text-primary" />
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                    {user?.profilePicture ? (
+                      <img src={user.profilePicture} alt={user.firstName} className="h-full w-full object-cover" />
+                    ) : (
+                      <User className="h-5 w-5 text-primary" />
+                    )}
                   </div>
                   <div className="hidden sm:block">
                     <p className="text-sm font-medium text-gray-900">
-                      {user.firstName} {user.lastName}
+                      {user?.firstName} {user?.lastName}
                     </p>
-                    <p className="text-xs text-gray-500 capitalize">{user.userType} Customer</p>
+                    <p className="text-xs text-gray-500 capitalize">Customer</p>
                   </div>
                 </div>
               </Link>
@@ -98,7 +129,11 @@ export default function CustomerProfile() {
               <CardContent className="p-6 text-center">
                 <div className="relative inline-block mb-4">
                   <div className="h-32 w-32 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border-4 border-white shadow-sm">
-                    <User className="h-16 w-16 text-primary" />
+                    {user?.profilePicture ? (
+                      <img src={user.profilePicture} alt={user.firstName} className="h-full w-full object-cover" />
+                    ) : (
+                      <User className="h-16 w-16 text-primary" />
+                    )}
                   </div>
                   <button className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-md border text-gray-600 hover:text-primary transition-colors">
                     <Camera className="h-4 w-4" />
@@ -182,9 +217,13 @@ export default function CustomerProfile() {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full sm:w-auto">
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Changes
+                  <Button type="submit" className="w-full sm:w-auto" disabled={isSaving}>
+                    {isSaving ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
+                    {isSaving ? "Saving..." : "Save Changes"}
                   </Button>
                 </form>
               </CardContent>

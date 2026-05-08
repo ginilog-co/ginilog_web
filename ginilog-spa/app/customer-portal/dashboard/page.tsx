@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,126 +23,56 @@ import {
   Clock,
   CheckCircle,
   TruckIcon,
-  Building2
+  Building2,
+  Loader2
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
-
-// Mock user data - in real app, this would come from authentication
-const mockUser = {
-  id: "1",
-  firstName: "John",
-  lastName: "Doe",
-  email: "john.doe@example.com",
-  userType: "User",
-  avatar: null,
-};
-
-// Mock data for accommodation customers
-const accommodationBookings = [
-  {
-    id: "1",
-    accommodationName: "Grand Hotel",
-    roomType: "Deluxe Suite",
-    checkIn: "2024-02-15",
-    checkOut: "2024-02-20",
-    status: "confirmed",
-    amount: 125000,
-    location: "Victoria Island, Lagos",
-    image: "/service-1.jpg",
-  },
-  {
-    id: "2",
-    accommodationName: "Sunset Apartments",
-    roomType: "Standard Room",
-    checkIn: "2024-03-10",
-    checkOut: "2024-03-12",
-    status: "pending",
-    amount: 70000,
-    location: "Maitama, Abuja",
-    image: "/service-2.jpg",
-  },
-];
-
-const recommendedAccommodations = [
-  {
-    id: "1",
-    name: "Beach Resort",
-    type: "Resort",
-    location: "Calabar, Nigeria",
-    price: 55000,
-    rating: 4.8,
-    image: "/service-3.jpg",
-  },
-  {
-    id: "2",
-    name: "City Lodge",
-    type: "Hotel",
-    location: "Ikeja, Lagos",
-    price: 35000,
-    rating: 4.2,
-    image: "/service-4.jpg",
-  },
-  {
-    id: "3",
-    name: "Mountain View",
-    type: "Resort",
-    location: "Jos, Plateau",
-    price: 45000,
-    rating: 4.5,
-    image: "/service-5.jpg",
-  },
-];
-
-// Mock data for logistics customers
-const logisticsOrders = [
-  {
-    id: "GNL-001-2024",
-    sender: "John Doe",
-    receiver: "Jane Smith",
-    from: "Lagos, Nigeria",
-    to: "Abuja, Nigeria",
-    status: "in_transit",
-    date: "2024-01-15",
-    amount: 3500,
-    company: "Swift Logistics",
-  },
-  {
-    id: "GNL-002-2024",
-    sender: "John Doe",
-    receiver: "Mike Johnson",
-    from: "Lagos, Nigeria",
-    to: "Port Harcourt, Nigeria",
-    status: "delivered",
-    date: "2024-01-10",
-    amount: 2800,
-    company: "Express Delivery",
-  },
-  {
-    id: "GNL-003-2024",
-    sender: "John Doe",
-    receiver: "Sarah Williams",
-    from: "Lagos, Nigeria",
-    to: "Kano, Nigeria",
-    status: "pending",
-    date: "2024-01-20",
-    amount: 4500,
-    company: "Prime Couriers",
-  },
-];
-
-const logisticsCompanies = [
-  { id: "1", name: "Swift Logistics", rating: 4.7, price: 1500 },
-  { id: "2", name: "Express Delivery", rating: 4.5, price: 2000 },
-  { id: "3", name: "Prime Couriers", rating: 4.8, price: 3000 },
-  { id: "4", name: "Trusty Transport", rating: 4.3, price: 1800 },
-];
+import { 
+  getProfile, 
+  getStoredUser, 
+  UserProfile,
+  getAccommodations,
+  getCompanies,
+  Accommodation,
+  Company
+} from "@/lib/api";
 
 export default function CustomerDashboard() {
-  const [user] = useState(mockUser);
+  const router = useRouter();
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [accommodations, setAccommodations] = useState<Accommodation[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [trackingNumber, setTrackingNumber] = useState("");
 
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const storedUser = getStoredUser();
+        if (!storedUser) {
+          router.push("/customer-portal/login");
+          return;
+        }
+        const [profile, accoms, comps] = await Promise.all([
+          getProfile(),
+          getAccommodations(),
+          getCompanies()
+        ]);
+        setUser(profile);
+        setAccommodations(accoms || []);
+        setCompanies(comps || []);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [router]);
+
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case "confirmed":
       case "delivered":
         return "bg-green-100 text-green-800";
@@ -155,7 +86,8 @@ export default function CustomerDashboard() {
   };
 
   const getStatusLabel = (status: string) => {
-    switch (status) {
+    if (!status) return "Unknown";
+    switch (status.toLowerCase()) {
       case "in_transit":
         return "In Transit";
       default:
@@ -165,8 +97,20 @@ export default function CustomerDashboard() {
 
   const handleTracking = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Tracking:", trackingNumber);
+    if (trackingNumber) {
+      router.push(`/tracking?id=${encodeURIComponent(trackingNumber)}`);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -179,7 +123,7 @@ export default function CustomerDashboard() {
             </Link>
 
           <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/customer-portal" className="text-gray-900 font-medium">
+            <Link href="/customer-portal/dashboard" className="text-gray-900 font-medium">
               Dashboard
             </Link>
             <Link href="/customer-portal/orders" className="text-gray-600 hover:text-gray-900">
@@ -198,7 +142,11 @@ export default function CustomerDashboard() {
               
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="h-5 w-5 text-primary" />
+                  {user.profilePicture ? (
+                    <img src={user.profilePicture} alt={user.firstName} className="h-10 w-10 rounded-full object-cover" />
+                  ) : (
+                    <User className="h-5 w-5 text-primary" />
+                  )}
                 </div>
                 <div className="hidden sm:block">
                   <p className="text-sm font-medium text-gray-900">
@@ -235,10 +183,10 @@ export default function CustomerDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-white/80 text-sm">Active Bookings</p>
-                  <p className="text-3xl font-bold mt-1">2</p>
+                  <p className="text-white/80 text-sm">Wallet Balance</p>
+                  <p className="text-3xl font-bold mt-1">₦{user.moneyBoxBalance?.toLocaleString() || '0'}</p>
                 </div>
-                <Building2 className="h-8 w-8 text-white/80" />
+                <CreditCard className="h-8 w-8 text-white/80" />
               </div>
             </CardContent>
           </Card>
@@ -246,32 +194,37 @@ export default function CustomerDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-500 text-sm">Active Orders</p>
-                  <p className="text-3xl font-bold mt-1 text-gray-900">3</p>
+                  <p className="text-gray-500 text-sm">Referral Code</p>
+                  <p className="text-xl font-bold mt-1 text-gray-900">{user.referralCode || 'N/A'}</p>
                 </div>
-                <Package className="h-8 w-8 text-primary" />
+                <User className="h-8 w-8 text-primary" />
               </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <form onSubmit={handleTracking} className="space-y-2">
+                <Label htmlFor="track" className="text-sm text-gray-500">Track Package/Booking</Label>
+                <div className="flex gap-2">
+                  <Input 
+                    id="track" 
+                    placeholder="Enter ID..." 
+                    value={trackingNumber}
+                    onChange={(e) => setTrackingNumber(e.target.value)}
+                  />
+                  <Button size="icon" type="submit"><Search className="h-4 w-4" /></Button>
+                </div>
+              </form>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-500 text-sm">Total Spent</p>
-                  <p className="text-3xl font-bold mt-1 text-gray-900">₦225,000</p>
+                  <p className="text-gray-500 text-sm">Status</p>
+                  <p className="text-xl font-bold mt-1 text-green-600">{user.userStatus ? 'Active' : 'Inactive'}</p>
                 </div>
-                <CreditCard className="h-8 w-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-500 text-sm">In Transit</p>
-                  <p className="text-3xl font-bold mt-1 text-gray-900">1</p>
-                </div>
-                <TruckIcon className="h-8 w-8 text-primary" />
+                <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
             </CardContent>
           </Card>
@@ -295,18 +248,22 @@ export default function CustomerDashboard() {
               <CardContent className="p-6">
                 <p className="text-gray-600 mb-4">Book hotels, apartments, and resorts for your stays.</p>
                 <div className="space-y-3">
-                  {accommodationBookings.slice(0, 2).map((booking) => (
-                    <div key={booking.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50">
-                      <div className="h-16 w-16 rounded-lg overflow-hidden flex-shrink-0">
-                        <img src={booking.image} alt={booking.accommodationName} className="h-full w-full object-cover" />
+                  {accommodations.slice(0, 3).map((acc) => (
+                    <div key={acc.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50">
+                      <div className="h-12 w-12 rounded-lg overflow-hidden flex-shrink-0">
+                        <img src={acc.accomodationImages?.[0] || "/service-1.jpg"} alt={acc.accomodationName} className="h-full w-full object-cover" />
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900">{booking.accommodationName}</h4>
-                        <p className="text-sm text-gray-500">{booking.location}</p>
-                        <Badge className={getStatusColor(booking.status)}>{getStatusLabel(booking.status)}</Badge>
+                        <h4 className="font-semibold text-gray-900 text-sm">{acc.accomodationName}</h4>
+                        <p className="text-xs text-gray-500">{acc.location}</p>
                       </div>
                     </div>
                   ))}
+                  {accommodations.length === 0 && (
+                    <div className="text-center py-4 text-gray-500 italic text-sm">
+                      No accommodations available at the moment.
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -325,20 +282,26 @@ export default function CustomerDashboard() {
               <CardContent className="p-6">
                 <p className="text-gray-600 mb-4">Send packages and track deliveries nationwide.</p>
                 <div className="space-y-3">
-                  {logisticsOrders.slice(0, 2).map((order) => (
-                    <div key={order.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50">
-                      <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Package className="h-6 w-6 text-primary" />
+                  {companies.slice(0, 3).map((comp) => (
+                    <div key={comp.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50">
+                      <div className="h-10 w-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 flex items-center justify-center">
+                        {comp.companyLogo ? (
+                          <img src={comp.companyLogo} alt={comp.companyName} className="h-full w-full object-cover" />
+                        ) : (
+                          <Truck className="h-5 w-5 text-gray-400" />
+                        )}
                       </div>
                       <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-semibold text-gray-900">{order.id}</h4>
-                          <Badge className={getStatusColor(order.status)}>{getStatusLabel(order.status)}</Badge>
-                        </div>
-                        <p className="text-sm text-gray-500">{order.from} → {order.to}</p>
+                        <h4 className="font-semibold text-gray-900 text-sm">{comp.companyName}</h4>
+                        <p className="text-xs text-gray-500">Starting from ₦{comp.valueCharge?.toLocaleString()}</p>
                       </div>
                     </div>
                   ))}
+                  {companies.length === 0 && (
+                    <div className="text-center py-4 text-gray-500 italic text-sm">
+                      No logistics companies available.
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

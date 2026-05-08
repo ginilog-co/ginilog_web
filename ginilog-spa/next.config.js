@@ -1,21 +1,23 @@
 /** @type {import('next').NextConfig} */
 
+// next.config.js
 const nextConfig = {
-  reactStrictMode: true,
-};
-
-async function headers() {
-  return [
-    {
-      source: '/.well-known/assetlinks.json',
-      headers: [{ key: 'Content-Type', value: 'application/json' }],
-    },
-  ];
-}
-
-export default {
-  ...nextConfig,
   async headers() {
-    return headers();
+    return [
+      {
+        source: '/.well-known/apple-app-site-association',
+        headers: [
+          { key: 'Content-Type', value: 'application/json' },
+        ],
+      },
+      {
+        source: '/.well-known/assetlinks.json',
+        headers: [
+          { key: 'Content-Type', value: 'application/json' },
+        ],
+      },
+    ];
   },
 };
+
+module.exports = nextConfig;
