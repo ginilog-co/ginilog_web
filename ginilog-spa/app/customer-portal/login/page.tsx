@@ -7,13 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
-import { login, LoginRequest } from "@/lib/api";
+import { login, LoginRequest, requestEmailVerificationToken } from "@/lib/api";
 
 export default function CustomerLogin() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -34,10 +36,26 @@ export default function CustomerLogin() {
       router.push("/customer-portal/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed. Please try again.");
+      setResendSuccess(false);
     } finally {
       setIsLoading(false);
     }
   };
+
+  const handleResendVerification = async () => {
+    setResendLoading(true);
+    setResendSuccess(false);
+    try {
+      await requestEmailVerificationToken(formData.email);
+      setResendSuccess(true);
+    } catch {
+      setResendSuccess(false);
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  const isEmailUnverified = error && /not yet verify|not verified|verify your email/i.test(error);
 
   return (
     <div className="min-h-screen flex">
@@ -79,8 +97,18 @@ export default function CustomerLogin() {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
-                  {error}
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm space-y-2">
+                  <p>{error}</p>
+                  {isEmailUnverified && (
+                    <button
+                      type="button"
+                      disabled={resendLoading || resendSuccess}
+                      onClick={handleResendVerification}
+                      className="text-primary underline hover:no-underline disabled:opacity-60 font-medium"
+                    >
+                      {resendLoading ? "Sending..." : resendSuccess ? "Verification email sent!" : "Resend verification email"}
+                    </button>
+                  )}
                 </div>
               )}
               <div>
