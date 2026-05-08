@@ -80,6 +80,23 @@ namespace Genilog_WebApi.Model.AdminsModel
         public List<string>? CompanyType { get; set; }
     }
 
+    public class BootstrapSuperAdminRequest
+    {
+        [Required]
+        public string? FirstName { get; set; }
+        [Required]
+        public string? LastName { get; set; }
+        [Required]
+        [EmailAddress(ErrorMessage = "Invalid email address")]
+        public string? Email { get; set; }
+        [Required]
+        [StringLength(255, ErrorMessage = "Must be at least 8 characters", MinimumLength = 8)]
+        [RegularExpression("^((?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])).{8,}$", ErrorMessage = "Password must contain uppercase, lowercase and number")]
+        public string? Password { get; set; }
+        [Required]
+        public string? PhoneNo { get; set; }
+    }
+
     public class UpdateAdminRequest
     {
         public string? SurName { get; set; }

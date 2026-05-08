@@ -737,14 +737,53 @@ export async function submitFeedback(data: AddFeedbackRequest): Promise<any> {
 }
 
 // Admin Auth
-export async function adminLogin(credentials: LoginRequest): Promise<LoginResponse> {
-  const response = await fetchWithAuth("Admin/login", {
+export async function adminLogin(credentials: LoginRequest): Promise<LoginResponse> {  const response = await fetchWithAuth("Admin/login", {
     method: "POST",
     body: JSON.stringify(credentials),
   });
   const data = await response.json();
   setAuthData(data);
   return data;
+}
+
+export async function loginManager(credentials: LoginRequest): Promise<LoginResponse> {
+  const response = await fetchWithAuth("Admin/login-manager", {
+    method: "POST",
+    body: JSON.stringify(credentials),
+  });
+  const data = await response.json();
+  setAuthData(data);
+  return data;
+}
+
+export interface RegisterManagerRequest {
+  AdminType: "Manager";
+  FirstName: string;
+  SurName: string;
+  Email: string;
+  Password: string;
+  Sex: string;
+  StaffCode: string;
+  PhoneNo: string;
+  State: string;
+  Locality: string;
+  Address: string;
+  Branch: string;
+  CompanyName?: string;
+  CompanyUserName?: string;
+  CompanyType?: string[];
+}
+
+export async function registerManager(data: RegisterManagerRequest): Promise<any> {
+  const response = await fetchWithAuth("Admin/add-manager", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Registration failed. Check all fields and try again.");
+  }
+  return response.json();
 }
 
 export async function adminGetProfile(): Promise<any> {

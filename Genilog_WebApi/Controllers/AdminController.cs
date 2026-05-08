@@ -149,6 +149,79 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("bootstrap")]
+        public async Task<IActionResult> BootstrapSuperAdminAsync([FromBody] BootstrapSuperAdminRequest request)
+        {
+            var allUsers = await generalUserRepository.GetAllAsync();
+            if (allUsers.Any(u => u.UserType == "Super_Admin"))
+            {
+                return StatusCode(403, new ErrorModel { Message = "Super Admin already exists. Bootstrap is locked.", Status = true });
+            }
+
+            var emailExists = await generalUserRepository.UserExistAsync(request.Email!);
+            if (emailExists)
+            {
+                return BadRequest(new ErrorModel { Message = "Email already in use.", Status = true });
+            }
+
+            var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
+            var admin = new GeneralUsers()
+            {
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                Email = request.Email,
+                UserType = "Super_Admin",
+                PhoneNo = request.PhoneNo,
+                VerificationToken = CreateRandomToken(),
+                EmailConfirmed = true,
+                ImagePath = "",
+                CreatedAt = DateTime.UtcNow,
+                LockOutEndEnabled = false,
+                AccessFailedCount = 0,
+                TwoFactorEnabled = false,
+                LockOutEnd = DateTime.UtcNow.AddDays(30),
+                PhoneNoConfirmed = true,
+                ResetTokenExpires = DateTime.UtcNow.AddMinutes(10),
+                EmailTokenExpires = DateTime.UtcNow.AddMinutes(10),
+                PhoneNoTokenExpires = DateTime.UtcNow.AddMinutes(10),
+                RefreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(10),
+                VerifiedAt = DateTime.UtcNow,
+                PhoneVerificationToken = CreateRandomToken(),
+                PhoneVerifiedAt = DateTime.UtcNow.AddMinutes(10),
+                PasswordResetToken = "",
+                RefreshToken = "",
+            };
+            admin = await generalUserRepository.AddAsync(admin, request.Password!);
+
+            var users = new AdminModelTable()
+            {
+                Id = admin.Id,
+                Sex = "N/A",
+                ImagePath = "",
+                FirstName = request.FirstName,
+                SurName = request.LastName,
+                Email = request.Email,
+                StaffCode = "SA001",
+                PhoneNo = request.PhoneNo,
+                Address = "N/A",
+                Branch = "Main",
+                Locality = "N/A",
+                State = "N/A",
+                AdminType = "Super_Admin",
+                ManagerId = admin.Id,
+                DatePublished = date,
+                CreatedAt = DateTime.UtcNow
+            };
+            users = await usersRepository.AddAsync(users);
+
+            var roles = new Roles() { Name = "Super_Admin" };
+            roles = await rolesRepository.AddAsync(roles);
+            await user_RoleRepository.AddAsync(new User_Role { GeneralUsersId = users.Id, RoleId = roles.Id });
+
+            return Ok(new { Message = "Super Admin created successfully. Bootstrap endpoint is now locked.", Email = users.Email });
+        }
+
         [HttpGet]
         [Authorize(Roles = "Super_Admin")]
         public async Task<IActionResult> GetAllAdminAsync()
