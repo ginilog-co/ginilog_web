@@ -92,7 +92,7 @@ namespace Genilog_WebApi.Controllers
                 if (user.EmailConfirmed == false)
                 {
                     var user2 = await userRepository.RequestNewEmailTokenAsync(userD.Email!);
-                    try { EmailTemplates.SendEmailVerificationCode(user.Email!, user2.VerificationToken!, user.LastName!); }
+                    try { await EmailTemplates.SendEmailVerificationCode(user.Email!, user2.VerificationToken!, user.LastName!); }
                     catch (Exception ex) { Console.WriteLine($"Warning: Email send failed: {ex.Message}"); }
                     //  string message1 = user.FirstName + " Your BMG(Bring My Gas) App Account Verication Code is " + user2.VerificationToken!;
                     var error = new ErrorModel()
@@ -568,7 +568,7 @@ namespace Genilog_WebApi.Controllers
                     RoleId = roles.Id,
                 };
                 await user_RoleRepository.AddAsync(user_Roles);
-                try { EmailTemplates.SendEmailVerificationCode(users.Email!, generalUsers.VerificationToken!, users.FirstName!); }
+                try { await EmailTemplates.SendEmailVerificationCode(users.Email!, generalUsers.VerificationToken!, users.FirstName!); }
                 catch (Exception ex) { Console.WriteLine($"Warning: Email send failed: {ex.Message}"); }
                 // convert back to dto
                 var user = await newUsersRepository.GetAsync(users.Id);
@@ -949,7 +949,7 @@ namespace Genilog_WebApi.Controllers
             }
             else
             {
-                try { EmailTemplates.SendChangePasswordCodeEmail(email.Email!, user.PasswordResetToken!, user.FirstName!); }
+                try { await EmailTemplates.SendChangePasswordCodeEmail(email.Email!, user.PasswordResetToken!, user.FirstName!); }
                 catch (Exception ex) { Console.WriteLine($"Warning: Email send failed: {ex.Message}"); }
                 return Ok($"Password Reset token has been Sent to your Email");
             }
@@ -965,7 +965,7 @@ namespace Genilog_WebApi.Controllers
             }
             else
             {
-                try { EmailTemplates.SendEmailVerificationCode(email.Email!, user.VerificationToken!, user.LastName!); }
+                try { await EmailTemplates.SendEmailVerificationCode(email.Email!, user.VerificationToken!, user.LastName!); }
                 catch (Exception ex) { Console.WriteLine($"Warning: Email send failed: {ex.Message}"); }
                 return Ok($"New token has been Sent to your Email");
             }

@@ -1,38 +1,40 @@
-﻿using System.Net.Mail;
-using System.Net;
+using System.Net.Http.Json;
 
 namespace Genilog_WebApi.EmailSender
 {
     public class EmailTemplates
     {
-        private static string SmtpHost => Environment.GetEnvironmentVariable("MailSettings__Host") ?? "smtp-relay.brevo.com";
-        private static int SmtpPort => int.TryParse(Environment.GetEnvironmentVariable("MailSettings__Port"), out var p) ? p : 587;
-        private static string SmtpUser => Environment.GetEnvironmentVariable("MailSettings__Mail") ?? "";
-        private static string SmtpPass => Environment.GetEnvironmentVariable("MailSettings__Password") ?? "";
-        private static string FromAddress => Environment.GetEnvironmentVariable("MailSettings__Mail") ?? "ginilogco@gmail.com";
+        private static readonly HttpClient _http = new HttpClient();
+
+        private static string ResendApiKey => Environment.GetEnvironmentVariable("ResendApiKey") ?? "";
+        private static string FromAddress => Environment.GetEnvironmentVariable("MailSettings__Mail") ?? "noreply@ginilog.com";
         private static string FromName => "Ginilog";
 
-        private static SmtpClient BuildSmtpClient() => new SmtpClient
+        private static async Task SendAsync(string toEmail, string subject, string htmlBody)
         {
-            Host = SmtpHost,
-            Port = SmtpPort,
-            EnableSsl = true,
-            DeliveryMethod = SmtpDeliveryMethod.Network,
-            UseDefaultCredentials = false,
-            Credentials = new NetworkCredential(SmtpUser, SmtpPass)
-        };
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.resend.com/emails");
+            request.Headers.Add("Authorization", $"Bearer {ResendApiKey}");
+            request.Content = JsonContent.Create(new
+            {
+                from = $"{FromName} <{FromAddress}>",
+                to = new[] { toEmail },
+                subject,
+                html = htmlBody
+            });
 
-        public static void SendEmailVerificationCode(string emailId, string activationcode, string username)
+            var response = await _http.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+        }
+
+        public static async Task SendEmailVerificationCode(string emailId, string activationcode, string username)
         {
-            var fromMail = new MailAddress(FromAddress, FromName);
-            var toMail = new MailAddress(emailId);
             string subject = "Verify Your Email Address";
 
             string body = $@"
              <html>
              <body style='font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; text-align: center;'>
              <div style='max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 5px;'>
-            
+
             <h2 style='color: #0046BE; margin: 0;'>Ginilog Ltd</h2>
             <hr style='border: 1px solid #ddd;'>
 
@@ -40,7 +42,7 @@ namespace Genilog_WebApi.EmailSender
             <p style='font-size: 16px;'>Hi {username},</p>
             <p style='color: #666;'>You're almost ready to get started. Please use the code below to verify your account.</p>
 
-            <div style='background-color: #ff6600; color: white; padding: 12px 20px; font-size: 16px; 
+            <div style='background-color: #ff6600; color: white; padding: 12px 20px; font-size: 16px;
                         border-radius: 5px; display: inline-block; font-weight: bold;'>
                 {activationcode}
             </div>
@@ -49,14 +51,10 @@ namespace Genilog_WebApi.EmailSender
             <p style='font-size: 14px; color: #888;'>This code expires in 10 minutes.</p>
 
             <br/><br/>
-            <p style='font-size: 1.18rem;'>Thanks, <br> BMG Team</p>
+            <p style='font-size: 1.18rem;'>Thanks, <br> Ginilog Team</p>
 
             <br/><br/>
             <div style='border-top: 1px solid #ddd; padding-top: 10px; text-align: left;'>
-                <p style='color: #666; font-weight: bold;'>Download our app:</p>
-                <p><a href='https://apps.apple.com/ng/app/bring-my-gas-app/id6740024841' style='color: #0046BE; text-decoration: none;'>Apple Store</a></p>
-                <p><a href='https://play.google.com/store/apps/details?id=com.bmg.bmg_customer' style='color: #0046BE; text-decoration: none;'>Google Play Store</a></p>
-
                 <p style='color: #666; font-weight: bold;'>Follow us on:</p>
                 <p><a href='https://www.facebook.com/profile.php?id=61565116785067' style='color: #0046BE; text-decoration: none;'>Facebook</a></p>
                 <p><a href='https://twitter.com/' style='color: #0046BE; text-decoration: none;'>Twitter</a></p>
@@ -72,81 +70,26 @@ namespace Genilog_WebApi.EmailSender
                </body>
              </html>";
 
-            string body2 = $@"
-               Ginilog Ltd
-               ------------------------
-
-               Hello {username},
-
-               You're almost ready to get started with Ginilog. 
-
-               Please use the verification code below to verify your email:
-
-               Verification Code: {activationcode}
-
-               This code expires in 10 minutes.
-
-              Download our app:
-              Apple Store: https://apps.apple.com/ng/app/bring-my-gas-app/id6740024841
-              Google Play Store: https://play.google.com/store/apps/details?id=com.bmg.bmg_customer
-
-             Follow us on:
-             Facebook: https://www.facebook.com/profile.php?id=61565116785067
-             Twitter: https://twitter.com/
-              Instagram: https://www.instagram.com/ginilog?igsh=NTc4MTIwNjQ2YQ==
-
-             Thank you for choosing Ginilog.
-
-             Best regards,  
-             Ginilog Team
-
-              ------------------------
-               Copyright © Ginilog Ltd. All Rights Reserved.
-             ";
-
-            var smtp = BuildSmtpClient();
-
-            using var message = new MailMessage(fromMail, toMail)
-            {
-                Subject = subject,
-                Body = body,
-                IsBodyHtml = true,
-                // AlternateViews = { AlternateView.CreateAlternateViewFromString(body2, null, "text/plain") }
-            };
-
-            smtp.Send(message);
+            await SendAsync(emailId, subject, body);
         }
 
-        public static void SendChangePasswordCodeEmail(string emailId, string activationcode, string username)
+        public static async Task SendChangePasswordCodeEmail(string emailId, string activationcode, string username)
         {
-            var fromMail = new MailAddress(FromAddress, FromName);
-            var toMail = new MailAddress(emailId);
             string subject = "Password Recovery Code";
-
-            string companyHeader = @"
-            <div style='display: flex; align-items: center; justify-content: center;'>
-            <h2 style='color: #0046BE; margin: 0;'>Ginilog Ltd</h2>
-             </div>
-             <hr style='border: 1px solid #ddd;'>";
-
-            string appStoreLink = "<a href='https://apps.apple.com/ng/app/bring-my-gas-app/id6740024841' style='color: #0046BE; text-decoration: none;'>Apple Store</a>";
-            string playStoreLink = "<a href='https://play.google.com/store/apps/details?id=com.bmg.bmg_customer' style='color: #0046BE; text-decoration: none;'>Google Play Store</a>";
-            string facebookLink = "<a href='https://www.facebook.com/profile.php?id=61565116785067' style='color: #0046BE; text-decoration: none;'>Facebook</a>";
-            string twitterLink = "<a href='https://twitter.com/' style='color: #0046BE; text-decoration: none;'>Twitter</a>";
-            string instagramLink = "<a href='https://www.instagram.com/ginilog?igsh=NTc4MTIwNjQ2YQ==' style='color: #0046BE; text-decoration: none;'>Instagram</a>";
 
             string body = $@"
              <html>
              <body style='font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; text-align: center;'>
              <div style='max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 5px;'>
 
-              {companyHeader}
+             <h2 style='color: #0046BE; margin: 0;'>Ginilog Ltd</h2>
+             <hr style='border: 1px solid #ddd;'>
 
              <h2 style='color: #0046BE;'>Password Recovery Code</h2>
              <p style='font-size: 16px;'>Hi {username},</p>
              <p style='color: #666;'>Forgot your password? Recover it now by using the code below:</p>
 
-             <div style='background-color: #ff6600; color: white; padding: 12px 20px; font-size: 16px; 
+             <div style='background-color: #ff6600; color: white; padding: 12px 20px; font-size: 16px;
                     border-radius: 5px; display: inline-block; font-weight: bold;'>
             {activationcode}
              </div>
@@ -155,18 +98,14 @@ namespace Genilog_WebApi.EmailSender
              <p style='font-size: 14px; color: #888;'>This code expires in 10 minutes.</p>
 
              <br/><br/>
-            <p style='font-size: 1.18rem;'>Thanks, <br> BMG Team</p>
+            <p style='font-size: 1.18rem;'>Thanks, <br> Ginilog Team</p>
 
              <br/><br/>
               <div style='border-top: 1px solid #ddd; padding-top: 10px; text-align: left;'>
-              <p style='color: #666; font-weight: bold;'>Download our app:</p>
-               <p>{appStoreLink}</p>
-             <p>{playStoreLink}</p>
-
              <p style='color: #666; font-weight: bold;'>Follow us on:</p>
-             <p>{facebookLink}</p>
-             <p>{twitterLink}</p>
-             <p>{instagramLink}</p>
+             <p><a href='https://www.facebook.com/profile.php?id=61565116785067' style='color: #0046BE; text-decoration: none;'>Facebook</a></p>
+             <p><a href='https://twitter.com/' style='color: #0046BE; text-decoration: none;'>Twitter</a></p>
+             <p><a href='https://www.instagram.com/ginilog?igsh=NTc4MTIwNjQ2YQ==' style='color: #0046BE; text-decoration: none;'>Instagram</a></p>
              </div>
 
              <br/>
@@ -178,64 +117,35 @@ namespace Genilog_WebApi.EmailSender
              </body>
              </html>";
 
-            var smtp = BuildSmtpClient();
-
-            using var message = new MailMessage(fromMail, toMail)
-            {
-                Subject = subject,
-                Body = body,
-                IsBodyHtml = true
-            };
-
-            smtp.Send(message);
+            await SendAsync(emailId, subject, body);
         }
 
-        public static void SendEmail(string emailId, string content, string title, string username, string link)
+        public static async Task SendEmail(string emailId, string content, string title, string username, string link)
         {
-            var fromMail = new MailAddress(FromAddress, FromName);
-            var toMail = new MailAddress(emailId);
-            string subject = $"{title}";
-
-            string companyHeader = @"
-            <div style='display: flex; align-items: center; justify-content: center;'>
-           <h2 style='color: #0046BE; margin: 0;'>Ginilog Ltd</h2>
-           </div>
-           <hr style='border: 1px solid #ddd;'>";
-
-            string appStoreLink = "<a href='https://apps.apple.com/ng/app/bring-my-gas-app/id6740024841' style='color: #0046BE; text-decoration: none;'>Apple Store</a>";
-            string playStoreLink = "<a href='https://play.google.com/store/apps/details?id=com.bmg.bmg_customer' style='color: #0046BE; text-decoration: none;'>Google Play Store</a>";
-            string facebookLink = "<a href='https://www.facebook.com/profile.php?id=61565116785067' style='color: #0046BE; text-decoration: none;'>Facebook</a>";
-            string twitterLink = "<a href='https://twitter.com/' style='color: #0046BE; text-decoration: none;'>Twitter</a>";
-            string instagramLink = "<a href='https://www.instagram.com/ginilog?igsh=NTc4MTIwNjQ2YQ==' style='color: #0046BE; text-decoration: none;'>Instagram</a>";
+            string subject = title;
 
             string body = $@"
             <html>
              <body style='font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; text-align: center;'>
             <div style='max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 5px;'>
 
-            {companyHeader}
+            <h2 style='color: #0046BE; margin: 0;'>Ginilog Ltd</h2>
+            <hr style='border: 1px solid #ddd;'>
 
             <h2 style='color: #0046BE;'>{title}</h2>
             <p style='font-size: 16px;'>Hi {username},</p>
             <p style='font-size: 1rem; line-height: 30px; word-wrap: break-word; word-break: break-word;'>
             {content}
             </p>
-            <a href='{link}' style='display: inline-block; padding: 12px 25px; font-size: 1.2rem; background-color: #1434A4; color: #ffffff; text-decoration: none; border-radius: 5px; margin-top: 15px;'>
-            Click Here
-            </a>
-            <p style='font-size: 1.18rem;'>Thanks, <br> BMG Team</p>
+            {(string.IsNullOrEmpty(link) ? "" : $"<a href='{link}' style='display: inline-block; padding: 12px 25px; font-size: 1.2rem; background-color: #1434A4; color: #ffffff; text-decoration: none; border-radius: 5px; margin-top: 15px;'>Click Here</a>")}
+            <p style='font-size: 1.18rem;'>Thanks, <br> Ginilog Team</p>
 
-            <br/><br/>
-
+            <br/>
              <div style='border-top: 1px solid #ddd; padding-top: 10px; text-align: left;'>
-            <p style='color: #666; font-weight: bold;'>Download our app:</p>
-            <p>{appStoreLink}</p>
-            <p>{playStoreLink}</p>
-
             <p style='color: #666; font-weight: bold;'>Follow us on:</p>
-            <p>{facebookLink}</p>
-            <p>{twitterLink}</p>
-            <p>{instagramLink}</p>
+            <p><a href='https://www.facebook.com/profile.php?id=61565116785067' style='color: #0046BE; text-decoration: none;'>Facebook</a></p>
+            <p><a href='https://twitter.com/' style='color: #0046BE; text-decoration: none;'>Twitter</a></p>
+            <p><a href='https://www.instagram.com/ginilog?igsh=NTc4MTIwNjQ2YQ==' style='color: #0046BE; text-decoration: none;'>Instagram</a></p>
              </div>
 
               <br/>
@@ -247,17 +157,7 @@ namespace Genilog_WebApi.EmailSender
              </body>
             </html>";
 
-
-            var smtp = BuildSmtpClient();
-
-            using var message = new MailMessage(fromMail, toMail)
-            {
-                Subject = subject,
-                Body = body,
-                IsBodyHtml = true
-            };
-
-            smtp.Send(message);
+            await SendAsync(emailId, subject, body);
         }
     }
 }

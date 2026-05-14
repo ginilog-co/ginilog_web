@@ -1,8 +1,3 @@
 {
-  "/page": "app/page.js",
-  "/admin-dashboard/company/page": "app/admin-dashboard/company/page.js",
-  "/admin-dashboard/admin-login/page": "app/admin-dashboard/admin-login/page.js",
-  "/customer-portal/register/page": "app/customer-portal/register/page.js",
-  "/admin-dashboard/company-login/page": "app/admin-dashboard/company-login/page.js",
   "/admin-dashboard/page": "app/admin-dashboard/page.js"
 }
