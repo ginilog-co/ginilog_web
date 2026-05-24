@@ -1,12 +1,13 @@
 /** @type {import('next').NextConfig} */
 
-// next.config.js
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "https://ginilog-web.onrender.com").replace(/\/$/, "");
+
 const nextConfig = {
   async rewrites() {
     return [
       {
         source: "/api/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/:path*`,
+        destination: `${API_BASE}/api/:path*`,
       },
     ];
   },

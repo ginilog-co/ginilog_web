@@ -1,3 +1,4 @@
 {
-  "/admin-dashboard/page": "app/admin-dashboard/page.js"
+  "/customer-portal/page": "app/customer-portal/page.js",
+  "/admin-dashboard/company-login/page": "app/admin-dashboard/company-login/page.js"
 }

@@ -12,10 +12,20 @@
       "static/css/app/admin-dashboard/layout.css",
       "static/chunks/app/admin-dashboard/layout.js"
     ],
-    "/admin-dashboard/page": [
+    "/admin-dashboard/company-login/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin-dashboard/page.js"
+      "static/chunks/app/admin-dashboard/company-login/page.js"
+    ],
+    "/customer-portal/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/customer-portal/layout.js"
+    ],
+    "/customer-portal/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/customer-portal/page.js"
     ]
   }
 }

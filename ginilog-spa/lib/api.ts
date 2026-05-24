@@ -1,5 +1,22 @@
-// Empty string → relative URLs → Next.js rewrites proxy to backend (no CORS)
-const API_URL = typeof window !== "undefined" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000");
+const DEFAULT_PRODUCTION_API = "https://ginilog-web.onrender.com";
+
+/** Browser: direct API URL in production; empty string in local dev → Next rewrites. SSR: env or localhost. */
+function resolveApiUrl(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
+
+  if (typeof window === "undefined") {
+    return "http://localhost:5000";
+  }
+
+  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+    return "";
+  }
+
+  return DEFAULT_PRODUCTION_API;
+}
+
+const API_URL = resolveApiUrl();
 
 // Types matching backend models
 export interface LoginRequest {
@@ -368,10 +385,26 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}): Promi
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  // #region agent log
+  fetch('http://127.0.0.1:7767/ingest/43406576-272c-4bbe-a18a-60d50b0b8d06',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'afbf21'},body:JSON.stringify({sessionId:'afbf21',runId:'post-fix',location:'lib/api.ts:fetchWithAuth:pre',message:'auth fetch start',data:{endpoint,url,apiUrl:API_URL,method:options.method||'GET',origin:typeof window!=='undefined'?window.location.origin:null},timestamp:Date.now(),hypothesisId:'A-B'})}).catch(()=>{});
+  // #endregion
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers,
+    });
+  } catch (fetchErr) {
+    // #region agent log
+    fetch('http://127.0.0.1:7767/ingest/43406576-272c-4bbe-a18a-60d50b0b8d06',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'afbf21'},body:JSON.stringify({sessionId:'afbf21',location:'lib/api.ts:fetchWithAuth:network',message:'auth fetch network error',data:{endpoint,url,error:fetchErr instanceof Error?fetchErr.message:String(fetchErr)},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    throw fetchErr;
+  }
+
+  // #region agent log
+  fetch('http://127.0.0.1:7767/ingest/43406576-272c-4bbe-a18a-60d50b0b8d06',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'afbf21'},body:JSON.stringify({sessionId:'afbf21',location:'lib/api.ts:fetchWithAuth:post',message:'auth fetch response',data:{endpoint,url,status:response.status,ok:response.ok},timestamp:Date.now(),hypothesisId:'C-D'})}).catch(()=>{});
+  // #endregion
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: "An error occurred" }));

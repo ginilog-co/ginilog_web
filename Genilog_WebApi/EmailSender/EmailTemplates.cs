@@ -23,6 +23,17 @@ namespace Genilog_WebApi.EmailSender
             });
 
             var response = await _http.SendAsync(request);
+            // #region agent log
+            try
+            {
+                var logPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "debug-afbf21.log");
+                if (!File.Exists(logPath)) logPath = Path.Combine(Directory.GetCurrentDirectory(), "debug-afbf21.log");
+                var hasKey = !string.IsNullOrEmpty(ResendApiKey);
+                var line = System.Text.Json.JsonSerializer.Serialize(new { sessionId = "afbf21", location = "EmailTemplates.cs:SendAsync", message = "resend email attempt", data = new { toEmail, subject, statusCode = (int)response.StatusCode, hasResendApiKey = hasKey, fromAddress = FromAddress }, timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), hypothesisId = "E" }) + "\n";
+                File.AppendAllText(logPath, line);
+            }
+            catch { /* debug log only */ }
+            // #endregion
             response.EnsureSuccessStatusCode();
         }
 
