@@ -93,8 +93,8 @@ namespace Genilog_WebApi.Controllers
 
                 if (user.EmailConfirmed == false)
                 {
-                    var user2 = await userRepository.RequestNewEmailTokenAsync(userD.Email!);
-                    try { EmailTemplates.SendEmailVerificationCode(user.Email!, user2.VerificationToken!, user.LastName!); }
+                    var user2 = await userRepository.RequestNewEmailTokenAsync(user.Email!);
+                    try {await EmailTemplates.SendEmailVerificationCode(user.Email!, user2.VerificationToken!, user.LastName!); }
                     catch (Exception ex) { Console.WriteLine($"Warning: Email send failed: {ex.Message}"); }
                     //  string message1 = user.FirstName + " Your BMG(Bring My Gas) App Account Verication Code is " + user2.VerificationToken!;
                     var error = new ErrorModel()
@@ -642,7 +642,7 @@ namespace Genilog_WebApi.Controllers
                 }
 
                 // Pass detials to repository
-                EmailTemplates.SendEmailVerificationCode(users.Email!, generalUsers.VerificationToken!, users.FirstName!);
+              await  EmailTemplates.SendEmailVerificationCode(users.Email!, generalUsers.VerificationToken!, users.FirstName!);
                 // convert back to dto
                 var userDto12 = await newUsersRepository.GetAsync(users.Id);
                 var token = await userRepository.GetAllDeviceTokenAsync();
