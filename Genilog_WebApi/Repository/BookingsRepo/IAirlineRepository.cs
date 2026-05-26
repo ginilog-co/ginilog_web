@@ -1,10 +1,13 @@
-﻿using Genilog_WebApi.Model.BookingsModel;
+﻿using Genilog_WebApi.Model;
+using Genilog_WebApi.Model.BookingsModel;
+using Genilog_WebApi.Model.GeneraModel;
 
 namespace Genilog_WebApi.Repository.BookingsRepo
 {
     public interface IAirlineRepository
     {
         Task<IEnumerable<AirlineDataModel>> GetAllAsync();
+        Task<PageModel<AirlineDataModelDto>> GetAllPaginationsAirlineAsync(FilterLocationData filter);
         Task<AirlineDataModel> GetAsync(Guid id);
         Task<AirlineDataModel> AddAsync(AirlineDataModel region);
         Task<AirlineDataModel> DeleteAsync(Guid id);

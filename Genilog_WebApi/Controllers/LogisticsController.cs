@@ -9,6 +9,7 @@ using Genilog_WebApi.Model.WalletModel;
 using Genilog_WebApi.Repository;
 using Genilog_WebApi.Repository.AdminRepo;
 using Genilog_WebApi.Repository.AuthRepo;
+using Genilog_WebApi.Repository.AuthRepo.PolicyBased;
 using Genilog_WebApi.Repository.LogisticsRepo;
 using Genilog_WebApi.Repository.NotificationRepo;
 using Genilog_WebApi.Repository.UploadRepo;
@@ -24,13 +25,13 @@ using System.Text;
 
 namespace Genilog_WebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/logistics-controller")]
     [ApiController]
     public class LogisticsController(IHostEnvironment _env, IMapper mapper, ITokenHandler tokenHandler
         , IGeneralUserRepository generalUserRepository, IUploadRepository uploadRepository, IRolesRepository rolesRepository, IUser_RoleRepository user_RoleRepository, 
         IRidersRepository ridersRepository, ICompanyRepository companyRepository
          , INotificationRepository notificationRepository,
-        IUserRepository newUsersRepository, IAdminRepository adminRepository) : ControllerBase
+        IUserRepository newUsersRepository, IAdminRepository adminRepository, Cls_Keys keys) : ControllerBase
     {
         private readonly IHostEnvironment _env = _env;
         private readonly IMapper mapper = mapper;
@@ -44,45 +45,38 @@ namespace Genilog_WebApi.Controllers
         readonly INotificationRepository notificationRepository = notificationRepository;
         private readonly IUserRepository newUsersRepository = newUsersRepository;
         private readonly IAdminRepository adminRepository = adminRepository;
-        //  readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
+        private readonly Cls_Keys keys = keys;
 
-        // This Is Gas Station SECTION
+        #region Public Tracking
+        // Public endpoint for tracking orders without authentication
+        [HttpGet("track-order")]
+        [AllowAnonymous]
+        public async Task<IActionResult> TrackOrderByTrackingNum([FromQuery] string trackingNum)
+        {
+            if (string.IsNullOrWhiteSpace(trackingNum))
+            {
+                return BadRequest(new ErrorModel { Message = "Tracking number is required", Status = true });
+            }
+
+            var order = await companyRepository.GetOrderByTrackingNumAsync(trackingNum);
+            if (order == null)
+            {
+                return NotFound(new ErrorModel { Message = "Order not found with this tracking number", Status = true });
+            }
+
+            var orderDto = mapper.Map<OrderModelDataDto>(order);
+            return Ok(orderDto);
+        }
+        #endregion
+
+        #region COMPANY SECTION
+        // This Is COMPANY SECTION
         [HttpGet]
        // [Authorize]
         public async Task<IActionResult> GetAllCompanyAsync([FromQuery] FilterLocationData data)
         {
-            var events = await companyRepository.GetAllAsync();
-            events = [.. events.OrderByDescending(x => x.CreatedAt)];
-            var allPosts = events.AsQueryable();
-
-            if (!string.IsNullOrEmpty(data.State) && !string.IsNullOrEmpty(data.Locality))
-            {
-                allPosts = allPosts.Where(x => x.State!.Contains(data.State) && x.Locality!.Contains(data.Locality));
-                var userDto = mapper.Map<List<CompanyModelDataDto>>(allPosts);
-
-                return Ok(userDto);
-            }
-            else if (!string.IsNullOrEmpty(data.State))
-            {
-                allPosts = allPosts.Where(x => x.State!.Contains(data.State));
-                var userDto = mapper.Map<List<CompanyModelDataDto>>(allPosts);
-
-                return Ok(userDto);
-            }
-            else if (!string.IsNullOrEmpty(data.Locality))
-            {
-                allPosts = allPosts.Where(x => x.Locality!.Contains(data.Locality));
-                var userDto = mapper.Map<List<CompanyModelDataDto>>(allPosts);
-
-                return Ok(userDto);
-            }
-            else
-            {
-                var userDto = mapper.Map<List<CompanyModelDataDto>>(events);
-                return Ok(userDto);
-            }
-
-
+            var result = await companyRepository.GetAllPaginationsCompanyDataAsync(data);
+            return Ok(result);
         }
 
         [HttpGet]
@@ -395,6 +389,10 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
+        #endregion
+
+
+        #region COMPANY RIDERS
 
         [HttpGet("rider-type")]
         [Authorize]
@@ -412,7 +410,7 @@ namespace Genilog_WebApi.Controllers
 
         [HttpGet("rider")]
         [Authorize]
-        public async Task<IActionResult> GetAllRidersAsync()
+        public async Task<IActionResult> GetAllRidersAsync([FromQuery] FilterLocationData filter)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!Guid.TryParse(userId, out Guid userGuid))
@@ -426,16 +424,14 @@ namespace Genilog_WebApi.Controllers
             }
             else if (user.UserType == "Manager")
             {
-                var contacts = await ridersRepository.GetAllAsync();
-                var contactsDto = mapper.Map<List<RidersModelDataDto>>(contacts);
-                contactsDto = contactsDto.Where(x => x.CompanyId == user.Id).ToList();
-                return Ok(contactsDto);
+                filter.UserId=user.Id.ToString();
+                var contacts = await ridersRepository.GetAllPaginatedRidersAsync(filter);
+                return Ok(contacts);
             }
             else
             {
-                var contacts = await ridersRepository.GetAllAsync();
-                var contactsDto = mapper.Map<List<RidersModelDataDto>>(contacts);
-                return Ok(contactsDto);
+                var contacts = await ridersRepository.GetAllPaginatedRidersAsync(filter);
+                return Ok(contacts);
             }
           
         }
@@ -594,17 +590,34 @@ namespace Genilog_WebApi.Controllers
                 };
                 // Pass detials to repository
                 contacts = await ridersRepository.AddAsync(contacts);
-                var roles = new Roles()
+                RoleType roleEnum = RoleType.Rider;
+                var role = await RolePermissionHelper.GetRoleAsync(roleEnum, rolesRepository);
+                if (role != null)
                 {
-                    Name = "Rider"
-                };
-                roles = await rolesRepository.AddAsync(roles);
-                var user_Roles = new User_Role()
+                    await rolesRepository.AddUserRoleAsync(new User_Role
+                    {
+                        GeneralUsersId = generalUsers.Id,
+                        RoleId = role.Id
+                    });
+                }
+
+                List<PermissionType> permissionTypes = [
+                    PermissionType.CanManageWallet,
+
+                    ];
+
+                foreach (var permEnum in permissionTypes)
                 {
-                    GeneralUsersId = contacts.Id,
-                    RoleId = roles.Id,
-                };
-                await user_RoleRepository.AddAsync(user_Roles);
+                    var perm = await RolePermissionHelper.GetPermissionAsync(permEnum, rolesRepository);
+                    if (perm != null)
+                    {
+                        await rolesRepository.AddUserPermissionAsync(new UserPermissionUsage
+                        {
+                            GeneralUsersId = generalUsers.Id,
+                            PermissionId = perm.Id
+                        });
+                    }
+                }
                 // convert back to dto
                 var contact = await ridersRepository.GetAsync(contacts.Id);
                 var contactsDto = mapper.Map<RidersModelDataDto>(contact);
@@ -654,12 +667,15 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
+        #endregion
+
+        #region COMPANY ORDERS
         // Orders
         [HttpGet("package-orders")]
         [Authorize]
-        public async Task<IActionResult> GetAllPackageOrderAsync()
+        public async Task<IActionResult> GetAllPackageOrderAsync([FromQuery] FilterLocationData filter)
         {
-            var events = await companyRepository.GetAllOrderAsync();
+           
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!Guid.TryParse(userId, out Guid userGuid))
             {
@@ -667,25 +683,23 @@ namespace Genilog_WebApi.Controllers
             }
             var user = await generalUserRepository.GetAsync(userGuid);
 
-            if (user.UserType=="Super_Admin"|| user.UserType=="Admin")
+            if (user.UserType=="Super_Admin"|| user.UserType =="Admin")
             {
-              
-                events = [.. events.OrderByDescending(x => x.CreatedAt)];
-                var userDto = mapper.Map<List<OrderModelDataDto>>(events);
-                return Ok(userDto);
+
+                var events = await companyRepository.GetAllPaginationOrderDataAsync(filter);
+                return Ok(events);
             }
             else if (user.UserType == "Manager" || user.UserType == "Staff-Admin" || user.UserType == "Staff")
             {
                 var admin = await adminRepository.GetAsync(user.Id);
-                events = [.. events.Where(x => x.AdminId == admin.ManagerId)];
-                var userDto = mapper.Map<List<OrderModelDataDto>>(events);
+                filter.UserId = admin.ManagerId.ToString();
+                var userDto = await companyRepository.GetAllPaginationOrderDataAsync(filter);
                 return Ok(userDto);
             }
             else
             {
-                events = [.. events.OrderByDescending(x => x.CreatedAt)];
-                events = events.Where(x => x.UserId == user.Id || x.CompanyId == user.Id || x.RiderId == user.Id).ToList();
-                var userDto = mapper.Map<List<OrderModelDataDto>>(events);
+                filter.UserId = user.Id.ToString();
+                var userDto = await companyRepository.GetAllPaginationOrderDataAsync(filter);
                 return Ok(userDto);
             }
            
@@ -1071,18 +1085,18 @@ namespace Genilog_WebApi.Controllers
                 {
                     email = events.SenderEmail,
                     amount = (events.ShippingCost + events.VatCost) * 100,  // Amount in Kobo (100 kobo = 1 Naira)
-                    callback_url = $"{Cls_Keys.ServerURL}/api/Logistics/verify-paystack-package-orders?orderId={events.Id}", // The URL to redirect after payment
+                    callback_url = $"{keys.ServerURL}/api/Logistics/verify-paystack-package-orders?orderId={events.Id}", // The URL to redirect after payment
                     channels = new[] { "card", "bank", "ussd", "mobile_money", "bank_transfer" },
                     metadata = new
                     {
-                        cancel_action = $"{Cls_Keys.ServerURL}/api/paystack-redirect?status=cancelled"
+                        cancel_action = $"{keys.ServerURL}/api/paystack-redirect?status=cancelled"
                     }
                 };
 
                 using var httpClient = new HttpClient();
 
                 StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.PaystackSecretKey);
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", keys.PaystackSecretKey);
                 using var response = await httpClient.PostAsync($"{url}", content);
                 string apiResponse = await response.Content.ReadAsStringAsync();
                 if (response.StatusCode == HttpStatusCode.OK)
@@ -1112,7 +1126,7 @@ namespace Genilog_WebApi.Controllers
             var url = $"https://api.paystack.co/transaction/verify/{reference}";
 
             using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.PaystackSecretKey);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", keys.PaystackSecretKey);
             using var response = await httpClient.GetAsync($"{url}");
             string apiResponse = await response.Content.ReadAsStringAsync();
             if (response.StatusCode == HttpStatusCode.OK)
@@ -1169,7 +1183,6 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
-
         //flutterwave
         [HttpPut("initialize-flutterwave-package-orders/{id:guid}")]
         [Authorize]
@@ -1197,7 +1210,7 @@ namespace Genilog_WebApi.Controllers
                         name = events.SenderName
                     },
                     currency = "NGN",
-                    redirect_url = $"{Cls_Keys.ServerURL}/api/Logistics/verify-flutterwave-package-orders?orderId={events.Id}", // The URL to redirect after payment
+                    redirect_url = $"{keys.ServerURL}/api/Logistics/verify-flutterwave-package-orders?orderId={events.Id}", // The URL to redirect after payment
                     customizations = new
                     {
                         title = "My App Payment",
@@ -1209,7 +1222,7 @@ namespace Genilog_WebApi.Controllers
                 using var httpClient = new HttpClient();
 
                 StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.FlutterwaveSecretKey);
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", keys.FlutterwaveSecretKey);
                 using var response = await httpClient.PostAsync($"{url}", content);
                 string apiResponse = await response.Content.ReadAsStringAsync();
                 if (response.StatusCode == HttpStatusCode.OK)
@@ -1237,7 +1250,7 @@ namespace Genilog_WebApi.Controllers
             var url = $"https://api.flutterwave.com/v3/transactions/{transaction_id}/verify";
 
             using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.FlutterwaveSecretKey);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", keys.FlutterwaveSecretKey);
             using var response = await httpClient.GetAsync($"{url}");
             string apiResponse = await response.Content.ReadAsStringAsync();
             if (response.StatusCode == HttpStatusCode.OK)
@@ -1285,12 +1298,12 @@ namespace Genilog_WebApi.Controllers
                     await WebSocketHandler.SendOrderToGroup(datra.CompanyId.ToString(), contactsDtoJson);
                     await WebSocketHandler.SendOrderToGroup(datra.AdminId.ToString(), contactsDtoJson);
                     // TODO: Mark payment as successful in DB
-                    return Redirect($"{Cls_Keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
+                    return Redirect($"{keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
                 }
                 else
                 {
 
-                    return Redirect($"{Cls_Keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
+                    return Redirect($"{keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
                 }
 
             }
@@ -1304,8 +1317,6 @@ namespace Genilog_WebApi.Controllers
                 return BadRequest(error);
             }
         }
-
-
 
         [HttpPut]
         [Route("package-orders/{id:guid}")]
@@ -1453,9 +1464,9 @@ namespace Genilog_WebApi.Controllers
                 }
             }
         }
+        #endregion
 
 
-   
         #region private methods
 
         private static string CreateRandomToken()
@@ -1712,26 +1723,6 @@ namespace Genilog_WebApi.Controllers
 
         #endregion
 
-        #region Public Tracking
-        // Public endpoint for tracking orders without authentication
-        [HttpGet("track-order")]
-        [AllowAnonymous]
-        public async Task<IActionResult> TrackOrderByTrackingNum([FromQuery] string trackingNum)
-        {
-            if (string.IsNullOrWhiteSpace(trackingNum))
-            {
-                return BadRequest(new ErrorModel { Message = "Tracking number is required", Status = true });
-            }
-
-            var order = await companyRepository.GetOrderByTrackingNumAsync(trackingNum);
-            if (order == null)
-            {
-                return NotFound(new ErrorModel { Message = "Order not found with this tracking number", Status = true });
-            }
-
-            var orderDto = mapper.Map<OrderModelDataDto>(order);
-            return Ok(orderDto);
-        }
-        #endregion
+   
     }
 }

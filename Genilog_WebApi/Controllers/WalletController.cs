@@ -15,12 +15,13 @@ namespace Genilog_WebApi.Controllers
     [Route("api/[controller]")]
     [ApiController]
     public class WalletController(IHostEnvironment _env, IMapper mapper, IRidersRepository ridersRepository,
-        IWalletRepository walletRepository) : ControllerBase
+        IWalletRepository walletRepository, Cls_Keys keys) : ControllerBase
     {
         private readonly IHostEnvironment _env = _env;
         private readonly IMapper mapper = mapper;
         private readonly IRidersRepository ridersRepository = ridersRepository;
         private readonly IWalletRepository walletRepository = walletRepository;
+        private readonly Cls_Keys keys = keys;
 
         //paystack
         [HttpPost("initialize")]
@@ -31,18 +32,18 @@ namespace Genilog_WebApi.Controllers
             {
                 email = paymentRequest.Email,
                 amount = paymentRequest.Amount * 100,  // Amount in Kobo (100 kobo = 1 Naira)
-                callback_url = $"{Cls_Keys.ServerURL}/api/Wallet/verify", // The URL to redirect after payment
+                callback_url = $"{keys.ServerURL}/api/Wallet/verify", // The URL to redirect after payment
                 channels = new[] { "card", "bank", "ussd", "mobile_money", "bank_transfer" },
                 metadata = new
                 {
-                    cancel_action = $"{Cls_Keys.ServerURL}/api/paystack-redirect?status=cancelled"
+                    cancel_action = $"{keys.ServerURL}/api/paystack-redirect?status=cancelled"
                 }
             };
 
             using var httpClient = new HttpClient();
 
             StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.PaystackSecretKey);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", keys.PaystackSecretKey);
             using var response = await httpClient.PostAsync($"{url}", content);
             string apiResponse = await response.Content.ReadAsStringAsync();
             if (response.StatusCode == HttpStatusCode.OK)
@@ -72,11 +73,11 @@ namespace Genilog_WebApi.Controllers
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(url),
             };
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.PaystackSecretKey);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", keys.PaystackSecretKey);
 
 
             using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.PaystackSecretKey);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", keys.PaystackSecretKey);
             using var response = await httpClient.GetAsync($"{url}");
             string apiResponse = await response.Content.ReadAsStringAsync();
             if (response.StatusCode == HttpStatusCode.OK)
@@ -117,7 +118,7 @@ namespace Genilog_WebApi.Controllers
                     name = paymentRequest.FullName
                 },
                 currency = "NGN",
-                redirect_url = $"{Cls_Keys.ServerURL}/api/Wallet/verify-flutterwave", // The URL to redirect after payment
+                redirect_url = $"{keys.ServerURL}/api/Wallet/verify-flutterwave", // The URL to redirect after payment
                 customizations = new
                 {
                     title = "My App Payment",
@@ -128,7 +129,7 @@ namespace Genilog_WebApi.Controllers
             using var httpClient = new HttpClient();
 
             StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.FlutterwaveSecretKey);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", keys.FlutterwaveSecretKey);
             using var response = await httpClient.PostAsync($"{url}", content);
             string apiResponse = await response.Content.ReadAsStringAsync();
             if (response.StatusCode == HttpStatusCode.OK)
@@ -158,11 +159,11 @@ namespace Genilog_WebApi.Controllers
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(url),
             };
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.FlutterwaveSecretKey);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", keys.FlutterwaveSecretKey);
 
 
             using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.FlutterwaveSecretKey);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", keys.FlutterwaveSecretKey);
             using var response = await httpClient.GetAsync($"{url}");
             string apiResponse = await response.Content.ReadAsStringAsync();
             if (response.StatusCode == HttpStatusCode.OK)
@@ -178,11 +179,11 @@ namespace Genilog_WebApi.Controllers
                 if (paystackResponse.PaymentStatus == "successful")
                 {
                     // TODO: Mark payment as successful in DB
-                    return Redirect($"{Cls_Keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
+                    return Redirect($"{keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
                 }
                 else
                 {
-                    return Redirect($"{Cls_Keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
+                    return Redirect($"{keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
                 }
             }
             else

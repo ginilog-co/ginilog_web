@@ -1,11 +1,14 @@
 ﻿
+using Genilog_WebApi.Model;
 using Genilog_WebApi.Model.AdminsModel;
+using Genilog_WebApi.Model.GeneraModel;
 
 namespace Genilog_WebApi.Repository.AdminRepo
 {
     public interface IAdminRepository
     {
         Task<IEnumerable<AdminModelTable>> GetAllAsync();
+        Task<PageModel<AdminModelTableDto>> GetAllAdminAsync(FilterLocationData filter);
         Task<AdminModelTable> GetAsync(Guid id);
         Task<AdminModelTable> AddAsync(AdminModelTable region);
         Task<AdminModelTable> DeleteAsync(Guid id);
@@ -20,6 +23,7 @@ namespace Genilog_WebApi.Repository.AdminRepo
 
         // COMPANY Apply
         Task<IEnumerable<CompanyApplyDataModel>> GetAllCompanyApplyAsync();
+        Task<PageModel<CompanyApplyDataModelDto>> GetAllPaginatedCompanyApplyAsync(FilterLocationData filter);
         Task<CompanyApplyDataModel> GetCompanyApplyAsync(Guid id);
         Task<CompanyApplyDataModel> AddCompanyApplyAsync(CompanyApplyDataModel region);
         Task<CompanyApplyDataModel> DeleteCompanyApplyAsync(Guid id);

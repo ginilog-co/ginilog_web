@@ -5,9 +5,10 @@ using static Google.Rpc.Help.Types;
 
 namespace Genilog_WebApi.Repository.UploadRepo
 {
-    public class UploadRepository(IWebHostEnvironment _environment) : IUploadRepository
+    public class UploadRepository(IWebHostEnvironment _environment, Cls_Keys keys) : IUploadRepository
     {
         private readonly IWebHostEnvironment _environment=_environment;
+        private readonly Cls_Keys keys = keys;
 
         public async Task<ImageListUpload> SaveListImageAsync(ImageListUpload files)
         {
@@ -35,7 +36,7 @@ namespace Genilog_WebApi.Repository.UploadRepo
                 {
                     var cancellation = new CancellationTokenSource();
                     var upload = new FirebaseStorage(
-                          Cls_Keys.BucketFile,
+                          keys.BucketFile,
                            new FirebaseStorageOptions
                            {
                                AuthTokenAsyncFactory = () => Task.FromResult(token.ToString()),
@@ -77,7 +78,7 @@ namespace Genilog_WebApi.Repository.UploadRepo
             {
                 var cancellation = new CancellationTokenSource();
                 var upload = new FirebaseStorage(
-                      Cls_Keys.BucketFile,
+                      keys.BucketFile,
                        new FirebaseStorageOptions
                        {
                            AuthTokenAsyncFactory = () => Task.FromResult(token.ToString()),

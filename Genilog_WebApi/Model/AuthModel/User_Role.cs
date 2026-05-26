@@ -1,4 +1,5 @@
-﻿namespace Genilog_WebApi.Model.AuthModel
+﻿
+namespace Genilog_WebApi.Model.AuthModel
 {
     public class User_Role
     {

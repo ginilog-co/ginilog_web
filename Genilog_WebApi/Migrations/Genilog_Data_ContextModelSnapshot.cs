@@ -18,7 +18,7 @@ namespace Genilog_WebApi.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.4")
+                .HasAnnotation("ProductVersion", "10.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -173,6 +173,32 @@ namespace Genilog_WebApi.Migrations
                     b.ToTable("CompanyApplyDataModels");
                 });
 
+            modelBuilder.Entity("Genilog_WebApi.Model.AuthModel.BlacklistedToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("Expiry")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Jti")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Jti")
+                        .IsUnique();
+
+                    b.ToTable("BlacklistedTokens");
+                });
+
             modelBuilder.Entity("Genilog_WebApi.Model.AuthModel.DeviceTokenModel", b =>
                 {
                     b.Property<Guid>("Id")
@@ -201,6 +227,12 @@ namespace Genilog_WebApi.Migrations
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("ActivateWallet")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ArchivedAccount")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -256,14 +288,29 @@ namespace Genilog_WebApi.Migrations
                     b.Property<string>("RefreshToken")
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("RefreshTokenExpiryTime")
+                    b.Property<DateTime?>("RefreshTokenExpiryTime")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("ResetTokenExpires")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("SuspendedAccount")
+                        .HasColumnType("boolean");
+
                     b.Property<bool?>("TwoFactorEnabled")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("TwoFactorRecoveryCodes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TwoFactorRecoveryCodesHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TwoFactorSecret")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("text");
 
                     b.Property<string>("UserType")
                         .HasColumnType("text");
@@ -277,6 +324,21 @@ namespace Genilog_WebApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("GeneralUsers");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.AuthModel.Permission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Permissions");
                 });
 
             modelBuilder.Entity("Genilog_WebApi.Model.AuthModel.Roles", b =>
@@ -293,21 +355,48 @@ namespace Genilog_WebApi.Migrations
                     b.ToTable("Roles");
                 });
 
-            modelBuilder.Entity("Genilog_WebApi.Model.AuthModel.User_Role", b =>
+            modelBuilder.Entity("Genilog_WebApi.Model.AuthModel.RolesPermissionUsage", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<Guid>("RoleId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("PermissionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("RoleId", "PermissionId");
+
+                    b.HasIndex("PermissionId");
+
+                    b.ToTable("RolesPermissionUsages");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.AuthModel.UserPermissionUsage", b =>
+                {
+                    b.Property<Guid>("GeneralUsersId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PermissionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("GeneralUsersId", "PermissionId");
+
+                    b.HasIndex("PermissionId");
+
+                    b.ToTable("UserPermissionUsages");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.AuthModel.User_Role", b =>
+                {
                     b.Property<Guid>("GeneralUsersId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("RoleId")
                         .HasColumnType("uuid");
 
-                    b.HasKey("Id");
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
 
-                    b.HasIndex("GeneralUsersId");
+                    b.HasKey("GeneralUsersId", "RoleId");
 
                     b.HasIndex("RoleId");
 
@@ -1776,6 +1865,44 @@ namespace Genilog_WebApi.Migrations
                     b.ToTable("TransactionDataModels");
                 });
 
+            modelBuilder.Entity("Genilog_WebApi.Model.AuthModel.RolesPermissionUsage", b =>
+                {
+                    b.HasOne("Genilog_WebApi.Model.AuthModel.Permission", "Permission")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Genilog_WebApi.Model.AuthModel.Roles", "Role")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.AuthModel.UserPermissionUsage", b =>
+                {
+                    b.HasOne("Genilog_WebApi.Model.AuthModel.GeneralUsers", "GeneralUsers")
+                        .WithMany("UserPermissions")
+                        .HasForeignKey("GeneralUsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Genilog_WebApi.Model.AuthModel.Permission", "Permission")
+                        .WithMany("UserPermissions")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GeneralUsers");
+
+                    b.Navigation("Permission");
+                });
+
             modelBuilder.Entity("Genilog_WebApi.Model.AuthModel.User_Role", b =>
                 {
                     b.HasOne("Genilog_WebApi.Model.AuthModel.GeneralUsers", "GeneralUsers")
@@ -1962,11 +2089,22 @@ namespace Genilog_WebApi.Migrations
 
             modelBuilder.Entity("Genilog_WebApi.Model.AuthModel.GeneralUsers", b =>
                 {
+                    b.Navigation("UserPermissions");
+
                     b.Navigation("User_Roles");
+                });
+
+            modelBuilder.Entity("Genilog_WebApi.Model.AuthModel.Permission", b =>
+                {
+                    b.Navigation("RolePermissions");
+
+                    b.Navigation("UserPermissions");
                 });
 
             modelBuilder.Entity("Genilog_WebApi.Model.AuthModel.Roles", b =>
                 {
+                    b.Navigation("RolePermissions");
+
                     b.Navigation("User_Roles");
                 });
 

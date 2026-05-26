@@ -12,7 +12,9 @@
         public string? FullName { get; set; }
         public string? ProfileImage { get; set; }  
         public string? IdAuthPassword { get; set; }
-        public DateTime RefreshTokenExpiryTime { get; set; }
+        public DateTime? RefreshTokenExpiryTime { get; set; }
+        public List<string> Roles { get; set; } = [];
+        public List<string> Permissions { get; set; } = [];
 
     }
 
@@ -30,7 +32,9 @@
         public string? Locality { get; set; }
         public string? Address { get; set; }
         public string? Branch { get; set; }
-        public DateTime RefreshTokenExpiryTime { get; set; }
+        public DateTime? RefreshTokenExpiryTime { get; set; }
+        public List<string> Roles { get; set; } = [];
+        public List<string> Permissions { get; set; } = [];
 
     }
 }

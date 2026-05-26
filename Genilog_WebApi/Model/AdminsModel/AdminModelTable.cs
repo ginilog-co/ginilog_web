@@ -1,4 +1,5 @@
 ﻿
+using Genilog_WebApi.Model.AuthModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace Genilog_WebApi.Model.AdminsModel
@@ -75,9 +76,11 @@ namespace Genilog_WebApi.Model.AdminsModel
         public string? Address { get; set; }
         [Required(AllowEmptyStrings = false, ErrorMessage = "Branch Number required")]
         public string? Branch { get; set; }
-        public string? CompanyName { get; set; }
+        public string? CompanyName { get; set; } 
         public string? CompanyUserName { get; set; }
         public List<string>? CompanyType { get; set; }
+        public List<RoleType> Roles { get; set; } = [];
+        public List<PermissionType> Permissions { get; set; } = [];
     }
 
     public class BootstrapSuperAdminRequest
@@ -108,5 +111,11 @@ namespace Genilog_WebApi.Model.AdminsModel
         public string? Address { get; set; }
         public string? Branch { get; set; }
         public string? ImagePath { get; set; }
+    }
+
+    public class AddAccessRequest
+    {
+        public List<RoleType> Roles { get; set; } = [];
+        public List<PermissionType> Permissions { get; set; } = [];
     }
 }

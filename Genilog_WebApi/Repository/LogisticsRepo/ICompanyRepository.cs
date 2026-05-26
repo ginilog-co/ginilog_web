@@ -1,10 +1,13 @@
-﻿using Genilog_WebApi.Model.LogisticsModel;
+﻿using Genilog_WebApi.Model;
+using Genilog_WebApi.Model.GeneraModel;
+using Genilog_WebApi.Model.LogisticsModel;
 
 namespace Genilog_WebApi.Repository.LogisticsRepo
 {
     public interface ICompanyRepository
     {
         Task<IEnumerable<CompanyModelData>> GetAllAsync();
+        Task<PageModel<CompanyModelDataDto>> GetAllPaginationsCompanyDataAsync(FilterLocationData filter);
         Task<CompanyModelData> GetAsync(Guid id);
         Task<CompanyModelData> AddAsync(CompanyModelData region);
         Task<CompanyModelData> DeleteAsync(Guid id);
@@ -13,11 +16,13 @@ namespace Genilog_WebApi.Repository.LogisticsRepo
 
         // Company Review
         Task<CompanyReviewModel> AddCompanyReviewAsync(CompanyReviewModel region);
+        Task<IEnumerable<CompanyReviewModel>> GetCompanyReviewByIdAsync(Guid CompanyId);
         Task<CompanyReviewModel> DeleteCompanyReviewAsync(Guid id);
 
 
         // Order
         Task<IEnumerable<OrderModelData>> GetAllOrderAsync();
+        Task<PageModel<OrderModelDataDto>> GetAllPaginationOrderDataAsync(FilterLocationData filter);
         Task<OrderModelData> GetOrderAsync(Guid id);
         Task<OrderModelData?> GetOrderByTrackingNumAsync(string trackingNum);
         Task<OrderModelData> AddOrderAsync(OrderModelData region);

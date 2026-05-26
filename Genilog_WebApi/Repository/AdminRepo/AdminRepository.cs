@@ -1,12 +1,17 @@
-﻿using Genilog_WebApi.DataContext;
+﻿using AutoMapper;
+using Genilog_WebApi.DataContext;
+using Genilog_WebApi.Model;
 using Genilog_WebApi.Model.AdminsModel;
+using Genilog_WebApi.Model.GeneraModel;
+using Genilog_WebApi.Repository.GeneralRepo;
 using Microsoft.EntityFrameworkCore;
 
 namespace Genilog_WebApi.Repository.AdminRepo
 {
-    public class AdminRepository(Genilog_Data_Context maap_Context) : IAdminRepository
+    public class AdminRepository(Genilog_Data_Context maap_Context, IMapper mapper) : IAdminRepository
     {
         private readonly Genilog_Data_Context maap_Context = maap_Context;
+        private readonly IMapper mapper = mapper;
 
         public async Task<AdminModelTable> AddAsync(AdminModelTable users)
         {
@@ -36,13 +41,111 @@ namespace Genilog_WebApi.Repository.AdminRepo
 
         public async Task<IEnumerable<AdminModelTable>> GetAllAsync()
         {
-            return await maap_Context.AdminModelTables!.ToListAsync();
+            return await maap_Context.AdminModelTables!.AsNoTracking().ToListAsync();
+        }
+
+        public async Task<PageModel<AdminModelTableDto>> GetAllAdminAsync(FilterLocationData filter)
+        {
+            // 1. Base query
+            var query = maap_Context.AdminModelTables!
+                .AsNoTracking()
+                .OrderBy(x => x.CreatedAt)
+                .AsQueryable();
+
+
+            // 2. Apply filters
+            if (!string.IsNullOrWhiteSpace(filter.State))
+            {
+                string any = filter.State;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.State, $"%{any}%") 
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.Locality))
+            {
+                string any = filter.Locality;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.Locality, $"%{any}%")
+                );
+            }
+              
+
+            if (!string.IsNullOrWhiteSpace(filter.UserId))
+            {
+                string any = filter.UserId;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.ManagerId.ToString(), $"%{any}%") 
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.FilterTypes))
+            {
+                string any = filter.FilterTypes;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.AdminType, $"%{any}%") ||
+                     x.CompanyType != null && x.CompanyType.Any(d =>
+                     d.Contains(any, StringComparison.CurrentCultureIgnoreCase))
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.AnyItem))
+            {
+                string any = filter.AnyItem;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.FirstName, $"%{any}%") ||
+                    EF.Functions.Like(x.SurName, $"%{any}%") ||
+                    EF.Functions.Like(x.Email, $"%{any}%") ||
+                    EF.Functions.Like(x.PhoneNo, $"%{any}%") ||
+                    EF.Functions.Like(x.Sex, $"%{any}%") ||
+                    EF.Functions.Like(x.Branch, $"%{any}%") ||
+                    EF.Functions.Like(x.CompanyName, $"%{any}%") ||
+                    EF.Functions.Like(x.CompanyUserName, $"%{any}%")
+                );
+            }
+            if (filter.StartDate.HasValue && filter.EndDate.HasValue)
+            {
+                var from = filter.StartDate.Value.Date;
+                var to = filter.EndDate.Value.Date;
+
+                // swap if reversed
+                if (from > to)
+                    (from, to) = (to, from);
+
+
+
+                var fromDate = from;
+                var toDate = to.AddDays(1);
+
+                query = query.Where(s => s.CreatedAt >= fromDate && s.CreatedAt < toDate);
+
+                // query = query.Where(s => s.CreatedAt.Date >= from && s.CreatedAt.Date <= to);
+            }
+
+            // 3. Pagination on the entity query
+            var pageSize = Math.Clamp(filter.PageSize ?? 20, 1, 20);
+            var page = filter.Page is null or <= 0 ? 1 : filter.Page.Value;
+            var pagedData = await query.ToPagedAsync(page, pageSize);
+
+
+            // 4. Map to DTO after retrieving paged data
+            var userDto = mapper.Map<List<AdminModelTableDto>>(pagedData.Data);
+            userDto = [.. userDto.OrderByDescending(o => o.CreatedAt)];
+
+
+            // 6. Return PageModel<DTO> with same pagination metadata
+            return new PageModel<AdminModelTableDto>(
+                userDto,
+                pagedData.TotalCount,
+                pagedData.Page,
+                pagedData.PageSize
+            );
         }
 
         public async Task<AdminModelTable> GetAsync(Guid id)
         {
 #pragma warning disable CS8603 // Possible null reference return.
-            return await maap_Context.AdminModelTables!.FirstOrDefaultAsync(x => x.Id == id);
+            return await maap_Context.AdminModelTables!.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
 #pragma warning restore CS8603 // Possible null reference return.
         }
 
@@ -106,13 +209,13 @@ namespace Genilog_WebApi.Repository.AdminRepo
 
         public async Task<IEnumerable<AdvertHolderModel>> GetAllAdvertAsync()
         {
-            return await maap_Context.AdvertHolderModels!.ToListAsync();
+            return await maap_Context.AdvertHolderModels!.AsNoTracking().ToListAsync();
         }
 
         public async Task<AdvertHolderModel> GetAdvertAsync(Guid id)
         {
 #pragma warning disable CS8603 // Possible null reference return.
-            return await maap_Context.AdvertHolderModels!.FirstOrDefaultAsync(x => x.Id == id);
+            return await maap_Context.AdvertHolderModels!.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
 #pragma warning restore CS8603 // Possible null reference return.
         }
 
@@ -171,7 +274,76 @@ namespace Genilog_WebApi.Repository.AdminRepo
 
         public async Task<IEnumerable<CompanyApplyDataModel>> GetAllCompanyApplyAsync()
         {
-            return await maap_Context.CompanyApplyDataModels!.ToListAsync();
+            return await maap_Context.CompanyApplyDataModels!.AsNoTracking().ToListAsync();
+        }
+
+        public async Task<PageModel<CompanyApplyDataModelDto>> GetAllPaginatedCompanyApplyAsync(FilterLocationData filter)
+        {
+            // 1. Base query
+            var query = maap_Context.CompanyApplyDataModels!
+                .AsNoTracking()
+                .OrderBy(x => x.CreatedAt)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(filter.FilterTypes))
+            {
+                string any = filter.FilterTypes;
+                query = query.Where(x =>
+                 
+                     x.CompanyType != null && x.CompanyType.Any(d =>
+                     d.Contains(any, StringComparison.CurrentCultureIgnoreCase))
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.AnyItem))
+            {
+                string any = filter.AnyItem;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.FirstName, $"%{any}%") ||
+                    EF.Functions.Like(x.SurName, $"%{any}%") ||
+                    EF.Functions.Like(x.Email, $"%{any}%") ||
+                    EF.Functions.Like(x.PhoneNo, $"%{any}%") ||
+                    EF.Functions.Like(x.CompanyName, $"%{any}%") ||
+                    EF.Functions.Like(x.CompanyUserName, $"%{any}%")
+                );
+            }
+            if (filter.StartDate.HasValue && filter.EndDate.HasValue)
+            {
+                var from = filter.StartDate.Value.Date;
+                var to = filter.EndDate.Value.Date;
+
+                // swap if reversed
+                if (from > to)
+                    (from, to) = (to, from);
+
+
+
+                var fromDate = from;
+                var toDate = to.AddDays(1);
+
+                query = query.Where(s => s.CreatedAt >= fromDate && s.CreatedAt < toDate);
+
+                // query = query.Where(s => s.CreatedAt.Date >= from && s.CreatedAt.Date <= to);
+            }
+
+            // 3. Pagination on the entity query
+            var pageSize = Math.Clamp(filter.PageSize ?? 20, 1, 20);
+            var page = filter.Page is null or <= 0 ? 1 : filter.Page.Value;
+            var pagedData = await query.ToPagedAsync(page, pageSize);
+
+
+            // 4. Map to DTO after retrieving paged data
+            var userDto = mapper.Map<List<CompanyApplyDataModelDto>>(pagedData.Data);
+            userDto = [.. userDto.OrderByDescending(o => o.CreatedAt)];
+
+
+            // 6. Return PageModel<DTO> with same pagination metadata
+            return new PageModel<CompanyApplyDataModelDto>(
+                userDto,
+                pagedData.TotalCount,
+                pagedData.Page,
+                pagedData.PageSize
+            );
         }
 
         public async Task<CompanyApplyDataModel> GetCompanyApplyAsync(Guid id)

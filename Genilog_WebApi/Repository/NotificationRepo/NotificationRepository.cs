@@ -1,12 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
 using Genilog_WebApi.DataContext;
 using Genilog_WebApi.Model.Notification_Model;
+using Microsoft.EntityFrameworkCore;
 
 namespace Genilog_WebApi.Repository.NotificationRepo
 {
-    public class NotificationRepository(Genilog_Data_Context mAAP_Context) : INotificationRepository
+    public class NotificationRepository(Genilog_Data_Context mAAP_Context, IMapper mapper) : INotificationRepository
     {
         private readonly Genilog_Data_Context mAAP_Context = mAAP_Context;
+        private readonly IMapper mapper = mapper;
 
         public async Task<NotificationModel> AddAsync(NotificationModel dataProvider)
         {
@@ -37,6 +39,7 @@ namespace Genilog_WebApi.Repository.NotificationRepo
         public async Task<IEnumerable<NotificationModel>> GetAllAsync()
         {
             return await mAAP_Context.NotificationModels!
+                 .AsNoTracking()
                   .OrderBy(x => x.CreatedAt).
                    ToListAsync();
         }
@@ -44,8 +47,9 @@ namespace Genilog_WebApi.Repository.NotificationRepo
         public async Task<NotificationModel> GetAsync(Guid id)
         {
 #pragma warning disable CS8603 // Possible null reference return.
-            return await mAAP_Context.NotificationModels!.
-               FirstOrDefaultAsync(x => x.Id == id);
+            return await mAAP_Context.NotificationModels!
+                 .AsNoTracking()
+                 .FirstOrDefaultAsync(x => x.Id == id);
 #pragma warning restore CS8603 // Possible null reference return.
         }
 

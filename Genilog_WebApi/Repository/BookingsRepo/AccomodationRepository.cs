@@ -1,14 +1,19 @@
-﻿using Genilog_WebApi.DataContext;
+﻿using AutoMapper;
+using Genilog_WebApi.DataContext;
+using Genilog_WebApi.Model;
 using Genilog_WebApi.Model.BookingsModel;
-using Genilog_WebApi.Model.LogisticsModel;
+using Genilog_WebApi.Model.GeneraModel;
+using Genilog_WebApi.Repository.GeneralRepo;
 using Microsoft.EntityFrameworkCore;
 
-namespace Genilog_WebApi.Repository.PlacesRepo
+namespace Genilog_WebApi.Repository.BookingsRepo
 {
-    public class AccomodationRepository(Genilog_Data_Context mAAP_Context) : IAccomodationRepository
+    public class AccomodationRepository(Genilog_Data_Context mAAP_Context, IMapper mapper) : IAccomodationRepository
     {
         private readonly Genilog_Data_Context mAAP_Context = mAAP_Context;
+        private readonly IMapper mapper = mapper;
 
+        #region Accomodation Data
         public async Task<AccomodationDataModel> AddAsync(AccomodationDataModel dataInfo)
         {
             dataInfo.Id = Guid.NewGuid();
@@ -50,6 +55,7 @@ namespace Genilog_WebApi.Repository.PlacesRepo
         public async Task<IEnumerable<AccomodationDataModel>> GetAllAsync()
         {
             return await mAAP_Context.AccomodationDataModels!
+                .AsNoTracking()
                   .Include(x => x.AccomodationMonday)
                 .Include(x => x.AccomodationTuesday)
                 .Include(x => x.AccomodationWednesday)
@@ -57,15 +63,107 @@ namespace Genilog_WebApi.Repository.PlacesRepo
                 .Include(x => x.AccomodationFriday)
                 .Include(x => x.AccomodationSaturday)
                 .Include(x => x.AccomodationSunday)
-                  .Include(x => x.AccomodationReviewModels)
                   .OrderBy(x => x.CreatedAt).
                    ToListAsync();
+        }
+
+        public async Task<PageModel<AccomodationDataModelDto>> GetAllPaginationsAccomodationAsync(FilterLocationData filter)
+        {
+            // 1. Base query
+            var query = mAAP_Context.AccomodationDataModels!
+                .AsNoTracking()
+                .Include(x => x.AccomodationMonday)
+                .Include(x => x.AccomodationTuesday)
+                .Include(x => x.AccomodationWednesday)
+                .Include(x => x.AccomodationThursday)
+                .Include(x => x.AccomodationFriday)
+                .Include(x => x.AccomodationSaturday)
+                .Include(x => x.AccomodationSunday)
+                .OrderBy(x => x.CreatedAt)
+                .AsQueryable();
+
+
+            // 2. Apply filters
+            if (!string.IsNullOrWhiteSpace(filter.State))
+                query = query.Where(x => x.State!.Contains(filter.State));
+
+            if (!string.IsNullOrWhiteSpace(filter.Locality))
+                query = query.Where(x => x.Locality!.Contains(filter.Locality));
+
+            if (!string.IsNullOrWhiteSpace(filter.UserId))
+            {
+                string any = filter.UserId;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.AdminId.ToString(), $"%{any}%")
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.FilterTypes))
+            {
+                string any = filter.FilterTypes;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.AccomodationAdvertType, $"%{any}%") ||
+                    EF.Functions.Like(x.AccomodationType, $"%{any}%")
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.AnyItem))
+            {
+                string any = filter.AnyItem;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.AccomodationName, $"%{any}%") ||
+                    EF.Functions.Like(x.AccomodationPhoneNo, $"%{any}%") ||
+                    EF.Functions.Like(x.AccomodationEmail, $"%{any}%") ||
+                    EF.Functions.Like(x.Location, $"%{any}%") ||
+                    EF.Functions.Like(x.AccomodationWebsite, $"%{any}%") ||
+                    EF.Functions.Like(x.Postcode, $"%{any}%")
+                );
+            }
+
+            if (filter.StartDate.HasValue && filter.EndDate.HasValue)
+            {
+                var from = filter.StartDate.Value.Date;
+                var to = filter.EndDate.Value.Date;
+
+                // swap if reversed
+                if (from > to)
+                    (from, to) = (to, from);
+
+
+
+                var fromDate = from;
+                var toDate = to.AddDays(1);
+
+                query = query.Where(s => s.CreatedAt >= fromDate && s.CreatedAt < toDate);
+
+                // query = query.Where(s => s.CreatedAt.Date >= from && s.CreatedAt.Date <= to);
+            }
+
+            // 3. Pagination on the entity query
+            var pageSize = Math.Clamp(filter.PageSize ?? 20, 1, 20);
+            var page = filter.Page is null or <= 0 ? 1 : filter.Page.Value;
+            var pagedData = await query.ToPagedAsync(page, pageSize);
+
+
+            // 4. Map to DTO after retrieving paged data
+            var userDto = mapper.Map<List<AccomodationDataModelDto>>(pagedData.Data);
+            userDto = [.. userDto.OrderByDescending(o => o.CreatedAt)];
+
+
+            // 6. Return PageModel<DTO> with same pagination metadata
+            return new PageModel<AccomodationDataModelDto>(
+                userDto,
+                pagedData.TotalCount,
+                pagedData.Page,
+                pagedData.PageSize
+            );
         }
 
         public async Task<AccomodationDataModel> GetAsync(Guid id)
         {
 #pragma warning disable CS8603 // Possible null reference return.
             return await mAAP_Context.AccomodationDataModels!
+                 .AsNoTracking()
                   .Include(x => x.AccomodationMonday)
                 .Include(x => x.AccomodationTuesday)
                 .Include(x => x.AccomodationWednesday)
@@ -98,7 +196,7 @@ namespace Genilog_WebApi.Repository.PlacesRepo
             }
             else
             {
-                dataValue.AccomodationName = dataInfo.AccomodationName;
+                dataValue.AccomodationName = !string.IsNullOrWhiteSpace(dataInfo.AccomodationName) ? dataInfo.AccomodationName:dataValue.AccomodationName;
                 dataValue.AccomodationDescription = dataInfo.AccomodationDescription;
                 dataValue.CheckInTime = dataInfo.CheckInTime;
                 dataValue.CheckOutTime = dataInfo.CheckOutTime;
@@ -163,12 +261,25 @@ namespace Genilog_WebApi.Repository.PlacesRepo
             }
         }
 
+        #endregion
+
+        #region Accomodation Review Data
+
         public async Task<AccomodationReviewModel> AddAccomodationReviewAsync(AccomodationReviewModel dataInfo)
         {
             dataInfo.Id = Guid.NewGuid();
             await mAAP_Context.AddAsync(dataInfo);
             await mAAP_Context.SaveChangesAsync();
             return dataInfo;
+        }
+
+        public async Task<IEnumerable<AccomodationReviewModel>> GetAccomodationReviewByIdAsync(Guid accomodationId)
+        {
+            return await mAAP_Context.AccomodationReviewModels!
+                .AsNoTracking()
+                .Where(x => x.AccomodationDataTableId == accomodationId)
+                .OrderBy(x => x.CreatedAt)
+                .ToListAsync();
         }
 
         public async Task<AccomodationReviewModel> DeleteAccomodationReviewAsync(Guid id)
@@ -189,6 +300,10 @@ namespace Genilog_WebApi.Repository.PlacesRepo
             }
         }
 
+        #endregion
+
+
+        #region Book Accommodation Reservation Data
         //Reservations
         public async Task<BookAccomodationReservatioModel> AddBookAccomodationReservationAsync(BookAccomodationReservatioModel dataInfo)
         {
@@ -219,14 +334,89 @@ namespace Genilog_WebApi.Repository.PlacesRepo
         public async Task<IEnumerable<BookAccomodationReservatioModel>> GetAllBookAccomodationReservationAsync()
         {
             return await mAAP_Context.BookAccomodationReservatioModels!
+                 .AsNoTracking()
                   .OrderBy(x => x.CreatedAt).
                    ToListAsync();
+        }
+
+        public async Task<PageModel<BookAccomodationReservatioModelDto>> GetAllPageBookAccomodationReservationAsync(FilterLocationData filter)
+        {
+            // 1. Base query
+            var query = mAAP_Context.BookAccomodationReservatioModels!
+                .AsNoTracking()
+                .OrderBy(x => x.CreatedAt)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(filter.UserId))
+            {
+                string any = filter.UserId;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.AccomodationId.ToString(), $"%{any}%") ||
+                    EF.Functions.Like(x.AdminId.ToString(), $"%{any}%")
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.FilterTypes))
+            {
+                string any = filter.FilterTypes;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.AccomodationType, $"%{any}%") ||
+                    EF.Functions.Like(x.RoomType, $"%{any}%") 
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.AnyItem))
+            {
+                string any = filter.AnyItem;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.TicketNum, $"%{any}%") ||
+                    EF.Functions.Like(x.AccomodationName, $"%{any}%") ||
+                    EF.Functions.Like(x.AccomodationState, $"%{any}%") ||
+                    EF.Functions.Like(x.Location, $"%{any}%")
+                );
+            }
+            if (filter.StartDate.HasValue && filter.EndDate.HasValue)
+            {
+                var from = filter.StartDate.Value.Date;
+                var to = filter.EndDate.Value.Date;
+
+                // swap if reversed
+                if (from > to)
+                    (from, to) = (to, from);
+
+
+
+                var fromDate = from;
+                var toDate = to.AddDays(1);
+
+                query = query.Where(s => s.CreatedAt >= fromDate && s.CreatedAt < toDate);
+
+                // query = query.Where(s => s.CreatedAt.Date >= from && s.CreatedAt.Date <= to);
+            }
+
+            // 3. Pagination on the entity query
+            var pageSize = Math.Clamp(filter.PageSize ?? 20, 1, 20);
+            var page = filter.Page is null or <= 0 ? 1 : filter.Page.Value;
+            var pagedData = await query.ToPagedAsync(page, pageSize);
+
+            // 4. Map to DTO after retrieving paged data
+            var userDto = mapper.Map<List<BookAccomodationReservatioModelDto>>(pagedData.Data);
+            // 6. Return PageModel<DTO> with same pagination metadata
+            return new PageModel<BookAccomodationReservatioModelDto>(
+                userDto,
+                pagedData.TotalCount,
+                pagedData.Page,
+                pagedData.PageSize
+
+            );
         }
 
         public async Task<BookAccomodationReservatioModel> GetBookAccomodationReservationAsync(Guid id)
         {
 #pragma warning disable CS8603 // Possible null reference return.
-            return await mAAP_Context.BookAccomodationReservatioModels!.FirstOrDefaultAsync(x => x.Id == id);
+            return await mAAP_Context.BookAccomodationReservatioModels!
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == id);
 #pragma warning restore CS8603 // Possible null reference return.
         }
 
@@ -277,6 +467,9 @@ namespace Genilog_WebApi.Repository.PlacesRepo
             }
            }
 
+        #endregion
+
+        #region Customer Booked Reservation Data
 
         //Customer
         public async Task<CustomerBookedReservation> AddCustomerBookedReservationAsync(CustomerBookedReservation dataInfo)
@@ -308,21 +501,107 @@ namespace Genilog_WebApi.Repository.PlacesRepo
         public async Task<IEnumerable<CustomerBookedReservation>> GetAllCustomerBookedReservationAsync()
         {
             return await mAAP_Context.CustomerBookedReservations!
+                .AsNoTracking()
                   .OrderBy(x => x.CreatedAt).
                    ToListAsync();
+        }
+
+        public async Task<PageModel<CustomerBookedReservationDto>> GetAllPageCustomerBookedReservationAsync(FilterLocationData filter)
+        {
+            // 1. Base query
+            var query = mAAP_Context.CustomerBookedReservations!
+                .AsNoTracking()
+                .OrderBy(x => x.CreatedAt)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(filter.UserId))
+            {
+                string any = filter.UserId;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.UserId.ToString(), $"%{any}%") ||
+                    EF.Functions.Like(x.AccomodationId.ToString(), $"%{any}%") ||
+                    EF.Functions.Like(x.AdminId.ToString(), $"%{any}%") ||
+                    EF.Functions.Like(x.ResevationId.ToString(), $"%{any}%") ||
+                    EF.Functions.Like(x.StaffId.ToString(), $"%{any}%")
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.FilterTypes))
+            {
+                string any = filter.FilterTypes;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.PaymentChannel, $"%{any}%") ||
+                    EF.Functions.Like(x.PurchaseChannel, $"%{any}%") ||
+                    EF.Functions.Like(x.AccomodationType, $"%{any}%") ||
+                    EF.Functions.Like(x.UserType, $"%{any}%")
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.AnyItem))
+            {
+                string any = filter.AnyItem;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.AccomodationName, $"%{any}%") ||
+                    EF.Functions.Like(x.AccomodationLocation, $"%{any}%") ||
+                    EF.Functions.Like(x.TicketNum, $"%{any}%") ||
+                    EF.Functions.Like(x.CustomerEmail, $"%{any}%") ||
+                    EF.Functions.Like(x.CustomerName, $"%{any}%") ||
+                    EF.Functions.Like(x.CustomerPhoneNumber, $"%{any}%") ||
+                    EF.Functions.Like(x.StaffName, $"%{any}%") ||
+                    EF.Functions.Like(x.TrnxReference, $"%{any}%") 
+                );
+            }
+
+
+            if (filter.StartDate.HasValue && filter.EndDate.HasValue)
+            {
+                var from = filter.StartDate.Value.Date;
+                var to = filter.EndDate.Value.Date;
+
+                // swap if reversed
+                if (from > to)
+                    (from, to) = (to, from);
+
+
+
+                var fromDate = from;
+                var toDate = to.AddDays(1);
+
+                query = query.Where(s => s.CreatedAt >= fromDate && s.CreatedAt < toDate);
+
+                // query = query.Where(s => s.CreatedAt.Date >= from && s.CreatedAt.Date <= to);
+            }
+
+            // 3. Pagination on the entity query
+            var pageSize = Math.Clamp(filter.PageSize ?? 20, 1, 20);
+            var page = filter.Page is null or <= 0 ? 1 : filter.Page.Value;
+            var pagedData = await query.ToPagedAsync(page, pageSize);
+
+            // 4. Map to DTO after retrieving paged data
+            var userDto = mapper.Map<List<CustomerBookedReservationDto>>(pagedData.Data);
+            // 6. Return PageModel<DTO> with same pagination metadata
+            return new PageModel<CustomerBookedReservationDto>(
+                userDto,
+                pagedData.TotalCount,
+                pagedData.Page,
+                pagedData.PageSize
+
+            );
         }
 
         public async Task<CustomerBookedReservation> GetCustomerBookedReservationAsync(Guid id)
         {
 #pragma warning disable CS8603 // Possible null reference return.
-            return await mAAP_Context.CustomerBookedReservations!.FirstOrDefaultAsync(x => x.Id == id);
+            return await mAAP_Context.CustomerBookedReservations!
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == id);
 #pragma warning restore CS8603 // Possible null reference return.
         }
 
         public async Task<CustomerBookedReservation?> GetCustomerBookedReservationByTicketNumAsync(string ticketNum)
         {
             return await mAAP_Context.CustomerBookedReservations!
-                .FirstOrDefaultAsync(x => x.TicketNum == ticketNum);
+                .AsNoTracking().FirstOrDefaultAsync(x => x.TicketNum == ticketNum);
         }
 
         public async Task<CustomerBookedReservation> UpdateCustomerBookedReservationAsync(Guid id, CustomerBookedReservation dataInfo)
@@ -364,10 +643,22 @@ namespace Genilog_WebApi.Repository.PlacesRepo
             return true;
         }
 
+        #endregion
+
+        #region Accomodation Chat Data
         // Accomodation Chat
         public async Task<IEnumerable<AccomodationChatModel>> GetAllAccomodationChatAsync()
         {
-            return await mAAP_Context.AccomodationChatModels!.OrderBy(x => x.CreatedAt).ToListAsync();
+            return await mAAP_Context.AccomodationChatModels!.AsNoTracking().OrderBy(x => x.CreatedAt).ToListAsync();
+        }
+
+        public async Task<IEnumerable<AccomodationChatModel>> GetAllAccomodationChatByIdAsync(Guid accomodationId)
+        {
+            return await mAAP_Context.AccomodationChatModels!
+                .AsNoTracking()
+                .Where(x => x.SenderId == accomodationId || x.ReceiverId == accomodationId)
+                .OrderBy(x => x.CreatedAt)
+                .ToListAsync();
         }
 
         public async Task<AccomodationChatModel> AddAccomodationChatAsync(AccomodationChatModel dataInfo)
@@ -431,5 +722,6 @@ namespace Genilog_WebApi.Repository.PlacesRepo
                 return dataValue;
             }
         }
+        #endregion
     }
 }

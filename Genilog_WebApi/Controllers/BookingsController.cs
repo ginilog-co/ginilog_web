@@ -5,18 +5,15 @@ using Genilog_WebApi.Model;
 using Genilog_WebApi.Model.BookingsModel;
 using Genilog_WebApi.Model.LogisticsModel;
 using Genilog_WebApi.Model.Notification_Model;
-using Genilog_WebApi.Model.UsersDataModel;
 using Genilog_WebApi.Model.WalletModel;
 using Genilog_WebApi.Repository.AdminRepo;
 using Genilog_WebApi.Repository.AuthRepo;
 using Genilog_WebApi.Repository.BookingsRepo;
 using Genilog_WebApi.Repository.NotificationRepo;
-using Genilog_WebApi.Repository.PlacesRepo;
 using Genilog_WebApi.Repository.UploadRepo;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using QRCoder;
 using System.Net;
 using System.Net.Http.Headers;
@@ -25,10 +22,11 @@ using System.Text;
 
 namespace Genilog_WebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/bookings")]
     [ApiController]
     public class BookingsController(IHostEnvironment _env, IMapper mapper, IAccomodationRepository accomodationRepository
-        , IGeneralUserRepository generalUserRepository, IUploadRepository uploadRepository, IAirlineRepository airlineRepository, IAdminRepository adminRepository, INotificationRepository notificationRepository) : ControllerBase
+        , IGeneralUserRepository generalUserRepository, IUploadRepository uploadRepository, IAirlineRepository airlineRepository,
+        IAdminRepository adminRepository, INotificationRepository notificationRepository, Cls_Keys keys) : ControllerBase
     {
         private readonly IHostEnvironment _env = _env;
         private readonly IMapper mapper = mapper;
@@ -38,47 +36,19 @@ namespace Genilog_WebApi.Controllers
         private readonly IAirlineRepository airlineRepository = airlineRepository;
         private readonly IAdminRepository adminRepository = adminRepository;
         private readonly INotificationRepository notificationRepository = notificationRepository;
-        readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
+        private readonly Cls_Keys keys = keys;
 
+        #region Airline Endpoints
 
-        // This Is PLACES SECTION
+        // This Is AIRLINE DATA
+
         [HttpGet]
         [Route("airline")]
         [Authorize]
-        public async Task<IActionResult> GetAllAirlinesAsync([FromQuery] FilterLocationData data)
+        public async Task<IActionResult> GetAllAirlinesAsync([FromQuery] FilterLocationData filter)
         {
-            var events = await airlineRepository.GetAllAsync();
-            events = [.. events.OrderByDescending(x => x.CreatedAt)];
-            var allPosts = events.AsQueryable();
-
-            if (!string.IsNullOrEmpty(data.State) && !string.IsNullOrEmpty(data.Locality))
-            {
-                allPosts = allPosts.Where(x => x.State!.Contains(data.State) && x.Locality!.Contains(data.Locality));
-                var userDto = mapper.Map<List<AirlineDataModelDto>>(allPosts);
-
-                return Ok(userDto);
-            }
-            else if (!string.IsNullOrEmpty(data.State))
-            {
-                allPosts = allPosts.Where(x => x.State!.Contains(data.State));
-                var userDto = mapper.Map<List<AirlineDataModelDto>>(allPosts);
-
-                return Ok(userDto);
-            }
-            else if (!string.IsNullOrEmpty(data.Locality))
-            {
-                allPosts = allPosts.Where(x => x.Locality!.Contains(data.Locality));
-                var userDto = mapper.Map<List<AirlineDataModelDto>>(allPosts);
-
-                return Ok(userDto);
-            }
-            else
-            {
-                var userDto = mapper.Map<List<AirlineDataModelDto>>(events);
-                return Ok(userDto);
-            }
-
-
+            var result = await airlineRepository.GetAllPaginationsAirlineAsync(filter);
+            return Ok(result);
         }
 
         [HttpGet]
@@ -102,7 +72,7 @@ namespace Genilog_WebApi.Controllers
         [HttpDelete]
         [Route("airline/{id:guid}")]
         [Authorize(Roles = "Manager,Admin,Super_Admin")]
-        public async Task<IActionResult> DeletePlacesAsync(Guid id)
+        public async Task<IActionResult> DeleteAirlinesAsync(Guid id)
         {
             // Get the region from the database
             var user = await airlineRepository.DeleteAsync(id);
@@ -220,7 +190,7 @@ namespace Genilog_WebApi.Controllers
             // check the null value
             if (events == null)
             {
-                return BadRequest("Places Does not Exist");
+                return BadRequest("Airlines Does not Exist");
             }
             // convert back to dto
             else
@@ -255,7 +225,7 @@ namespace Genilog_WebApi.Controllers
             // check the null value
             if (events == null)
             {
-                return BadRequest("Places Does not Exist");
+                return BadRequest("Airlines Does not Exist");
             }
             // convert back to dto
             else
@@ -325,8 +295,8 @@ namespace Genilog_WebApi.Controllers
         }
 
 
-        // Places Chat Message
-        [HttpGet("all-places-chat-messages")]
+        // Airlines Chat Message
+        [HttpGet("all-airlines-chat-messages")]
         [Authorize]
         public async Task<IActionResult> GetAllAirlineChatAsync()
         {
@@ -349,7 +319,7 @@ namespace Genilog_WebApi.Controllers
             return Ok(userDto2);
         }
 
-        [HttpGet("places-chat-messages")]
+        [HttpGet("airlines-chat-messages")]
         [Authorize]
         public async Task<IActionResult> GetAirlineChatAsync([FromHeader] Guid senderId, [FromHeader] Guid receiverId)
         {
@@ -397,7 +367,7 @@ namespace Genilog_WebApi.Controllers
         }
 
         [HttpPost]
-        [Route("places-chat-messages")]
+        [Route("airlines-chat-messages")]
         [Authorize]
         public async Task<IActionResult> AddAirlineChatAsync([FromHeader] Guid senderId, [FromHeader] Guid receiverId, [FromBody] AddChatMessage message)
         {
@@ -595,43 +565,42 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
+        #endregion
 
-        // This Is HOTEL SECTION
+
+        #region Public Tracking
+        // Public endpoint for tracking bookings without authentication
+        [HttpGet("track-booking")]
+        [AllowAnonymous]
+        public async Task<IActionResult> TrackBookingByTicketNum([FromQuery] string ticketRef)
+        {
+            if (string.IsNullOrWhiteSpace(ticketRef))
+            {
+                return BadRequest(new ErrorModel { Message = "Booking reference is required", Status = true });
+            }
+
+            var booking = await accomodationRepository.GetCustomerBookedReservationByTicketNumAsync(ticketRef);
+            if (booking == null)
+            {
+                return NotFound(new ErrorModel { Message = "Booking not found with this reference number", Status = true });
+            }
+
+            var bookingDto = mapper.Map<CustomerBookedReservationDto>(booking);
+            return Ok(bookingDto);
+        }
+        #endregion
+
+
+        #region ACCOMODATION SECTION
+        // This Is ACCOMODATION SECTION
+
         [HttpGet]
         [Route("accomodation")]
-      // [Authorize]
-        public async Task<IActionResult> GetAllAccomodationAsync([FromQuery] FilterLocationData data)
+        // [Authorize]
+        public async Task<IActionResult> GetAllAccomodationAsync([FromQuery] FilterLocationData filter)
         {
-            var events = await accomodationRepository.GetAllAsync();
-            events = [.. events.OrderByDescending(x => x.CreatedAt)];
-            var allPosts = events.AsQueryable();
-
-            if (!string.IsNullOrEmpty(data.State) && !string.IsNullOrEmpty(data.Locality))
-            {
-                allPosts = allPosts.Where(x => x.State!.Contains(data.State) && x.Locality!.Contains(data.Locality));
-                var userDto = mapper.Map<List<AccomodationDataModelDto>>(allPosts);
-
-                return Ok(userDto);
-            }
-            else if (!string.IsNullOrEmpty(data.State))
-            {
-                allPosts = allPosts.Where(x => x.State!.Contains(data.State));
-                var userDto = mapper.Map<List<AccomodationDataModelDto>>(allPosts);
-
-                return Ok(userDto);
-            }
-            else if (!string.IsNullOrEmpty(data.Locality))
-            {
-                allPosts = allPosts.Where(x => x.Locality!.Contains(data.Locality));
-                var userDto = mapper.Map<List<AccomodationDataModelDto>>(allPosts);
-
-                return Ok(userDto);
-            }
-            else
-            {
-                var userDto = mapper.Map<List<AccomodationDataModelDto>>(events);
-                return Ok(userDto);
-            }
+            var result = await accomodationRepository.GetAllPaginationsAccomodationAsync(filter);
+            return Ok(result);
         }
 
         [HttpGet]
@@ -1037,40 +1006,19 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
+        #endregion
+
+        #region ACCOMODATIONS RESERVATIONS
+
         //Reservations Book
         [HttpGet]
         [Route("accomodation-reservations")]
         // [Authorize]
-        public async Task<IActionResult> GetAllBookAccomodationReservationAsync([FromQuery] FilterData data)
+        public async Task<IActionResult> GetAllBookAccomodationReservationAsync([FromQuery] FilterLocationData filter)
         {
-            var events = await accomodationRepository.GetAllBookAccomodationReservationAsync();
 
-            // in-memory ordering
-            var allPosts = events.OrderByDescending(x => x.CreatedAt).AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(data.AnyItem))
-            {
-                var search = data.AnyItem.Trim();
-                var like = $"%{search}%";
-
-                allPosts = allPosts.Where(x =>
-                    x.AdminId.ToString().Contains(search) ||
-                    x.AccomodationId.ToString().Contains(search) ||
-                    (x.AccomodationName ?? "").Contains(search) ||
-                    (x.AccomodationState ?? "").Contains(search) ||
-                    (x.RoomType ?? "").Contains(search) ||
-                    (x.AccomodationType ?? "").Contains(search) ||
-                    (x.Location ?? "").Contains(search) ||
-                    (x.AccomodationLocality ?? "").Contains(search)
-                );
-
-                var filtered = allPosts.ToList(); // in-memory
-                var userDto = mapper.Map<List<BookAccomodationReservatioModelDto>>(filtered);
-                return Ok(userDto);
-            }
-
-            var dto = mapper.Map<List<BookAccomodationReservatioModelDto>>(events.OrderByDescending(x => x.CreatedAt).ToList());
-            return Ok(dto);
+            var result = await accomodationRepository.GetAllPageBookAccomodationReservationAsync(filter);
+            return Ok(result);
         }
 
         [HttpGet]
@@ -1213,6 +1161,9 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
+        #endregion
+
+        #region ACCOMODATIONS CUSTOMER BOOK RESERVATIONS
         //Customer Book
 
         [HttpGet]
@@ -1249,12 +1200,8 @@ namespace Genilog_WebApi.Controllers
         [HttpGet]
         [Route("accomodation-reservations-customer")]
         [Authorize]
-        public async Task<IActionResult> GetAllCustomerBookedReservationAsync([FromQuery] FilterData data)
+        public async Task<IActionResult> GetAllCustomerBookedReservationAsync([FromQuery] FilterLocationData filter)
         {
-            var events = await accomodationRepository.GetAllCustomerBookedReservationAsync();
-            events = [.. events.OrderByDescending(x => x.CreatedAt)];
-            var allPosts = events.AsQueryable();
-
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!Guid.TryParse(userId, out Guid userGuid))
             {
@@ -1263,34 +1210,22 @@ namespace Genilog_WebApi.Controllers
             var user = await generalUserRepository.GetAsync(userGuid);
             if (user.UserType == "Super_Admin" || user.UserType == "Admin")
             {
-                if (!string.IsNullOrEmpty(data.AnyItem))
-                {
-                    allPosts = allPosts.Where(x => x.ResevationId!.ToString() == data.AnyItem || x.AccomodationId!.ToString() == data.AnyItem
-                    );
-                    var userDto = mapper.Map<List<CustomerBookedReservationDto>>(allPosts);
-
-                    return Ok(userDto);
-                }
-
-                else
-                {
-                    var userDto = mapper.Map<List<CustomerBookedReservationDto>>(events);
-                    return Ok(userDto);
-                }
+                var result = await accomodationRepository.GetAllPageCustomerBookedReservationAsync(filter);
+                 return Ok(result);
             }
             else if (user.UserType == "Manager" || user.UserType == "Staff_Admin"|| user.UserType=="Staff")
             {
                 var admin = await adminRepository.GetAsync(user.Id);
-                events = [.. events.Where(x => x.AdminId == admin.ManagerId)];
-                var userDto = mapper.Map<List<CustomerBookedReservationDto>>(events);
-                return Ok(userDto);
+                filter.UserId = admin.ManagerId.ToString();
+                var result = await accomodationRepository.GetAllPageCustomerBookedReservationAsync(filter);
+                return Ok(result);
             }
 
             else
             {
-                events = [.. events.Where(x => x.UserId == user.Id)];
-                var userDto = mapper.Map<List<CustomerBookedReservationDto>>(events);
-                return Ok(userDto);
+                filter.UserId = user.Id.ToString();
+                var result = await accomodationRepository.GetAllPageCustomerBookedReservationAsync(filter);
+                return Ok(result);
             }
         }
 
@@ -1617,18 +1552,18 @@ namespace Genilog_WebApi.Controllers
                         {
                             email = request.CustomerEmail,
                             amount = (events.RoomPrice * request.NoOfDays) * 100,  // Amount in Kobo (100 kobo = 1 Naira)
-                            callback_url = $"{Cls_Keys.ServerURL}/api/Bookings/verify-paystack-accomodation-reservations-customer?orderId={contacts.Id}", // The URL to redirect after payment
+                            callback_url = $"{keys.ServerURL}/api/Bookings/verify-paystack-accomodation-reservations-customer?orderId={contacts.Id}", // The URL to redirect after payment
                             channels = new[] { "card", "bank", "ussd", "mobile_money", "bank_transfer" },
                             metadata = new
                             {
-                                cancel_action = $"{Cls_Keys.ServerURL}/api/Bookings/delete-accomodation-reservations-customer?orderId={contacts.Id}"
+                                cancel_action = $"{keys.ServerURL}/api/Bookings/delete-accomodation-reservations-customer?orderId={contacts.Id}"
                             }
                         };
 
                         using var httpClient = new HttpClient();
 
                         StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
-                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.PaystackSecretKey);
+                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", keys.PaystackSecretKey);
                         using var response = await httpClient.PostAsync($"{url}", content);
                         string apiResponse = await response.Content.ReadAsStringAsync();
                         if (response.StatusCode == HttpStatusCode.OK)
@@ -1704,18 +1639,18 @@ namespace Genilog_WebApi.Controllers
                         {
                             email = request.CustomerEmail,
                             amount = (events.RoomPrice * request.NoOfDays) * 100,  // Amount in Kobo (100 kobo = 1 Naira)
-                            callback_url = $"{Cls_Keys.ServerURL}/api/Bookings/verify-paystack-accomodation-reservations-customer?orderId={contacts.Id}", // The URL to redirect after payment
+                            callback_url = $"{keys.ServerURL}/api/Bookings/verify-paystack-accomodation-reservations-customer?orderId={contacts.Id}", // The URL to redirect after payment
                             channels = new[] { "card", "bank", "ussd", "mobile_money", "bank_transfer" },
                             metadata = new
                             {
-                                cancel_action = $"{Cls_Keys.ServerURL}/api/Bookings/delete-accomodation-reservations-customer?orderId={contacts.Id}"
+                                cancel_action = $"{keys.ServerURL}/api/Bookings/delete-accomodation-reservations-customer?orderId={contacts.Id}"
                             }
                         };
 
                         using var httpClient = new HttpClient();
 
                         StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
-                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.PaystackSecretKey);
+                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", keys.PaystackSecretKey);
                         using var response = await httpClient.PostAsync($"{url}", content);
                         string apiResponse = await response.Content.ReadAsStringAsync();
                         if (response.StatusCode == HttpStatusCode.OK)
@@ -1750,7 +1685,7 @@ namespace Genilog_WebApi.Controllers
             var url = $"https://api.paystack.co/transaction/verify/{reference}";
 
             using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.PaystackSecretKey);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", keys.PaystackSecretKey);
             using var response = await httpClient.GetAsync($"{url}");
             string apiResponse = await response.Content.ReadAsStringAsync();
             if (response.StatusCode == HttpStatusCode.OK)
@@ -1890,7 +1825,7 @@ namespace Genilog_WebApi.Controllers
                                 name = request.CustomerName
                             },
                             currency = "NGN",
-                            redirect_url = $"{Cls_Keys.ServerURL}/api/Bookings/verify-flutterwave-accomodation-reservations-customer?orderId={contacts.Id}", // The URL to redirect after payment
+                            redirect_url = $"{keys.ServerURL}/api/Bookings/verify-flutterwave-accomodation-reservations-customer?orderId={contacts.Id}", // The URL to redirect after payment
                             customizations = new
                             {
                                 title = "My App Payment",
@@ -1904,7 +1839,7 @@ namespace Genilog_WebApi.Controllers
                         };
                         using var httpClient = new HttpClient(handler);
                         StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
-                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.FlutterwaveSecretKey);
+                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", keys.FlutterwaveSecretKey);
                         try
                         {
                             using var response = await httpClient.PostAsync($"{url}", content);
@@ -1996,7 +1931,7 @@ namespace Genilog_WebApi.Controllers
                                 name = request.CustomerName
                             },
                             currency = "NGN",
-                            redirect_url = $"{Cls_Keys.ServerURL}/api/Bookings/verify-flutterwave-accomodation-reservations-customer?orderId={contacts.Id}", // The URL to redirect after payment
+                            redirect_url = $"{keys.ServerURL}/api/Bookings/verify-flutterwave-accomodation-reservations-customer?orderId={contacts.Id}", // The URL to redirect after payment
                             customizations = new
                             {
                                 title = "My App Payment",
@@ -2012,7 +1947,7 @@ namespace Genilog_WebApi.Controllers
                         using var httpClient = new HttpClient(handler);
 
                         StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
-                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.FlutterwaveSecretKey);
+                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", keys.FlutterwaveSecretKey);
                         try
                         {
                             using var response = await httpClient.PostAsync($"{url}", content);
@@ -2058,7 +1993,7 @@ namespace Genilog_WebApi.Controllers
             var url = $"https://api.flutterwave.com/v3/transactions/{transaction_id}/verify";
 
             using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.FlutterwaveSecretKey);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", keys.FlutterwaveSecretKey);
             using var response = await httpClient.GetAsync($"{url}");
             string apiResponse = await response.Content.ReadAsStringAsync();
             if (response.StatusCode == HttpStatusCode.OK)
@@ -2108,13 +2043,13 @@ namespace Genilog_WebApi.Controllers
                     // Update detials to repository
                     await accomodationRepository.UpdateBookAccomodationReservationAsync(tronData.ResevationId, book);
                     // TODO: Mark payment as successful in DB
-                    return Redirect($"{Cls_Keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
+                    return Redirect($"{keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
                 }
                 else
                 {
 
                     await accomodationRepository.DeleteCustomerBookedReservationAsync(orderId);
-                    return Redirect($"{Cls_Keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
+                    return Redirect($"{keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
                 }
 
             }
@@ -2130,8 +2065,9 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
+        #endregion
 
-
+        #region ACCOMODATIONS Chat
         // Accomodation Chat Message
         [HttpGet("all-accomodation-chat-messages")]
         [Authorize]
@@ -2262,6 +2198,7 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
+        #endregion
 
 
         #region private methods
@@ -2466,26 +2403,6 @@ namespace Genilog_WebApi.Controllers
 
         #endregion
 
-        #region Public Tracking
-        // Public endpoint for tracking bookings without authentication
-        [HttpGet("track-booking")]
-        [AllowAnonymous]
-        public async Task<IActionResult> TrackBookingByTicketNum([FromQuery] string ticketRef)
-        {
-            if (string.IsNullOrWhiteSpace(ticketRef))
-            {
-                return BadRequest(new ErrorModel { Message = "Booking reference is required", Status = true });
-            }
-
-            var booking = await accomodationRepository.GetCustomerBookedReservationByTicketNumAsync(ticketRef);
-            if (booking == null)
-            {
-                return NotFound(new ErrorModel { Message = "Booking not found with this reference number", Status = true });
-            }
-
-            var bookingDto = mapper.Map<CustomerBookedReservationDto>(booking);
-            return Ok(bookingDto);
-        }
-        #endregion
+       
     }
 }

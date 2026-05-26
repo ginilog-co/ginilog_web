@@ -27,6 +27,8 @@ namespace Genilog_WebApi.Model.UsersDataModel
         public DateTime? CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }
         public DateTime? LastSeenAt { get; set; }
+        public bool SuspendedAccount { get; set; }
+        public bool ArchivedAccount { get; set; }
     }
 
 
@@ -73,6 +75,8 @@ namespace Genilog_WebApi.Model.UsersDataModel
         public DateTime? CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }
         public DateTime? LastSeenAt { get; set; }
+        public bool SuspendedAccount { get; set; }
+        public bool ArchivedAccount { get; set; }
     }
 
     public class DeliveryAddressDto

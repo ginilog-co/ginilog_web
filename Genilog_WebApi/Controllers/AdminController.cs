@@ -4,18 +4,17 @@ using Genilog_WebApi.Key;
 using Genilog_WebApi.Model;
 using Genilog_WebApi.Model.AdminsModel;
 using Genilog_WebApi.Model.AuthModel;
-using Genilog_WebApi.Model.LogisticsModel;
 using Genilog_WebApi.Model.WalletModel;
-using Genilog_WebApi.Repository;
 using Genilog_WebApi.Repository.AdminRepo;
 using Genilog_WebApi.Repository.AuthRepo;
-using Genilog_WebApi.Repository.LogisticsRepo;
+using Genilog_WebApi.Repository.AuthRepo.PolicyBased;
 using Genilog_WebApi.Repository.UploadRepo;
 using Google.Cloud.Firestore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Data;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Claims;
@@ -24,10 +23,11 @@ using System.Text;
 
 namespace Genilog_WebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/admin-controller")]
     [ApiController]
     public class AdminController(IHostEnvironment _env, IAdminRepository usersRepository, IMapper mapper, ITokenHandler tokenHandler, IRolesRepository rolesRepository,
-     IUser_RoleRepository user_RoleRepository, IUploadRepository uploadRepository, IGeneralUserRepository generalUserRepository) : ControllerBase
+     IUser_RoleRepository user_RoleRepository, IUploadRepository uploadRepository, 
+     IGeneralUserRepository generalUserRepository, Cls_Keys keys, IBlacklistedTokenRepository blacklistedTokenRepository) : ControllerBase
     {
         private readonly IHostEnvironment _env = _env;
         private readonly IAdminRepository usersRepository = usersRepository;
@@ -37,7 +37,133 @@ namespace Genilog_WebApi.Controllers
         private readonly IUser_RoleRepository user_RoleRepository = user_RoleRepository;
         private readonly IUploadRepository uploadRepository = uploadRepository;
         private readonly IGeneralUserRepository generalUserRepository = generalUserRepository;
-        readonly string keyPath = Path.Combine(_env.ContentRootPath, "Key\\ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
+        private readonly Cls_Keys keys = keys;
+        private readonly IBlacklistedTokenRepository blacklistedTokenRepository = blacklistedTokenRepository;
+
+
+
+        [HttpPost("user/{userId}/access")]
+        [Authorize(Roles = "Super_Admin", Policy = "CanAssignRoles")]
+        public async Task<IActionResult> AddAccessToUser([FromRoute] Guid userId, [FromBody] AddAccessRequest request)
+        {
+            // Null Body Handling
+            if (request == null)
+            {
+                return BadRequest("Request body cannot be empty.");
+            }
+
+            if ((request.Roles == null || request.Roles.Count == 0) &&
+                (request.Permissions == null || request.Permissions.Count == 0))
+            {
+                return BadRequest("No roles or permissions provided.");
+            }
+
+            var user = await generalUserRepository.GetAsync(userId);
+            if (user == null) return NotFound("User not found");
+
+            //-----------------------------
+            // 1. ADD ROLES
+            //-----------------------------
+            if (request.Roles != null && request.Roles.Count != 0)
+            {
+                foreach (var roleEnum in request.Roles)
+                {
+                    var role = await RolePermissionHelper.GetRoleAsync(roleEnum, rolesRepository);
+
+                    if (role != null)
+                    {
+                        var userRoles = await rolesRepository.GetUserRolesAsync(user.Id);
+
+                        if (!userRoles.Any(r => r.Id == role.Id))
+                        {
+                            await rolesRepository.AddUserRoleAsync(new User_Role
+                            {
+                                GeneralUsersId = user.Id,
+                                RoleId = role.Id
+                            });
+                        }
+                    }
+                }
+            }
+
+            //-----------------------------
+            // 2. ADD PERMISSIONS
+            //-----------------------------
+            if (request.Permissions != null && request.Permissions.Count != 0)
+            {
+                foreach (var permissionEnum in request.Permissions)
+                {
+                    var permission = await RolePermissionHelper.GetPermissionAsync(permissionEnum, rolesRepository);
+
+                    if (permission != null)
+                    {
+                        var userPermissions = await rolesRepository.GetUserPermissionsAsync(user.Id);
+
+                        if (!userPermissions.Any(p => p.Id == permission.Id))
+                        {
+                            await rolesRepository.AddUserPermissionAsync(new UserPermissionUsage
+                            {
+                                GeneralUsersId = user.Id,
+                                PermissionId = permission.Id
+                            });
+                        }
+                    }
+                }
+            }
+
+            return Ok(new
+            {
+                Message = "Access updated successfully."
+            });
+        }
+
+
+        [HttpDelete("user/{userId}/roles")]
+        [Authorize(Roles = "Super_Admin", Policy = "CanAssignRoles")]
+        public async Task<IActionResult> RemoveRoleFromUser([FromRoute] Guid userId, [FromBody] RoleType roleToRemove)
+        {
+            var user = await generalUserRepository.GetAsync(userId);
+            if (user == null) return NotFound("User not found");
+
+            var role = await RolePermissionHelper.GetRoleAsync(roleToRemove, rolesRepository);
+            if (role == null) return NotFound("Role does not exist");
+
+            var userRoles = await rolesRepository.GetUserRolesAsync(userId);
+            var userRoleEntry = userRoles.FirstOrDefault(r => r.Id == role.Id);
+
+            if (userRoleEntry == null)
+            {
+                return BadRequest($"User does not have the '{role.Name}' role.");
+            }
+
+            await rolesRepository.RemoveUserRoleAsync(userId, role.Id);
+
+            return Ok(new { Message = $"Role '{role.Name}' removed successfully." });
+        }
+
+        [HttpDelete("user/{userId}/permissions")]
+        [Authorize(Roles = "Super_Admin", Policy = "CanAssignRoles")]
+        public async Task<IActionResult> RemovePermissionFromUser([FromRoute] Guid userId, [FromBody] PermissionType permissionToRemove)
+        {
+            var user = await generalUserRepository.GetAsync(userId);
+            if (user == null) return NotFound("User not found");
+
+            var permission = await RolePermissionHelper.GetPermissionAsync(permissionToRemove, rolesRepository);
+            if (permission == null) return NotFound("Permission does not exist");
+
+            var userPermissions = await rolesRepository.GetUserPermissionsAsync(userId);
+            var userPermissionEntry = userPermissions.FirstOrDefault(p => p.Id == permission.Id);
+
+            if (userPermissionEntry == null)
+            {
+                return BadRequest($"User does not have the '{permission.Name}' permission.");
+            }
+
+            await rolesRepository.RemoveUserPermissionAsync(userId, permission.Id);
+
+            return Ok(new { Message = $"Permission '{permission.Name}' removed successfully." });
+        }
+
 
         [HttpPost]
         [Route("login")]
@@ -149,29 +275,119 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
-        [HttpPost]
-        [Route("bootstrap")]
-        public async Task<IActionResult> BootstrapSuperAdminAsync([FromBody] BootstrapSuperAdminRequest request)
+        [HttpPost("tokens/refresh")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RefreshTokens([FromBody] RefreshTokenRequest request)
         {
-            var allUsers = await generalUserRepository.GetAllAsync();
-            if (allUsers.Any(u => u.UserType == "Super_Admin"))
+            var user = await generalUserRepository.GetByEmailAsync(request.Email);
+
+            if (user == null)
+                return Unauthorized();
+
+            // VALIDATE + ROTATE TOKEN
+            var newRefreshToken = await tokenHandler.RotateRefreshTokenAsync(
+                request.Email,
+                request.RefreshToken
+            );
+
+            if (newRefreshToken == null)
             {
-                return StatusCode(403, new ErrorModel { Message = "Super Admin already exists. Bootstrap is locked.", Status = true });
+                var error = new ErrorModel()
+                {
+                    Message = "Invalid refresh token",
+                    Status = true
+                };
+                return Unauthorized(error);
             }
 
-            var emailExists = await generalUserRepository.UserExistAsync(request.Email!);
-            if (emailExists)
+            // CREATE NEW ACCESS TOKEN
+            var newAccessToken = tokenHandler.CreateTokenAsync(user);
+
+            return Ok(new
             {
-                return BadRequest(new ErrorModel { Message = "Email already in use.", Status = true });
+                token = newAccessToken,
+                refreshToken = newRefreshToken,
+            });
+        }
+
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            // GET JWT
+            var token = HttpContext.Request.Headers.Authorization
+                .ToString()
+                .Replace("Bearer ", "");
+
+            if (string.IsNullOrWhiteSpace(token))
+                return Unauthorized();
+
+            var handler = new JwtSecurityTokenHandler();
+
+            if (!handler.CanReadToken(token))
+                return Unauthorized("Invalid token");
+
+            var jwtToken = handler.ReadJwtToken(token);
+
+            // JWT ID
+            var jti = jwtToken.Id;
+
+            // EXPIRY
+            var expiry = jwtToken.ValidTo;
+
+            // USER EMAIL
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+
+            // BLACKLIST ACCESS TOKEN
+            var tokenEx = new BlacklistedToken()
+            {
+                Jti = jti,
+                Expiry = expiry,
+                CreatedAt = DateTime.UtcNow,
+            };
+
+            await blacklistedTokenRepository.BlacklistTokenAsync(tokenEx);
+
+            // REMOVE REFRESH TOKEN
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                await tokenHandler.LogoutAsync(email);
             }
 
-            var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
-            var admin = new GeneralUsers()
+            return Ok(new
+            {
+                message = "Logged out successfully"
+            });
+        }
+
+
+
+        [HttpPost]
+        [Authorize(Roles = "Super_Admin", Policy = "CanCreateAdmin")]
+        public async Task<IActionResult> AddMainAdminAsync(AddAdminRequest request)
+        {
+            // Validate request
+            var isValid = await ValidateAddUserAsync(request);
+            if (!isValid)
+                return BadRequest(ModelState);
+
+            // Ensure AdminType is valid enum
+            if (!Enum.TryParse<RoleType>(request.AdminType, out var roleEnums))
+            {
+                return BadRequest(new ErrorModel
+                {
+                    Message = "Invalid Admin Type",
+                    Status = true
+                });
+            }
+
+            // Create GeneralUsers entity
+            var admin = new GeneralUsers
             {
                 FirstName = request.FirstName,
-                LastName = request.LastName,
+                LastName = request.SurName,
                 Email = request.Email,
-                UserType = "Super_Admin",
+                UserType = roleEnums.ToString(),
                 PhoneNo = request.PhoneNo,
                 VerificationToken = CreateRandomToken(),
                 EmailConfirmed = true,
@@ -191,74 +407,102 @@ namespace Genilog_WebApi.Controllers
                 PhoneVerifiedAt = DateTime.UtcNow.AddMinutes(10),
                 PasswordResetToken = "",
                 RefreshToken = "",
+                UserName="",
+                ActivateWallet=false,
+                ArchivedAccount=false,
+                SuspendedAccount=false,
+                TwoFactorSecret="",
+                TwoFactorRecoveryCodes="",
+                TwoFactorRecoveryCodesHash =""
             };
+
             admin = await generalUserRepository.AddAsync(admin, request.Password!);
 
-            var users = new AdminModelTable()
+            // Create AdminModelTable entity
+            var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
+            var userTable = new AdminModelTable
             {
                 Id = admin.Id,
-                Sex = "N/A",
+                Sex = request.Sex,
                 ImagePath = "",
                 FirstName = request.FirstName,
-                SurName = request.LastName,
+                SurName = request.SurName,
                 Email = request.Email,
-                StaffCode = "SA001",
+                StaffCode = request.StaffCode,
                 PhoneNo = request.PhoneNo,
-                Address = "N/A",
-                Branch = "Main",
-                Locality = "N/A",
-                State = "N/A",
-                AdminType = "Super_Admin",
-                ManagerId = admin.Id,
+                Address = request.Address,
+                Branch = request.Branch,
+                Locality = request.Locality,
+                State = request.State,
+                AdminType = request.AdminType,
                 DatePublished = date,
+                CompanyType=request.CompanyType,
+                CompanyName = request.CompanyName,
+                CompanyUserName = request.CompanyUserName,
+                ManagerId=admin.Id,
                 CreatedAt = DateTime.UtcNow
             };
-            users = await usersRepository.AddAsync(users);
 
-            var roles = new Roles() { Name = "Super_Admin" };
-            roles = await rolesRepository.AddAsync(roles);
-            await user_RoleRepository.AddAsync(new User_Role { GeneralUsersId = users.Id, RoleId = roles.Id });
+            userTable = await usersRepository.AddAsync(userTable);
 
-            return Ok(new { Message = "Super Admin created successfully. Bootstrap endpoint is now locked.", Email = users.Email });
+            // Assign multiple roles
+            foreach (var roleEnum in request.Roles)
+            {
+                var role = await RolePermissionHelper.GetRoleAsync(roleEnum, rolesRepository);
+                if (role != null)
+                {
+                    await rolesRepository.AddUserRoleAsync(new User_Role
+                    {
+                        GeneralUsersId = userTable.Id,
+                        RoleId = role.Id
+                    });
+                }
+            }
+
+            // Assign multiple permissions
+            foreach (var permEnum in request.Permissions)
+            {
+                var perm = await RolePermissionHelper.GetPermissionAsync(permEnum, rolesRepository);
+                if (perm != null)
+                {
+                    await rolesRepository.AddUserPermissionAsync(new UserPermissionUsage
+                    {
+                        GeneralUsersId = userTable.Id,
+                        PermissionId = perm.Id
+                    });
+                }
+            }
+
+            // Convert to DTO
+            var userDto = new AdminModelTableDto
+            {
+                Id = userTable.Id,
+                SurName = userTable.SurName,
+                FirstName = userTable.FirstName,
+                Email = userTable.Email,
+                Sex = userTable.Sex,
+                ImagePath = userTable.ImagePath,
+                StaffCode = userTable.StaffCode,
+                Address = userTable.Address,
+                Branch = userTable.Branch,
+                Locality = userTable.Locality,
+                State = userTable.State,
+                AdminType = admin.UserType,
+                PhoneNo = userTable.PhoneNo,
+                DatePublished = userTable.DatePublished,
+                
+                CreatedAt = userTable.CreatedAt
+            };
+
+            return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.Id }, userDto);
         }
 
         [HttpGet]
-        [Authorize(Roles = "Super_Admin")]
-        public async Task<IActionResult> GetAllAdminAsync()
+        [Authorize(Roles = "Super_Admin", Policy = "CanViewAdmin")]
+        public async Task<IActionResult> GetAllAdminUsers([FromQuery] FilterLocationData filter)
         {
-            var users = await usersRepository.GetAllAsync();
-            users = users.Where(x => x.AdminType == "Super_Admin" || x.AdminType == "Admin" || x.AdminType == "Manager").ToList();
-            var userDto = mapper.Map<List<AdminModelTableDto>>(users);
-            return Ok(userDto);
-        }
-
-
-        [HttpGet]
-        [Route("staff-users")]
-        [Authorize(Roles = "Super_Admin,Manager,Admin")]
-        public async Task<IActionResult> GetAllStaffAsync()
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!Guid.TryParse(userId, out Guid userGuid))
-            {
-                return BadRequest("Invalid User ID format.");
-            }
-            var user = await generalUserRepository.GetAsync(userGuid);
-            if (user.UserType == "Super_Admin" || user.UserType == "Admin")
-            {
-                var users = await usersRepository.GetAllAsync();
-                users= [.. users.Where(x=> x.AdminType== "Staff_Admin" || x.AdminType== "Staff")];
-                var userDto = mapper.Map<List<AdminModelTableDto>>(users);
-                return Ok(userDto);
-            }
-            else
-            {
-                var users = await usersRepository.GetAllAsync();
-                users = [.. users.Where(x => (x.ManagerId==user.Id)&&(x.AdminType == "Staff_Admin" || x.AdminType == "Staff"))];
-                var userDto = mapper.Map<List<AdminModelTableDto>>(users);
-                return Ok(userDto);
-            }
-           
+            var result = await usersRepository.GetAllAdminAsync(filter);
+            return Ok(result);
         }
 
         [HttpGet]
@@ -305,123 +549,6 @@ namespace Genilog_WebApi.Controllers
 
         }
 
-        [HttpPost]
-        [Authorize(Roles = "Super_Admin")]
-        public async Task<IActionResult> AddAdminAsync(AddAdminRequest request)
-        {
-            // Validate the request
-            var check = await ValidateAddUserAsync(request);
-
-            if (!check)
-            {
-                return BadRequest(ModelState);
-            }
-            else
-            {
-                if (request.AdminType == "Super_Admin" || request.AdminType == "Admin" || request.AdminType=="Manager") 
-                {
-                    var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
-                    var timeStamp = Timestamp.GetCurrentTimestamp();
-                    var admin = new GeneralUsers()
-                    {
-                        FirstName = request.FirstName,
-                        LastName = request.SurName,
-                        Email = request.Email,
-                        UserType = request.AdminType,
-                        PhoneNo = request.PhoneNo,
-                        VerificationToken = CreateRandomToken(),
-                        EmailConfirmed = true,
-                        ImagePath = "",
-                        CreatedAt = DateTime.UtcNow,
-                        LockOutEndEnabled = false,
-                        AccessFailedCount = 0,
-                        TwoFactorEnabled = false,
-                        LockOutEnd = DateTime.UtcNow.AddDays(30),
-                        PhoneNoConfirmed = true,
-                        ResetTokenExpires = DateTime.UtcNow.AddMinutes(10),
-                        EmailTokenExpires = DateTime.UtcNow.AddMinutes(10),
-                        PhoneNoTokenExpires = DateTime.UtcNow.AddMinutes(10),
-                        RefreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(10),
-                        VerifiedAt = DateTime.UtcNow,
-                        PhoneVerificationToken = CreateRandomToken(),
-                        PhoneVerifiedAt = DateTime.UtcNow.AddMinutes(10),
-                        PasswordResetToken = "",
-                        RefreshToken = "",
-                    };
-                    admin = await generalUserRepository.AddAsync(admin, request.Password!);
-                    var users = new AdminModelTable()
-                    {
-                        Id = admin.Id,
-                        Sex = request.Sex,
-                        ImagePath = "",
-                        FirstName = request.FirstName,
-                        SurName = request.SurName,
-                        Email = request.Email,
-                        StaffCode = request.StaffCode,
-                        PhoneNo = request.PhoneNo,
-                        Address = request.Address,
-                        Branch = request.Branch,
-                        Locality = request.Locality,
-                        State = request.State,
-                        CompanyName = request.CompanyName,
-                        CompanyUserName = request.CompanyUserName,
-                        CompanyType = request.CompanyType,
-                        AdminType = request.AdminType,
-                        ManagerId = admin.Id,
-                        DatePublished = date,
-                        CreatedAt = DateTime.UtcNow
-
-                    };
-                    // Pass detials to repository
-                    users = await usersRepository.AddAsync(users);
-
-                    var roles = new Roles()
-                    {
-                        Name = admin.UserType
-                    };
-                    roles = await rolesRepository.AddAsync(roles);
-                    var user_Roles = new User_Role()
-                    {
-                        GeneralUsersId = users.Id,
-                        RoleId = roles.Id,
-                    };
-                    await user_RoleRepository.AddAsync(user_Roles);
-                    // convert back to dto
-                    var userDto = new AdminModelTableDto()
-                    {
-                        Id = users.Id,
-                        SurName = users.SurName,
-                        FirstName = users.FirstName,
-                        Email = users.Email,
-                        Sex = users.Sex,
-                        ImagePath = users.ImagePath,
-                        StaffCode = users.StaffCode,
-                        Address = users.Address,
-                        Branch = users.Branch,
-                        Locality = users.Locality,
-                        State = users.State,
-                        AdminType = admin.UserType,
-                        PhoneNo = users.PhoneNo,
-                        CompanyName = users.CompanyName,
-                        CompanyUserName = users.CompanyUserName,
-                        CompanyType = users.CompanyType,
-                        ManagerId = users.ManagerId,
-                        DatePublished = users.DatePublished,
-                        CreatedAt = users.CreatedAt,
-                    };
-                    return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.Id }, userDto);
-                }
-                else
-                {
-                    var error = new ErrorModel()
-                    {
-                        Message = "Invalid Admin Type",
-                        Status = true
-                    };
-                    return BadRequest(error);
-                }
-            }
-        }
 
         [HttpPost]
         [Route("add-manager")]
@@ -436,108 +563,130 @@ namespace Genilog_WebApi.Controllers
             }
             else
             {
-                if (request.AdminType == "Manager")
+                // Ensure AdminType is valid enum
+                if (!Enum.TryParse<RoleType>(request.AdminType, out var roleEnums))
                 {
-                    var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
-                    var timeStamp = Timestamp.GetCurrentTimestamp();
-                    var admin = new GeneralUsers()
-                    {
-                        FirstName = request.FirstName,
-                        LastName = request.SurName,
-                        Email = request.Email,
-                        UserType = request.AdminType,
-                        PhoneNo = request.PhoneNo,
-                        VerificationToken = CreateRandomToken(),
-                        EmailConfirmed = true,
-                        ImagePath = "",
-                        CreatedAt = DateTime.UtcNow,
-                        LockOutEndEnabled = false,
-                        AccessFailedCount = 0,
-                        TwoFactorEnabled = false,
-                        LockOutEnd = DateTime.UtcNow.AddDays(30),
-                        PhoneNoConfirmed = true,
-                        ResetTokenExpires = DateTime.UtcNow.AddMinutes(10),
-                        EmailTokenExpires = DateTime.UtcNow.AddMinutes(10),
-                        PhoneNoTokenExpires = DateTime.UtcNow.AddMinutes(10),
-                        RefreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(10),
-                        VerifiedAt = DateTime.UtcNow,
-                        PhoneVerificationToken = CreateRandomToken(),
-                        PhoneVerifiedAt = DateTime.UtcNow.AddMinutes(10),
-                        PasswordResetToken = "",
-                        RefreshToken = "",
-                    };
-                    admin = await generalUserRepository.AddAsync(admin, request.Password!);
-                    var users = new AdminModelTable()
-                    {
-                        Id = admin.Id,
-                        Sex = request.Sex,
-                        ImagePath = "",
-                        FirstName = request.FirstName,
-                        SurName = request.SurName,
-                        Email = request.Email,
-                        StaffCode = request.StaffCode,
-                        PhoneNo = request.PhoneNo,
-                        Address = request.Address,
-                        Branch = request.Branch,
-                        Locality = request.Locality,
-                        State = request.State,
-                        CompanyName = request.CompanyName,
-                        CompanyUserName = request.CompanyUserName,
-                        CompanyType = request.CompanyType,
-                        AdminType = request.AdminType,
-                        ManagerId = admin.Id,
-                        DatePublished = date,
-                        CreatedAt = DateTime.UtcNow
-
-                    };
-                    // Pass detials to repository
-                    users = await usersRepository.AddAsync(users);
-
-                    var roles = new Roles()
-                    {
-                        Name = admin.UserType
-                    };
-                    roles = await rolesRepository.AddAsync(roles);
-                    var user_Roles = new User_Role()
-                    {
-                        GeneralUsersId = users.Id,
-                        RoleId = roles.Id,
-                    };
-                    await user_RoleRepository.AddAsync(user_Roles);
-                    // convert back to dto
-                    var userDto = new AdminModelTableDto()
-                    {
-                        Id = users.Id,
-                        SurName = users.SurName,
-                        FirstName = users.FirstName,
-                        Email = users.Email,
-                        Sex = users.Sex,
-                        ImagePath = users.ImagePath,
-                        StaffCode = users.StaffCode,
-                        Address = users.Address,
-                        Branch = users.Branch,
-                        Locality = users.Locality,
-                        State = users.State,
-                        AdminType = admin.UserType,
-                        PhoneNo = users.PhoneNo,
-                        CompanyName = users.CompanyName,
-                        CompanyUserName = users.CompanyUserName,
-                        CompanyType = users.CompanyType,
-                        ManagerId = users.ManagerId,
-                        DatePublished = users.DatePublished,
-                        CreatedAt = users.CreatedAt,
-                    };
-                    return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.Id }, userDto);
-                }
-                else
-                {
-                    var error = new ErrorModel()
+                    return BadRequest(new ErrorModel
                     {
                         Message = "Invalid Admin Type",
                         Status = true
-                    };
-                    return BadRequest(error);
+                    });
                 }
+                var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
+                var timeStamp = Timestamp.GetCurrentTimestamp();
+                var admin = new GeneralUsers()
+                {
+                    FirstName = request.FirstName,
+                    LastName = request.SurName,
+                    Email = request.Email,
+                    UserType = request.AdminType,
+                    PhoneNo = request.PhoneNo,
+                    VerificationToken = CreateRandomToken(),
+                    EmailConfirmed = true,
+                    ImagePath = "",
+                    CreatedAt = DateTime.UtcNow,
+                    LockOutEndEnabled = false,
+                    AccessFailedCount = 0,
+                    TwoFactorEnabled = false,
+                    LockOutEnd = DateTime.UtcNow.AddDays(30),
+                    PhoneNoConfirmed = true,
+                    ResetTokenExpires = DateTime.UtcNow.AddMinutes(10),
+                    EmailTokenExpires = DateTime.UtcNow.AddMinutes(10),
+                    PhoneNoTokenExpires = DateTime.UtcNow.AddMinutes(10),
+                    RefreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(10),
+                    VerifiedAt = DateTime.UtcNow,
+                    PhoneVerificationToken = CreateRandomToken(),
+                    PhoneVerifiedAt = DateTime.UtcNow.AddMinutes(10),
+                    PasswordResetToken = "",
+                    RefreshToken = "",
+                    UserName = "",
+                    ActivateWallet = false,
+                    ArchivedAccount = false,
+                    SuspendedAccount = false,
+                    TwoFactorSecret = "",
+                    TwoFactorRecoveryCodes = "",
+                    TwoFactorRecoveryCodesHash = ""
+                };
+                admin = await generalUserRepository.AddAsync(admin, request.Password!);
+                var users = new AdminModelTable()
+                {
+                    Id = admin.Id,
+                    Sex = request.Sex,
+                    ImagePath = "",
+                    FirstName = request.FirstName,
+                    SurName = request.SurName,
+                    Email = request.Email,
+                    StaffCode = request.StaffCode,
+                    PhoneNo = request.PhoneNo,
+                    Address = request.Address,
+                    Branch = request.Branch,
+                    Locality = request.Locality,
+                    State = request.State,
+                    CompanyName = request.CompanyName,
+                    CompanyUserName = request.CompanyUserName,
+                    CompanyType = request.CompanyType,
+                    AdminType = request.AdminType,
+                    ManagerId = admin.Id,
+                    DatePublished = date,
+                    
+                    CreatedAt = DateTime.UtcNow
+
+                };
+                // Pass detials to repository
+                users = await usersRepository.AddAsync(users);
+
+                // Assign multiple roles
+                foreach (var roleEnum in request.Roles)
+                {
+                    var role = await RolePermissionHelper.GetRoleAsync(roleEnum, rolesRepository);
+                    if (role != null)
+                    {
+                        await rolesRepository.AddUserRoleAsync(new User_Role
+                        {
+                            GeneralUsersId = users.Id,
+                            RoleId = role.Id
+                        });
+                    }
+                }
+
+                // Assign multiple permissions
+                foreach (var permEnum in request.Permissions)
+                {
+                    var perm = await RolePermissionHelper.GetPermissionAsync(permEnum, rolesRepository);
+                    if (perm != null)
+                    {
+                        await rolesRepository.AddUserPermissionAsync(new UserPermissionUsage
+                        {
+                            GeneralUsersId = users.Id,
+                            PermissionId = perm.Id
+                        });
+                    }
+                }
+                // convert back to dto
+                var userDto = new AdminModelTableDto()
+                {
+                    Id = users.Id,
+                    SurName = users.SurName,
+                    FirstName = users.FirstName,
+                    Email = users.Email,
+                    Sex = users.Sex,
+                    ImagePath = users.ImagePath,
+                    StaffCode = users.StaffCode,
+                    Address = users.Address,
+                    Branch = users.Branch,
+                    Locality = users.Locality,
+                    State = users.State,
+                    AdminType = admin.UserType,
+                    PhoneNo = users.PhoneNo,
+                    CompanyName = users.CompanyName,
+                    CompanyUserName = users.CompanyUserName,
+                    CompanyType = users.CompanyType,
+                    ManagerId = users.ManagerId,
+                    DatePublished = users.DatePublished,
+                    CreatedAt = users.CreatedAt,
+                };
+                return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.Id }, userDto);
+
             }
         }
 
@@ -559,6 +708,15 @@ namespace Genilog_WebApi.Controllers
             }
             else
             {
+                // Ensure AdminType is valid enum
+                if (!Enum.TryParse<RoleType>(request.AdminType, out var roleEnums))
+                {
+                    return BadRequest(new ErrorModel
+                    {
+                        Message = "Invalid Admin Type",
+                        Status = true
+                    });
+                }
                 if (request.AdminType == "Staff_Admin" || request.AdminType == "Staff")
                 {
                     var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
@@ -588,6 +746,13 @@ namespace Genilog_WebApi.Controllers
                         PhoneVerifiedAt = DateTime.UtcNow.AddMinutes(10),
                         PasswordResetToken = "",
                         RefreshToken = "",
+                        UserName = "",
+                        ActivateWallet = false,
+                        ArchivedAccount = false,
+                        SuspendedAccount = false,
+                        TwoFactorSecret = "",
+                        TwoFactorRecoveryCodes = "",
+                        TwoFactorRecoveryCodesHash = ""
                     };
                     admin = await generalUserRepository.AddAsync(admin, request.Password!);
                     var users = new AdminModelTable()
@@ -616,17 +781,34 @@ namespace Genilog_WebApi.Controllers
                     // Pass detials to repository
                     users = await usersRepository.AddAsync(users);
 
-                    var roles = new Roles()
+                    // Assign multiple roles
+                    foreach (var roleEnum in request.Roles)
                     {
-                        Name = admin.UserType
-                    };
-                    roles = await rolesRepository.AddAsync(roles);
-                    var user_Roles = new User_Role()
+                        var role = await RolePermissionHelper.GetRoleAsync(roleEnum, rolesRepository);
+                        if (role != null)
+                        {
+                            await rolesRepository.AddUserRoleAsync(new User_Role
+                            {
+                                GeneralUsersId = users.Id,
+                                RoleId = role.Id
+                            });
+                        }
+                    }
+
+                    // Assign multiple permissions
+                    foreach (var permEnum in request.Permissions)
                     {
-                        GeneralUsersId = users.Id,
-                        RoleId = roles.Id,
-                    };
-                    await user_RoleRepository.AddAsync(user_Roles);
+                        var perm = await RolePermissionHelper.GetPermissionAsync(permEnum, rolesRepository);
+                        if (perm != null)
+                        {
+                            await rolesRepository.AddUserPermissionAsync(new UserPermissionUsage
+                            {
+                                GeneralUsersId = users.Id,
+                                PermissionId = perm.Id
+                            });
+                        }
+                    }
+
                     // convert back to dto
                     var userDto = new AdminModelTableDto()
                     {
@@ -1022,18 +1204,18 @@ namespace Genilog_WebApi.Controllers
                 {
                     email = admin.Email,
                     amount = (events.AdvertItemCost) * 100,  // Amount in Kobo (100 kobo = 1 Naira)
-                    callback_url = $"{Cls_Keys.ServerURL}/api/Admin/verify-paystack-advert-payment?orderId={events.Id}", // The URL to redirect after payment
+                    callback_url = $"{keys.ServerURL}/api/Admin/verify-paystack-advert-payment?orderId={events.Id}", // The URL to redirect after payment
                     channels = new[] { "card", "bank", "ussd", "mobile_money", "bank_transfer" },
                     metadata = new
                     {
-                        cancel_action = $"{Cls_Keys.ServerURL}/api/paystack-redirect?status=cancelled"
+                        cancel_action = $"{keys.ServerURL}/api/paystack-redirect?status=cancelled"
                     }
                 };
 
                 using var httpClient = new HttpClient();
 
                 StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.PaystackSecretKey);
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", keys.PaystackSecretKey);
                 using var response = await httpClient.PostAsync($"{url}", content);
                 string apiResponse = await response.Content.ReadAsStringAsync();
                 if (response.StatusCode == HttpStatusCode.OK)
@@ -1063,7 +1245,7 @@ namespace Genilog_WebApi.Controllers
             var url = $"https://api.paystack.co/transaction/verify/{reference}";
 
             using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.PaystackSecretKey);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", keys.PaystackSecretKey);
             using var response = await httpClient.GetAsync($"{url}");
             string apiResponse = await response.Content.ReadAsStringAsync();
             if (response.StatusCode == HttpStatusCode.OK)
@@ -1134,7 +1316,7 @@ namespace Genilog_WebApi.Controllers
                         name = admin.FirstName + " " + admin.SurName,
                     },
                     currency = "NGN",
-                    redirect_url = $"{Cls_Keys.ServerURL}/api/Admin/verify-flutterwave-advert-payment?orderId={events.Id}", // The URL to redirect after payment
+                    redirect_url = $"{keys.ServerURL}/api/Admin/verify-flutterwave-advert-payment?orderId={events.Id}", // The URL to redirect after payment
                     customizations = new
                     {
                         title = "My App Payment",
@@ -1146,7 +1328,7 @@ namespace Genilog_WebApi.Controllers
                 using var httpClient = new HttpClient();
 
                 StringContent content = new(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json");
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.FlutterwaveSecretKey);
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", keys.FlutterwaveSecretKey);
                 using var response = await httpClient.PostAsync($"{url}", content);
                 string apiResponse = await response.Content.ReadAsStringAsync();
                 if (response.StatusCode == HttpStatusCode.OK)
@@ -1174,7 +1356,7 @@ namespace Genilog_WebApi.Controllers
             var url = $"https://api.flutterwave.com/v3/transactions/{transaction_id}/verify";
 
             using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Cls_Keys.FlutterwaveSecretKey);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", keys.FlutterwaveSecretKey);
             using var response = await httpClient.GetAsync($"{url}");
             string apiResponse = await response.Content.ReadAsStringAsync();
             if (response.StatusCode == HttpStatusCode.OK)
@@ -1210,12 +1392,12 @@ namespace Genilog_WebApi.Controllers
                     // Update detials to repository
                     await usersRepository.UpdateAdvertAsync(tronData.Id, user);
                     // TODO: Mark payment as successful in DB
-                    return Redirect($"{Cls_Keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
+                    return Redirect($"{keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
                 }
                 else
                 {
 
-                    return Redirect($"{Cls_Keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
+                    return Redirect($"{keys.ServerURL}/api/flutterwave-redirect?status={paystackResponse.PaymentStatus}");
                 }
 
             }
@@ -1237,12 +1419,10 @@ namespace Genilog_WebApi.Controllers
         [HttpGet]
         [Route("company-apply")]
         [Authorize(Roles = "Admin,Super_Admin")]
-        public async Task<IActionResult> GetAllCompanyApplyAsync()
+        public async Task<IActionResult> GetAllCompanyApplyAsync([FromQuery] FilterLocationData filter)
         {
-            var events = await usersRepository.GetAllCompanyApplyAsync();
-            events = [.. events.OrderByDescending(x => x.CreatedAt)];
-            var userDto = mapper.Map<List<CompanyApplyDataModelDto>>(events);
-            return Ok(userDto);
+            var result = await usersRepository.GetAllPaginatedCompanyApplyAsync(filter);
+            return Ok(result);
         }
 
         [HttpGet]

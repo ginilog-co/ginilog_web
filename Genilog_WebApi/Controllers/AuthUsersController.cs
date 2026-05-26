@@ -1,22 +1,24 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using Google.Cloud.Firestore;
-using Genilog_WebApi.Repository.UploadRepo;
-using Genilog_WebApi.Model.UsersDataModel;
-using Genilog_WebApi.Model;
-using Genilog_WebApi.Repository.AuthRepo;
-using Genilog_WebApi.Model.AuthModel;
 using Genilog_WebApi.EmailSender;
+using Genilog_WebApi.Model;
+using Genilog_WebApi.Model.AuthModel;
+using Genilog_WebApi.Model.UsersDataModel;
+using Genilog_WebApi.Repository.AuthRepo;
+using Genilog_WebApi.Repository.AuthRepo.PolicyBased;
+using Genilog_WebApi.Repository.UploadRepo;
 using Genilog_WebApi.Repository.UserRepo;
+using Google.Cloud.Firestore;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace Genilog_WebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/auth-users")]
     [ApiController]
     public class AuthUsersController(IHostEnvironment _env, IGeneralUserRepository userRepository, ITokenHandler tokenHandler, IMapper mapper, IRolesRepository rolesRepository, IUser_RoleRepository user_RoleRepository, IUserRepository newUsersRepository,
-        IUploadRepository uploadRepository) : ControllerBase
+        IUploadRepository uploadRepository, IBlacklistedTokenRepository blacklistedTokenRepository) : ControllerBase
     {
         private readonly IHostEnvironment _env = _env;
         private readonly IGeneralUserRepository userRepository = userRepository;
@@ -26,6 +28,7 @@ namespace Genilog_WebApi.Controllers
         private readonly IUser_RoleRepository user_RoleRepository = user_RoleRepository;
         private readonly IUserRepository newUsersRepository = newUsersRepository;
         private readonly IUploadRepository uploadRepository = uploadRepository;
+        private readonly IBlacklistedTokenRepository blacklistedTokenRepository = blacklistedTokenRepository;
 
         [HttpPut]
         [Route("update-device-token")]
@@ -83,18 +86,16 @@ namespace Genilog_WebApi.Controllers
         [Route("login")]
         public async Task<IActionResult> LoginAsync(LoginRequset requset)
         {
-
             var user = await userRepository.AuthenticateAsync(requset.Email_PhoneNo!, requset.Password!);
 
             if (user != null)
             {
-                var userD = await newUsersRepository.GetAsync(user.Id);
+
                 if (user.EmailConfirmed == false)
                 {
-                    var user2 = await userRepository.RequestNewEmailTokenAsync(userD.Email!);
-                    try { EmailTemplates.SendEmailVerificationCode(user.Email!, user2.VerificationToken!, user.LastName!); }
-                    catch (Exception ex) { Console.WriteLine($"Warning: Email send failed: {ex.Message}"); }
-                    //  string message1 = user.FirstName + " Your BMG(Bring My Gas) App Account Verication Code is " + user2.VerificationToken!;
+                    var user2 = await userRepository.RequestNewEmailTokenAsync(user.Email!);
+                    EmailTemplates.SendEmailVerificationCode(user.Email!, user2.VerificationToken!, user.LastName!);
+                    //  string message1 = user.FirstName + " Your Bizora(Bring My Gas) App Account Verication Code is " + user2.VerificationToken!;
                     var error = new ErrorModel()
                     {
                         Message = "User Email Not Yet Verify",
@@ -106,22 +107,24 @@ namespace Genilog_WebApi.Controllers
                 {
                     var error = new ErrorModel()
                     {
-                        Message = "Not A User Account",
+                        Message = "Account Does Not Exist",
                         Status = true
                     };
                     return BadRequest(error);
                 }
                 else
                 {
+                    var userD = await newUsersRepository.GetAsync(user.Id);
+                    var general = await userRepository.GetAsync(userD.Id);
                     //generate jwt token
-                    var token = tokenHandler.CreateTokenAsync(user);
-                    var refreshToken = tokenHandler.RefreshTokenAsync(user.Email!);
+                    var token = await tokenHandler.CreateTokenAsync(user);
+                    var refreshToken = await tokenHandler.RefreshTokenAsync(user.Email!);
                     // var userId = userRepository.Userd;
                     //  
                     var userDto = new LoginDto()
                     {
-                        Token = await token,
-                        RefreshToken = await refreshToken,
+                        Token = token,
+                        RefreshToken = refreshToken,
                         RefreshTokenExpiryTime = user.RefreshTokenExpiryTime,
                         UserId = user.Id,
                         Email = user.Email,
@@ -130,7 +133,10 @@ namespace Genilog_WebApi.Controllers
                         PhoneVerified = user.PhoneNoConfirmed,
                         FullName = $"{userD.FirstName} {userD.LastName}",
                         ProfileImage = userD.ProfilePicture,
-                        IdAuthPassword = ""
+                        IdAuthPassword = "",
+                        Roles = general.Roles,
+                        Permissions = general.Permissions,
+                        
                     };
                     var request = await newUsersRepository.GetAsync(user.Id);
                     var users = new UsersDataModelTable()
@@ -150,12 +156,11 @@ namespace Genilog_WebApi.Controllers
                         PostCodes = request.PostCodes,
                         Latitude = request.Latitude,
                         Longitude = request.Longitude,
-                        MoneyBoxBalance = request.MoneyBoxBalance,
-                        AccountName = request.AccountName,
-                        AccountNumber = request.AccountNumber,
-                        BankName = request.BankName,
                         LastLoginAt = DateTime.UtcNow,
                         LastSeenAt = request.LastSeenAt,
+                        ArchivedAccount = request.ArchivedAccount,
+                        SuspendedAccount = request.SuspendedAccount,
+
                     };
                     await newUsersRepository.UpdateAsync(user.Id, users);
                     return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.UserId }, userDto);
@@ -184,10 +189,11 @@ namespace Genilog_WebApi.Controllers
                 {
                     var user = await userRepository.AuthenticateAsync(requvest.Email!, requvest.ExternalId!);
                     var userD = await newUsersRepository.GetAsync(user.Id);
+                    var general = await userRepository.GetAsync(userD.Id);
+
                     //generate jwt token
                     var token = tokenHandler.CreateTokenAsync(user);
                     var refreshToken = tokenHandler.RefreshTokenAsync(user.Email!);
-
                     var userDto = new LoginDto()
                     {
                         Token = await token,
@@ -201,6 +207,8 @@ namespace Genilog_WebApi.Controllers
                         FullName = $"{userD.FirstName} {userD.LastName}",
                         ProfileImage = userD.ProfilePicture,
                         IdAuthPassword = requvest.ExternalId,
+                        Roles = general.Roles,
+                        Permissions = general.Permissions,
                     };
                     var request = await newUsersRepository.GetAsync(user.Id);
                     var users = new UsersDataModelTable()
@@ -222,10 +230,12 @@ namespace Genilog_WebApi.Controllers
                         Longitude = request.Longitude,
                         LastLoginAt = DateTime.UtcNow,
                         LastSeenAt = request.LastSeenAt,
-                        MoneyBoxBalance = request.MoneyBoxBalance,
                         AccountName = request.AccountName,
-                        AccountNumber = request.AccountNumber,
+                        AccountNumber =request.AccountNumber,
                         BankName = request.BankName,
+                        ArchivedAccount = request.ArchivedAccount,
+                        SuspendedAccount = request.SuspendedAccount,
+                        MoneyBoxBalance = request.MoneyBoxBalance,
                     };
                     await newUsersRepository.UpdateAsync(user.Id, users);
                     return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.UserId }, userDto);
@@ -234,13 +244,14 @@ namespace Genilog_WebApi.Controllers
                 {
                     var generalUsers = new GeneralUsers()
                     {
+                        UserName = "",
                         FirstName = requvest.FirstName,
                         LastName = requvest.LastName,
                         Email = requvest.Email,
-                        UserType = "User",
+                        UserType = RoleType.User.ToString(),
                         VerificationToken = CreateRandomToken(),
                         EmailConfirmed = true,
-                        PhoneNo = "",
+                        PhoneNo = requvest.PhoneNo,
                         ImagePath = requvest.ProfilePicture,
                         CreatedAt = DateTime.UtcNow,
                         LockOutEndEnabled = false,
@@ -257,11 +268,43 @@ namespace Genilog_WebApi.Controllers
                         PhoneVerifiedAt = DateTime.UtcNow.AddMinutes(10),
                         PasswordResetToken = "",
                         RefreshToken = "",
-
+                        ArchivedAccount = false,
+                        SuspendedAccount = false,
+                        TwoFactorRecoveryCodes = "",
+                        TwoFactorRecoveryCodesHash = "",
+                        TwoFactorSecret = "",
+                        ActivateWallet = false,
+                      
                     };
                     generalUsers = await userRepository.AddAsync(generalUsers, requvest.ExternalId!);
-                    var date = DateTime.UtcNow.ToString("ddd,MMM d,yyyy");
-                    var timeStamp = Timestamp.GetCurrentTimestamp();
+                    RoleType roleEnum = RoleType.User;
+                    var role = await RolePermissionHelper.GetRoleAsync(roleEnum, rolesRepository);
+                    if (role != null)
+                    {
+                        await rolesRepository.AddUserRoleAsync(new User_Role
+                        {
+                            GeneralUsersId = generalUsers.Id,
+                            RoleId = role.Id
+                        });
+                    }
+
+                    List<PermissionType> permissionTypes = [
+                        PermissionType.CanManageWallet,
+
+                    ];
+
+                    foreach (var permEnum in permissionTypes)
+                    {
+                        var perm = await RolePermissionHelper.GetPermissionAsync(permEnum, rolesRepository);
+                        if (perm != null)
+                        {
+                            await rolesRepository.AddUserPermissionAsync(new UserPermissionUsage
+                            {
+                                GeneralUsersId = generalUsers.Id,
+                                PermissionId = perm.Id
+                            });
+                        }
+                    }
 
                     var users = new UsersDataModelTable()
                     {
@@ -274,41 +317,36 @@ namespace Genilog_WebApi.Controllers
                         UserStatus = false,
                         ProfilePicture = generalUsers.ImagePath,
                         ReferralCode = CreateRandomToken11(),
-                        CreatedAt = DateTime.UtcNow,
-                        LastLoginAt = DateTime.UtcNow,
-                        LastSeenAt = DateTime.UtcNow,
                         Address = "",
                         Locality = "",
                         State = "",
                         PostCodes = "",
                         Latitude = 1.11,
                         Longitude = 1.11,
-                        MoneyBoxBalance = 0,
-                        AccountName = "",
-                        AccountNumber = "",
-                        BankName = "",
+                        CreatedAt = DateTime.Now,
+                        LastLoginAt = DateTime.UtcNow,
+                        LastSeenAt = DateTime.UtcNow,
+                        AccountName="",
+                        AccountNumber="",
+                        BankName="",
+                        ArchivedAccount=false,
+                        SuspendedAccount=false,
+                        MoneyBoxBalance=0,
                     };
                     // Pass detials to repository
                     users = await newUsersRepository.AddAsync(users);
-                    var roles = new Roles()
-                    {
-                        Name = "User"
-                    };
-                    roles = await rolesRepository.AddAsync(roles);
-                    var user_Roles = new User_Role()
-                    {
-                        GeneralUsersId = users.Id,
-                        RoleId = roles.Id,
-                    };
-                    await user_RoleRepository.AddAsync(user_Roles);
+
 
                     //Now Login Here
                     var loginUser = await userRepository.AuthenticateAsync(generalUsers.Email!, requvest.ExternalId!);
+
                     var userD = await newUsersRepository.GetAsync(loginUser.Id);
+                    var general = await userRepository.GetAsync(userD.Id);
+
+
                     //generate jwt token
                     var token = tokenHandler.CreateTokenAsync(loginUser);
                     var refreshToken = tokenHandler.RefreshTokenAsync(loginUser.Email!);
-
                     var userDto = new LoginDto()
                     {
                         Token = await token,
@@ -322,7 +360,8 @@ namespace Genilog_WebApi.Controllers
                         FullName = $"{userD.FirstName} {userD.LastName}",
                         ProfileImage = userD.ProfilePicture,
                         IdAuthPassword = requvest.ExternalId,
-                        
+                        Roles = general.Roles,
+                        Permissions = general.Permissions,
                     };
                     return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.UserId }, userDto);
                 }
@@ -333,108 +372,113 @@ namespace Genilog_WebApi.Controllers
             }
         }
 
-        [HttpGet]
-        [Authorize(Roles = "Admin,Super_Admin")]
-        public async Task<IActionResult> GetAllUsersAsync([FromQuery] FilterLocationData data)
+        [HttpPost("tokens/refresh")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RefreshTokens([FromBody] RefreshTokenRequest request)
         {
-            List<UsersDataModelTableDto> users = [];
-            var token = await userRepository.GetAllDeviceTokenAsync();
-            var user = await newUsersRepository.GetAllAsync();
-            var allPosts = user.AsQueryable();
+            var user = await userRepository.GetByEmailAsync(request.Email);
 
-            if (!string.IsNullOrEmpty(data.State) && !string.IsNullOrEmpty(data.Locality) && !string.IsNullOrEmpty(data.AnyItem))
+            if (user == null)
+                return Unauthorized();
+
+            // VALIDATE + ROTATE TOKEN
+            var newRefreshToken = await tokenHandler.RotateRefreshTokenAsync(
+                request.Email,
+                request.RefreshToken
+            );
+
+            if (newRefreshToken == null)
             {
-                allPosts = allPosts.Where(x => x.State!.Contains(data.State) && x.Locality!.Contains(data.Locality) && (x.FirstName!.Contains(data.AnyItem) ||
-                x.LastName!.Contains(data.AnyItem) || x.Email!.Contains(data.AnyItem) || x.PhoneNo!.Contains(data.AnyItem)));
-                var userDto = mapper.Map<List<UsersDataModelTableDto>>(allPosts);
-                foreach (var item in userDto)
+                var error = new ErrorModel()
                 {
-                    item.DeviceTokenModels = [.. token.Where(x => x.UserId == item.Id)];
-                    users.Add(item);
-                }
-                return Ok(users);
-            }
-            else if (!string.IsNullOrEmpty(data.State) && !string.IsNullOrEmpty(data.Locality))
-            {
-                allPosts = allPosts.Where(x => x.State!.Contains(data.State) && x.Locality!.Contains(data.Locality));
-                var userDto = mapper.Map<List<UsersDataModelTableDto>>(allPosts);
-                foreach (var item in userDto)
-                {
-                    item.DeviceTokenModels = [.. token.Where(x => x.UserId == item.Id)];
-                    users.Add(item);
-                }
-                return Ok(users);
+                    Message = "Invalid refresh token",
+                    Status = true
+                };
+                return Unauthorized(error);
             }
 
-            else if (!string.IsNullOrEmpty(data.State) && !string.IsNullOrEmpty(data.AnyItem))
+            // CREATE NEW ACCESS TOKEN
+            var newAccessToken = await tokenHandler.CreateTokenAsync(user);
+
+            var userDto = new LoginDto()
             {
-                allPosts = allPosts.Where(x => x.State!.Contains(data.State) && (x.FirstName!.Contains(data.AnyItem) ||
-                x.LastName!.Contains(data.AnyItem) || x.Email!.Contains(data.AnyItem) || x.PhoneNo!.Contains(data.AnyItem)));
-                var userDto = mapper.Map<List<UsersDataModelTableDto>>(allPosts);
-                foreach (var item in userDto)
-                {
-                    item.DeviceTokenModels = [.. token.Where(x => x.UserId == item.Id)];
-                    users.Add(item);
-                }
-                return Ok(users);
-            }
-            else if (!string.IsNullOrEmpty(data.State))
+                Token = newAccessToken,
+                RefreshToken = newRefreshToken,
+                RefreshTokenExpiryTime = user.RefreshTokenExpiryTime,
+                UserId = user.Id,
+                Email = user.Email,
+                UserType = user.UserType,
+                EmailVerified = user.EmailConfirmed,
+                PhoneVerified = user.PhoneNoConfirmed,
+                FullName = $"{user.FirstName} {user.LastName}",
+                ProfileImage = user.ImagePath,
+                IdAuthPassword = "",
+                Roles = user.Roles,
+                Permissions = user.Permissions,
+                
+
+            };
+
+            return Ok(userDto);
+        }
+
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            // GET JWT
+            var token = HttpContext.Request.Headers.Authorization
+                .ToString()
+                .Replace("Bearer ", "");
+
+            if (string.IsNullOrWhiteSpace(token))
+                return Unauthorized();
+
+            var handler = new JwtSecurityTokenHandler();
+
+            if (!handler.CanReadToken(token))
+                return Unauthorized("Invalid token");
+
+            var jwtToken = handler.ReadJwtToken(token);
+
+            // JWT ID
+            var jti = jwtToken.Id;
+
+            // EXPIRY
+            var expiry = jwtToken.ValidTo;
+
+            // USER EMAIL
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+
+            // BLACKLIST ACCESS TOKEN
+            var tokenEx = new BlacklistedToken()
             {
-                allPosts = allPosts.Where(x => x.State!.Contains(data.State));
-                var userDto = mapper.Map<List<UsersDataModelTableDto>>(allPosts);
-                foreach (var item in userDto)
-                {
-                    item.DeviceTokenModels = [.. token.Where(x => x.UserId == item.Id)];
-                    users.Add(item);
-                }
-                return Ok(users);
-            }
-            else if (!string.IsNullOrEmpty(data.Locality) && !string.IsNullOrEmpty(data.AnyItem))
+                Jti = jti,
+                Expiry = expiry,
+                CreatedAt = DateTime.UtcNow,
+            };
+
+            await blacklistedTokenRepository.BlacklistTokenAsync(tokenEx);
+
+            // REMOVE REFRESH TOKEN
+            if (!string.IsNullOrWhiteSpace(email))
             {
-                allPosts = allPosts.Where(x => x.Locality!.Contains(data.Locality) && (x.FirstName!.Contains(data.AnyItem) ||
-                x.LastName!.Contains(data.AnyItem) || x.Email!.Contains(data.AnyItem) || x.PhoneNo!.Contains(data.AnyItem)));
-                var userDto = mapper.Map<List<UsersDataModelTableDto>>(allPosts);
-                foreach (var item in userDto)
-                {
-                    item.DeviceTokenModels = [.. token.Where(x => x.UserId == item.Id)];
-                    users.Add(item);
-                }
-                return Ok(users);
-            }
-            else if (!string.IsNullOrEmpty(data.Locality))
-            {
-                allPosts = allPosts.Where(x => x.Locality!.Contains(data.Locality));
-                var userDto = mapper.Map<List<UsersDataModelTableDto>>(allPosts);
-                foreach (var item in userDto)
-                {
-                    item.DeviceTokenModels = [.. token.Where(x => x.UserId == item.Id)];
-                    users.Add(item);
-                }
-                return Ok(users);
-            }
-            else if (!string.IsNullOrEmpty(data.AnyItem))
-            {
-                allPosts = allPosts.Where(x => x.State!.Contains(data.AnyItem) || x.Locality!.Contains(data.AnyItem) || x.FirstName!.Contains(data.AnyItem) ||
-                x.LastName!.Contains(data.AnyItem) || x.Email!.Contains(data.AnyItem) || x.PhoneNo!.Contains(data.AnyItem));
-                var userDto = mapper.Map<List<UsersDataModelTableDto>>(allPosts);
-                foreach (var item in userDto)
-                {
-                    item.DeviceTokenModels = [.. token.Where(x => x.UserId == item.Id)];
-                    users.Add(item);
-                }
-                return Ok(users);
-            }
-            else
-            {
-                var userDto = mapper.Map<List<UsersDataModelTableDto>>(user);
-                foreach (var item in userDto)
-                {
-                    item.DeviceTokenModels = [.. token.Where(x => x.UserId == item.Id)];
-                    users.Add(item);
-                }
-                return Ok(users);
+                await tokenHandler.LogoutAsync(email);
             }
 
+            return Ok(new
+            {
+                message = "Logged out successfully"
+            });
+        }
+
+
+        [HttpGet]
+        [Authorize(Roles = "Admin,Super_Admin", Policy = "CanManageUsers")]
+        public async Task<IActionResult> GetAllUsers([FromQuery] FilterLocationData filter)
+        {
+            var result = await newUsersRepository.GetAllUsersAsync(filter);
+            return Ok(result);
         }
 
         [HttpGet]
@@ -505,10 +549,11 @@ namespace Genilog_WebApi.Controllers
             {
                 var generalUsers = new GeneralUsers()
                 {
+                    UserName = "",
                     FirstName = request.FirstName,
                     LastName = request.LastName,
                     Email = request.Email,
-                    UserType = "User",
+                    UserType = RoleType.User.ToString(),
                     VerificationToken = CreateRandomToken(),
                     EmailConfirmed = false,
                     PhoneNo = request.PhoneNo,
@@ -528,6 +573,12 @@ namespace Genilog_WebApi.Controllers
                     PhoneVerifiedAt = DateTime.UtcNow.AddMinutes(10),
                     PasswordResetToken = "",
                     RefreshToken = "",
+                    ActivateWallet = false,
+                    ArchivedAccount = false,
+                    SuspendedAccount = false,
+                    TwoFactorRecoveryCodes = "",
+                    TwoFactorRecoveryCodesHash = "",
+                    TwoFactorSecret = "",
                 };
                 generalUsers = await userRepository.AddAsync(generalUsers, request.Password!);
                 var users = new UsersDataModelTable()
@@ -550,29 +601,52 @@ namespace Genilog_WebApi.Controllers
                     PostCodes = "",
                     Latitude = 1.11,
                     Longitude = 1.11,
-                    MoneyBoxBalance = 0,
-                    AccountName = "",
-                    AccountNumber = "",
-                    BankName = "",
+                    AccountName="",
+                    AccountNumber ="",
+                    BankName="",
+                    MoneyBoxBalance=0,
+                    ArchivedAccount = false,
+                    SuspendedAccount = false,
                 };
                 // Pass detials to repository
                 users = await newUsersRepository.AddAsync(users);
-                var roles = new Roles()
+
+                RoleType roleEnum = RoleType.User;
+                var role = await RolePermissionHelper.GetRoleAsync(roleEnum, rolesRepository);
+                if (role != null)
                 {
-                    Name = "User"
-                };
-                roles = await rolesRepository.AddAsync(roles);
-                var user_Roles = new User_Role()
+                    await rolesRepository.AddUserRoleAsync(new User_Role
+                    {
+                        GeneralUsersId = users.Id,
+                        RoleId = role.Id
+                    });
+                }
+
+                List<PermissionType> permissionTypes = [
+                    PermissionType.CanManageWallet,
+
+                    ];
+
+                foreach (var permEnum in permissionTypes)
                 {
-                    GeneralUsersId = users.Id,
-                    RoleId = roles.Id,
-                };
-                await user_RoleRepository.AddAsync(user_Roles);
-                try { EmailTemplates.SendEmailVerificationCode(users.Email!, generalUsers.VerificationToken!, users.FirstName!); }
-                catch (Exception ex) { Console.WriteLine($"Warning: Email send failed: {ex.Message}"); }
+                    var perm = await RolePermissionHelper.GetPermissionAsync(permEnum, rolesRepository);
+                    if (perm != null)
+                    {
+                        await rolesRepository.AddUserPermissionAsync(new UserPermissionUsage
+                        {
+                            GeneralUsersId = users.Id,
+                            PermissionId = perm.Id
+                        });
+                    }
+                }
+
+                // Pass detials to repository
+                EmailTemplates.SendEmailVerificationCode(users.Email!, generalUsers.VerificationToken!, users.FirstName!);
                 // convert back to dto
-                var user = await newUsersRepository.GetAsync(users.Id);
-                var userDto = mapper.Map<UsersDataModelTableDto>(user);
+                var userDto12 = await newUsersRepository.GetAsync(users.Id);
+                var token = await userRepository.GetAllDeviceTokenAsync();
+                var userDto = mapper.Map<UsersDataModelTableDto>(userDto12);
+                userDto.DeviceTokenModels = [.. token.Where(x => x.UserId == users.Id)];
                 return Ok(userDto);
             }
         }
@@ -753,8 +827,7 @@ namespace Genilog_WebApi.Controllers
             {
                 return BadRequest("Invalid User ID format.");
             }
-            var token = await newUsersRepository.GetAllDeliveryAsync();
-            token = token.Where(x => x.UsersDataModelTableId == userGuid).ToList();
+            var token = await newUsersRepository.GetAllDeliveryAsync(userGuid);
             var userDto = mapper.Map<List<DeliveryAddressDto>>(token);
             return Ok(userDto);
         }
@@ -765,8 +838,7 @@ namespace Genilog_WebApi.Controllers
         [Route("delivery-address-for-admin")]
         public async Task<IActionResult> GetAllUsersDeliveryAdressAsync([FromHeader] Guid userId)
         {
-            var token = await newUsersRepository.GetAllDeliveryAsync();
-            token = token.Where(x => x.UsersDataModelTableId == userId).ToList();
+            var token = await newUsersRepository.GetAllDeliveryAsync(userId);
             var userDto = mapper.Map<List<DeliveryAddressDto>>(token);
             return Ok(userDto);
         }

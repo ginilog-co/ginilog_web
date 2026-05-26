@@ -16,15 +16,69 @@ namespace Genilog_WebApi.DataContext
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            //modelBuilder.Entity<User_Role>()
+            //    .HasOne(x => x.Roles)
+            //    .WithMany(y => y.User_Roles)
+            //    .HasForeignKey(x => x.RoleId);
+            // -------------------------
+            // USER <-> ROLE (Many-to-Many)
+            // -------------------------
             modelBuilder.Entity<User_Role>()
-                .HasOne(x => x.Roles)
-                .WithMany(y => y.User_Roles)
-                .HasForeignKey(x => x.RoleId);
+                .HasKey(ur => new { ur.GeneralUsersId, ur.RoleId });
+
+            modelBuilder.Entity<User_Role>()
+                .HasOne(ur => ur.GeneralUsers)
+                .WithMany(u => u.User_Roles)
+                .HasForeignKey(ur => ur.GeneralUsersId);
+
+            modelBuilder.Entity<User_Role>()
+                .HasOne(ur => ur.Roles)
+                .WithMany(r => r.User_Roles)
+                .HasForeignKey(ur => ur.RoleId);
+
+            // -------------------------
+            // ROLE <-> PERMISSION (Many-to-Many)
+            // -------------------------
+            modelBuilder.Entity<RolesPermissionUsage>()
+                .HasKey(rp => new { rp.RoleId, rp.PermissionId });
+
+            modelBuilder.Entity<RolesPermissionUsage>()
+                .HasOne(rp => rp.Role)
+                .WithMany(r => r.RolePermissions)
+                .HasForeignKey(rp => rp.RoleId);
+
+            modelBuilder.Entity<RolesPermissionUsage>()
+                .HasOne(rp => rp.Permission)
+                .WithMany(p => p.RolePermissions)
+                .HasForeignKey(rp => rp.PermissionId);
+
+
+            // -------------------------
+            // USER <-> PERMISSION (Direct Assign)
+            // -------------------------
+            modelBuilder.Entity<UserPermissionUsage>()
+                .HasKey(up => new { up.GeneralUsersId, up.PermissionId });
+
+            modelBuilder.Entity<UserPermissionUsage>()
+                .HasOne(up => up.GeneralUsers)
+                .WithMany(u => u.UserPermissions)
+                .HasForeignKey(up => up.GeneralUsersId);
+
+            modelBuilder.Entity<UserPermissionUsage>()
+                .HasOne(up => up.Permission)
+                .WithMany(p => p.UserPermissions)
+                .HasForeignKey(up => up.PermissionId);
+
 
             modelBuilder.Entity<DeliveryAddress>()
-             .HasOne(x => x.UsersDataModelTable)
-             .WithMany(y => y.DeliveryAddresses)
-             .HasForeignKey(x => x.UsersDataModelTableId);
+            .HasOne(x => x.UsersDataModelTable)
+            .WithMany(y => y.DeliveryAddresses)
+            .HasForeignKey(x => x.UsersDataModelTableId);
+
+
+            modelBuilder.Entity<BlacklistedToken>()
+                .HasIndex(x => x.Jti)
+                .IsUnique();
 
 
             // Company
@@ -101,12 +155,18 @@ namespace Genilog_WebApi.DataContext
             .WithMany(y => y.AccomodationReviewModels)
             .HasForeignKey(x => x.AccomodationDataTableId);
         }
+
         public DbSet<GeneralUsers>? GeneralUsers { get; set; }
+        public DbSet<BlacklistedToken>? BlacklistedTokens { get; set; }
+        public DbSet<Roles>? Roles { get; set; }
+        public DbSet<User_Role>? User_Roles { get; set; }
+        public DbSet<Permission>? Permissions { get; set; }
+        public DbSet<RolesPermissionUsage>? RolesPermissionUsages { get; set; }
+        public DbSet<UserPermissionUsage>? UserPermissionUsages { get; set; }
+
         public DbSet<UsersDataModelTable>? UsersDataModelTables { get; set; }
         public DbSet<DeviceTokenModel>? DeviceTokenModels { get; set; }
         public DbSet<DeliveryAddress>? DeliveryAddresses { get; set; }
-        public DbSet<Roles>? Roles { get; set; }
-        public DbSet<User_Role>? User_Roles { get; set; }
         public DbSet<AdminModelTable>? AdminModelTables { get; set; }
         public DbSet<AdvertHolderModel>? AdvertHolderModels { get; set; }
         public DbSet<CompanyApplyDataModel>? CompanyApplyDataModels { get; set; }

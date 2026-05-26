@@ -1,12 +1,17 @@
-﻿using Genilog_WebApi.DataContext;
+﻿using AutoMapper;
+using Genilog_WebApi.DataContext;
+using Genilog_WebApi.Model;
+using Genilog_WebApi.Model.GeneraModel;
 using Genilog_WebApi.Model.UsersDataModel;
+using Genilog_WebApi.Repository.GeneralRepo;
 using Microsoft.EntityFrameworkCore;
 
 namespace Genilog_WebApi.Repository.UserRepo
 {
-    public class UserRepository(Genilog_Data_Context maap_Context) : IUserRepository
+    public class UserRepository(Genilog_Data_Context maap_Context,IMapper mapper) : IUserRepository
     {
         private readonly Genilog_Data_Context maap_Context = maap_Context;
+        private readonly IMapper mapper = mapper;
 
         public async Task<UsersDataModelTable> AddAsync(UsersDataModelTable subTable)
         {
@@ -39,16 +44,108 @@ namespace Genilog_WebApi.Repository.UserRepo
 
         public async Task<IEnumerable<UsersDataModelTable>> GetAllAsync()
         {
-            return await maap_Context.UsersDataModelTables!.
-            Include(x => x.DeliveryAddresses).
-            OrderBy(x => x.CreatedAt)
-            .ToListAsync(); ;
+            return await maap_Context.UsersDataModelTables!
+                .AsNoTracking()
+                .Include(x => x.DeliveryAddresses)
+                .OrderBy(x => x.CreatedAt)
+                .ToListAsync(); ;
+        }
+
+        public async Task<PageModel<UsersDataModelTableDto>> GetAllUsersAsync(FilterLocationData filter)
+        {
+            // 1. Base query
+            var query = maap_Context.UsersDataModelTables!
+                .AsNoTracking()
+                .OrderBy(x => x.CreatedAt)
+                .AsQueryable();
+
+
+            // 2. Apply filters
+            if (!string.IsNullOrWhiteSpace(filter.State))
+            {
+                string any = filter.State;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.State, $"%{any}%")
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.Locality))
+            {
+                string any = filter.Locality;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.Locality, $"%{any}%")
+                );
+            }
+            if (!string.IsNullOrWhiteSpace(filter.FilterTypes))
+            {
+                string any = filter.FilterTypes;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.Sex, $"%{any}%")
+                );
+            }
+      
+
+            if (!string.IsNullOrWhiteSpace(filter.AnyItem))
+            {
+                string any = filter.AnyItem;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.FirstName, $"%{any}%") ||
+                    EF.Functions.Like(x.LastName, $"%{any}%") ||
+                    EF.Functions.Like(x.Email, $"%{any}%") ||
+                    EF.Functions.Like(x.PhoneNo, $"%{any}%") ||
+                    EF.Functions.Like(x.ReferralCode, $"%{any}%")||
+                    EF.Functions.Like(x.BankName, $"%{any}%") ||
+                    EF.Functions.Like(x.AccountName, $"%{any}%") ||
+                    EF.Functions.Like(x.AccountNumber, $"%{any}%")
+                );
+            }
+
+            if (filter.StartDate.HasValue && filter.EndDate.HasValue)
+            {
+                var from = filter.StartDate.Value.Date;
+                var to = filter.EndDate.Value.Date;
+
+                // swap if reversed
+                if (from > to)
+                    (from, to) = (to, from);
+
+
+
+                var fromDate = from;
+                var toDate = to.AddDays(1);
+
+                query = query.Where(s => s.CreatedAt >= fromDate && s.CreatedAt < toDate);
+
+            }
+
+
+            // 3. Pagination on the entity query
+            var pagedData = await query.ToPagedAsync(filter.Page, filter.PageSize);
+
+            // 4. Map to DTO after retrieving paged data
+            var userDto = mapper.Map<List<UsersDataModelTableDto>>(pagedData.Data);
+            userDto = [.. userDto.OrderByDescending(o => o.CreatedAt)];
+            // 5. Attach Device Tokens
+            var allTokens = await maap_Context.DeviceTokenModels!.AsNoTracking().ToListAsync();
+            foreach (var item in userDto)
+            {
+                item.DeviceTokenModels = [.. allTokens.Where(t => t.UserId == item.Id)];
+            }
+
+            // 6. Return PageModel<DTO> with same pagination metadata
+            return new PageModel<UsersDataModelTableDto>(
+                userDto,
+                pagedData.TotalCount,
+                pagedData.Page,
+                pagedData.PageSize
+            );
         }
 
         public async Task<UsersDataModelTable> GetAsync(Guid id)
         {
 #pragma warning disable CS8603 // Possible null reference return.
             return await maap_Context.UsersDataModelTables!
+                  .AsNoTracking()
            .Include(x => x.DeliveryAddresses)
             .FirstOrDefaultAsync(x => x.Id == id);
 #pragma warning restore CS8603 // Possible null reference return.
@@ -90,11 +187,11 @@ namespace Genilog_WebApi.Repository.UserRepo
         }
        
         // Delivery Address
-        public async Task<IEnumerable<DeliveryAddress>> GetAllDeliveryAsync()
+        public async Task<IEnumerable<DeliveryAddress>> GetAllDeliveryAsync(Guid id)
         {
-            return await maap_Context.DeliveryAddresses!.
-            OrderBy(x => x.CreatedAt)
-            .ToListAsync(); ;
+            return await maap_Context.DeliveryAddresses!
+                .Where(x=>x.UsersDataModelTableId == id )
+                .OrderBy(x => x.CreatedAt).ToListAsync();
         }
         public async Task<DeliveryAddress> GetAddressAsync(Guid id)
         {

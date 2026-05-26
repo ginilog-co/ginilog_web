@@ -6,5 +6,7 @@ namespace Genilog_WebApi.Repository.AuthRepo
     {
         Task<string> CreateTokenAsync(GeneralUsers sub);
         Task<string> RefreshTokenAsync(string email);
+        Task<string?> RotateRefreshTokenAsync(string email, string refreshToken);
+        Task<bool> LogoutAsync(string email);
     }
 }
