@@ -35,11 +35,17 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
                       policy =>
                       {
-                        policy.WithOrigins(
-                            "http://localhost:3000",
-                            "https://ginilog-web.vercel.app",
-                            "https://api-data.ginilog.com"
-                        )
+                        policy.SetIsOriginAllowed(origin =>
+                        {
+                            if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                                return false;
+                            var host = uri.Host;
+                            return host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+                                || host.Equals("api-data.ginilog.com", StringComparison.OrdinalIgnoreCase)
+                                || host.EndsWith(".onrender.com", StringComparison.OrdinalIgnoreCase)
+                                || host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase)
+                                || host.EndsWith(".ginilog.com", StringComparison.OrdinalIgnoreCase);
+                        })
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials(); // Required for SignalR

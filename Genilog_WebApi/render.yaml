@@ -22,6 +22,10 @@ services:
         sync: false
       - key: MailSettings__Password
         sync: false
+      - key: MailSettings__Mail
+        sync: false
+      - key: ResendApiKey
+        sync: false
       - key: Twilio__AuthToken
         sync: false
     healthCheckPath: /api/Health

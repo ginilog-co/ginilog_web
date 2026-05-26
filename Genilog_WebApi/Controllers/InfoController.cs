@@ -107,7 +107,7 @@ namespace Genilog_WebApi.Controllers
 
         [HttpPost("send-mail")]
         [Authorize(Roles = "Super_Admin,Admin")]
-        public IActionResult SendMail(SendMailModel request)
+        public async Task<IActionResult> SendMail(SendMailModel request)
         {
             var check = ValidateMail(request);
 
@@ -117,7 +117,7 @@ namespace Genilog_WebApi.Controllers
             }
             else
             {
-                EmailTemplates.SendEmail(request.Email!, request.Message!, request.Title!, request.Name!, ""!);
+                await EmailTemplates.SendEmail(request.Email!, request.Message!, request.Title!, request.Name!, ""!);
                 return Ok($"Mail Sent Successfully");
             }
         }
@@ -138,7 +138,7 @@ namespace Genilog_WebApi.Controllers
                 var userDto = mapper.Map<List<UsersDataModelTableDto>>(user);
                 for (int i = 0; i < userDto.Count; i++)
                 {
-                    EmailTemplates.SendEmail(userDto[i].Email!, request.Message!, request.Title!, $"{userDto[i].FirstName} {userDto[i].LastName}", request.Link!);
+                    await EmailTemplates.SendEmail(userDto[i].Email!, request.Message!, request.Title!, $"{userDto[i].FirstName} {userDto[i].LastName}", request.Link!);
                 }
                 return Ok($"Mail Sent Successfully");
             }
