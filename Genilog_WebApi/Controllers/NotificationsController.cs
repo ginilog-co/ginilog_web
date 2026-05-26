@@ -1,22 +1,17 @@
 ﻿using AutoMapper;
 using FirebaseAdmin.Messaging;
-using Google.Cloud.Firestore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Genilog_WebApi.Key;
 using Genilog_WebApi.Model.Notification_Model;
 using Genilog_WebApi.Repository.AuthRepo;
 using Genilog_WebApi.Repository.NotificationRepo;
 using Genilog_WebApi.Model.AuthModel;
 using Genilog_WebApi.Model;
-using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
-using Google.Cloud.Firestore.V1;
-using Microsoft.Extensions.Logging;
 
 namespace Genilog_WebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/notifications")]
     [ApiController]
     public class NotificationsController(IMapper mapper, IHostEnvironment _env, IGeneralUserRepository generalUserRepository,INotificationRepository notificationRepository) : ControllerBase
     {

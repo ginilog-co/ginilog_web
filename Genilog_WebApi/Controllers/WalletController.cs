@@ -12,7 +12,7 @@ using System.Text;
 
 namespace Genilog_WebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/wallet-systems")]
     [ApiController]
     public class WalletController(IHostEnvironment _env, IMapper mapper, IRidersRepository ridersRepository,
         IWalletRepository walletRepository, Cls_Keys keys) : ControllerBase

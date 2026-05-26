@@ -3,19 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Genilog_WebApi.Repository.InfoRepo;
 using Genilog_WebApi.Model.InfoModel;
-using Genilog_WebApi.Key;
 using Google.Cloud.Firestore;
-using System.Net.Mail;
-using System.Net;
 using Genilog_WebApi.EmailSender;
-using Genilog_WebApi.Repository.NotificationRepo;
-using Microsoft.AspNetCore.SignalR;
 using Genilog_WebApi.Repository.UserRepo;
 using Genilog_WebApi.Model.UsersDataModel;
 
 namespace Genilog_WebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/info-controller")]
     [ApiController]
     public class InfoController(IFeedbackRepository contactUsRepository,
         IMapper mapper, IHostEnvironment _env, IUserRepository newUsersRepository) : ControllerBase
@@ -24,6 +19,7 @@ namespace Genilog_WebApi.Controllers
         private readonly IUserRepository newUsersRepository = newUsersRepository;
         private readonly IMapper mapper = mapper;
         private readonly IHostEnvironment _env = _env;
+
         [HttpGet("feedback")]
         [Authorize(Roles = "Super_Admin,Admin")]
         public async Task<IActionResult> GetAllRiderPayoutAsync([FromQuery] SearchFeedback search)

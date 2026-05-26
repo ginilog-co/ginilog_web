@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Genilog_WebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/upload-file")]
     [Authorize]
     [ApiController]
     public class UploadFileController(IUploadRepository uploadRepository, IWebHostEnvironment _environment) : ControllerBase
