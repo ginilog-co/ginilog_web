@@ -41,10 +41,10 @@ builder.Services.AddCors(options =>
                                 return false;
                             var host = uri.Host;
                             return host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
-                                || host.Equals("api-data.ginilog.com", StringComparison.OrdinalIgnoreCase)
+                                || host.Equals("api-data.ginilog.org", StringComparison.OrdinalIgnoreCase)
                                 || host.EndsWith(".onrender.com", StringComparison.OrdinalIgnoreCase)
                                 || host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase)
-                                || host.EndsWith(".ginilog.com", StringComparison.OrdinalIgnoreCase);
+                                || host.EndsWith(".ginilog.org", StringComparison.OrdinalIgnoreCase);
                         })
                         .AllowAnyHeader()
                         .AllowAnyMethod()
@@ -82,9 +82,14 @@ FirebaseApp.Create(new AppOptions()
 
 
 
+//builder.Services.AddDbContext<Genilog_Data_Context>(options =>
+//{
+//    options.UseNpgsql(builder.Configuration.GetConnectionString("Genilog_Data_Context"));
+//});
+
 builder.Services.AddDbContext<Genilog_Data_Context>(options =>
 {
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Genilog_Data_Context"));
+  options.UseSqlServer(builder.Configuration.GetConnectionString("Genilog_Data_Context"));
 });
 
 // ================= CONFIG =================

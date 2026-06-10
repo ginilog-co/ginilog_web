@@ -1009,8 +1009,7 @@ namespace Genilog_WebApi.Controllers
             }
             else
             {
-                try {await EmailTemplates.SendChangePasswordCodeEmail(user.Email!, user.PasswordResetToken!, user.FirstName!); }
-                catch (Exception ex) { Console.WriteLine($"Warning: Email send failed: {ex.Message}"); }
+                EmailTemplates.SendChangePasswordCodeEmail(user.Email!, user.PasswordResetToken!, user.FirstName!);
                 return Ok("Password Reset token has been Sent to your Email and \n");
             }
         }

@@ -82,6 +82,7 @@ namespace Genilog_WebApi.Controllers
 
         }
 
+
         [HttpPost]
         [Route("login")]
         public async Task<IActionResult> LoginAsync(LoginRequset requset)
@@ -94,9 +95,8 @@ namespace Genilog_WebApi.Controllers
                 if (user.EmailConfirmed == false)
                 {
                     var user2 = await userRepository.RequestNewEmailTokenAsync(user.Email!);
-                    try {await EmailTemplates.SendEmailVerificationCode(user.Email!, user2.VerificationToken!, user.LastName!); }
-                    catch (Exception ex) { Console.WriteLine($"Warning: Email send failed: {ex.Message}"); }
-                    //  string message1 = user.FirstName + " Your BMG(Bring My Gas) App Account Verication Code is " + user2.VerificationToken!;
+                    EmailTemplates.SendEmailVerificationCode(user.Email!, user2.VerificationToken!, user.LastName!);
+                    //  string message1 = user.FirstName + " Your Bizora(Bring My Gas) App Account Verication Code is " + user2.VerificationToken!;
                     var error = new ErrorModel()
                     {
                         Message = "User Email Not Yet Verify",
@@ -137,7 +137,7 @@ namespace Genilog_WebApi.Controllers
                         IdAuthPassword = "",
                         Roles = general.Roles,
                         Permissions = general.Permissions,
-                        
+
                     };
                     var request = await newUsersRepository.GetAsync(user.Id);
                     var users = new UsersDataModelTable()
@@ -161,7 +161,6 @@ namespace Genilog_WebApi.Controllers
                         LastSeenAt = request.LastSeenAt,
                         ArchivedAccount = request.ArchivedAccount,
                         SuspendedAccount = request.SuspendedAccount,
-
                     };
                     await newUsersRepository.UpdateAsync(user.Id, users);
                     return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.UserId }, userDto);
@@ -231,12 +230,6 @@ namespace Genilog_WebApi.Controllers
                         Longitude = request.Longitude,
                         LastLoginAt = DateTime.UtcNow,
                         LastSeenAt = request.LastSeenAt,
-                        AccountName = request.AccountName,
-                        AccountNumber =request.AccountNumber,
-                        BankName = request.BankName,
-                        ArchivedAccount = request.ArchivedAccount,
-                        SuspendedAccount = request.SuspendedAccount,
-                        MoneyBoxBalance = request.MoneyBoxBalance,
                     };
                     await newUsersRepository.UpdateAsync(user.Id, users);
                     return CreatedAtAction(nameof(ProfileAsync), new { id = userDto.UserId }, userDto);
@@ -275,7 +268,6 @@ namespace Genilog_WebApi.Controllers
                         TwoFactorRecoveryCodesHash = "",
                         TwoFactorSecret = "",
                         ActivateWallet = false,
-                      
                     };
                     generalUsers = await userRepository.AddAsync(generalUsers, requvest.ExternalId!);
                     RoleType roleEnum = RoleType.User;
@@ -327,12 +319,6 @@ namespace Genilog_WebApi.Controllers
                         CreatedAt = DateTime.Now,
                         LastLoginAt = DateTime.UtcNow,
                         LastSeenAt = DateTime.UtcNow,
-                        AccountName="",
-                        AccountNumber="",
-                        BankName="",
-                        ArchivedAccount=false,
-                        SuspendedAccount=false,
-                        MoneyBoxBalance=0,
                     };
                     // Pass detials to repository
                     users = await newUsersRepository.AddAsync(users);
@@ -642,7 +628,7 @@ namespace Genilog_WebApi.Controllers
                 }
 
                 // Pass detials to repository
-              await  EmailTemplates.SendEmailVerificationCode(users.Email!, generalUsers.VerificationToken!, users.FirstName!);
+               EmailTemplates.SendEmailVerificationCode(users.Email!, generalUsers.VerificationToken!, users.FirstName!);
                 // convert back to dto
                 var userDto12 = await newUsersRepository.GetAsync(users.Id);
                 var token = await userRepository.GetAllDeviceTokenAsync();
@@ -979,15 +965,15 @@ namespace Genilog_WebApi.Controllers
                     else
                     {
                         //generate jwt token
-                        var token = tokenHandler.CreateTokenAsync(user);
-                        var refreshToken = tokenHandler.RefreshTokenAsync(user.Email!);
+                        var token = await tokenHandler.CreateTokenAsync(user);
+                        var refreshToken = await tokenHandler.RefreshTokenAsync(user.Email!);
                         // var userId = userRepository.Userd;
 
                         var userDto = new LoginDto()
                         {
 
-                            Token = await token,
-                            RefreshToken = await refreshToken,
+                            Token =  token,
+                            RefreshToken =  refreshToken,
                             RefreshTokenExpiryTime = user.RefreshTokenExpiryTime,
                             UserId = user.Id,
                             Email = user.Email,
@@ -1022,8 +1008,7 @@ namespace Genilog_WebApi.Controllers
             }
             else
             {
-                try { await EmailTemplates.SendChangePasswordCodeEmail(email.Email!, user.PasswordResetToken!, user.FirstName!); }
-                catch (Exception ex) { Console.WriteLine($"Warning: Email send failed: {ex.Message}"); }
+                EmailTemplates.SendChangePasswordCodeEmail(email.Email!, user.PasswordResetToken!, user.FirstName!);
                 return Ok($"Password Reset token has been Sent to your Email");
             }
         }
@@ -1038,8 +1023,7 @@ namespace Genilog_WebApi.Controllers
             }
             else
             {
-                try { await EmailTemplates.SendEmailVerificationCode(email.Email!, user.VerificationToken!, user.LastName!); }
-                catch (Exception ex) { Console.WriteLine($"Warning: Email send failed: {ex.Message}"); }
+                EmailTemplates.SendEmailVerificationCode(email.Email!, user.VerificationToken!, user.LastName!);
                 return Ok($"New token has been Sent to your Email");
             }
         }

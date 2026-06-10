@@ -309,7 +309,7 @@ namespace Genilog_WebApi.Repository.AuthRepo
 
             user.TwoFactorSecret = base32Secret;
             await bmg_context.SaveChangesAsync();
-            var qrCodeUrl = $"otpauth://totp/Bizora+:{user.Email}?secret={base32Secret}&issuer=Bizora+";
+            var qrCodeUrl = $"otpauth://totp/Ginilog+:{user.Email}?secret={base32Secret}&issuer=Ginilog+";
 
             var data = new TwoFactorCodeModel 
             {
