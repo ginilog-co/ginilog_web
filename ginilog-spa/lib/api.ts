@@ -1,21 +1,223 @@
+// lib/api.ts
+
 const DEFAULT_PRODUCTION_API = "https://ginilog-web.onrender.com";
+const LOCAL_API = "http://localhost:5000";
 
 function resolveApiUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
   if (fromEnv) return fromEnv;
 
   if (typeof window === "undefined") {
-    return "http://localhost:5000";
+    return LOCAL_API;
+  }
+
+  // Check if we're on the production domain
+  if (window.location.hostname === "www.ginilog.com" || 
+      window.location.hostname === "ginilog.com" ||
+      window.location.hostname.includes("vercel.app")) {
+    return DEFAULT_PRODUCTION_API;
   }
 
   if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-    return "";
+    return LOCAL_API;
   }
 
   return DEFAULT_PRODUCTION_API;
 }
 
 const API_URL = resolveApiUrl();
+
+// Enhanced fetch wrapper with timeout and retry logic
+async function fetchWithTimeout(
+  url: string, 
+  options: RequestInit = {}, 
+  timeout: number = 30000
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Request timeout. Please check your connection and try again.');
+    }
+    throw error;
+  }
+}
+
+// Retry wrapper for failed requests
+async function fetchWithRetry(
+  url: string, 
+  options: RequestInit = {}, 
+  retries: number = 3, 
+  delay: number = 1000
+): Promise<Response> {
+  try {
+    return await fetchWithTimeout(url, options);
+  } catch (error) {
+    if (retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return fetchWithRetry(url, options, retries - 1, delay * 2);
+    }
+    throw error;
+  }
+}
+
+// Enhanced fetch with auth wrapper
+async function fetchWithAuth(endpoint: string, options: RequestInit = {}): Promise<Response> {
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+  const url = `${API_URL}/api/${cleanEndpoint}`;
+  
+  console.log(`Fetching: ${url}`);
+  
+  const token = getToken();
+  
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    ...((options.headers as Record<string, string>) || {}),
+  };
+  
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  
+  try {
+    const response = await fetchWithRetry(url, { 
+      ...options, 
+      headers,
+      credentials: 'include',
+      mode: 'cors',
+    });
+    
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const error = await response.json();
+        if (error.errors && typeof error.errors === "object") {
+          const messages = Object.values(error.errors as Record<string, string[]>)
+            .flat()
+            .join(" ");
+          errorMessage = messages || error.title || errorMessage;
+        } else {
+          errorMessage = error.message || error.title || errorMessage;
+        }
+      } catch {
+        const text = await response.text();
+        if (text) errorMessage = text;
+      }
+      
+      if (response.status === 401) {
+        clearAuthData();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+        }
+      }
+      
+      throw new Error(errorMessage);
+    }
+    
+    return response;
+  } catch (error) {
+    console.error(`API Error for ${url}:`, error);
+    if (error instanceof Error) {
+      throw new Error(`Network error: ${error.message}`);
+    }
+    throw error;
+  }
+}
+
+// Token helpers
+export function getToken(): string | null {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("token");
+  }
+  return null;
+}
+
+export function getRefreshToken(): string | null {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("refreshToken");
+  }
+  return null;
+}
+
+export function getStoredUser(): LoginResponse | null {
+  if (typeof window !== "undefined") {
+    const user = localStorage.getItem("user");
+    return user ? JSON.parse(user) : null;
+  }
+  return null;
+}
+
+export function setAuthData(data: LoginResponse): void {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("refreshToken", data.refreshToken);
+    localStorage.setItem("user", JSON.stringify(data));
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: 'token',
+      newValue: data.token
+    }));
+  }
+}
+
+export function clearAuthData(): void {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+    window.dispatchEvent(new CustomEvent('auth:logout'));
+  }
+}
+
+// Refresh token function
+export async function refreshAccessToken(): Promise<string | null> {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return null;
+  
+  try {
+    const response = await fetch(`${API_URL}/api/AuthUsers/refresh-token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ refreshToken }),
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        return data.token;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error('Failed to refresh token:', error);
+    return null;
+  }
+}
+
+// Health check function
+export async function checkApiHealth(): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_URL}/health`, {
+      method: 'GET',
+      signal: AbortSignal.timeout(5000),
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
 
 export interface LoginRequest {
   Email_PhoneNo: string;
@@ -351,69 +553,7 @@ export interface RegisterManagerRequest {
   CompanyType?: string[];
 }
 
-// Token helpers
-export function getToken(): string | null {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("token");
-  }
-  return null;
-}
-
-export function getStoredUser(): LoginResponse | null {
-  if (typeof window !== "undefined") {
-    const user = localStorage.getItem("user");
-    return user ? JSON.parse(user) : null;
-  }
-  return null;
-}
-
-export function setAuthData(data: LoginResponse): void {
-  if (typeof window !== "undefined") {
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("refreshToken", data.refreshToken);
-    localStorage.setItem("user", JSON.stringify(data));
-  }
-}
-
-export function clearAuthData(): void {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
-  }
-}
-
-// Core fetch wrapper
-async function fetchWithAuth(endpoint: string, options: RequestInit = {}): Promise<Response> {
-  const url = `${API_URL}/api/${endpoint}`;
-  const token = getToken();
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...((options.headers as Record<string, string>) || {}),
-  };
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  const response = await fetch(url, { ...options, headers });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: "An error occurred" }));
-    if (error.errors && typeof error.errors === "object") {
-      const messages = Object.values(error.errors as Record<string, string[]>)
-        .flat()
-        .join(" ");
-      throw new Error(messages || error.title || `HTTP error! status: ${response.status}`);
-    }
-    throw new Error(error.message || error.title || `HTTP error! status: ${response.status}`);
-  }
-
-  return response;
-}
-
-// Auth
+// Auth Functions
 export async function login(credentials: LoginRequest): Promise<LoginResponse> {
   const response = await fetchWithAuth("AuthUsers/login", {
     method: "POST",
@@ -438,7 +578,11 @@ export async function getProfile(): Promise<UserProfile> {
 }
 
 export async function logout(): Promise<void> {
-  clearAuthData();
+  try {
+    await fetchWithAuth("AuthUsers/logout", { method: "POST" }).catch(() => {});
+  } finally {
+    clearAuthData();
+  }
 }
 
 export async function googleAuth(data: GoogleAuthRequest): Promise<LoginResponse> {
@@ -539,7 +683,7 @@ export async function enableTwoFactor(id: string): Promise<string> {
   return response.json();
 }
 
-// Logistics
+// Logistics Functions
 export async function getCompanies(): Promise<Company[]> {
   const response = await fetchWithAuth("Logistics", { method: "GET" });
   return response.json();
@@ -570,18 +714,13 @@ export async function getOrderById(id: string): Promise<OrderTrackingResult> {
 }
 
 export async function trackOrder(trackingNumber: string): Promise<OrderTrackingResult> {
-  const response = await fetch(
-    `${API_URL}/api/Logistics/track-order?trackingNum=${encodeURIComponent(trackingNumber)}`,
-    { method: "GET", headers: { "Content-Type": "application/json" } }
-  );
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: "Tracking number not found" }));
-    throw new Error(error.message || "Order not found");
-  }
+  const response = await fetchWithAuth(`Logistics/track-order?trackingNum=${encodeURIComponent(trackingNumber)}`, { 
+    method: "GET" 
+  });
   return response.json();
 }
 
-// Bookings
+// Bookings Functions
 export async function getAccommodations(): Promise<Accommodation[]> {
   const response = await fetchWithAuth("Bookings/accomodation", { method: "GET" });
   return response.json();
@@ -593,10 +732,7 @@ export async function getAccommodationById(id: string): Promise<Accommodation> {
 }
 
 export async function getRooms(accommodationId: string): Promise<any[]> {
-  const response = await fetchWithAuth(
-    `Bookings/accomodation-reservations?id=${accommodationId}`,
-    { method: "GET" }
-  );
+  const response = await fetchWithAuth(`Bookings/accomodation-reservations?id=${accommodationId}`, { method: "GET" });
   return response.json();
 }
 
@@ -639,14 +775,9 @@ export async function getFlightTickets(): Promise<FlightTicket[]> {
 }
 
 export async function trackBooking(bookingRef: string): Promise<BookingTrackingResult> {
-  const response = await fetch(
-    `${API_URL}/api/Bookings/track-booking?ticketRef=${encodeURIComponent(bookingRef)}`,
-    { method: "GET", headers: { "Content-Type": "application/json" } }
-  );
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: "Booking reference not found" }));
-    throw new Error(error.message || "Booking not found");
-  }
+  const response = await fetchWithAuth(`Bookings/track-booking?ticketRef=${encodeURIComponent(bookingRef)}`, { 
+    method: "GET" 
+  });
   return response.json();
 }
 
@@ -666,7 +797,7 @@ export async function trackParcelOrBooking(
   }
 }
 
-// Payments
+// Payments Functions
 export async function initializePaystackPayment(orderId: string, amount: number, email: string): Promise<any> {
   const response = await fetchWithAuth("Wallet/initialize", {
     method: "POST",
@@ -688,7 +819,7 @@ export async function initializeFlutterwavePayment(amount: number, email: string
   return response.json();
 }
 
-// Notifications
+// Notifications Functions
 export async function getNotifications(): Promise<Notification[]> {
   const response = await fetchWithAuth("Notifications", { method: "GET" });
   return response.json();
@@ -707,7 +838,7 @@ export async function markNotificationRead(id: string, data: UpdateNotificationR
   return response.json();
 }
 
-// Feedback
+// Feedback Functions
 export async function submitFeedback(data: AddFeedbackRequest): Promise<any> {
   const response = await fetchWithAuth("Info/feedback", {
     method: "POST",
@@ -716,7 +847,7 @@ export async function submitFeedback(data: AddFeedbackRequest): Promise<any> {
   return response.json();
 }
 
-// Admin Auth
+// Admin Auth Functions
 export async function adminLogin(credentials: LoginRequest): Promise<LoginResponse> {
   const response = await fetchWithAuth("Admin/login", {
     method: "POST",
@@ -750,7 +881,7 @@ export async function adminGetProfile(): Promise<any> {
   return response.json();
 }
 
-// Admin Data
+// Admin Data Functions
 export async function getAllUsers(): Promise<any[]> {
   const response = await fetchWithAuth("AuthUsers", { method: "GET" });
   return response.json();
@@ -804,3 +935,5 @@ export async function getAllAdverts(): Promise<any[]> {
   const response = await fetchWithAuth("Admin/advert", { method: "GET" });
   return response.json();
 }
+
+export { API_URL, checkApiHealth };
