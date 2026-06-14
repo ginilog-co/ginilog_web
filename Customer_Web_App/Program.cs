@@ -1,6 +1,4 @@
 using Customer_Web_App.Repository;
-using FirebaseAdmin;
-using Google.Apis.Auth.OAuth2;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,20 +20,6 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
 });
 
 
-
-var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
-
-// Load service account JSON
-using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-
-// Create Google Credential (Correct way)
-var credential = ServiceAccountCredential.FromServiceAccountData(stream);
-
-// Create Firebase App
-FirebaseApp.Create(new AppOptions
-{
-    Credential = GoogleCredential.FromServiceAccountCredential(credential)
-});
 
 // ? Register your own services
 builder.Services.AddScoped<RepositoryService>();

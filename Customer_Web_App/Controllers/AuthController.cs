@@ -3,7 +3,6 @@ using Customer_Web_App.Models;
 using Customer_Web_App.Models.BookingsModel;
 using Customer_Web_App.Models.UsersDataModel;
 using Customer_Web_App.Repository;
-using FirebaseAdmin.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Net;
@@ -100,97 +99,6 @@ namespace Customer_Web_App.Controllers
                 }
             }
             return View(requset);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> FirebaseSignIn(LoginRequset req)
-        {
-            try
-            {
-
-                FirebaseToken decoded;
-                decoded = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(req.IdToken);
-
-                // Firebase user info (claims)
-                var uid = decoded.Uid;
-
-                // email may be in decoded.Claims depending on provider
-                var email = decoded.Claims.TryGetValue("email", out var e) ? e?.ToString() : null;
-
-                var name = decoded.Claims.TryGetValue("name", out var n) ? n?.ToString() : null;
-                var picture = decoded.Claims.TryGetValue("picture", out var p) ? p?.ToString() : null;
-                var phone = decoded.Claims.TryGetValue("phone_number", out var ph) ? ph?.ToString() : null;
-
-                string? firstName = null;
-                string? surname = null;
-
-                if (!string.IsNullOrWhiteSpace(name))
-                {
-                    var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-                    if (parts.Length == 1)
-                    {
-                        firstName = parts[0];
-                    }
-                    else if (parts.Length >= 2)
-                    {
-                        firstName = parts[0];
-                        surname = parts[^1]; // last word
-                    }
-                }
-
-
-                // OPTION A: Just store firebase identity in session
-                HttpContext.Session.SetString("bt_firebase_uid", uid);
-                if (!string.IsNullOrEmpty(email))
-                    HttpContext.Session.SetString("bt_userEmail", email);
-
-                // OPTION B (Recommended): send token to your API to login/register and return your own JWT
-                // Example: /auth/firebase-login on your API (you create it)
-                // It should verify the same token again server-side, create user, return AdminLoginDto.
-
-                LoginExternalRequset login = new()
-                {
-                    Email = email,
-                    IdToken = req.IdToken,
-                    ExternalId=uid,
-                    FirstName = firstName,
-                    LastName = surname,
-                    ProfilePicture = picture,
-                    PhoneNo = phone,
-                };
-
-                using var httpClient = new HttpClient();
-
-                StringContent content = new(JsonConvert.SerializeObject(login), Encoding.UTF8, "application/json");
-                var response = await httpClient.PostAsync($"{GlobalConstant.BaseUrl}{GlobalConstant.UserUrl}/auth-login", content);
-                var apiResponse = await response.Content.ReadAsStringAsync();
-
-                if (response.StatusCode == HttpStatusCode.OK|| response.StatusCode == HttpStatusCode.Created)
-                {
-                    var body = JsonConvert.DeserializeObject<LoginDto>(apiResponse)!;
-
-                    HttpContext.Session.SetString("bt_userId", body.UserId.ToString());
-                    HttpContext.Session.SetString("bt_token", body.Token!);
-                    HttpContext.Session.SetString("bt_userType", body.UserType!);
-                    HttpContext.Session.SetString("bt_userEmail", body.Email!);
-                    HttpContext.Session.SetString("bt_userLogin", "Login");
-                    return RedirectToAction("Index", "Home");
-                }
-
-                else
-                {
-                    ViewBag.UserError = apiResponse;
-                    return View(req);
-                }
-
-
-            }
-            catch (Exception ex)
-            {
-                ViewBag.UserError = ex.Message;
-                return View(req);
-            }
         }
 
         public IActionResult SignUp()
