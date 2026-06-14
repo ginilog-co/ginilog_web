@@ -936,4 +936,4 @@ export async function getAllAdverts(): Promise<any[]> {
   return response.json();
 }
 
-export { API_URL, checkApiHealth };
+export { API_URL };
