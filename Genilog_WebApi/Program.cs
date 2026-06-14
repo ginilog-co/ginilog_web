@@ -32,7 +32,9 @@ var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 var builder = WebApplication.CreateBuilder(args);
 
 // ================= DEFINED ALLOWED ORIGINS =================
-// Explicitly define allowed origins instead of using dynamic checking
+// FIX: Removed all wildcard origins (e.g. *.vercel.app, *.onrender.com)
+// Wildcards are NOT supported by ASP.NET Core CORS when AllowCredentials() is used.
+// They silently break the entire CORS policy. Use exact origins only.
 var allowedOrigins = new[]
 {
     // Local development
@@ -44,23 +46,20 @@ var allowedOrigins = new[]
     "https://localhost:3001",
     "https://localhost:5173",
     "https://localhost:8080",
-    
-    // Your production domain
+
+    // Production domain
     "https://www.ginilog.com",
     "https://ginilog.com",
-    
-    // Vercel deployments
+
+    // Vercel deployments (exact URLs only — no wildcards)
     "https://ginilog.vercel.app",
     "https://ginilog-git-main.vercel.app",
-    "https://ginilog-git-*.vercel.app",
-    "https://*.vercel.app",
-    
-    // Render backend (for testing)
-    "https://*.onrender.com",
-    
-    // Your other domains
+
+    // Render backend exact URL (replace with your actual Render URL)
+    "https://ginilog-web.onrender.com",
+
+    // Other domains (exact only)
     "https://api-data.ginilog.org",
-    "https://*.ginilog.org"
 };
 
 // Add response compression for better performance
@@ -71,17 +70,16 @@ builder.Services.AddResponseCompression(options =>
     options.Providers.Add<GzipCompressionProvider>();
 });
 
-// ================= CORS FIX =================
+// ================= CORS =================
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins, policy =>
     {
-        // Use specific origins instead of dynamic checking
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials()
-              .SetPreflightMaxAge(TimeSpan.FromMinutes(10)); // Cache preflight requests
+              .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
     });
 });
 
@@ -100,7 +98,7 @@ builder.Services.AddEndpointsApiExplorer();
 try
 {
     var firebaseJsonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ginilog-e3c8a-firebase-adminsdk-28ax3-07783858d2.json");
-    
+
     if (File.Exists(firebaseJsonPath))
     {
         var credential = CredentialFactory
@@ -121,14 +119,12 @@ try
 catch (Exception ex)
 {
     Console.WriteLine($"Failed to initialize Firebase: {ex.Message}");
-    // Don't throw, allow app to start but log error
 }
 
 // Database Context
 builder.Services.AddDbContext<Genilog_Data_Context>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("Genilog_Data_Context"));
-    // Add these for better debugging in production
     options.EnableSensitiveDataLogging(builder.Environment.IsDevelopment());
     options.EnableDetailedErrors(builder.Environment.IsDevelopment());
 });
@@ -138,7 +134,6 @@ builder.Services.Configure<PaymentConfig>(builder.Configuration.GetSection("Paym
 builder.Services.Configure<FirebaseConfig>(builder.Configuration.GetSection("Firebase"));
 builder.Services.Configure<ServerConfig>(builder.Configuration.GetSection("Server"));
 
-// Register Cls_Keys as singleton
 builder.Services.AddSingleton<Cls_Keys>();
 
 // ================= REPOSITORIES =================
@@ -149,16 +144,13 @@ builder.Services.AddScoped<IUser_RoleRepository, User_RoleRepository>();
 builder.Services.AddScoped<ITokenHandler, Genilog_WebApi.Repository.AuthRepo.TokenHandler>();
 builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 builder.Services.AddScoped<IUploadRepository, UploadRepository>();
-
 builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IRidersRepository, RidersRepository>();
 builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
-
 builder.Services.AddScoped<IAccomodationRepository, AccomodationRepository>();
 builder.Services.AddScoped<IAirlineRepository, AirlineRepository>();
 builder.Services.AddScoped<IWalletRepository, WalletRepository>();
-
 builder.Services.AddScoped<IUserPermissionRepository, UserPermissionRepository>();
 builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, DynamicPermissionPolicyProvider>();
@@ -214,25 +206,24 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
         ),
-        ClockSkew = TimeSpan.FromSeconds(30) // Allow 30 seconds clock skew
+        ClockSkew = TimeSpan.FromSeconds(30)
     };
-    
+
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
         {
-            // Handle token from query string for SignalR/WebSockets
             var accessToken = context.Request.Query["access_token"];
             var path = context.HttpContext.Request.Path;
-            
+
             if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/ws"))
             {
                 context.Token = accessToken;
             }
-            
+
             return Task.CompletedTask;
         },
-        
+
         OnTokenValidated = async context =>
         {
             var blacklistService = context.HttpContext.RequestServices
@@ -250,7 +241,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 }
             }
         },
-        
+
         OnAuthenticationFailed = context =>
         {
             if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
@@ -276,14 +267,14 @@ builder.Services.AddRateLimiter(options =>
         opt.PermitLimit = 3;
         opt.QueueLimit = 0;
     });
-    
+
     options.AddFixedWindowLimiter("apiLimiter", opt =>
     {
         opt.Window = TimeSpan.FromMinutes(1);
         opt.PermitLimit = 100;
         opt.QueueLimit = 10;
     });
-    
+
     options.OnRejected = async (context, token) =>
     {
         context.HttpContext.Response.StatusCode = 429;
@@ -316,7 +307,7 @@ builder.Services.AddSignalR(options =>
     options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
 });
 
-// Add health checks
+// Health checks
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
@@ -329,18 +320,17 @@ app.UseForwardedHeaders();
 // Response compression
 app.UseResponseCompression();
 
-// Configure pipeline based on environment
-if (app.Environment.IsDevelopment())
+// FIX: Swagger enabled in ALL environments so you can verify routes on Render.
+// Once CORS and routing are confirmed working, move back inside IsDevelopment() check.
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.DefaultModelsExpandDepth(-1);
-        options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
-        options.DisplayRequestDuration();
-    });
-}
-else
+    options.DefaultModelsExpandDepth(-1);
+    options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
+    options.DisplayRequestDuration();
+});
+
+if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
 }
@@ -365,7 +355,7 @@ using (var scope = app.Services.CreateScope())
 // Health check endpoint
 app.MapHealthChecks("/health");
 
-// HTTPS Redirection (skip in development if needed)
+// HTTPS Redirection
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
@@ -374,7 +364,7 @@ if (!app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseRouting();
 
-// CORS must be between UseRouting and UseAuthentication
+// FIX: CORS must be between UseRouting and UseAuthentication — this is correct and kept as-is
 app.UseCors(MyAllowSpecificOrigins);
 
 app.UseAuthentication();
@@ -391,7 +381,7 @@ app.UseWebSockets(new WebSocketOptions
     ReceiveBufferSize = 4 * 1024
 });
 
-// WebSocket endpoint with better error handling
+// WebSocket endpoint
 app.Map("/ws", async (HttpContext context) =>
 {
     try
@@ -413,7 +403,7 @@ app.Map("/ws", async (HttpContext context) =>
     {
         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "WebSocket connection error");
-        
+
         if (!context.Response.HasStarted)
         {
             context.Response.StatusCode = 500;
@@ -422,7 +412,7 @@ app.Map("/ws", async (HttpContext context) =>
     }
 });
 
-// Optional: Add a test endpoint for CORS
+// CORS test endpoint
 app.MapGet("/test-cors", () => Results.Ok(new { message = "CORS is working!" }));
 
 app.Run();
