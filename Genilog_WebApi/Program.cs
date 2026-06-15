@@ -60,6 +60,9 @@ var allowedOrigins = new[]
 
     // Other domains (exact only)
     "https://api-data.ginilog.org",
+    // Additional deployed API hosts used by frontends
+    "https://api-data-connection.ginilog.org",
+    "https://api-data.ginilog.com",
 };
 
 // Add response compression for better performance
