@@ -1,6 +1,6 @@
 // lib/api.ts
 
-const DEFAULT_PRODUCTION_API = "https://ginilog-web.onrender.com";
+const DEFAULT_PRODUCTION_API = "https://api-data-connection.ginilog.org";
 const LOCAL_API = "http://localhost:5000";
 
 function resolveApiUrl(): string {
