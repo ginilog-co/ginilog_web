@@ -10,7 +10,7 @@ This document summarizes what was wrong, what was changed in the repo, and the s
 2. **CORS** — The API allowed `localhost:3000` and `ginilog-web.vercel.app`, but **not** other `*.onrender.com` frontends. Browser sign-in from a Render-hosted UI was blocked.
 3. **Email (verification)** — `ResendApiKey` and `MailSettings__Mail` were not listed in `render.yaml`; unverified users may not receive codes on production.
 
-**Production API URL (confirmed healthy):** `https://ginilog-web.onrender.com`
+**Production API URL (confirmed healthy):** `https://api-data-connection.ginilog.org`
 
 ---
 
@@ -19,7 +19,7 @@ This document summarizes what was wrong, what was changed in the repo, and the s
 | File | Change |
 |------|--------|
 | `ginilog-spa/lib/api.ts` | Production browsers call Render API directly when env is unset; localhost still uses `/api` rewrites. |
-| `ginilog-spa/next.config.js` | Rewrites default to `https://ginilog-web.onrender.com` instead of `localhost:5000`. |
+| `ginilog-spa/next.config.js` | Rewrites default to `https://api-data-connection.ginilog.org` instead of `localhost:5000`. |
 | `ginilog-spa/.env.example` | Documents `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_WS_URL`. |
 | `Genilog_WebApi/Program.cs` | CORS allows `*.onrender.com`, `*.vercel.app`, `*.ginilog.com`, and `localhost`. |
 | `Genilog_WebApi/render.yaml` | Adds `ResendApiKey` and `MailSettings__Mail` as required env keys. |
@@ -33,7 +33,7 @@ Debug logging in `ginilog-spa/lib/api.ts` and `Genilog_WebApi/EmailSender/EmailT
 1. Commit and push the updated `Genilog_WebApi` (especially `Program.cs` and `render.yaml`).
 2. In the [Render dashboard](https://dashboard.render.com), open your **web service** for the API (e.g. `ginilog-api` / `ginilog-web`).
 3. Trigger a **manual deploy** or wait for auto-deploy from your branch.
-4. Confirm health: open `https://ginilog-web.onrender.com/api/Health` — expect `{"status":"healthy",...}`.
+4. Confirm health: open `https://api-data-connection.ginilog.org/api/Health` — expect `{"status":"healthy",...}`.
 
 ### Required environment variables (Render → API service → Environment)
 
@@ -62,7 +62,7 @@ Set any that are missing (values are secrets — do not commit them):
 
 1. In Vercel project **Settings → Environment Variables**, set:
    ```
-   NEXT_PUBLIC_API_URL=https://ginilog-web.onrender.com
+   NEXT_PUBLIC_API_URL=https://api-data-connection.ginilog.org
    NEXT_PUBLIC_WS_URL=wss://ginilog-web.onrender.com/ws
    ```
 2. Redeploy (production build must pick up these vars).
@@ -95,21 +95,21 @@ Set any that are missing (values are secrets — do not commit them):
 1. Open `/customer-portal/login`.
 2. Sign in with a **verified** customer account.
 3. In DevTools → **Network**, confirm:
-   - Request URL: `https://ginilog-web.onrender.com/api/AuthUsers/login` (or your `NEXT_PUBLIC_API_URL`).
+   - Request URL: `https://api-data-connection.ginilog.org/api/AuthUsers/login` (or your `NEXT_PUBLIC_API_URL`).
    - Status: **200** (not CORS error, not 404 on `/api/...` from the static host alone).
 
 ### Company (manager)
 
 1. Open `/admin-dashboard/company-login`.
 2. Sign in with a manager account.
-3. Confirm request to `https://ginilog-web.onrender.com/api/Admin/login-manager` returns **200**.
+3. Confirm request to `https://api-data-connection.ginilog.org/api/Admin/login-manager` returns **200**.
 
 ### CORS check (optional, after API redeploy)
 
 Replace `YOUR-FRONTEND` with your real host:
 
 ```bash
-curl.exe -s -X OPTIONS "https://ginilog-web.onrender.com/api/AuthUsers/login" ^
+curl.exe -s -X OPTIONS "https://api-data-connection.ginilog.org/api/AuthUsers/login" ^
   -H "Origin: https://YOUR-FRONTEND.onrender.com" ^
   -H "Access-Control-Request-Method: POST" -D -
 ```

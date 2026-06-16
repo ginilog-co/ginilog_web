@@ -7,7 +7,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://ginilog-web.onrender.com/api/:path*"
+      "destination": "https://api-data-connection.ginilog.org/api/:path*"
     }
   ],
   "headers": [

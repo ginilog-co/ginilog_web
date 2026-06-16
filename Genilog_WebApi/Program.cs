@@ -56,7 +56,7 @@ var allowedOrigins = new[]
     "https://ginilog-git-main.vercel.app",
 
     // Render backend exact URL (replace with your actual Render URL)
-    "https://ginilog-web.onrender.com",
+    "https://api-data-connection.ginilog.org",
 
     // Other domains (exact only)
     "https://api-data.ginilog.org",

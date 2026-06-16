@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "https://ginilog-web.onrender.com").replace(/\/$/, "");
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "https://api-data-connection.ginilog.org").replace(/\/$/, "");
 
 const nextConfig = {
   async rewrites() {
