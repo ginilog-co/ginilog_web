@@ -184,7 +184,7 @@ export async function refreshAccessToken(): Promise<string | null> {
   if (!refreshToken) return null;
   
   try {
-    const response = await fetch(`${API_URL}/api/AuthUsers/refresh-token`, {
+    const response = await fetch(`${API_URL}/api/auth-users/refresh-token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -555,7 +555,7 @@ export interface RegisterManagerRequest {
 
 // Auth Functions
 export async function login(credentials: LoginRequest): Promise<LoginResponse> {
-  const response = await fetchWithAuth("AuthUsers/login", {
+  const response = await fetchWithAuth("auth-users/login", {
     method: "POST",
     body: JSON.stringify(credentials),
   });
@@ -565,7 +565,7 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
 }
 
 export async function register(userData: RegisterRequest): Promise<RegisterResponse> {
-  const response = await fetchWithAuth("AuthUsers", {
+  const response = await fetchWithAuth("auth-users", {
     method: "POST",
     body: JSON.stringify(userData),
   });
@@ -573,20 +573,20 @@ export async function register(userData: RegisterRequest): Promise<RegisterRespo
 }
 
 export async function getProfile(): Promise<UserProfile> {
-  const response = await fetchWithAuth("AuthUsers/profile", { method: "GET" });
+  const response = await fetchWithAuth("auth-users/profile", { method: "GET" });
   return response.json();
 }
 
 export async function logout(): Promise<void> {
   try {
-    await fetchWithAuth("AuthUsers/logout", { method: "POST" }).catch(() => {});
+    await fetchWithAuth("auth-users/logout", { method: "POST" }).catch(() => {});
   } finally {
     clearAuthData();
   }
 }
 
 export async function googleAuth(data: GoogleAuthRequest): Promise<LoginResponse> {
-  const response = await fetchWithAuth("AuthUsers/auth-login", {
+  const response = await fetchWithAuth("auth-users/auth-login", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -596,7 +596,7 @@ export async function googleAuth(data: GoogleAuthRequest): Promise<LoginResponse
 }
 
 export async function updateProfile(data: UpdateUserRequest): Promise<UserProfile> {
-  const response = await fetchWithAuth("AuthUsers/update-user", {
+  const response = await fetchWithAuth("auth-users/update-user", {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -604,7 +604,7 @@ export async function updateProfile(data: UpdateUserRequest): Promise<UserProfil
 }
 
 export async function updateDeviceToken(deviceToken: string): Promise<any> {
-  const response = await fetchWithAuth("AuthUsers/update-device-token", {
+  const response = await fetchWithAuth("auth-users/update-device-token", {
     method: "PUT",
     body: JSON.stringify({ DeviceToken: deviceToken }),
   });
@@ -612,12 +612,12 @@ export async function updateDeviceToken(deviceToken: string): Promise<any> {
 }
 
 export async function getDeliveryAddresses(): Promise<DeliveryAddress[]> {
-  const response = await fetchWithAuth("AuthUsers/delivery-address", { method: "GET" });
+  const response = await fetchWithAuth("auth-users/delivery-address", { method: "GET" });
   return response.json();
 }
 
 export async function addNewAddress(data: AddDeliveryAddressRequest): Promise<UserProfile> {
-  const response = await fetchWithAuth("AuthUsers/add-new-address", {
+  const response = await fetchWithAuth("auth-users/add-new-address", {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -625,7 +625,7 @@ export async function addNewAddress(data: AddDeliveryAddressRequest): Promise<Us
 }
 
 export async function updateDeliveryAddress(id: string, data: AddDeliveryAddressRequest): Promise<UserProfile> {
-  const response = await fetchWithAuth(`AuthUsers/update-delivery-address/${id}`, {
+  const response = await fetchWithAuth(`auth-users/update-delivery-address/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -633,11 +633,11 @@ export async function updateDeliveryAddress(id: string, data: AddDeliveryAddress
 }
 
 export async function deleteDeliveryAddress(id: string): Promise<void> {
-  await fetchWithAuth(`AuthUsers/delete-delivery-address/${id}`, { method: "DELETE" });
+  await fetchWithAuth(`auth-users/delete-delivery-address/${id}`, { method: "DELETE" });
 }
 
 export async function verifyEmail(data: EmailVerificationRequest): Promise<LoginResponse> {
-  const response = await fetchWithAuth("AuthUsers/email-verification", {
+  const response = await fetchWithAuth("auth-users/email-verification", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -647,7 +647,7 @@ export async function verifyEmail(data: EmailVerificationRequest): Promise<Login
 }
 
 export async function requestEmailVerificationToken(email: string): Promise<string> {
-  const response = await fetchWithAuth("AuthUsers/email-verification-request-token", {
+  const response = await fetchWithAuth("auth-users/email-verification-request-token", {
     method: "POST",
     body: JSON.stringify({ Email: email }),
   });
@@ -655,7 +655,7 @@ export async function requestEmailVerificationToken(email: string): Promise<stri
 }
 
 export async function forgotPassword(email: string): Promise<string> {
-  const response = await fetchWithAuth("AuthUsers/forgot-password-request-token", {
+  const response = await fetchWithAuth("auth-users/forgot-password-request-token", {
     method: "POST",
     body: JSON.stringify({ Email: email }),
   });
@@ -663,7 +663,7 @@ export async function forgotPassword(email: string): Promise<string> {
 }
 
 export async function resetPassword(data: ResetPasswordRequest): Promise<string> {
-  const response = await fetchWithAuth("AuthUsers/reset-password", {
+  const response = await fetchWithAuth("auth-users/reset-password", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -671,7 +671,7 @@ export async function resetPassword(data: ResetPasswordRequest): Promise<string>
 }
 
 export async function verifyPhoneNumber(otp: string): Promise<string> {
-  const response = await fetchWithAuth("AuthUsers/phone-no-verification", {
+  const response = await fetchWithAuth("auth-users/phone-no-verification", {
     method: "POST",
     body: JSON.stringify({ Otp: otp }),
   });
@@ -679,7 +679,7 @@ export async function verifyPhoneNumber(otp: string): Promise<string> {
 }
 
 export async function enableTwoFactor(id: string): Promise<string> {
-  const response = await fetchWithAuth(`AuthUsers/two-factor-enabled/${id}`, { method: "POST" });
+  const response = await fetchWithAuth(`auth-users/two-factor-enabled/${id}`, { method: "POST" });
   return response.json();
 }
 
@@ -883,7 +883,7 @@ export async function adminGetProfile(): Promise<any> {
 
 // Admin Data Functions
 export async function getAllUsers(): Promise<any[]> {
-  const response = await fetchWithAuth("AuthUsers", { method: "GET" });
+  const response = await fetchWithAuth("auth-users", { method: "GET" });
   return response.json();
 }
 
