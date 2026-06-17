@@ -30,26 +30,38 @@ var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 var builder = WebApplication.CreateBuilder(args);
 
 
+var allowedHosts = new[]
+{
+    "localhost",
+    "127.0.0.1",
+    "ginilog.org",
+    "ginilog.com",
+    "www.ginilog.org",
+    "www.ginilog.com",
+    "api.ginilog.org",
+    "api-data.ginilog.org",
+};
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: MyAllowSpecificOrigins,
-                      policy =>
-                      {
-                        policy.SetIsOriginAllowed(origin =>
-                        {
-                            if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
-                                return false;
-                            var host = uri.Host;
-                            return host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
-                                || host.Equals("api-data.ginilog.org", StringComparison.OrdinalIgnoreCase)
-                                || host.EndsWith(".onrender.com", StringComparison.OrdinalIgnoreCase)
-                                || host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase)
-                                || host.EndsWith(".ginilog.org", StringComparison.OrdinalIgnoreCase);
-                        })
-                        .AllowAnyHeader()
-                        .AllowAnyMethod()
-                        .AllowCredentials(); // Required for SignalR
-                      });
+    options.AddPolicy(MyAllowSpecificOrigins, policy =>
+    {
+        policy.SetIsOriginAllowed(origin =>
+        {
+            if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                return false;
+
+            return allowedHosts.Contains(
+                uri.Host,
+                StringComparer.OrdinalIgnoreCase)
+                || uri.Host.EndsWith(".ginilog.org", StringComparison.OrdinalIgnoreCase)
+                || uri.Host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase)
+                || uri.Host.EndsWith(".onrender.com", StringComparison.OrdinalIgnoreCase);
+        })
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
+    });
 });
 
 

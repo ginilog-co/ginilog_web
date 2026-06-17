@@ -11,8 +11,8 @@ namespace Genilog_WebApi.Model.AuthModel
         User,
         Super_Admin,
         Admin,
-        Manager,
         Staff,
+        Manager,
         BrandOwner,
         BrandStaff,
         Rider

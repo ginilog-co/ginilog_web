@@ -13,6 +13,8 @@ namespace Genilog_WebApi.Profiles
                 .ReverseMap(); 
             CreateMap<CompanyApplyDataModel, CompanyApplyDataModelDto>()
                 .ReverseMap();
+            CreateMap<CompanyManagerStaffDataModel, CompanyManagerStaffDataModelDto>()
+                .ReverseMap();
 
         }
     }

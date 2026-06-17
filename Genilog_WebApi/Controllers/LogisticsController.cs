@@ -180,8 +180,8 @@ namespace Genilog_WebApi.Controllers
                 {
                     return BadRequest("Invalid User ID format.");
                 }
-                var admin = await adminRepository.GetAsync(userGuid);
-                if (admin.AdminType == "Manager")
+                var admin = await adminRepository.GetCompanyManagerStaffAsync(userGuid);
+                if (admin.StaffType == "Manager")
                 {
                     var contacts = new CompanyModelData()
                     {
@@ -540,7 +540,7 @@ namespace Genilog_WebApi.Controllers
                     FirstName = request.FirstName,
                     LastName = request.LastName,
                     Email = request.Email,
-                    UserType = "Rider",
+                    UserType = RoleType.Rider.ToString(),
                     VerificationToken = CreateRandomToken(),
                     EmailConfirmed = true,
                     PhoneNo = request.PhoneNumber,
@@ -689,13 +689,14 @@ namespace Genilog_WebApi.Controllers
                 var events = await companyRepository.GetAllPaginationOrderDataAsync(filter);
                 return Ok(events);
             }
-            else if (user.UserType == "Manager" || user.UserType == "Staff-Admin" || user.UserType == "Staff")
+            else if (user.UserType == "Manager" || user.UserType == "BrandOwner" || user.UserType == "BrandStaff")
             {
-                var admin = await adminRepository.GetAsync(user.Id);
+                var admin = await adminRepository.GetCompanyManagerStaffAsync(user.Id);
                 filter.UserId = admin.ManagerId.ToString();
                 var userDto = await companyRepository.GetAllPaginationOrderDataAsync(filter);
                 return Ok(userDto);
             }
+
             else
             {
                 filter.UserId = user.Id.ToString();

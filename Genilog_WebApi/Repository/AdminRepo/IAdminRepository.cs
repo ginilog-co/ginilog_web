@@ -14,6 +14,15 @@ namespace Genilog_WebApi.Repository.AdminRepo
         Task<AdminModelTable> DeleteAsync(Guid id);
         Task<AdminModelTable> UpdateAsync(Guid id, AdminModelTable region);
 
+        // COMPANY MANAGER/STAFF
+        Task<IEnumerable<CompanyManagerStaffDataModel>> GetAllCompanyManagerStaffAsync();
+        Task<PageModel<CompanyManagerStaffDataModelDto>> GetAllPaginatedCompanyManagerStaffAsync(FilterLocationData filter);
+        Task<CompanyManagerStaffDataModel> GetCompanyManagerStaffAsync(Guid id);
+        Task<CompanyManagerStaffDataModel> AddCompanyManagerStaffAsync(CompanyManagerStaffDataModel region);
+        Task<CompanyManagerStaffDataModel> DeleteCompanyManagerStaffAsync(Guid id);
+        Task<CompanyManagerStaffDataModel> UpdateCompanyManagerStaffAsync(Guid id, CompanyManagerStaffDataModel region);
+
+
         // ADVERT LINE
         Task<IEnumerable<AdvertHolderModel>> GetAllAdvertAsync();
         Task<AdvertHolderModel> GetAdvertAsync(Guid id);

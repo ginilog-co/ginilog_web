@@ -13,6 +13,7 @@ namespace Genilog_WebApi.Repository.AdminRepo
         private readonly Genilog_Data_Context maap_Context = maap_Context;
         private readonly IMapper mapper = mapper;
 
+        #region ADMIN DATA MODEL
         public async Task<AdminModelTable> AddAsync(AdminModelTable users)
         {
             await maap_Context.AdminModelTables!.AddAsync(users);
@@ -70,22 +71,11 @@ namespace Genilog_WebApi.Repository.AdminRepo
                 );
             }
               
-
-            if (!string.IsNullOrWhiteSpace(filter.UserId))
-            {
-                string any = filter.UserId;
-                query = query.Where(x =>
-                    EF.Functions.Like(x.ManagerId.ToString(), $"%{any}%") 
-                );
-            }
-
             if (!string.IsNullOrWhiteSpace(filter.FilterTypes))
             {
                 string any = filter.FilterTypes;
                 query = query.Where(x =>
-                    EF.Functions.Like(x.AdminType, $"%{any}%") ||
-                     x.CompanyType != null && x.CompanyType.Any(d =>
-                     d.Contains(any, StringComparison.CurrentCultureIgnoreCase))
+                    EF.Functions.Like(x.AdminType, $"%{any}%")
                 );
             }
 
@@ -98,9 +88,7 @@ namespace Genilog_WebApi.Repository.AdminRepo
                     EF.Functions.Like(x.Email, $"%{any}%") ||
                     EF.Functions.Like(x.PhoneNo, $"%{any}%") ||
                     EF.Functions.Like(x.Sex, $"%{any}%") ||
-                    EF.Functions.Like(x.Branch, $"%{any}%") ||
-                    EF.Functions.Like(x.CompanyName, $"%{any}%") ||
-                    EF.Functions.Like(x.CompanyUserName, $"%{any}%")
+                    EF.Functions.Like(x.Branch, $"%{any}%") 
                 );
             }
             if (filter.StartDate.HasValue && filter.EndDate.HasValue)
@@ -171,15 +159,161 @@ namespace Genilog_WebApi.Repository.AdminRepo
                 existinguser.Address = user.Address;
                 // Upload Image
                 existinguser.ImagePath = user.ImagePath;
-                existinguser.CompanyName = user.CompanyName;
-                existinguser.CompanyUserName = user.CompanyUserName;
-                existinguser.CompanyType = user.CompanyType;
                 await maap_Context.SaveChangesAsync();
                 return existinguser;
             }
         }
 
+        #endregion
+
+        #region COMPANY MANAGER/STAFF
+        //COMPANY MANAGER/STAFF
+
+        public async Task<CompanyManagerStaffDataModel> AddCompanyManagerStaffAsync(CompanyManagerStaffDataModel users)
+        {
+          //  users.Id = Guid.NewGuid();
+            await maap_Context.CompanyManagerStaffDataModels!.AddAsync(users);
+            await maap_Context.SaveChangesAsync();
+            return users;
+        }
+        public async Task<CompanyManagerStaffDataModel> DeleteCompanyManagerStaffAsync(Guid id)
+        {
+            var users = await maap_Context.CompanyManagerStaffDataModels!.FirstOrDefaultAsync(x => x.Id == id);
+            if (users == null)
+            {
+#pragma warning disable CS8603 // Possible null reference return.
+                return null;
+#pragma warning restore CS8603 // Possible null reference return.
+            }
+            else
+            {
+                // Delete Region
+                maap_Context.CompanyManagerStaffDataModels!.Remove(users);
+                await maap_Context.SaveChangesAsync();
+                return users;
+            }
+        }
+
+        public async Task<IEnumerable<CompanyManagerStaffDataModel>> GetAllCompanyManagerStaffAsync()
+        {
+            return await maap_Context.CompanyManagerStaffDataModels!.AsNoTracking().ToListAsync();
+        }
+
+        public async Task<PageModel<CompanyManagerStaffDataModelDto>> GetAllPaginatedCompanyManagerStaffAsync(FilterLocationData filter)
+        {
+            // 1. Base query
+            var query = maap_Context.CompanyManagerStaffDataModels!
+                .AsNoTracking()
+                .OrderBy(x => x.CreatedAt)
+                .AsQueryable();
+
+
+            if (!string.IsNullOrWhiteSpace(filter.UserId))
+            {
+                string any = filter.UserId;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.ManagerId.ToString(), $"%{any}%")
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.FilterTypes))
+            {
+                string any = filter.FilterTypes;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.StaffType, $"%{any}%") ||
+                     x.CompanyType != null && x.CompanyType.Any(d =>
+                     d.Contains(any, StringComparison.CurrentCultureIgnoreCase))
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.AnyItem))
+            {
+                string any = filter.AnyItem;
+                query = query.Where(x =>
+                    EF.Functions.Like(x.FirstName, $"%{any}%") ||
+                    EF.Functions.Like(x.SurName, $"%{any}%") ||
+                    EF.Functions.Like(x.Email, $"%{any}%") ||
+                    EF.Functions.Like(x.PhoneNo, $"%{any}%") ||
+                    EF.Functions.Like(x.Sex, $"%{any}%") ||
+                    EF.Functions.Like(x.CompanyName, $"%{any}%") ||
+                    EF.Functions.Like(x.CompanyUserName, $"%{any}%")
+                );
+            }
+            if (filter.StartDate.HasValue && filter.EndDate.HasValue)
+            {
+                var from = filter.StartDate.Value.Date;
+                var to = filter.EndDate.Value.Date;
+
+                // swap if reversed
+                if (from > to)
+                    (from, to) = (to, from);
+
+
+
+                var fromDate = from;
+                var toDate = to.AddDays(1);
+
+                query = query.Where(s => s.CreatedAt >= fromDate && s.CreatedAt < toDate);
+
+                // query = query.Where(s => s.CreatedAt.Date >= from && s.CreatedAt.Date <= to);
+            }
+
+            // 3. Pagination on the entity query
+            var pageSize = Math.Clamp(filter.PageSize ?? 20, 1, 20);
+            var page = filter.Page is null or <= 0 ? 1 : filter.Page.Value;
+            var pagedData = await query.ToPagedAsync(page, pageSize);
+
+
+            // 4. Map to DTO after retrieving paged data
+            var userDto = mapper.Map<List<CompanyManagerStaffDataModelDto>>(pagedData.Data);
+            userDto = [.. userDto.OrderByDescending(o => o.CreatedAt)];
+
+
+            // 6. Return PageModel<DTO> with same pagination metadata
+            return new PageModel<CompanyManagerStaffDataModelDto>(
+                userDto,
+                pagedData.TotalCount,
+                pagedData.Page,
+                pagedData.PageSize
+            );
+        }
+
+        public async Task<CompanyManagerStaffDataModel> GetCompanyManagerStaffAsync(Guid id)
+        {
+#pragma warning disable CS8603 // Possible null reference return.
+            return await maap_Context.CompanyManagerStaffDataModels!.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+#pragma warning restore CS8603 // Possible null reference return.
+        }
+
+        public async Task<CompanyManagerStaffDataModel> UpdateCompanyManagerStaffAsync(Guid id, CompanyManagerStaffDataModel user)
+        {
+            var existinguser = await maap_Context.CompanyManagerStaffDataModels!.FirstOrDefaultAsync(x => x.Id == id);
+
+            if (existinguser == null)
+            {
+#pragma warning disable CS8603 // Possible null reference return.
+                return null;
+#pragma warning restore CS8603 // Possible null reference return.
+            }
+            else
+            {
+                existinguser.SurName = user.SurName;
+                existinguser.FirstName = user.FirstName;
+                existinguser.PhoneNo = user.PhoneNo;
+                existinguser.StaffCode = user.StaffCode;
+                existinguser.Address = user.Address;
+                // Upload Image
+                existinguser.ImagePath = user.ImagePath;
+                await maap_Context.SaveChangesAsync();
+                return existinguser;
+            }
+        }
+
+        #endregion
+
+        #region ADVERT HOLDER
         // ADVERT LINE
+
         public async Task<AdvertHolderModel> AddAdvertAsync(AdvertHolderModel users)
         {
             users.Id=Guid.NewGuid();
@@ -245,6 +379,9 @@ namespace Genilog_WebApi.Repository.AdminRepo
             }
         }
 
+        #endregion
+
+        #region COMPANY APPLY
         // COMPANY Apply
         public async Task<CompanyApplyDataModel> AddCompanyApplyAsync(CompanyApplyDataModel users)
         {
@@ -377,5 +514,7 @@ namespace Genilog_WebApi.Repository.AdminRepo
 
             }
         }
+
+        #endregion
     }
 }

@@ -174,6 +174,8 @@ namespace Genilog_WebApi.DataContext
         public DbSet<NotificationModel>? NotificationModels { get; set; }
 
         // Company
+
+        public DbSet<CompanyManagerStaffDataModel>? CompanyManagerStaffDataModels { get; set; }
         public DbSet<CompanyModelData>? CompanyModelDatas { get; set; }
         public DbSet<CompanyReviewModel>? CompanyReviewModels { get; set; }
         public DbSet<RidersModelData>? RidersModelDatas { get; set; }

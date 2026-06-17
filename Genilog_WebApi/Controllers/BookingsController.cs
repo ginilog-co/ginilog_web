@@ -773,8 +773,8 @@ namespace Genilog_WebApi.Controllers
                     return BadRequest("Invalid User ID format.");
                 }
 
-                var admin = await adminRepository.GetAsync(userGuid);
-                if (admin.AdminType == "Manager")
+                var admin = await adminRepository.GetCompanyManagerStaffAsync(userGuid);
+                if (admin.StaffType == "BrandOwner")
                 {
                     var contacts = new AccomodationDataModel()
                     {
@@ -1215,7 +1215,7 @@ namespace Genilog_WebApi.Controllers
             }
             else if (user.UserType == "Manager" || user.UserType == "Staff_Admin"|| user.UserType=="Staff")
             {
-                var admin = await adminRepository.GetAsync(user.Id);
+                var admin = await adminRepository.GetCompanyManagerStaffAsync(user.Id);
                 filter.UserId = admin.ManagerId.ToString();
                 var result = await accomodationRepository.GetAllPageCustomerBookedReservationAsync(filter);
                 return Ok(result);
