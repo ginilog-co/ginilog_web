@@ -1,0 +1,78 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Genilog_WebApi",
+      "type": "coreclr",
+      "request": "launch",
+      "project": "${workspaceFolder}/Genilog_WebApi/Genilog_WebApi.csproj",
+      "cwd": "${workspaceFolder}/Genilog_WebApi",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "Launch Genilog_landing_page",
+      "type": "coreclr",
+      "request": "launch",
+      "project": "${workspaceFolder}/Genilog_landing_page/Genilog_landing_page.csproj",
+      "cwd": "${workspaceFolder}/Genilog_landing_page",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "Launch Ginilog_AdminWeb",
+      "type": "coreclr",
+      "request": "launch",
+      "project": "${workspaceFolder}/Ginilog_AdminWeb/Ginilog_AdminWeb.csproj",
+      "cwd": "${workspaceFolder}/Ginilog_AdminWeb",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "Launch Ginilog_Company_WebDasboard",
+      "type": "coreclr",
+      "request": "launch",
+      "project": "${workspaceFolder}/Ginilog_Company_WebDasboard/Ginilog_Company_WebDasboard.csproj",
+      "cwd": "${workspaceFolder}/Ginilog_Company_WebDasboard",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "Launch Customer_Web_App",
+      "type": "coreclr",
+      "request": "launch",
+      "project": "${workspaceFolder}/Customer_Web_App/Customer_Web_App.csproj",
+      "cwd": "${workspaceFolder}/Customer_Web_App",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "Launch ginilog-spa (Next.js)",
+      "type": "pwa-node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "${workspaceFolder}/ginilog-spa",
+      "console": "integratedTerminal",
+      "autoAttachChildProcesses": true,
+      "env": {
+        "NODE_OPTIONS": "--inspect=9229"
+      }
+    }
+  ]
+}

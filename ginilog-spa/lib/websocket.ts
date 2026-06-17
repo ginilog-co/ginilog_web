@@ -1,8 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { API_URL, getToken } from "@/lib/api";
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "wss://ginilog-web.onrender.com/ws";
+// Derive the WebSocket URL from the same API_URL used for REST calls,
+// so it can never drift out of sync with the actual backend host.
+// Falls back to NEXT_PUBLIC_WS_URL only if explicitly set.
+function resolveWsBase(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_WS_URL;
+  if (fromEnv) return fromEnv.replace(/\/$/, "");
+
+  return API_URL.replace(/^https:/, "wss:").replace(/^http:/, "ws:") + "/ws";
+}
+
+const WS_BASE = resolveWsBase();
 
 export function useWebSocket(orderId?: string) {
   const [socket, setSocket] = useState<WebSocket | null>(null);
@@ -10,7 +21,14 @@ export function useWebSocket(orderId?: string) {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const ws = new WebSocket(WS_URL);
+    // Attach the JWT as a query param — the backend's JwtBearerEvents
+    // .OnMessageReceived specifically reads "access_token" from the
+    // query string for paths under /ws, since browsers can't send
+    // custom Authorization headers on a WebSocket handshake.
+    const token = getToken();
+    const url = token ? `${WS_BASE}?access_token=${encodeURIComponent(token)}` : WS_BASE;
+
+    const ws = new WebSocket(url);
 
     ws.onopen = () => {
       console.log("Connected to WebSocket");
@@ -32,6 +50,10 @@ export function useWebSocket(orderId?: string) {
     ws.onclose = () => {
       console.log("Disconnected from WebSocket");
       setIsConnected(false);
+    };
+
+    ws.onerror = (err) => {
+      console.error("WebSocket error:", err);
     };
 
     setSocket(ws);

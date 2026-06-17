@@ -18,8 +18,6 @@ namespace Customer_Web_App.Models.UsersDataModel
         [StringLength(255, ErrorMessage = "Must be atleast 8 characters", MinimumLength = 8)]
         [RegularExpression("^((?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])).{8,}$", ErrorMessage = "Passwords must contain uppercase,lowercase and number")]
         public string? Password { get; set; }
-
-        public string? IdToken { get; set; }
     }
     public class AddMainUserRequest
     {

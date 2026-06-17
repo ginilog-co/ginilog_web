@@ -4,8 +4,8 @@
     {
         static string baseUrl = "https://api-data.ginilog.com/api/";
 
-        static string usersUrl = "AuthUsers";
-        static string usersLoginUrl = "AuthUsers/login";
+        static string usersUrl = "auth-users";
+        static string usersLoginUrl = "auth-users/login";
         static string emailVerificationUrl = "AuthUsers/email-verification";
         static string phoneVerificationUrl = "AuthUsers/phone-no-verification";
         static string phoneNoVerificationUrl = "AuthUsers/PhoneNo-Verification";
