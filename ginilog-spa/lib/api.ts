@@ -1,7 +1,7 @@
 // lib/api.ts
 
 const DEFAULT_PRODUCTION_API = "https://api-data-connection.ginilog.org";
-const LOCAL_API = "http://localhost:5000";
+const LOCAL_API = "https://api-data-connection.ginilog.org";
 
 function resolveApiUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
@@ -70,68 +70,44 @@ async function fetchWithRetry(
   }
 }
 
-// Enhanced fetch with auth wrapper
-async function fetchWithAuth(endpoint: string, options: RequestInit = {}): Promise<Response> {
-  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-  const url = `${API_URL}/api/${cleanEndpoint}`;
-  
-  console.log(`Fetching: ${url}`);
-  
-  const token = getToken();
-  
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    ...((options.headers as Record<string, string>) || {}),
-  };
-  
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+// Helper function to safely extract array from response
+function extractArrayFromResponse(data: any): any[] {
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+  if (typeof data === 'object') {
+    if (data.data && Array.isArray(data.data)) return data.data;
+    if (data.items && Array.isArray(data.items)) return data.items;
+    if (data.results && Array.isArray(data.results)) return data.results;
+    if (data.records && Array.isArray(data.records)) return data.records;
+    if (data.list && Array.isArray(data.list)) return data.list;
+    if (data.id) return [data];
   }
-  
-  try {
-    const response = await fetchWithRetry(url, { 
-      ...options, 
-      headers,
-      credentials: 'include',
-      mode: 'cors',
-    });
-    
-    if (!response.ok) {
-      let errorMessage = `HTTP error! status: ${response.status}`;
+  console.warn('Unexpected response format, expected array:', data);
+  return [];
+}
+
+// Check if user is authenticated
+export function isAuthenticated(): boolean {
+  if (typeof window !== "undefined") {
+    return !!localStorage.getItem("token");
+  }
+  return false;
+}
+
+// Get current user type
+export function getUserType(): string | null {
+  if (typeof window !== "undefined") {
+    const user = localStorage.getItem("user");
+    if (user) {
       try {
-        const error = await response.json();
-        if (error.errors && typeof error.errors === "object") {
-          const messages = Object.values(error.errors as Record<string, string[]>)
-            .flat()
-            .join(" ");
-          errorMessage = messages || error.title || errorMessage;
-        } else {
-          errorMessage = error.message || error.title || errorMessage;
-        }
+        const userData = JSON.parse(user);
+        return userData.userType || null;
       } catch {
-        const text = await response.text();
-        if (text) errorMessage = text;
+        return null;
       }
-      
-      if (response.status === 401) {
-        clearAuthData();
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('auth:unauthorized'));
-        }
-      }
-      
-      throw new Error(errorMessage);
     }
-    
-    return response;
-  } catch (error) {
-    console.error(`API Error for ${url}:`, error);
-    if (error instanceof Error) {
-      throw new Error(`Network error: ${error.message}`);
-    }
-    throw error;
   }
+  return null;
 }
 
 // Token helpers
@@ -178,32 +154,68 @@ export function clearAuthData(): void {
   }
 }
 
-// Refresh token function
+// FIXED: Refresh token function with fallback and better error handling
 export async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = getRefreshToken();
-  if (!refreshToken) return null;
-  
-  try {
-    const response = await fetch(`${API_URL}/api/AuthUsers/refresh-token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ refreshToken }),
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-        return data.token;
-      }
-    }
-    return null;
-  } catch (error) {
-    console.error('Failed to refresh token:', error);
+  if (!refreshToken) {
+    console.warn('No refresh token available');
     return null;
   }
+  
+  // Try multiple possible refresh endpoints
+  const refreshEndpoints = [
+    `${API_URL}/api/auth-users/refresh-token`,
+    `${API_URL}/api/auth-users/token/refresh`,
+    `${API_URL}/api/auth/refresh-token`,
+    `${API_URL}/api/auth/token/refresh`,
+  ];
+  
+  let lastError: Error | null = null;
+  
+  for (const endpoint of refreshEndpoints) {
+    try {
+      console.log(`Attempting token refresh at: ${endpoint}`);
+      
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          refreshToken,
+          // Try different possible payload formats
+          refresh_token: refreshToken,
+          token: refreshToken
+        }),
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Try different possible response formats
+        const newToken = data.token || data.accessToken || data.access_token || null;
+        
+        if (newToken) {
+          localStorage.setItem('token', newToken);
+          console.log('Access token refreshed successfully');
+          return newToken;
+        } else {
+          console.warn('Refresh response did not contain a token:', data);
+        }
+      } else {
+        console.warn(`Refresh endpoint ${endpoint} returned status: ${response.status}`);
+        if (response.status === 405) {
+          console.warn(`Endpoint ${endpoint} does not accept POST method`);
+        }
+      }
+    } catch (error) {
+      console.warn(`Failed to refresh at ${endpoint}:`, error);
+      lastError = error instanceof Error ? error : new Error(String(error));
+    }
+  }
+  
+  console.error('All refresh attempts failed');
+  return null;
 }
 
 // Health check function
@@ -218,6 +230,117 @@ export async function checkApiHealth(): Promise<boolean> {
     return false;
   }
 }
+
+// FIXED: fetchWithAuth with proper token refresh and retry logic
+async function fetchWithAuth(
+  endpoint: string,
+  options: RequestInit = {},
+  isRetry: boolean = false
+): Promise<Response> {
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+  const url = `${API_URL}/api/${cleanEndpoint}`;
+
+  console.log(`Fetching: ${url}${isRetry ? ' (retry after refresh)' : ''}`);
+
+  const token = getToken();
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    ...((options.headers as Record<string, string>) || {}),
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  } else if (!isRetry) {
+    // Only log warning if not a retry (retry will have token from refresh)
+    console.warn(`No token found for request to ${url}`);
+  }
+
+  try {
+    const response = await fetchWithRetry(url, {
+      ...options,
+      headers,
+      credentials: 'include',
+      mode: 'cors',
+    });
+
+    // If response is 401, try to refresh token once
+    if (response.status === 401 && !isRetry) {
+      console.log(`Token expired for ${url}, attempting refresh...`);
+      const refreshed = await refreshAccessToken();
+      
+      if (refreshed) {
+        console.log(`Token refreshed, retrying: ${url}`);
+        // Retry with the new token
+        return fetchWithAuth(endpoint, options, true);
+      } else {
+        console.warn(`Token refresh failed for ${url}`);
+        clearAuthData();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+        }
+        throw new Error('Your session has expired. Please log in again.');
+      }
+    }
+
+    // If retry also returns 401, session is truly invalid
+    if (response.status === 401 && isRetry) {
+      clearAuthData();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      }
+      throw new Error('Your session has expired. Please log in again.');
+    }
+
+    // Handle other non-200 responses
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+
+      try {
+        const errorResponse = response.clone();
+        const contentType = errorResponse.headers.get('content-type') || '';
+
+        if (contentType.includes('application/json')) {
+          const errorData = await errorResponse.json();
+          if (errorData.errors && typeof errorData.errors === "object") {
+            const messages = Object.values(errorData.errors as Record<string, string[]>)
+              .flat()
+              .join(" ");
+            errorMessage = messages || errorData.title || errorMessage;
+          } else {
+            errorMessage = errorData.message || errorData.title || errorMessage;
+          }
+        } else {
+          const text = await errorResponse.text();
+          if (text && text.length > 0) {
+            errorMessage = text.length > 300 ? text.slice(0, 300) + "…" : text;
+          }
+        }
+      } catch (error) {
+        console.warn('Could not read error response body:', error);
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    return response;
+  } catch (error) {
+    console.error(`API Error for ${url}:`, error);
+    if (error instanceof Error) {
+      if (error.message.includes('Network error') || 
+          error.message.includes('Request timeout') ||
+          error.message.includes('HTTP error') ||
+          error.message.includes('session has expired')) {
+        throw error;
+      }
+      throw new Error(`Network error: ${error.message}`);
+    }
+    throw error;
+  }
+}
+
+// [Rest of your interfaces remain the same...]
 
 export interface LoginRequest {
   Email_PhoneNo: string;
@@ -311,6 +434,15 @@ export interface GoogleAuthRequest {
   FirstName?: string;
   LastName?: string;
   ProfilePicture?: string;
+}
+
+export interface FirebaseAuthRequest {
+  idToken: string;
+  provider: string;
+  email: string;
+  name: string;
+  profilePicture: string;
+  firebaseUid: string;
 }
 
 export interface UpdateUserRequest {
@@ -555,7 +687,7 @@ export interface RegisterManagerRequest {
 
 // Auth Functions
 export async function login(credentials: LoginRequest): Promise<LoginResponse> {
-  const response = await fetchWithAuth("AuthUsers/login", {
+  const response = await fetchWithAuth("auth-users/login", {
     method: "POST",
     body: JSON.stringify(credentials),
   });
@@ -565,7 +697,7 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
 }
 
 export async function register(userData: RegisterRequest): Promise<RegisterResponse> {
-  const response = await fetchWithAuth("AuthUsers", {
+  const response = await fetchWithAuth("auth-users", {
     method: "POST",
     body: JSON.stringify(userData),
   });
@@ -573,20 +705,30 @@ export async function register(userData: RegisterRequest): Promise<RegisterRespo
 }
 
 export async function getProfile(): Promise<UserProfile> {
-  const response = await fetchWithAuth("AuthUsers/profile", { method: "GET" });
+  const response = await fetchWithAuth("auth-users/profile", { method: "GET" });
   return response.json();
 }
 
 export async function logout(): Promise<void> {
   try {
-    await fetchWithAuth("AuthUsers/logout", { method: "POST" }).catch(() => {});
+    await fetchWithAuth("auth-users/logout", { method: "POST" }).catch(() => {});
   } finally {
     clearAuthData();
   }
 }
 
 export async function googleAuth(data: GoogleAuthRequest): Promise<LoginResponse> {
-  const response = await fetchWithAuth("AuthUsers/auth-login", {
+  const response = await fetchWithAuth("auth-users/auth-login", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  const loginData = await response.json();
+  setAuthData(loginData);
+  return loginData;
+}
+
+export async function firebaseAuth(data: FirebaseAuthRequest): Promise<LoginResponse> {
+  const response = await fetchWithAuth("auth-users/firebase-auth", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -596,7 +738,7 @@ export async function googleAuth(data: GoogleAuthRequest): Promise<LoginResponse
 }
 
 export async function updateProfile(data: UpdateUserRequest): Promise<UserProfile> {
-  const response = await fetchWithAuth("AuthUsers/update-user", {
+  const response = await fetchWithAuth("auth-users/update-user", {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -604,7 +746,7 @@ export async function updateProfile(data: UpdateUserRequest): Promise<UserProfil
 }
 
 export async function updateDeviceToken(deviceToken: string): Promise<any> {
-  const response = await fetchWithAuth("AuthUsers/update-device-token", {
+  const response = await fetchWithAuth("auth-users/update-device-token", {
     method: "PUT",
     body: JSON.stringify({ DeviceToken: deviceToken }),
   });
@@ -612,12 +754,13 @@ export async function updateDeviceToken(deviceToken: string): Promise<any> {
 }
 
 export async function getDeliveryAddresses(): Promise<DeliveryAddress[]> {
-  const response = await fetchWithAuth("AuthUsers/delivery-address", { method: "GET" });
-  return response.json();
+  const response = await fetchWithAuth("auth-users/delivery-address", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function addNewAddress(data: AddDeliveryAddressRequest): Promise<UserProfile> {
-  const response = await fetchWithAuth("AuthUsers/add-new-address", {
+  const response = await fetchWithAuth("auth-users/add-new-address", {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -625,7 +768,7 @@ export async function addNewAddress(data: AddDeliveryAddressRequest): Promise<Us
 }
 
 export async function updateDeliveryAddress(id: string, data: AddDeliveryAddressRequest): Promise<UserProfile> {
-  const response = await fetchWithAuth(`AuthUsers/update-delivery-address/${id}`, {
+  const response = await fetchWithAuth(`auth-users/update-delivery-address/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -633,11 +776,11 @@ export async function updateDeliveryAddress(id: string, data: AddDeliveryAddress
 }
 
 export async function deleteDeliveryAddress(id: string): Promise<void> {
-  await fetchWithAuth(`AuthUsers/delete-delivery-address/${id}`, { method: "DELETE" });
+  await fetchWithAuth(`auth-users/delete-delivery-address/${id}`, { method: "DELETE" });
 }
 
 export async function verifyEmail(data: EmailVerificationRequest): Promise<LoginResponse> {
-  const response = await fetchWithAuth("AuthUsers/email-verification", {
+  const response = await fetchWithAuth("auth-users/email-verification", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -647,7 +790,7 @@ export async function verifyEmail(data: EmailVerificationRequest): Promise<Login
 }
 
 export async function requestEmailVerificationToken(email: string): Promise<string> {
-  const response = await fetchWithAuth("AuthUsers/email-verification-request-token", {
+  const response = await fetchWithAuth("auth-users/email-verification-request-token", {
     method: "POST",
     body: JSON.stringify({ Email: email }),
   });
@@ -655,7 +798,7 @@ export async function requestEmailVerificationToken(email: string): Promise<stri
 }
 
 export async function forgotPassword(email: string): Promise<string> {
-  const response = await fetchWithAuth("AuthUsers/forgot-password-request-token", {
+  const response = await fetchWithAuth("auth-users/forgot-password-request-token", {
     method: "POST",
     body: JSON.stringify({ Email: email }),
   });
@@ -663,7 +806,7 @@ export async function forgotPassword(email: string): Promise<string> {
 }
 
 export async function resetPassword(data: ResetPasswordRequest): Promise<string> {
-  const response = await fetchWithAuth("AuthUsers/reset-password", {
+  const response = await fetchWithAuth("auth-users/reset-password", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -671,7 +814,7 @@ export async function resetPassword(data: ResetPasswordRequest): Promise<string>
 }
 
 export async function verifyPhoneNumber(otp: string): Promise<string> {
-  const response = await fetchWithAuth("AuthUsers/phone-no-verification", {
+  const response = await fetchWithAuth("auth-users/phone-no-verification", {
     method: "POST",
     body: JSON.stringify({ Otp: otp }),
   });
@@ -679,23 +822,24 @@ export async function verifyPhoneNumber(otp: string): Promise<string> {
 }
 
 export async function enableTwoFactor(id: string): Promise<string> {
-  const response = await fetchWithAuth(`AuthUsers/two-factor-enabled/${id}`, { method: "POST" });
+  const response = await fetchWithAuth(`auth-users/two-factor-enabled/${id}`, { method: "POST" });
   return response.json();
 }
 
 // Logistics Functions
 export async function getCompanies(): Promise<Company[]> {
-  const response = await fetchWithAuth("Logistics", { method: "GET" });
-  return response.json();
+  const response = await fetchWithAuth("logistics-controller", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function getCompanyById(id: string): Promise<Company> {
-  const response = await fetchWithAuth(`Logistics/${id}`, { method: "GET" });
+  const response = await fetchWithAuth(`logistics-controller/${id}`, { method: "GET" });
   return response.json();
 }
 
 export async function createOrder(companyId: string, orderData: AddOrder): Promise<any> {
-  const response = await fetchWithAuth("Logistics/package-orders", {
+  const response = await fetchWithAuth("logistics-controller/package-orders", {
     method: "POST",
     headers: { companyId },
     body: JSON.stringify(orderData),
@@ -704,17 +848,18 @@ export async function createOrder(companyId: string, orderData: AddOrder): Promi
 }
 
 export async function getCustomerOrders(): Promise<any[]> {
-  const response = await fetchWithAuth("Logistics/package-orders", { method: "GET" });
-  return response.json();
+  const response = await fetchWithAuth("logistics-controller/package-orders", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function getOrderById(id: string): Promise<OrderTrackingResult> {
-  const response = await fetchWithAuth(`Logistics/package-orders/${id}`, { method: "GET" });
+  const response = await fetchWithAuth(`logistics-controller/package-orders/${id}`, { method: "GET" });
   return response.json();
 }
 
 export async function trackOrder(trackingNumber: string): Promise<OrderTrackingResult> {
-  const response = await fetchWithAuth(`Logistics/track-order?trackingNum=${encodeURIComponent(trackingNumber)}`, { 
+  const response = await fetchWithAuth(`logistics-controller/track-order?trackingNum=${encodeURIComponent(trackingNumber)}`, { 
     method: "GET" 
   });
   return response.json();
@@ -723,7 +868,8 @@ export async function trackOrder(trackingNumber: string): Promise<OrderTrackingR
 // Bookings Functions
 export async function getAccommodations(): Promise<Accommodation[]> {
   const response = await fetchWithAuth("Bookings/accomodation", { method: "GET" });
-  return response.json();
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function getAccommodationById(id: string): Promise<Accommodation> {
@@ -733,11 +879,12 @@ export async function getAccommodationById(id: string): Promise<Accommodation> {
 
 export async function getRooms(accommodationId: string): Promise<any[]> {
   const response = await fetchWithAuth(`Bookings/accomodation-reservations?id=${accommodationId}`, { method: "GET" });
-  return response.json();
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function bookAccommodation(reservationId: string, bookingData: AddCustomerBookedReservation): Promise<any> {
-  const response = await fetchWithAuth("Bookings/accomodation-reservations-customer", {
+  const response = await fetchWithAuth("bookings/accomodation-reservations-customer", {
     method: "POST",
     headers: { reservationId },
     body: JSON.stringify(bookingData),
@@ -746,36 +893,39 @@ export async function bookAccommodation(reservationId: string, bookingData: AddC
 }
 
 export async function getCustomerBookings(): Promise<any[]> {
-  const response = await fetchWithAuth("Bookings/accomodation-reservations-customer", { method: "GET" });
-  return response.json();
+  const response = await fetchWithAuth("bookings/accomodation-reservations-customer", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function getCustomerBookingById(id: string): Promise<BookingTrackingResult> {
-  const response = await fetchWithAuth(`Bookings/accomodation-reservations-customer/${id}`, { method: "GET" });
+  const response = await fetchWithAuth(`bookings/accomodation-reservations-customer/${id}`, { method: "GET" });
   return response.json();
 }
 
 export async function cancelCustomerBooking(id: string): Promise<void> {
-  await fetchWithAuth(`Bookings/accomodation-reservations-customer/${id}`, { method: "DELETE" });
+  await fetchWithAuth(`bookings/accomodation-reservations-customer/${id}`, { method: "DELETE" });
 }
 
 export async function getAirlines(): Promise<Airline[]> {
-  const response = await fetchWithAuth("Bookings/airline", { method: "GET" });
-  return response.json();
+  const response = await fetchWithAuth("bookings/airline", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function getAirlineById(id: string): Promise<Airline> {
-  const response = await fetchWithAuth(`Bookings/airline/${id}`, { method: "GET" });
+  const response = await fetchWithAuth(`bookings/airline/${id}`, { method: "GET" });
   return response.json();
 }
 
 export async function getFlightTickets(): Promise<FlightTicket[]> {
-  const response = await fetchWithAuth("Bookings/airline-flight-ticket", { method: "GET" });
-  return response.json();
+  const response = await fetchWithAuth("bookings/airline-flight-ticket", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function trackBooking(bookingRef: string): Promise<BookingTrackingResult> {
-  const response = await fetchWithAuth(`Bookings/track-booking?ticketRef=${encodeURIComponent(bookingRef)}`, { 
+  const response = await fetchWithAuth(`bookings/track-booking?ticketRef=${encodeURIComponent(bookingRef)}`, { 
     method: "GET" 
   });
   return response.json();
@@ -822,7 +972,8 @@ export async function initializeFlutterwavePayment(amount: number, email: string
 // Notifications Functions
 export async function getNotifications(): Promise<Notification[]> {
   const response = await fetchWithAuth("Notifications", { method: "GET" });
-  return response.json();
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function getNotificationById(id: string): Promise<Notification> {
@@ -849,7 +1000,7 @@ export async function submitFeedback(data: AddFeedbackRequest): Promise<any> {
 
 // Admin Auth Functions
 export async function adminLogin(credentials: LoginRequest): Promise<LoginResponse> {
-  const response = await fetchWithAuth("Admin/login", {
+  const response = await fetchWithAuth("admin-controller/login", {
     method: "POST",
     body: JSON.stringify(credentials),
   });
@@ -859,7 +1010,7 @@ export async function adminLogin(credentials: LoginRequest): Promise<LoginRespon
 }
 
 export async function loginManager(credentials: LoginRequest): Promise<LoginResponse> {
-  const response = await fetchWithAuth("Admin/login-manager", {
+  const response = await fetchWithAuth("admin-controller/login", {
     method: "POST",
     body: JSON.stringify(credentials),
   });
@@ -869,31 +1020,68 @@ export async function loginManager(credentials: LoginRequest): Promise<LoginResp
 }
 
 export async function registerManager(data: RegisterManagerRequest): Promise<any> {
-  const response = await fetchWithAuth("Admin/add-manager", {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
-  return response.json();
+  if (!isAuthenticated()) {
+    throw new Error('You must be logged in as an admin to register a new manager. Please log in first.');
+  }
+  
+  const endpoints = [
+    "admin-controller/register",
+    "admin-controller/add-manager",
+    "Admin/add-manager",
+    "auth-users/add-manager",
+    "admin/register"
+  ];
+  
+  let lastError: Error | null = null;
+  
+  for (const endpoint of endpoints) {
+    try {
+      console.log(`Trying to register manager with endpoint: ${endpoint}`);
+      const response = await fetchWithAuth(endpoint, {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+      console.log(`Successfully registered manager with endpoint: ${endpoint}`);
+      return result;
+    } catch (error) {
+      console.warn(`Failed with endpoint ${endpoint}:`, error);
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (error instanceof Error) {
+        if (!error.message.includes('404') && !error.message.includes('401')) {
+          throw error;
+        }
+      }
+    }
+  }
+  
+  console.error('All registration endpoints failed');
+  if (lastError) {
+    throw lastError;
+  }
+  throw new Error('Failed to register manager. Please contact support or use a different method to create an admin account.');
 }
 
 export async function adminGetProfile(): Promise<any> {
-  const response = await fetchWithAuth("Admin/profile", { method: "GET" });
+  const response = await fetchWithAuth("admin-controller/profile", { method: "GET" });
   return response.json();
 }
 
 // Admin Data Functions
 export async function getAllUsers(): Promise<any[]> {
-  const response = await fetchWithAuth("AuthUsers", { method: "GET" });
-  return response.json();
+  const response = await fetchWithAuth("auth-users", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function getAllOrders(): Promise<any[]> {
-  const response = await fetchWithAuth("Logistics/package-orders", { method: "GET" });
-  return response.json();
+  const response = await fetchWithAuth("logistics-controller/package-orders", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function updateOrderStatus(id: string, data: Record<string, unknown>): Promise<any> {
-  const response = await fetchWithAuth(`Logistics/package-orders/${id}`, {
+  const response = await fetchWithAuth(`logistics-controller/package-orders/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -902,7 +1090,8 @@ export async function updateOrderStatus(id: string, data: Record<string, unknown
 
 export async function getAllReservations(): Promise<any[]> {
   const response = await fetchWithAuth("Bookings/accomodation-reservations", { method: "GET" });
-  return response.json();
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function updateReservation(id: string, data: Record<string, unknown>): Promise<any> {
@@ -914,12 +1103,13 @@ export async function updateReservation(id: string, data: Record<string, unknown
 }
 
 export async function getAllCustomerReservations(): Promise<any[]> {
-  const response = await fetchWithAuth("Bookings/accomodation-reservations-customer", { method: "GET" });
-  return response.json();
+  const response = await fetchWithAuth("bookings/accomodation-reservations-customer", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function updateCustomerReservation(id: string, data: Record<string, unknown>): Promise<any> {
-  const response = await fetchWithAuth(`Bookings/accomodation-reservations-customer/${id}`, {
+  const response = await fetchWithAuth(`bookings/accomodation-reservations-customer/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -927,13 +1117,15 @@ export async function updateCustomerReservation(id: string, data: Record<string,
 }
 
 export async function getAllStaff(): Promise<any[]> {
-  const response = await fetchWithAuth("Admin/staff-users", { method: "GET" });
-  return response.json();
+  const response = await fetchWithAuth("admin-controller/staff-users", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function getAllAdverts(): Promise<any[]> {
-  const response = await fetchWithAuth("Admin/advert", { method: "GET" });
-  return response.json();
+  const response = await fetchWithAuth("admin-controller/advert", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export { API_URL };
