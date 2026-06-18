@@ -19,7 +19,8 @@ import {
   CheckCircle,
   TruckIcon,
   Building2,
-  Loader2
+  Loader2,
+  AlertTriangle
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
@@ -31,9 +32,40 @@ import {
   getCustomerOrders,
   getCustomerBookings,
   logout,
+  clearAuthData,
   Accommodation,
   Company
 } from "@/lib/api";
+
+function isUnauthorizedError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const msg = error.message.toLowerCase();
+  return msg.includes("401") || msg.includes("unauthorized") || msg.includes("unauthenticated");
+}
+
+// Guards against a dashboard <-> login redirect loop (e.g. when a Firebase
+// session persists in the browser but the backend never issued, or no
+// longer accepts, a valid token). Allows exactly one automatic redirect per
+// browser session; after that, the user has to sign in manually.
+const REDIRECT_GUARD_KEY = "dashboardAuthRedirectCount";
+const REDIRECT_GUARD_LIMIT = 1;
+
+function canAutoRedirectToLogin(): boolean {
+  if (typeof window === "undefined") return true;
+  const count = Number(sessionStorage.getItem(REDIRECT_GUARD_KEY) || "0");
+  return count < REDIRECT_GUARD_LIMIT;
+}
+
+function recordRedirectAttempt(): void {
+  if (typeof window === "undefined") return;
+  const count = Number(sessionStorage.getItem(REDIRECT_GUARD_KEY) || "0");
+  sessionStorage.setItem(REDIRECT_GUARD_KEY, String(count + 1));
+}
+
+function clearRedirectGuard(): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(REDIRECT_GUARD_KEY);
+}
 
 export default function CustomerDashboard() {
   const router = useRouter();
@@ -43,40 +75,116 @@ export default function CustomerDashboard() {
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [trackingNumber, setTrackingNumber] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [needsManualLogin, setNeedsManualLogin] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+
+    const goToLogin = () => {
+      if (canAutoRedirectToLogin()) {
+        recordRedirectAttempt();
+        router.push("/customer-portal/login");
+      } else {
+        // We've already auto-redirected once this session and ended up
+        // back here unauthenticated — stop looping and let the user act.
+        setNeedsManualLogin(true);
+        setIsLoading(false);
+      }
+    };
+
     const fetchDashboardData = async () => {
+      const storedUser = getStoredUser();
+      if (!storedUser) {
+        goToLogin();
+        return;
+      }
+
       try {
-        const storedUser = getStoredUser();
-        if (!storedUser) {
-          router.push("/customer-portal/login");
+        // allSettled so one failing endpoint doesn't blank the entire dashboard
+        const [profileResult, accomsResult, compsResult, ordersResult, bookingsResult] =
+          await Promise.allSettled([
+            getProfile(),
+            getAccommodations(),
+            getCompanies(),
+            getCustomerOrders(),
+            getCustomerBookings(),
+          ]);
+
+        if (!isMounted) return;
+
+        // Profile is required. If it failed, decide whether to bounce to login
+        // or show an error, depending on the failure reason.
+        if (profileResult.status === "rejected") {
+          console.error("Failed to fetch profile:", profileResult.reason);
+          if (isUnauthorizedError(profileResult.reason)) {
+            goToLogin();
+            return;
+          }
+          setErrorMessage(
+            profileResult.reason instanceof Error
+              ? profileResult.reason.message
+              : "Failed to load your profile. Please try again."
+          );
+          setIsLoading(false);
           return;
         }
-        const [profile, accoms, comps, orders, bookings] = await Promise.all([
-          getProfile(),
-          getAccommodations(),
-          getCompanies(),
-          getCustomerOrders(),
-          getCustomerBookings(),
-        ]);
-        setUser(profile);
-        setAccommodations(accoms || []);
-        setCompanies(comps || []);
+
+        // We successfully loaded the dashboard — reset the redirect guard
+        // so a future genuine session expiry can still trigger one
+        // automatic bounce to login instead of being blocked forever.
+        clearRedirectGuard();
+
+        setUser(profileResult.value);
+
+        if (accomsResult.status === "fulfilled") {
+          setAccommodations(accomsResult.value || []);
+        } else {
+          console.error("Failed to fetch accommodations:", accomsResult.reason);
+        }
+
+        if (compsResult.status === "fulfilled") {
+          setCompanies(compsResult.value || []);
+        } else {
+          console.error("Failed to fetch companies:", compsResult.reason);
+        }
+
+        const orders = ordersResult.status === "fulfilled" ? ordersResult.value : [];
+        if (ordersResult.status === "rejected") {
+          console.error("Failed to fetch orders:", ordersResult.reason);
+        }
+
+        const bookings = bookingsResult.status === "fulfilled" ? bookingsResult.value : [];
+        if (bookingsResult.status === "rejected") {
+          console.error("Failed to fetch bookings:", bookingsResult.reason);
+        }
+
         const combined = [
           ...(orders || []).map((o: any) => ({ ...o, kind: "logistics", label: o.itemName || "Package", ref: o.trackingNum || o.id })),
           ...(bookings || []).map((b: any) => ({ ...b, kind: "accommodation", label: b.accomodationName || "Hotel", ref: b.bookingRefNo || b.id })),
         ]
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .slice(0, 3);
+
         setRecentActivity(combined);
       } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
+        // Safety net for anything unexpected outside the allSettled handling above
+        console.error("Unexpected error loading dashboard:", error);
+        if (isMounted) {
+          setErrorMessage(
+            error instanceof Error ? error.message : "Something went wrong loading your dashboard."
+          );
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
     fetchDashboardData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [router]);
 
   const handleTracking = (e: React.FormEvent) => {
@@ -90,6 +198,53 @@ export default function CustomerDashboard() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (needsManualLogin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="p-8 text-center">
+            <User className="h-10 w-10 text-primary mx-auto mb-4" />
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              Please sign in again
+            </h2>
+            <p className="text-sm text-gray-600 mb-6">
+              Your session couldn&apos;t be verified. This can happen if your sign-in
+              expired or didn&apos;t fully complete. Please sign in again to continue.
+            </p>
+            <Button
+              onClick={() => {
+                clearAuthData();
+                router.push("/customer-portal/login");
+              }}
+              className="w-full"
+            >
+              Go to login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="p-8 text-center">
+            <AlertTriangle className="h-10 w-10 text-amber-500 mx-auto mb-4" />
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              Couldn&apos;t load your dashboard
+            </h2>
+            <p className="text-sm text-gray-600 mb-6">{errorMessage}</p>
+            <Button onClick={() => window.location.reload()} className="w-full">
+              Try again
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
