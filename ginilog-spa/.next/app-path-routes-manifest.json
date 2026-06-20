@@ -6,17 +6,17 @@
   "/terms/page": "/terms",
   "/admin-dashboard/admin-login/page": "/admin-dashboard/admin-login",
   "/admin-dashboard/company/page": "/admin-dashboard/company",
+  "/customer-portal/dashboard/page": "/customer-portal/dashboard",
   "/admin-dashboard/company-login/page": "/admin-dashboard/company-login",
   "/admin-dashboard/page": "/admin-dashboard",
-  "/customer-portal/accommodations/[id]/page": "/customer-portal/accommodations/[id]",
-  "/customer-portal/accommodations/page": "/customer-portal/accommodations",
-  "/customer-portal/dashboard/page": "/customer-portal/dashboard",
   "/customer-portal/forgot-password/page": "/customer-portal/forgot-password",
-  "/customer-portal/login/page": "/customer-portal/login",
-  "/customer-portal/logistics/[id]/page": "/customer-portal/logistics/[id]",
+  "/customer-portal/accommodations/[id]/page": "/customer-portal/accommodations/[id]",
   "/customer-portal/logistics/page": "/customer-portal/logistics",
+  "/customer-portal/logistics/[id]/page": "/customer-portal/logistics/[id]",
+  "/customer-portal/login/page": "/customer-portal/login",
   "/customer-portal/orders/page": "/customer-portal/orders",
   "/customer-portal/page": "/customer-portal",
   "/customer-portal/profile/page": "/customer-portal/profile",
-  "/customer-portal/register/page": "/customer-portal/register"
+  "/customer-portal/register/page": "/customer-portal/register",
+  "/customer-portal/accommodations/page": "/customer-portal/accommodations"
 }

@@ -80,6 +80,24 @@
       "static/chunks/20-ad6ebc869288256e.js",
       "static/chunks/app/admin-dashboard/company/page-720df5abf84b2c0b.js"
     ],
+    "/customer-portal/layout": [
+      "static/chunks/webpack-e608598c8844fbac.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-98a0bdaa30757bda.js",
+      "static/chunks/main-app-29c534f4467c3480.js",
+      "static/chunks/app/customer-portal/layout-c806d1b896065677.js"
+    ],
+    "/customer-portal/dashboard/page": [
+      "static/chunks/webpack-e608598c8844fbac.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-98a0bdaa30757bda.js",
+      "static/chunks/main-app-29c534f4467c3480.js",
+      "static/chunks/297-7295b248ad97a1e5.js",
+      "static/chunks/531-b33cb0615dd1557c.js",
+      "static/chunks/527-f70d94f2f936a135.js",
+      "static/chunks/20-ad6ebc869288256e.js",
+      "static/chunks/app/customer-portal/dashboard/page-52e03e47448ae5b0.js"
+    ],
     "/admin-dashboard/company-login/page": [
       "static/chunks/webpack-e608598c8844fbac.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
@@ -100,44 +118,6 @@
       "static/chunks/20-ad6ebc869288256e.js",
       "static/chunks/app/admin-dashboard/page-f95d1a5555323448.js"
     ],
-    "/customer-portal/layout": [
-      "static/chunks/webpack-e608598c8844fbac.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-98a0bdaa30757bda.js",
-      "static/chunks/main-app-29c534f4467c3480.js",
-      "static/chunks/app/customer-portal/layout-c806d1b896065677.js"
-    ],
-    "/customer-portal/accommodations/[id]/page": [
-      "static/chunks/webpack-e608598c8844fbac.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-98a0bdaa30757bda.js",
-      "static/chunks/main-app-29c534f4467c3480.js",
-      "static/chunks/297-7295b248ad97a1e5.js",
-      "static/chunks/531-b33cb0615dd1557c.js",
-      "static/chunks/20-ad6ebc869288256e.js",
-      "static/chunks/app/customer-portal/accommodations/[id]/page-a72014aad86adabd.js"
-    ],
-    "/customer-portal/accommodations/page": [
-      "static/chunks/webpack-e608598c8844fbac.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-98a0bdaa30757bda.js",
-      "static/chunks/main-app-29c534f4467c3480.js",
-      "static/chunks/297-7295b248ad97a1e5.js",
-      "static/chunks/531-b33cb0615dd1557c.js",
-      "static/chunks/20-ad6ebc869288256e.js",
-      "static/chunks/app/customer-portal/accommodations/page-b41dbc2ef4aa9ef0.js"
-    ],
-    "/customer-portal/dashboard/page": [
-      "static/chunks/webpack-e608598c8844fbac.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-98a0bdaa30757bda.js",
-      "static/chunks/main-app-29c534f4467c3480.js",
-      "static/chunks/297-7295b248ad97a1e5.js",
-      "static/chunks/531-b33cb0615dd1557c.js",
-      "static/chunks/527-f70d94f2f936a135.js",
-      "static/chunks/20-ad6ebc869288256e.js",
-      "static/chunks/app/customer-portal/dashboard/page-52e03e47448ae5b0.js"
-    ],
     "/customer-portal/forgot-password/page": [
       "static/chunks/webpack-e608598c8844fbac.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
@@ -147,6 +127,38 @@
       "static/chunks/531-b33cb0615dd1557c.js",
       "static/chunks/20-ad6ebc869288256e.js",
       "static/chunks/app/customer-portal/forgot-password/page-391d7ceca0670c0d.js"
+    ],
+    "/customer-portal/accommodations/[id]/page": [
+      "static/chunks/webpack-e608598c8844fbac.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-98a0bdaa30757bda.js",
+      "static/chunks/main-app-29c534f4467c3480.js",
+      "static/chunks/297-7295b248ad97a1e5.js",
+      "static/chunks/531-b33cb0615dd1557c.js",
+      "static/chunks/20-ad6ebc869288256e.js",
+      "static/chunks/799-44641501098fffcb.js",
+      "static/chunks/app/customer-portal/accommodations/[id]/page-8e0cd974687f8621.js"
+    ],
+    "/customer-portal/logistics/page": [
+      "static/chunks/webpack-e608598c8844fbac.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-98a0bdaa30757bda.js",
+      "static/chunks/main-app-29c534f4467c3480.js",
+      "static/chunks/297-7295b248ad97a1e5.js",
+      "static/chunks/531-b33cb0615dd1557c.js",
+      "static/chunks/20-ad6ebc869288256e.js",
+      "static/chunks/app/customer-portal/logistics/page-633d6c8990ca1348.js"
+    ],
+    "/customer-portal/logistics/[id]/page": [
+      "static/chunks/webpack-e608598c8844fbac.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-98a0bdaa30757bda.js",
+      "static/chunks/main-app-29c534f4467c3480.js",
+      "static/chunks/297-7295b248ad97a1e5.js",
+      "static/chunks/531-b33cb0615dd1557c.js",
+      "static/chunks/20-ad6ebc869288256e.js",
+      "static/chunks/799-44641501098fffcb.js",
+      "static/chunks/app/customer-portal/logistics/[id]/page-3063089614d2dc42.js"
     ],
     "/customer-portal/login/page": [
       "static/chunks/webpack-e608598c8844fbac.js",
@@ -159,26 +171,6 @@
       "static/chunks/52-885e070225b02f3d.js",
       "static/chunks/20-ad6ebc869288256e.js",
       "static/chunks/app/customer-portal/login/page-bc1e95c05f7a92e9.js"
-    ],
-    "/customer-portal/logistics/[id]/page": [
-      "static/chunks/webpack-e608598c8844fbac.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-98a0bdaa30757bda.js",
-      "static/chunks/main-app-29c534f4467c3480.js",
-      "static/chunks/297-7295b248ad97a1e5.js",
-      "static/chunks/531-b33cb0615dd1557c.js",
-      "static/chunks/20-ad6ebc869288256e.js",
-      "static/chunks/app/customer-portal/logistics/[id]/page-1fd49f9695e95447.js"
-    ],
-    "/customer-portal/logistics/page": [
-      "static/chunks/webpack-e608598c8844fbac.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-98a0bdaa30757bda.js",
-      "static/chunks/main-app-29c534f4467c3480.js",
-      "static/chunks/297-7295b248ad97a1e5.js",
-      "static/chunks/531-b33cb0615dd1557c.js",
-      "static/chunks/20-ad6ebc869288256e.js",
-      "static/chunks/app/customer-portal/logistics/page-138c24b16be3d42d.js"
     ],
     "/customer-portal/orders/page": [
       "static/chunks/webpack-e608598c8844fbac.js",
@@ -221,6 +213,16 @@
       "static/chunks/52-885e070225b02f3d.js",
       "static/chunks/20-ad6ebc869288256e.js",
       "static/chunks/app/customer-portal/register/page-00e4f41e394e035a.js"
+    ],
+    "/customer-portal/accommodations/page": [
+      "static/chunks/webpack-e608598c8844fbac.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-98a0bdaa30757bda.js",
+      "static/chunks/main-app-29c534f4467c3480.js",
+      "static/chunks/297-7295b248ad97a1e5.js",
+      "static/chunks/531-b33cb0615dd1557c.js",
+      "static/chunks/20-ad6ebc869288256e.js",
+      "static/chunks/app/customer-portal/accommodations/page-f22e02b1f884d0e4.js"
     ]
   }
 }
