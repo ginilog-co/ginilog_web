@@ -122,6 +122,102 @@
         "x-next-revalidate-tag-token"
       ]
     },
+    "/admin-dashboard/admin-login": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/admin-dashboard/admin-login",
+      "dataRoute": "/admin-dashboard/admin-login.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
+    "/admin-dashboard/company-login": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/admin-dashboard/company-login",
+      "dataRoute": "/admin-dashboard/company-login.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
+    "/admin-dashboard": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/admin-dashboard",
+      "dataRoute": "/admin-dashboard.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
+    "/admin-dashboard/company": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/admin-dashboard/company",
+      "dataRoute": "/admin-dashboard/company.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
     "/customer-portal/accommodations": {
       "experimentalBypassFor": [
         {
@@ -146,7 +242,7 @@
         "x-next-revalidate-tag-token"
       ]
     },
-    "/customer-portal/forgot-password": {
+    "/customer-portal/dashboard": {
       "experimentalBypassFor": [
         {
           "type": "header",
@@ -159,8 +255,8 @@
         }
       ],
       "initialRevalidateSeconds": false,
-      "srcRoute": "/customer-portal/forgot-password",
-      "dataRoute": "/customer-portal/forgot-password.rsc",
+      "srcRoute": "/customer-portal/dashboard",
+      "dataRoute": "/customer-portal/dashboard.rsc",
       "allowHeader": [
         "host",
         "x-matched-path",
@@ -185,30 +281,6 @@
       "initialRevalidateSeconds": false,
       "srcRoute": "/customer-portal/login",
       "dataRoute": "/customer-portal/login.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
-    },
-    "/customer-portal/dashboard": {
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/customer-portal/dashboard",
-      "dataRoute": "/customer-portal/dashboard.rsc",
       "allowHeader": [
         "host",
         "x-matched-path",
@@ -338,7 +410,7 @@
         "x-next-revalidate-tag-token"
       ]
     },
-    "/admin-dashboard/admin-login": {
+    "/customer-portal/forgot-password": {
       "experimentalBypassFor": [
         {
           "type": "header",
@@ -351,80 +423,8 @@
         }
       ],
       "initialRevalidateSeconds": false,
-      "srcRoute": "/admin-dashboard/admin-login",
-      "dataRoute": "/admin-dashboard/admin-login.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
-    },
-    "/admin-dashboard/company-login": {
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/admin-dashboard/company-login",
-      "dataRoute": "/admin-dashboard/company-login.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
-    },
-    "/admin-dashboard/company": {
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/admin-dashboard/company",
-      "dataRoute": "/admin-dashboard/company.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
-    },
-    "/admin-dashboard": {
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/admin-dashboard",
-      "dataRoute": "/admin-dashboard.rsc",
+      "srcRoute": "/customer-portal/forgot-password",
+      "dataRoute": "/customer-portal/forgot-password.rsc",
       "allowHeader": [
         "host",
         "x-matched-path",
@@ -438,8 +438,8 @@
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "1ab848f51039275263fc52ac43ad2574",
-    "previewModeSigningKey": "7746f1cf5be190b70f6e8a2cb5699f223df39753f09f5ac83331dd0207d566d0",
-    "previewModeEncryptionKey": "993bbc6ac60b70fee019b95bd1b47b02a3551cf07ec08e221cb89f92220fd896"
+    "previewModeId": "d1310739e3ebc2f0f03c51fd8d8e2b11",
+    "previewModeSigningKey": "0f4288b247c31ba8e214ce26c05f5b607bb950fa80a7063c9539d3d6df5b5f93",
+    "previewModeEncryptionKey": "879fe6654c03747051eeada5af9704a78331fd14b8b25dc4febad0e0d9788945"
   }
 }
