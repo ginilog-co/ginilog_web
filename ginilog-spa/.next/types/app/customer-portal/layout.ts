@@ -1,4 +1,4 @@
-// File: C:\Users\HomePC\Desktop\ginilog_web\ginilog-spa\app\customer-portal\layout.tsx
+// File: /workspaces/ginilog_web/ginilog-spa/app/customer-portal/layout.tsx
 import * as entry from '../../../../app/customer-portal/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
