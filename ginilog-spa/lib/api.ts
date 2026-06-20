@@ -11,7 +11,6 @@ function resolveApiUrl(): string {
     return LOCAL_API;
   }
 
-  // Check if we're on the production domain
   if (window.location.hostname === "www.ginilog.com" || 
       window.location.hostname === "ginilog.com" ||
       window.location.hostname.includes("vercel.app")) {
@@ -154,7 +153,7 @@ export function clearAuthData(): void {
   }
 }
 
-// FIXED: Refresh token function with fallback and better error handling
+// Refresh token function
 export async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = getRefreshToken();
   if (!refreshToken) {
@@ -162,7 +161,6 @@ export async function refreshAccessToken(): Promise<string | null> {
     return null;
   }
   
-  // Try multiple possible refresh endpoints
   const refreshEndpoints = [
     `${API_URL}/api/auth-users/refresh-token`,
     `${API_URL}/api/auth-users/token/refresh`,
@@ -183,7 +181,6 @@ export async function refreshAccessToken(): Promise<string | null> {
         },
         body: JSON.stringify({ 
           refreshToken,
-          // Try different possible payload formats
           refresh_token: refreshToken,
           token: refreshToken
         }),
@@ -192,20 +189,12 @@ export async function refreshAccessToken(): Promise<string | null> {
       
       if (response.ok) {
         const data = await response.json();
-        // Try different possible response formats
         const newToken = data.token || data.accessToken || data.access_token || null;
         
         if (newToken) {
           localStorage.setItem('token', newToken);
           console.log('Access token refreshed successfully');
           return newToken;
-        } else {
-          console.warn('Refresh response did not contain a token:', data);
-        }
-      } else {
-        console.warn(`Refresh endpoint ${endpoint} returned status: ${response.status}`);
-        if (response.status === 405) {
-          console.warn(`Endpoint ${endpoint} does not accept POST method`);
         }
       }
     } catch (error) {
@@ -231,31 +220,21 @@ export async function checkApiHealth(): Promise<boolean> {
   }
 }
 
-// FIXED: fetchWithAuth with proper token refresh and retry logic
-async function fetchWithAuth(
+// ***** Public fetch for authentication endpoints (no token required) *****
+async function fetchPublic(
   endpoint: string,
-  options: RequestInit = {},
-  isRetry: boolean = false
+  options: RequestInit = {}
 ): Promise<Response> {
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
   const url = `${API_URL}/api/${cleanEndpoint}`;
 
-  console.log(`Fetching: ${url}${isRetry ? ' (retry after refresh)' : ''}`);
-
-  const token = getToken();
+  console.log(`📡 Fetching (public): ${url}`);
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "Accept": "application/json",
     ...((options.headers as Record<string, string>) || {}),
   };
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  } else if (!isRetry) {
-    // Only log warning if not a retry (retry will have token from refresh)
-    console.warn(`No token found for request to ${url}`);
-  }
 
   try {
     const response = await fetchWithRetry(url, {
@@ -265,35 +244,12 @@ async function fetchWithAuth(
       mode: 'cors',
     });
 
-    // If response is 401, try to refresh token once
-    if (response.status === 401 && !isRetry) {
-      console.log(`Token expired for ${url}, attempting refresh...`);
-      const refreshed = await refreshAccessToken();
-      
-      if (refreshed) {
-        console.log(`Token refreshed, retrying: ${url}`);
-        // Retry with the new token
-        return fetchWithAuth(endpoint, options, true);
-      } else {
-        console.warn(`Token refresh failed for ${url}`);
-        clearAuthData();
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('auth:unauthorized'));
-        }
-        throw new Error('Your session has expired. Please log in again.');
-      }
-    }
+    // Log response for debugging
+    const clonedResponse = response.clone();
+    const responseText = await clonedResponse.text();
+    console.log(`📥 Response status: ${response.status}`);
+    console.log(`📥 Response body:`, responseText.substring(0, 200));
 
-    // If retry also returns 401, session is truly invalid
-    if (response.status === 401 && isRetry) {
-      clearAuthData();
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
-      }
-      throw new Error('Your session has expired. Please log in again.');
-    }
-
-    // Handle other non-200 responses
     if (!response.ok) {
       let errorMessage = `HTTP error! status: ${response.status}`;
 
@@ -326,21 +282,99 @@ async function fetchWithAuth(
 
     return response;
   } catch (error) {
-    console.error(`API Error for ${url}:`, error);
-    if (error instanceof Error) {
-      if (error.message.includes('Network error') || 
-          error.message.includes('Request timeout') ||
-          error.message.includes('HTTP error') ||
-          error.message.includes('session has expired')) {
-        throw error;
-      }
-      throw new Error(`Network error: ${error.message}`);
-    }
+    console.error(`Public API Error for ${url}:`, error);
     throw error;
   }
 }
 
-// [Rest of your interfaces remain the same...]
+// ***** fetchWithAuth with proper token refresh and retry logic *****
+async function fetchWithAuth(
+  endpoint: string,
+  options: RequestInit = {},
+  isRetry: boolean = false
+): Promise<Response> {
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+  const url = `${API_URL}/api/${cleanEndpoint}`;
+
+  console.log(`🔐 Fetching (auth): ${url}`);
+
+  const token = getToken();
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    ...((options.headers as Record<string, string>) || {}),
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  } else {
+    console.warn(`⚠️ No token found for request to ${url}`);
+  }
+
+  try {
+    const response = await fetchWithRetry(url, {
+      ...options,
+      headers,
+      credentials: 'include',
+      mode: 'cors',
+    });
+
+    if (response.status === 401 && !isRetry) {
+      console.log(`🔄 Token expired, attempting refresh...`);
+      const refreshed = await refreshAccessToken();
+      
+      if (refreshed) {
+        console.log(`✅ Token refreshed, retrying...`);
+        return fetchWithAuth(endpoint, options, true);
+      } else {
+        clearAuthData();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+        }
+        throw new Error('Your session has expired. Please log in again.');
+      }
+    }
+
+    if (response.status === 401 && isRetry) {
+      clearAuthData();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      }
+      throw new Error('Your session has expired. Please log in again.');
+    }
+
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+
+      try {
+        const errorResponse = response.clone();
+        const contentType = errorResponse.headers.get('content-type') || '';
+
+        if (contentType.includes('application/json')) {
+          const errorData = await errorResponse.json();
+          errorMessage = errorData.message || errorData.title || errorMessage;
+        } else {
+          const text = await errorResponse.text();
+          if (text && text.length > 0) {
+            errorMessage = text.length > 300 ? text.slice(0, 300) + "…" : text;
+          }
+        }
+      } catch (error) {
+        console.warn('Could not read error response body:', error);
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    return response;
+  } catch (error) {
+    console.error(`API Error for ${url}:`, error);
+    throw error;
+  }
+}
+
+// ============ INTERFACES ============
 
 export interface LoginRequest {
   Email_PhoneNo: string;
@@ -443,6 +477,14 @@ export interface FirebaseAuthRequest {
   name: string;
   profilePicture: string;
   firebaseUid: string;
+}
+
+export interface SocialLoginRequest {
+  idToken: string;
+  provider: 'google' | 'apple';
+  email?: string;
+  name?: string;
+  photoURL?: string;
 }
 
 export interface UpdateUserRequest {
@@ -685,9 +727,10 @@ export interface RegisterManagerRequest {
   CompanyType?: string[];
 }
 
-// Auth Functions
+// ============ AUTH FUNCTIONS ============
+
 export async function login(credentials: LoginRequest): Promise<LoginResponse> {
-  const response = await fetchWithAuth("auth-users/login", {
+  const response = await fetchPublic("auth-users/login", {
     method: "POST",
     body: JSON.stringify(credentials),
   });
@@ -697,7 +740,7 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
 }
 
 export async function register(userData: RegisterRequest): Promise<RegisterResponse> {
-  const response = await fetchWithAuth("auth-users", {
+  const response = await fetchPublic("auth-users", {
     method: "POST",
     body: JSON.stringify(userData),
   });
@@ -718,24 +761,145 @@ export async function logout(): Promise<void> {
 }
 
 export async function googleAuth(data: GoogleAuthRequest): Promise<LoginResponse> {
-  const response = await fetchWithAuth("auth-users/auth-login", {
-    method: "POST",
-    body: JSON.stringify(data),
+  console.log('🔄 googleAuth called with:', {
+    Email: data.Email,
+    ExternalId: data.ExternalId,
   });
-  const loginData = await response.json();
-  setAuthData(loginData);
-  return loginData;
+
+  try {
+    const response = await fetchPublic("auth-users/auth-login", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    
+    const loginData = await response.json();
+    console.log('✅ googleAuth response received');
+    
+    setAuthData(loginData);
+    console.log('✅ Auth data stored');
+    
+    return loginData;
+  } catch (error: any) {
+    console.error('❌ googleAuth error:', error);
+    throw error;
+  }
 }
 
 export async function firebaseAuth(data: FirebaseAuthRequest): Promise<LoginResponse> {
-  const response = await fetchWithAuth("auth-users/firebase-auth", {
-    method: "POST",
-    body: JSON.stringify(data),
+  console.log('🔄 firebaseAuth called with:', {
+    provider: data.provider,
+    email: data.email,
+    firebaseUid: data.firebaseUid,
   });
-  const loginData = await response.json();
-  setAuthData(loginData);
-  return loginData;
+
+  const endpoints = [
+    "auth-users/firebase-auth",
+    "auth-users/auth-login",
+    "auth-users/auth-login",
+    "auth-users/auth-login",
+    "auth-users/firebase",
+  ];
+  
+  let lastError: Error | null = null;
+  
+  for (const endpoint of endpoints) {
+    try {
+      console.log(`📡 Trying firebase auth with endpoint: ${endpoint}`);
+      const response = await fetchPublic(endpoint, {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+      
+      const loginData = await response.json();
+      setAuthData(loginData);
+      console.log(`✅ Success with endpoint: ${endpoint}`);
+      return loginData;
+    } catch (error) {
+      console.warn(`❌ Failed with endpoint ${endpoint}:`, error);
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (error instanceof Error) {
+        if (!error.message.includes('404') && !error.message.includes('405')) {
+          throw error;
+        }
+      }
+    }
+  }
+  
+  throw lastError || new Error('All Firebase authentication endpoints failed');
 }
+
+// ***** Unified social login function *****
+export async function socialLogin(data: SocialLoginRequest): Promise<LoginResponse> {
+  console.log('🔄 socialLogin called with:', {
+    provider: data.provider,
+    email: data.email,
+    hasToken: !!data.idToken,
+    tokenLength: data.idToken?.length || 0,
+  });
+
+  // Try multiple approaches
+  const attempts = [
+    {
+      endpoint: "auth-users/auth-login",
+      payload: {
+        idToken: data.idToken,
+        provider: data.provider,
+        email: data.email || '',
+        name: data.name || '',
+        photoURL: data.photoURL || '',
+      }
+    },
+    {
+      endpoint: "auth-users/firebase-auth",
+      payload: {
+        idToken: data.idToken,
+        provider: data.provider,
+        email: data.email || '',
+        name: data.name || '',
+        profilePicture: data.photoURL || '',
+        firebaseUid: '',
+      }
+    },
+    {
+      endpoint: "auth-users/auth-login",
+      payload: {
+        Email: data.email || '',
+        ExternalId: '',
+        FirstName: data.name?.split(" ")[0] || '',
+        LastName: data.name?.split(" ").slice(1).join(" ") || '',
+        ProfilePicture: data.photoURL || '',
+        idToken: data.idToken,
+      }
+    }
+  ];
+
+  let lastError: Error | null = null;
+
+  for (const attempt of attempts) {
+    try {
+      console.log(`📡 Trying social login with endpoint: ${attempt.endpoint}`);
+      const response = await fetchPublic(attempt.endpoint, {
+        method: "POST",
+        body: JSON.stringify(attempt.payload),
+      });
+
+      const loginData = await response.json();
+      console.log(`✅ Success with endpoint: ${attempt.endpoint}`);
+      
+      setAuthData(loginData);
+      console.log('✅ Auth data stored');
+      
+      return loginData;
+    } catch (error) {
+      console.warn(`❌ Failed with endpoint ${attempt.endpoint}:`, error);
+      lastError = error instanceof Error ? error : new Error(String(error));
+    }
+  }
+
+  throw lastError || new Error('All social login attempts failed');
+}
+
+// ============ PROFILE FUNCTIONS ============
 
 export async function updateProfile(data: UpdateUserRequest): Promise<UserProfile> {
   const response = await fetchWithAuth("auth-users/update-user", {
@@ -779,8 +943,10 @@ export async function deleteDeliveryAddress(id: string): Promise<void> {
   await fetchWithAuth(`auth-users/delete-delivery-address/${id}`, { method: "DELETE" });
 }
 
+// ============ VERIFICATION FUNCTIONS ============
+
 export async function verifyEmail(data: EmailVerificationRequest): Promise<LoginResponse> {
-  const response = await fetchWithAuth("auth-users/email-verification", {
+  const response = await fetchPublic("auth-users/email-verification", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -790,7 +956,7 @@ export async function verifyEmail(data: EmailVerificationRequest): Promise<Login
 }
 
 export async function requestEmailVerificationToken(email: string): Promise<string> {
-  const response = await fetchWithAuth("auth-users/email-verification-request-token", {
+  const response = await fetchPublic("auth-users/email-verification-request-token", {
     method: "POST",
     body: JSON.stringify({ Email: email }),
   });
@@ -798,7 +964,7 @@ export async function requestEmailVerificationToken(email: string): Promise<stri
 }
 
 export async function forgotPassword(email: string): Promise<string> {
-  const response = await fetchWithAuth("auth-users/forgot-password-request-token", {
+  const response = await fetchPublic("auth-users/forgot-password-request-token", {
     method: "POST",
     body: JSON.stringify({ Email: email }),
   });
@@ -806,7 +972,7 @@ export async function forgotPassword(email: string): Promise<string> {
 }
 
 export async function resetPassword(data: ResetPasswordRequest): Promise<string> {
-  const response = await fetchWithAuth("auth-users/reset-password", {
+  const response = await fetchPublic("auth-users/reset-password", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -814,7 +980,7 @@ export async function resetPassword(data: ResetPasswordRequest): Promise<string>
 }
 
 export async function verifyPhoneNumber(otp: string): Promise<string> {
-  const response = await fetchWithAuth("auth-users/phone-no-verification", {
+  const response = await fetchPublic("auth-users/phone-no-verification", {
     method: "POST",
     body: JSON.stringify({ Otp: otp }),
   });
@@ -826,7 +992,8 @@ export async function enableTwoFactor(id: string): Promise<string> {
   return response.json();
 }
 
-// Logistics Functions
+// ============ LOGISTICS FUNCTIONS ============
+
 export async function getCompanies(): Promise<Company[]> {
   const response = await fetchWithAuth("logistics-controller", { method: "GET" });
   const data = await response.json();
@@ -865,7 +1032,8 @@ export async function trackOrder(trackingNumber: string): Promise<OrderTrackingR
   return response.json();
 }
 
-// Bookings Functions
+// ============ BOOKINGS FUNCTIONS ============
+
 export async function getAccommodations(): Promise<Accommodation[]> {
   const response = await fetchWithAuth("Bookings/accomodation", { method: "GET" });
   const data = await response.json();
@@ -947,7 +1115,8 @@ export async function trackParcelOrBooking(
   }
 }
 
-// Payments Functions
+// ============ PAYMENTS FUNCTIONS ============
+
 export async function initializePaystackPayment(orderId: string, amount: number, email: string): Promise<any> {
   const response = await fetchWithAuth("Wallet/initialize", {
     method: "POST",
@@ -969,7 +1138,8 @@ export async function initializeFlutterwavePayment(amount: number, email: string
   return response.json();
 }
 
-// Notifications Functions
+// ============ NOTIFICATIONS FUNCTIONS ============
+
 export async function getNotifications(): Promise<Notification[]> {
   const response = await fetchWithAuth("Notifications", { method: "GET" });
   const data = await response.json();
@@ -989,7 +1159,8 @@ export async function markNotificationRead(id: string, data: UpdateNotificationR
   return response.json();
 }
 
-// Feedback Functions
+// ============ FEEDBACK FUNCTIONS ============
+
 export async function submitFeedback(data: AddFeedbackRequest): Promise<any> {
   const response = await fetchWithAuth("Info/feedback", {
     method: "POST",
@@ -998,9 +1169,10 @@ export async function submitFeedback(data: AddFeedbackRequest): Promise<any> {
   return response.json();
 }
 
-// Admin Auth Functions
+// ============ ADMIN FUNCTIONS ============
+
 export async function adminLogin(credentials: LoginRequest): Promise<LoginResponse> {
-  const response = await fetchWithAuth("admin-controller/login", {
+  const response = await fetchPublic("admin-controller/login", {
     method: "POST",
     body: JSON.stringify(credentials),
   });
@@ -1010,7 +1182,7 @@ export async function adminLogin(credentials: LoginRequest): Promise<LoginRespon
 }
 
 export async function loginManager(credentials: LoginRequest): Promise<LoginResponse> {
-  const response = await fetchWithAuth("admin-controller/login", {
+  const response = await fetchPublic("admin-controller/login", {
     method: "POST",
     body: JSON.stringify(credentials),
   });
@@ -1067,7 +1239,8 @@ export async function adminGetProfile(): Promise<any> {
   return response.json();
 }
 
-// Admin Data Functions
+// ============ ADMIN DATA FUNCTIONS ============
+
 export async function getAllUsers(): Promise<any[]> {
   const response = await fetchWithAuth("auth-users", { method: "GET" });
   const data = await response.json();
@@ -1127,5 +1300,7 @@ export async function getAllAdverts(): Promise<any[]> {
   const data = await response.json();
   return extractArrayFromResponse(data);
 }
+
+// ============ EXPORT ALL FUNCTIONS ============
 
 export { API_URL };
