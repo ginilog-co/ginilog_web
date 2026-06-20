@@ -13,14 +13,22 @@ import {
   Truck,
   User,
   LogOut,
-  Bell,
   CreditCard,
   Clock,
   CheckCircle,
   TruckIcon,
   Building2,
   Loader2,
-  AlertTriangle
+  AlertTriangle,
+  Menu,
+  X,
+  LayoutDashboard,
+  ShoppingBag,
+  UserCircle,
+  ChevronRight,
+  LogOut as LogOutIcon,
+  Sparkles,
+  Star
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
@@ -36,6 +44,7 @@ import {
   Accommodation,
   Company
 } from "@/lib/api";
+import { Badge } from "@/components/ui/badge";
 
 function isUnauthorizedError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
@@ -43,10 +52,7 @@ function isUnauthorizedError(error: unknown): boolean {
   return msg.includes("401") || msg.includes("unauthorized") || msg.includes("unauthenticated");
 }
 
-// Guards against a dashboard <-> login redirect loop (e.g. when a Firebase
-// session persists in the browser but the backend never issued, or no
-// longer accepts, a valid token). Allows exactly one automatic redirect per
-// browser session; after that, the user has to sign in manually.
+// Guards against a dashboard <-> login redirect loop
 const REDIRECT_GUARD_KEY = "dashboardAuthRedirectCount";
 const REDIRECT_GUARD_LIMIT = 1;
 
@@ -77,6 +83,7 @@ export default function CustomerDashboard() {
   const [trackingNumber, setTrackingNumber] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [needsManualLogin, setNeedsManualLogin] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -86,8 +93,6 @@ export default function CustomerDashboard() {
         recordRedirectAttempt();
         router.push("/customer-portal/login");
       } else {
-        // We've already auto-redirected once this session and ended up
-        // back here unauthenticated — stop looping and let the user act.
         setNeedsManualLogin(true);
         setIsLoading(false);
       }
@@ -101,7 +106,6 @@ export default function CustomerDashboard() {
       }
 
       try {
-        // allSettled so one failing endpoint doesn't blank the entire dashboard
         const [profileResult, accomsResult, compsResult, ordersResult, bookingsResult] =
           await Promise.allSettled([
             getProfile(),
@@ -113,8 +117,6 @@ export default function CustomerDashboard() {
 
         if (!isMounted) return;
 
-        // Profile is required. If it failed, decide whether to bounce to login
-        // or show an error, depending on the failure reason.
         if (profileResult.status === "rejected") {
           console.error("Failed to fetch profile:", profileResult.reason);
           if (isUnauthorizedError(profileResult.reason)) {
@@ -130,11 +132,7 @@ export default function CustomerDashboard() {
           return;
         }
 
-        // We successfully loaded the dashboard — reset the redirect guard
-        // so a future genuine session expiry can still trigger one
-        // automatic bounce to login instead of being blocked forever.
         clearRedirectGuard();
-
         setUser(profileResult.value);
 
         if (accomsResult.status === "fulfilled") {
@@ -168,7 +166,6 @@ export default function CustomerDashboard() {
 
         setRecentActivity(combined);
       } catch (error) {
-        // Safety net for anything unexpected outside the allSettled handling above
         console.error("Unexpected error loading dashboard:", error);
         if (isMounted) {
           setErrorMessage(
@@ -192,6 +189,26 @@ export default function CustomerDashboard() {
     if (trackingNumber) {
       router.push(`/tracking?id=${encodeURIComponent(trackingNumber)}`);
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    clearAuthData();
+    router.push("/customer-portal/login");
+  };
+
+  // Mobile menu navigation items - includes Logout as a menu item
+  const menuItems = [
+    { icon: LayoutDashboard, label: "Dashboard", href: "/customer-portal/dashboard" },
+    { icon: ShoppingBag, label: "My Orders & Bookings", href: "/customer-portal/orders" },
+    { icon: UserCircle, label: "Profile", href: "/customer-portal/profile" },
+    { icon: LogOutIcon, label: "Logout", href: "#", isLogout: true },
+  ];
+
+  // Get user initials for avatar fallback
+  const getInitials = () => {
+    if (!user) return "U";
+    return `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase();
   };
 
   if (isLoading) {
@@ -254,40 +271,45 @@ export default function CustomerDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
+      <header className="bg-white border-b sticky top-0 z-50 shadow-sm">
+        <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <Link href="/" className="text-2xl font-bold text-primary">
+            <Link href="/" className="text-2xl font-bold text-primary flex items-center gap-2">
+          
               GINILOG
             </Link>
 
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/customer-portal/dashboard" className="text-gray-900 font-medium">
-              Dashboard
-            </Link>
-            <Link href="/customer-portal/orders" className="text-gray-600 hover:text-gray-900">
-              My Orders & Bookings
-            </Link>
-            <Link href="/customer-portal/profile" className="text-gray-600 hover:text-gray-900">
-              Profile
-            </Link>
-          </nav>
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center space-x-8">
+              <Link href="/customer-portal/dashboard" className="text-gray-900 font-medium hover:text-primary transition-colors">
+                Dashboard
+              </Link>
+              <Link href="/customer-portal/orders" className="text-gray-600 hover:text-gray-900 transition-colors">
+                My Orders & Bookings
+              </Link>
+              <Link href="/customer-portal/profile" className="text-gray-600 hover:text-gray-900 transition-colors">
+                Profile
+              </Link>
+            </nav>
 
-            <div className="flex items-center gap-4">
-              <button className="relative p-2 text-gray-600 hover:text-gray-900">
-                <Bell className="h-6 w-6" />
-                <span className="absolute top-1 right-1 h-2 w-2 bg-primary rounded-full" />
-              </button>
-              
+            {/* Desktop Right Side */}
+            <div className="hidden md:flex items-center gap-4">
+              {/* User Profile */}
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-full border-2 border-primary/20 overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
                   {user.profilePicture ? (
-                    <img src={user.profilePicture} alt={user.firstName} className="h-10 w-10 rounded-full object-cover" />
+                    <img 
+                      src={user.profilePicture} 
+                      alt={user.firstName} 
+                      className="h-full w-full object-cover" 
+                    />
                   ) : (
-                    <User className="h-5 w-5 text-primary" />
+                    <span className="text-primary font-semibold text-sm">
+                      {getInitials()}
+                    </span>
                   )}
                 </div>
-                <div className="hidden sm:block">
+                <div className="hidden lg:block text-left">
                   <p className="text-sm font-medium text-gray-900">
                     {user.firstName} {user.lastName}
                   </p>
@@ -295,24 +317,134 @@ export default function CustomerDashboard() {
                 </div>
               </div>
 
+              {/* Logout Button */}
               <Button
                 variant="ghost"
-                size="icon"
-                className="text-gray-600"
-                onClick={() => { logout(); router.push("/customer-portal/login"); }}
+                size="sm"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={handleLogout}
               >
-                <LogOut className="h-5 w-5" />
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
               </Button>
             </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none"
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Menu Overlay */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setIsMobileMenuOpen(false)}>
+            <div className="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              {/* Mobile Menu Header */}
+              <div className="p-4 border-b bg-gradient-to-r from-primary/5 to-blue-50">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-full border-2 border-primary/20 overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      {user.profilePicture ? (
+                        <img 
+                          src={user.profilePicture} 
+                          alt={user.firstName} 
+                          className="h-full w-full object-cover" 
+                        />
+                      ) : (
+                        <span className="text-primary font-semibold text-lg">
+                          {getInitials()}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 text-base">
+                        {user.firstName} {user.lastName}
+                      </p>
+                      <p className="text-xs text-gray-500">{user.email}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                {/* Quick stats in mobile menu */}
+                <div className="flex items-center gap-4 text-xs">
+                  <div className="flex items-center gap-1">
+                    <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                    <span className="text-gray-600">4.8</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <CheckCircle className="h-3 w-3 text-green-500" />
+                    <span className="text-gray-600">{recentActivity.length} activities</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile Menu Items - includes Logout */}
+              <nav className="p-4 space-y-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+                {menuItems.map((item) => (
+                  item.isLogout ? (
+                    // Logout button in mobile menu
+                    <button
+                      key={item.label}
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        handleLogout();
+                      }}
+                      className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-red-50 transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-red-50 group-hover:bg-red-100 flex items-center justify-center transition-colors">
+                          <item.icon className="h-4 w-4 text-red-600 group-hover:text-red-700 transition-colors" />
+                        </div>
+                        <span className="text-red-600 group-hover:text-red-700 font-medium transition-colors">
+                          {item.label}
+                        </span>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-red-400 group-hover:text-red-500 transition-colors" />
+                    </button>
+                  ) : (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-gray-100 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+                          <item.icon className="h-4 w-4 text-gray-500 group-hover:text-primary transition-colors" />
+                        </div>
+                        <span className="text-gray-700 group-hover:text-primary font-medium transition-colors">
+                          {item.label}
+                        </span>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-primary transition-colors" />
+                    </Link>
+                  )
+                ))}
+              </nav>
+            </div>
+          </div>
+        )}
       </header>
 
       <main className="container mx-auto px-4 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
-            Welcome back, {user.firstName}!
+            Welcome back, {user.firstName}! 👋
           </h1>
           <p className="text-gray-600 mt-1">
             Manage your bookings, track packages, and access all GINILOG services.
@@ -321,7 +453,7 @@ export default function CustomerDashboard() {
 
         {/* Quick Actions - Unified for all users */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-primary text-white">
+          <Card className="bg-primary text-white shadow-lg shadow-primary/20">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -332,7 +464,7 @@ export default function CustomerDashboard() {
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="shadow-md hover:shadow-lg transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -343,7 +475,7 @@ export default function CustomerDashboard() {
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="shadow-md hover:shadow-lg transition-shadow">
             <CardContent className="p-6">
               <form onSubmit={handleTracking} className="space-y-2">
                 <Label htmlFor="track" className="text-sm text-gray-500">Track Package/Booking</Label>
@@ -359,7 +491,7 @@ export default function CustomerDashboard() {
               </form>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="shadow-md hover:shadow-lg transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -377,21 +509,23 @@ export default function CustomerDashboard() {
           {/* Services Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Accommodation Section */}
-            <Card>
+            <Card className="shadow-md hover:shadow-lg transition-shadow overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-t-lg">
                 <div className="flex items-center gap-2">
                   <Building2 className="h-5 w-5" />
                   <CardTitle className="text-white">Accommodation</CardTitle>
                 </div>
                 <Link href="/customer-portal/accommodations">
-                  <Button variant="secondary" size="sm">Explore</Button>
+                  <Button variant="secondary" size="sm" className="bg-white/20 hover:bg-white/30 text-white border-0">
+                    Explore
+                  </Button>
                 </Link>
               </CardHeader>
               <CardContent className="p-6">
                 <p className="text-gray-600 mb-4">Book hotels, apartments, and resorts for your stays.</p>
                 <div className="space-y-3">
                   {accommodations.slice(0, 3).map((acc) => (
-                    <div key={acc.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50">
+                    <div key={acc.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
                       <div className="h-12 w-12 rounded-lg overflow-hidden flex-shrink-0">
                         <img src={acc.accomodationImages?.[0] || "/service-1.jpg"} alt={acc.accomodationName} className="h-full w-full object-cover" />
                       </div>
@@ -411,21 +545,23 @@ export default function CustomerDashboard() {
             </Card>
 
             {/* Logistics Section */}
-            <Card>
+            <Card className="shadow-md hover:shadow-lg transition-shadow overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-primary to-red-800 text-white rounded-t-lg">
                 <div className="flex items-center gap-2">
                   <Truck className="h-5 w-5" />
                   <CardTitle className="text-white">Logistics</CardTitle>
                 </div>
                 <Link href="/customer-portal/logistics">
-                  <Button variant="secondary" size="sm">Send Package</Button>
+                  <Button variant="secondary" size="sm" className="bg-white/20 hover:bg-white/30 text-white border-0">
+                    Send Package
+                  </Button>
                 </Link>
               </CardHeader>
               <CardContent className="p-6">
                 <p className="text-gray-600 mb-4">Send packages and track deliveries nationwide.</p>
                 <div className="space-y-3">
                   {companies.slice(0, 3).map((comp) => (
-                    <div key={comp.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50">
+                    <div key={comp.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
                       <div className="h-10 w-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 flex items-center justify-center">
                         {comp.companyLogo ? (
                           <img src={comp.companyLogo} alt={comp.companyName} className="h-full w-full object-cover" />
@@ -451,51 +587,60 @@ export default function CustomerDashboard() {
 
           {/* Quick Actions Row */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Home className="h-6 w-6 text-blue-600" />
+            <Link href="/customer-portal/accommodations">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer hover:scale-[1.02] transform duration-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <Home className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Find Stays</h3>
+                      <p className="text-sm text-gray-500">Search accommodations</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">Find Stays</h3>
-                    <p className="text-sm text-gray-500">Search accommodations</p>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link href="/customer-portal/logistics">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer hover:scale-[1.02] transform duration-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <Package className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Send Package</h3>
+                      <p className="text-sm text-gray-500">Book logistics service</p>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Package className="h-6 w-6 text-primary" />
+                </CardContent>
+              </Card>
+            </Link>
+            <Link href="/tracking">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer hover:scale-[1.02] transform duration-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
+                      <Search className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Track Item</h3>
+                      <p className="text-sm text-gray-500">Track orders & bookings</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">Send Package</h3>
-                    <p className="text-sm text-gray-500">Book logistics service</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <Search className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">Track Item</h3>
-                    <p className="text-sm text-gray-500">Track orders & bookings</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </Link>
           </div>
 
           {/* Recent Activity */}
-          <Card>
+          <Card className="shadow-md hover:shadow-lg transition-shadow">
             <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-primary" />
+                Recent Activity
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {recentActivity.length === 0 ? (
@@ -503,18 +648,21 @@ export default function CustomerDashboard() {
               ) : (
                 <div className="space-y-3">
                   {recentActivity.map((item) => (
-                    <div key={item.id} className="flex items-center gap-3 text-sm">
+                    <div key={item.id} className="flex items-center gap-3 text-sm p-2 rounded-lg hover:bg-gray-50 transition-colors">
                       <div className={`h-8 w-8 rounded-full flex items-center justify-center ${item.kind === "accommodation" ? "bg-blue-100" : "bg-primary/10"}`}>
                         {item.kind === "accommodation"
                           ? <Building2 className="h-4 w-4 text-blue-600" />
                           : <TruckIcon className="h-4 w-4 text-primary" />}
                       </div>
-                      <div>
-                        <p className="text-gray-900">{item.label}</p>
+                      <div className="flex-1">
+                        <p className="text-gray-900 font-medium">{item.label}</p>
                         <p className="text-gray-500 text-xs">
                           {item.orderStatus || item.bookingStatus || "Pending"} · {item.ref}
                         </p>
                       </div>
+                      <Badge variant="outline" className="text-xs">
+                        {item.kind === "accommodation" ? "Booking" : "Order"}
+                      </Badge>
                     </div>
                   ))}
                 </div>

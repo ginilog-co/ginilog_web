@@ -4,11 +4,29 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Package, Search, LogOut, Bell, User, Loader2, Truck, Hotel, X } from "lucide-react";
+import {
+  Package,
+  Search,
+  LogOut,
+  User,
+  Loader2,
+  Truck,
+  Hotel,
+  X,
+  Menu,
+  LayoutDashboard,
+  ShoppingBag,
+  UserCircle,
+  ChevronRight,
+  Sparkles,
+  LogOut as LogOutIcon,
+  Clock,
+  Star
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getProfile, getStoredUser, UserProfile, getCustomerOrders, getCustomerBookings, cancelCustomerBooking, logout } from "@/lib/api";
+import { getProfile, getStoredUser, UserProfile, getCustomerOrders, getCustomerBookings, cancelCustomerBooking, logout, clearAuthData } from "@/lib/api";
 
 export default function CustomerOrders() {
   const router = useRouter();
@@ -17,6 +35,7 @@ export default function CustomerOrders() {
   const [isLoading, setIsLoading] = useState(true);
   const [orders, setOrders] = useState<any[]>([]);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -34,7 +53,6 @@ export default function CustomerOrders() {
         
         setUser(profile);
         
-        // Combine and normalize data
         const combined = [
           ...(logOrders || []).map((o: any) => ({ ...o, type: 'logistics', title: o.itemName || 'Package' })),
           ...(hotelBookings || []).map((b: any) => ({ ...b, type: 'accommodation', title: b.accomodationName || 'Hotel' }))
@@ -71,66 +89,186 @@ export default function CustomerOrders() {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    clearAuthData();
+    router.push("/customer-portal/login");
+  };
+
+  const getInitials = () => {
+    if (!user) return "U";
+    return `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase();
+  };
+
+  const menuItems = [
+    { icon: LayoutDashboard, label: "Dashboard", href: "/customer-portal/dashboard" },
+    { icon: ShoppingBag, label: "My Orders & Bookings", href: "/customer-portal/orders" },
+    { icon: UserCircle, label: "Profile", href: "/customer-portal/profile" },
+    { icon: LogOutIcon, label: "Logout", href: "#", isLogout: true },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-      <header className="bg-white border-b sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
+      {/* Header */}
+      <header className="bg-white border-b sticky top-0 z-50 shadow-sm">
+        <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <Link href="/" className="text-2xl font-bold text-primary">
+            <Link href="/" className="text-2xl font-bold text-primary flex items-center gap-2">
+           
               GINILOG
             </Link>
 
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/customer-portal" className="text-gray-900 font-medium">
-              Dashboard
-            </Link>
-            <Link href="/customer-portal/orders" className="text-gray-600 hover:text-gray-900">
-              My Orders & Bookings
-            </Link>
-            <Link href="/customer-portal/profile" className="text-gray-600 hover:text-gray-900">
-              Profile
-            </Link>
-          </nav>
+            <nav className="hidden md:flex items-center space-x-8">
+              <Link href="/customer-portal/dashboard" className="text-gray-600 hover:text-gray-900 transition-colors">
+                Dashboard
+              </Link>
+              <Link href="/customer-portal/orders" className="text-gray-900 font-medium hover:text-primary transition-colors">
+                My Orders & Bookings
+              </Link>
+              <Link href="/customer-portal/profile" className="text-gray-600 hover:text-gray-900 transition-colors">
+                Profile
+              </Link>
+            </nav>
 
-            <div className="flex items-center gap-4">
-              <button className="relative p-2 text-gray-600 hover:text-gray-900">
-                <Bell className="h-6 w-6" />
-                <span className="absolute top-1 right-1 h-2 w-2 bg-primary rounded-full" />
-              </button>
-              
+            <div className="hidden md:flex items-center gap-4">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-full border-2 border-primary/20 overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
                   {user?.profilePicture ? (
-                    <img src={user.profilePicture} alt={user.firstName} className="h-10 w-10 rounded-full object-cover" />
+                    <img 
+                      src={user.profilePicture} 
+                      alt={user.firstName} 
+                      className="h-full w-full object-cover" 
+                    />
                   ) : (
-                    <User className="h-5 w-5 text-primary" />
+                    <span className="text-primary font-semibold text-sm">
+                      {getInitials()}
+                    </span>
                   )}
                 </div>
-                <div className="hidden sm:block">
+                <div className="hidden lg:block text-left">
                   <p className="text-sm font-medium text-gray-900">
                     {user?.firstName} {user?.lastName}
                   </p>
-                  <p className="text-xs text-gray-500">Customer</p>
+                  <p className="text-xs text-gray-500 capitalize">Customer</p>
                 </div>
               </div>
 
               <Button
                 variant="ghost"
-                size="icon"
-                className="text-gray-600"
-                onClick={() => { logout(); router.push("/customer-portal/login"); }}
+                size="sm"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={handleLogout}
               >
-                <LogOut className="h-5 w-5" />
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
               </Button>
             </div>
+
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none"
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setIsMobileMenuOpen(false)}>
+            <div className="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="p-4 border-b bg-gradient-to-r from-primary/5 to-blue-50">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-full border-2 border-primary/20 overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      {user?.profilePicture ? (
+                        <img 
+                          src={user.profilePicture} 
+                          alt={user.firstName} 
+                          className="h-full w-full object-cover" 
+                        />
+                      ) : (
+                        <span className="text-primary font-semibold text-lg">
+                          {getInitials()}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 text-base">
+                        {user?.firstName} {user?.lastName}
+                      </p>
+                      <p className="text-xs text-gray-500">{user?.email}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-xs">Active</Badge>
+                  <span className="text-xs text-gray-500">•</span>
+                  <span className="text-xs text-gray-500 capitalize">Customer</span>
+                </div>
+              </div>
+
+              <nav className="p-4 space-y-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+                {menuItems.map((item) => (
+                  item.isLogout ? (
+                    <button
+                      key={item.label}
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        handleLogout();
+                      }}
+                      className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-red-50 transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-red-50 group-hover:bg-red-100 flex items-center justify-center transition-colors">
+                          <item.icon className="h-4 w-4 text-red-600 group-hover:text-red-700 transition-colors" />
+                        </div>
+                        <span className="text-red-600 group-hover:text-red-700 font-medium transition-colors">
+                          {item.label}
+                        </span>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-red-400 group-hover:text-red-500 transition-colors" />
+                    </button>
+                  ) : (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-gray-100 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+                          <item.icon className="h-4 w-4 text-gray-500 group-hover:text-primary transition-colors" />
+                        </div>
+                        <span className="text-gray-700 group-hover:text-primary font-medium transition-colors">
+                          {item.label}
+                        </span>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-primary transition-colors" />
+                    </Link>
+                  )
+                ))}
+              </nav>
+            </div>
+          </div>
+        )}
       </header>
 
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">My Orders & Bookings</h1>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">My Orders & Bookings</h1>
+              <p className="text-gray-500 text-sm mt-1">Track and manage all your orders and bookings</p>
+            </div>
             <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -182,15 +320,13 @@ export default function CustomerOrders() {
                             ? `Ref: ${order.bookingRefNo}`
                             : `ID: ${order.id}`}
                         </p>
+                        <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString()}
+                        </p>
                         {order.type === "accommodation" && order.checkInDate && (
-                          <p className="text-xs text-gray-400 mt-1">
-                            {new Date(order.checkInDate).toLocaleDateString()} →{" "}
-                            {new Date(order.checkOutDate).toLocaleDateString()}
-                          </p>
-                        )}
-                        {order.type === "logistics" && order.senderAddress && (
-                          <p className="text-xs text-gray-400 mt-1">
-                            {order.senderAddress} → {order.recieverAddress}
+                          <p className="text-xs text-gray-400">
+                            {new Date(order.checkInDate).toLocaleDateString()} → {new Date(order.checkOutDate).toLocaleDateString()}
                           </p>
                         )}
                       </div>
