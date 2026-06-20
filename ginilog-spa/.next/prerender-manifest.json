@@ -74,30 +74,6 @@
         "x-next-revalidate-tag-token"
       ]
     },
-    "/terms": {
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/terms",
-      "dataRoute": "/terms.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
-    },
     "/privacy": {
       "experimentalBypassFor": [
         {
@@ -113,6 +89,30 @@
       "initialRevalidateSeconds": false,
       "srcRoute": "/privacy",
       "dataRoute": "/privacy.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
+    "/terms": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/terms",
+      "dataRoute": "/terms.rsc",
       "allowHeader": [
         "host",
         "x-matched-path",
@@ -170,30 +170,6 @@
         "x-next-revalidate-tag-token"
       ]
     },
-    "/admin-dashboard": {
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/admin-dashboard",
-      "dataRoute": "/admin-dashboard.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
-    },
     "/admin-dashboard/company": {
       "experimentalBypassFor": [
         {
@@ -209,6 +185,30 @@
       "initialRevalidateSeconds": false,
       "srcRoute": "/admin-dashboard/company",
       "dataRoute": "/admin-dashboard/company.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
+    "/admin-dashboard": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/admin-dashboard",
+      "dataRoute": "/admin-dashboard.rsc",
       "allowHeader": [
         "host",
         "x-matched-path",
@@ -257,6 +257,30 @@
       "initialRevalidateSeconds": false,
       "srcRoute": "/customer-portal/dashboard",
       "dataRoute": "/customer-portal/dashboard.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
+    "/customer-portal/forgot-password": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/customer-portal/forgot-password",
+      "dataRoute": "/customer-portal/forgot-password.rsc",
       "allowHeader": [
         "host",
         "x-matched-path",
@@ -409,37 +433,13 @@
         "x-next-revalidated-tags",
         "x-next-revalidate-tag-token"
       ]
-    },
-    "/customer-portal/forgot-password": {
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/customer-portal/forgot-password",
-      "dataRoute": "/customer-portal/forgot-password.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
     }
   },
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "d1310739e3ebc2f0f03c51fd8d8e2b11",
-    "previewModeSigningKey": "0f4288b247c31ba8e214ce26c05f5b607bb950fa80a7063c9539d3d6df5b5f93",
-    "previewModeEncryptionKey": "879fe6654c03747051eeada5af9704a78331fd14b8b25dc4febad0e0d9788945"
+    "previewModeId": "4b6d74eaf1cae81f6eeaf3f86e3a6c8b",
+    "previewModeSigningKey": "a031d12a9b324d737c35d3bcd33e7a1188d3248c3730e4857998c10a14c37a4e",
+    "previewModeEncryptionKey": "b1c2de5b3f281b99d0832f2cb5cedfb2281bfa92b38ea73edacb70d1c9347c31"
   }
 }

@@ -1,12 +1,12 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
+  "/landing-page/page": "app/landing-page/page.js",
   "/page": "app/page.js",
   "/privacy/page": "app/privacy/page.js",
-  "/landing-page/page": "app/landing-page/page.js",
   "/terms/page": "app/terms/page.js",
   "/admin-dashboard/admin-login/page": "app/admin-dashboard/admin-login/page.js",
-  "/admin-dashboard/company-login/page": "app/admin-dashboard/company-login/page.js",
   "/admin-dashboard/company/page": "app/admin-dashboard/company/page.js",
+  "/admin-dashboard/company-login/page": "app/admin-dashboard/company-login/page.js",
   "/admin-dashboard/page": "app/admin-dashboard/page.js",
   "/customer-portal/accommodations/[id]/page": "app/customer-portal/accommodations/[id]/page.js",
   "/customer-portal/accommodations/page": "app/customer-portal/accommodations/page.js",
@@ -16,7 +16,7 @@
   "/customer-portal/logistics/[id]/page": "app/customer-portal/logistics/[id]/page.js",
   "/customer-portal/logistics/page": "app/customer-portal/logistics/page.js",
   "/customer-portal/orders/page": "app/customer-portal/orders/page.js",
-  "/customer-portal/profile/page": "app/customer-portal/profile/page.js",
   "/customer-portal/page": "app/customer-portal/page.js",
+  "/customer-portal/profile/page": "app/customer-portal/profile/page.js",
   "/customer-portal/register/page": "app/customer-portal/register/page.js"
 }
