@@ -155,6 +155,12 @@
       "namedRegex": "^/customer\\-portal/register(?:/)?$"
     },
     {
+      "page": "/customer-portal/verify-email",
+      "regex": "^/customer\\-portal/verify\\-email(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/customer\\-portal/verify\\-email(?:/)?$"
+    },
+    {
       "page": "/landing-page",
       "regex": "^/landing\\-page(?:/)?$",
       "routeKeys": {},

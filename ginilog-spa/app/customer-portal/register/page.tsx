@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Mail, Lock, User, Phone, Loader2 } from "lucide-react";
-import { register, RegisterRequest } from "@/lib/api";
+import { Eye, EyeOff, Mail, Lock, User, Phone, Loader2, AlertCircle } from "lucide-react";
+import { register, RegisterRequest, getStoredUser } from "@/lib/api";
 import { signInWithGoogle, signInWithApple } from "@/lib/firebase";
 
 export default function CustomerRegister() {
@@ -17,6 +17,12 @@ export default function CustomerRegister() {
   const [isLoading, setIsLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState<"google" | "apple" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{
+    email?: string;
+    phone?: string;
+    password?: string;
+    general?: string;
+  }>({});
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -29,6 +35,7 @@ export default function CustomerRegister() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
 
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
@@ -39,7 +46,7 @@ export default function CustomerRegister() {
     // Validate password complexity
     const passwordRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{8,}$/;
     if (!passwordRegex.test(formData.password)) {
-      setError("Password must be at least 8 characters with uppercase, lowercase, and number");
+      setFieldErrors({ password: "Password must be at least 8 characters with uppercase, lowercase, and number" });
       return;
     }
 
@@ -47,7 +54,7 @@ export default function CustomerRegister() {
     const cleanedPhone = formData.phone.replace(/\s+/g, "");
     const phoneRegex = /^\+[0-9]+$/;
     if (!phoneRegex.test(cleanedPhone)) {
-      setError("Phone number must start with + and contain only digits (e.g., +2348000000000)");
+      setFieldErrors({ phone: "Phone number must start with + and contain only digits (e.g., +2348000000000)" });
       return;
     }
 
@@ -63,10 +70,42 @@ export default function CustomerRegister() {
       };
 
       await register(userData);
-      // Redirect to login after successful registration
-      router.push("/customer-portal/login");
+      
+      // Store email and password temporarily for verification
+      sessionStorage.setItem("tempEmail", formData.email);
+      sessionStorage.setItem("tempPassword", formData.password);
+      
+      // Redirect to verification page after successful registration
+      router.push(`/customer-portal/verify-email?email=${encodeURIComponent(formData.email)}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
+      console.error('❌ Registration error:', err);
+      
+      if (err instanceof Error) {
+        const errorMessage = err.message;
+        
+        // Parse the error message for specific field errors
+        if (errorMessage.includes("Email already Exist") || errorMessage.includes("Email already exists")) {
+          setFieldErrors({ 
+            email: "This email is already registered. Please use a different email or sign in." 
+          });
+          setError("Email already registered");
+        } else if (errorMessage.includes("PhoneNo already Exist") || errorMessage.includes("PhoneNo already exists")) {
+          setFieldErrors({ 
+            phone: "This phone number is already registered. Please use a different number or sign in." 
+          });
+          setError("Phone number already registered");
+        } else if (errorMessage.includes("Email") && errorMessage.includes("PhoneNo")) {
+          setFieldErrors({ 
+            email: "This email is already registered",
+            phone: "This phone number is already registered"
+          });
+          setError("Email and phone number already registered");
+        } else {
+          setError(errorMessage);
+        }
+      } else {
+        setError("Registration failed. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -76,14 +115,21 @@ export default function CustomerRegister() {
   const handleGoogleSignUp = async () => {
     setSocialLoading("google");
     setError(null);
+    setFieldErrors({});
     try {
       console.log('🔄 Starting Google sign-up...');
       const result = await signInWithGoogle();
       console.log('✅ Google sign-up result:', result);
       
       if (result && (result.token || result.refreshToken)) {
-        // Registration successful, redirect to dashboard
-        router.push("/customer-portal/dashboard");
+        // Check if email needs verification
+        const user = getStoredUser();
+        if (user?.emailVerified) {
+          router.push("/customer-portal/dashboard");
+        } else {
+          // Redirect to verification page
+          router.push(`/customer-portal/verify-email?email=${encodeURIComponent(user?.email || "")}`);
+        }
       } else {
         throw new Error("Google sign-up failed");
       }
@@ -99,14 +145,21 @@ export default function CustomerRegister() {
   const handleAppleSignUp = async () => {
     setSocialLoading("apple");
     setError(null);
+    setFieldErrors({});
     try {
       console.log('🔄 Starting Apple sign-up...');
       const result = await signInWithApple();
       console.log('✅ Apple sign-up result:', result);
       
       if (result && (result.token || result.refreshToken)) {
-        // Registration successful, redirect to dashboard
-        router.push("/customer-portal/dashboard");
+        // Check if email needs verification
+        const user = getStoredUser();
+        if (user?.emailVerified) {
+          router.push("/customer-portal/dashboard");
+        } else {
+          // Redirect to verification page
+          router.push(`/customer-portal/verify-email?email=${encodeURIComponent(user?.email || "")}`);
+        }
       } else {
         throw new Error("Apple sign-up failed");
       }
@@ -157,9 +210,16 @@ export default function CustomerRegister() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
-                  {error}
+              {/* General Error */}
+              {error && !fieldErrors.email && !fieldErrors.phone && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-red-800">Registration Error</p>
+                      <p className="text-sm text-red-700 mt-1">{error}</p>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -205,12 +265,23 @@ export default function CustomerRegister() {
                     id="email"
                     type="email"
                     placeholder="you@example.com"
-                    className="pl-10 h-12"
+                    className={`pl-10 h-12 ${fieldErrors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, email: e.target.value });
+                      if (fieldErrors.email) {
+                        setFieldErrors({ ...fieldErrors, email: undefined });
+                      }
+                    }}
                     required
                   />
                 </div>
+                {fieldErrors.email && (
+                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {fieldErrors.email}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -221,12 +292,23 @@ export default function CustomerRegister() {
                     id="phone"
                     type="tel"
                     placeholder="+234 800 000 0000"
-                    className="pl-10 h-12"
+                    className={`pl-10 h-12 ${fieldErrors.phone ? 'border-red-500 focus:ring-red-500' : ''}`}
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, phone: e.target.value });
+                      if (fieldErrors.phone) {
+                        setFieldErrors({ ...fieldErrors, phone: undefined });
+                      }
+                    }}
                     required
                   />
                 </div>
+                {fieldErrors.phone && (
+                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {fieldErrors.phone}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -237,9 +319,14 @@ export default function CustomerRegister() {
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    className="pl-10 pr-10 h-12"
+                    className={`pl-10 pr-10 h-12 ${fieldErrors.password ? 'border-red-500 focus:ring-red-500' : ''}`}
                     value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, password: e.target.value });
+                      if (fieldErrors.password) {
+                        setFieldErrors({ ...fieldErrors, password: undefined });
+                      }
+                    }}
                     required
                   />
                   <button
@@ -250,6 +337,12 @@ export default function CustomerRegister() {
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
+                {fieldErrors.password && (
+                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {fieldErrors.password}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -293,6 +386,18 @@ export default function CustomerRegister() {
                   </Link>
                 </Label>
               </div>
+
+              {/* Show sign in suggestion if email or phone already exists */}
+              {(fieldErrors.email || fieldErrors.phone) && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <p className="text-sm text-blue-700">
+                    Already have an account?{" "}
+                    <Link href="/customer-portal/login" className="font-semibold underline hover:no-underline">
+                      Sign in here
+                    </Link>
+                  </p>
+                </div>
+              )}
 
               <Button
                 type="submit"

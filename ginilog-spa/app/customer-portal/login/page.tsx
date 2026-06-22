@@ -1,32 +1,67 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
-import { login, requestEmailVerificationToken } from "@/lib/api";
+import { Eye, EyeOff, Mail, Lock, Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import { login, requestEmailVerificationToken, getStoredUser } from "@/lib/api";
 import { signInWithGoogle, signInWithApple } from "@/lib/firebase";
 
-export default function CustomerLogin() {
+function CustomerLoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSocialLoading, setIsSocialLoading] = useState<'google' | 'apple' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+  const [verificationEmailSent, setVerificationEmailSent] = useState(false);
+
+  // Check if user came from registration/verification
+  useEffect(() => {
+    const verified = searchParams.get("verified");
+    const email = searchParams.get("email");
+    const fromRegistration = searchParams.get("from") === "registration";
+    
+    if (verified === "true" && email) {
+      setFormData(prev => ({ ...prev, email }));
+      setVerificationEmailSent(true);
+      // Show success message
+      setTimeout(() => {
+        setVerificationEmailSent(false);
+      }, 5000);
+    }
+    
+    // If coming from registration, show a message
+    if (fromRegistration && email) {
+      setFormData(prev => ({ ...prev, email }));
+      // Show a message that they need to verify
+      setError("Please verify your email before logging in. A verification code has been sent to your email.");
+    }
+  }, [searchParams]);
+
+  // Countdown timer for resend
+  useEffect(() => {
+    if (resendCountdown > 0) {
+      const timer = setTimeout(() => setResendCountdown(resendCountdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCountdown]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    setResendSuccess(false);
 
     try {
       const credentials = {
@@ -34,10 +69,20 @@ export default function CustomerLogin() {
         Password: formData.password,
       };
 
-      await login(credentials);
+      const result = await login(credentials);
+      console.log('✅ Login successful:', result);
+      
+      // Check if email is verified
+      if (!result.emailVerified) {
+        setError("Please verify your email before logging in. A verification code has been sent to your email.");
+        setIsLoading(false);
+        return;
+      }
+      
       router.push("/customer-portal/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed. Please try again.");
+      const errorMessage = err instanceof Error ? err.message : "Login failed. Please try again.";
+      setError(errorMessage);
       setResendSuccess(false);
     } finally {
       setIsLoading(false);
@@ -45,12 +90,38 @@ export default function CustomerLogin() {
   };
 
   const handleResendVerification = async () => {
+    if (resendCountdown > 0) return;
+    
     setResendLoading(true);
     setResendSuccess(false);
+    setError(null);
+    
     try {
-      await requestEmailVerificationToken(formData.email);
+      const userEmail = formData.email || getStoredUser()?.email;
+      
+      if (!userEmail) {
+        setError("Please enter your email address to resend the verification code.");
+        setResendLoading(false);
+        return;
+      }
+
+      console.log('📤 Requesting verification token for:', userEmail);
+      await requestEmailVerificationToken(userEmail);
+      
       setResendSuccess(true);
-    } catch {
+      setResendCountdown(60); // 60 second cooldown
+      setVerificationEmailSent(true);
+      
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => {
+        setVerificationEmailSent(false);
+      }, 5000);
+      
+      // Redirect to verification page with email
+      router.push(`/customer-portal/verify-email?email=${encodeURIComponent(userEmail)}&from=login`);
+    } catch (err) {
+      console.error('❌ Resend verification error:', err);
+      setError(err instanceof Error ? err.message : "Failed to resend verification email.");
       setResendSuccess(false);
     } finally {
       setResendLoading(false);
@@ -66,15 +137,21 @@ export default function CustomerLogin() {
       console.log('✅ Google login result:', result);
       
       if (result && (result.token || result.refreshToken)) {
-        console.log('✅ Login successful, redirecting to dashboard...');
-        router.push("/customer-portal/dashboard");
+        // Check if email needs verification
+        const user = getStoredUser();
+        if (user?.emailVerified) {
+          console.log('✅ Email verified, redirecting to dashboard...');
+          router.push("/customer-portal/dashboard");
+        } else {
+          console.log('⚠️ Email not verified, redirecting to verification...');
+          router.push(`/customer-portal/verify-email?email=${encodeURIComponent(user?.email || "")}&from=login`);
+        }
       } else {
         throw new Error('Authentication failed - no token received');
       }
     } catch (err: any) {
       console.error('❌ Google login error in page:', err);
       
-      // Show specific error message
       let errorMessage = err.message || "Google login failed. Please try again.";
       
       if (errorMessage.includes('HTTP 401') || errorMessage.includes('Unauthorized')) {
@@ -83,6 +160,8 @@ export default function CustomerLogin() {
         errorMessage = 'The login service is currently unavailable. Please try again later.';
       } else if (errorMessage.includes('HTTP 500')) {
         errorMessage = 'Server error. Please try again later.';
+      } else if (errorMessage.includes('email not verified') || errorMessage.includes('verify your email')) {
+        errorMessage = 'Please verify your email before logging in.';
       }
       
       setError(errorMessage);
@@ -100,8 +179,15 @@ export default function CustomerLogin() {
       console.log('✅ Apple login result:', result);
       
       if (result && (result.token || result.refreshToken)) {
-        console.log('✅ Login successful, redirecting to dashboard...');
-        router.push("/customer-portal/dashboard");
+        // Check if email needs verification
+        const user = getStoredUser();
+        if (user?.emailVerified) {
+          console.log('✅ Email verified, redirecting to dashboard...');
+          router.push("/customer-portal/dashboard");
+        } else {
+          console.log('⚠️ Email not verified, redirecting to verification...');
+          router.push(`/customer-portal/verify-email?email=${encodeURIComponent(user?.email || "")}&from=login`);
+        }
       } else {
         throw new Error('Authentication failed - no token received');
       }
@@ -116,6 +202,8 @@ export default function CustomerLogin() {
         errorMessage = 'The login service is currently unavailable. Please try again later.';
       } else if (errorMessage.includes('HTTP 500')) {
         errorMessage = 'Server error. Please try again later.';
+      } else if (errorMessage.includes('email not verified') || errorMessage.includes('verify your email')) {
+        errorMessage = 'Please verify your email before logging in.';
       }
       
       setError(errorMessage);
@@ -124,7 +212,9 @@ export default function CustomerLogin() {
     }
   };
 
-  const isEmailUnverified = error && /not yet verify|not verified|verify your email/i.test(error);
+  const isEmailUnverified = error && (
+    /not yet verify|not verified|verify your email|email not verified|please verify your email/i.test(error)
+  );
 
   return (
     <div className="min-h-screen flex">
@@ -164,33 +254,67 @@ export default function CustomerLogin() {
               </div>
             </div>
 
+            {/* Success message for verified email */}
+            {verificationEmailSent && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md text-green-700 text-sm flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                <span>Verification email sent! Please check your inbox and spam folder.</span>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-5">
               {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm space-y-2">
-                  <p>{error}</p>
-                  {isEmailUnverified && (
-                    <button
-                      type="button"
-                      disabled={resendLoading || resendSuccess}
-                      onClick={handleResendVerification}
-                      className="text-primary underline hover:no-underline disabled:opacity-60 font-medium"
-                    >
-                      {resendLoading ? "Sending..." : resendSuccess ? "Verification email sent!" : "Resend verification email"}
-                    </button>
-                  )}
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm text-red-700">{error}</p>
+                      {isEmailUnverified && (
+                        <div className="mt-2 pt-2 border-t border-red-200">
+                          <p className="text-xs text-red-600 mb-1">
+                            Please verify your email address to continue.
+                          </p>
+                          <button
+                            type="button"
+                            disabled={resendLoading || resendCountdown > 0}
+                            onClick={handleResendVerification}
+                            className="text-sm text-primary hover:text-primary/80 font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            {resendLoading ? (
+                              <>
+                                <Loader2 className="inline h-3 w-3 animate-spin mr-1" />
+                                Sending...
+                              </>
+                            ) : resendCountdown > 0 ? (
+                              `Resend in ${resendCountdown}s`
+                            ) : resendSuccess ? (
+                              "✓ Verification email sent!"
+                            ) : (
+                              "Resend verification email"
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
+
               <div>
-                <Label htmlFor="email" className="text-gray-700">Email</Label>
+                <Label htmlFor="email" className="text-gray-700">Email or Phone</Label>
                 <div className="relative mt-1">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <Input
                     id="email"
-                    type="email"
-                    placeholder="you@example.com"
+                    type="text"
+                    placeholder="you@example.com or +2348000000000"
                     className="pl-10 h-12"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, email: e.target.value });
+                      if (error) setError(null);
+                      setResendSuccess(false);
+                    }}
                     required
                   />
                 </div>
@@ -206,7 +330,10 @@ export default function CustomerLogin() {
                     placeholder="••••••••"
                     className="pl-10 pr-10 h-12"
                     value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, password: e.target.value });
+                      if (error) setError(null);
+                    }}
                     required
                   />
                   <button
@@ -311,7 +438,7 @@ export default function CustomerLogin() {
             </p>
 
             <p className="mt-4 text-center text-xs text-gray-500">
-              <Link href="/customer-portal" className="hover:text-gray-700">
+              <Link href="/" className="hover:text-gray-700">
                 ← Back to Home
               </Link>
             </p>
@@ -319,5 +446,21 @@ export default function CustomerLogin() {
         </div>
       </main>
     </div>
+  );
+}
+
+// Main component with Suspense wrapper for useSearchParams
+export default function CustomerLogin() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="mt-2 text-gray-500">Loading...</p>
+        </div>
+      </div>
+    }>
+      <CustomerLoginContent />
+    </Suspense>
   );
 }

@@ -229,6 +229,7 @@ async function fetchPublic(
   const url = `${API_URL}/api/${cleanEndpoint}`;
 
   console.log(`📡 Fetching (public): ${url}`);
+  console.log(`📤 Request body:`, options.body);
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -248,7 +249,7 @@ async function fetchPublic(
     const clonedResponse = response.clone();
     const responseText = await clonedResponse.text();
     console.log(`📥 Response status: ${response.status}`);
-    console.log(`📥 Response body:`, responseText.substring(0, 200));
+    console.log(`📥 Response body:`, responseText);
 
     if (!response.ok) {
       let errorMessage = `HTTP error! status: ${response.status}`;
@@ -259,13 +260,26 @@ async function fetchPublic(
 
         if (contentType.includes('application/json')) {
           const errorData = await errorResponse.json();
+          console.log('📥 Error details:', JSON.stringify(errorData, null, 2));
+          
+          // ASP.NET Core validation errors format
           if (errorData.errors && typeof errorData.errors === "object") {
             const messages = Object.values(errorData.errors as Record<string, string[]>)
               .flat()
               .join(" ");
             errorMessage = messages || errorData.title || errorMessage;
-          } else {
-            errorMessage = errorData.message || errorData.title || errorMessage;
+          } 
+          // Custom error format
+          else if (errorData.message) {
+            errorMessage = errorData.message;
+          } 
+          // Title format
+          else if (errorData.title) {
+            errorMessage = errorData.title;
+          } 
+          // Stringify if nothing else
+          else {
+            errorMessage = JSON.stringify(errorData);
           }
         } else {
           const text = await errorResponse.text();
@@ -744,7 +758,15 @@ export async function register(userData: RegisterRequest): Promise<RegisterRespo
     method: "POST",
     body: JSON.stringify(userData),
   });
-  return response.json();
+  
+  // Check if response contains validation errors
+  const data = await response.json();
+  if (data.errors) {
+    const errorMessages = Object.values(data.errors).flat().join(" ");
+    throw new Error(errorMessages);
+  }
+  
+  return data;
 }
 
 export async function getProfile(): Promise<UserProfile> {
@@ -946,9 +968,17 @@ export async function deleteDeliveryAddress(id: string): Promise<void> {
 // ============ VERIFICATION FUNCTIONS ============
 
 export async function verifyEmail(data: EmailVerificationRequest): Promise<LoginResponse> {
+  console.log('🔄 Verifying email with:', { 
+    Token: data.Token, 
+    hasPassword: !!data.Password 
+  });
+  
   const response = await fetchPublic("auth-users/email-verification", {
     method: "POST",
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      Token: data.Token,
+      Password: data.Password
+    }),
   });
   const loginData = await response.json();
   setAuthData(loginData);
@@ -956,11 +986,19 @@ export async function verifyEmail(data: EmailVerificationRequest): Promise<Login
 }
 
 export async function requestEmailVerificationToken(email: string): Promise<string> {
+  console.log('🔄 Requesting email verification token for:', email);
+  
   const response = await fetchPublic("auth-users/email-verification-request-token", {
     method: "POST",
     body: JSON.stringify({ Email: email }),
   });
   return response.json();
+}
+
+// Alias for resend verification code - same as requestEmailVerificationToken
+export async function resendVerificationCode(email: string): Promise<string> {
+  console.log('🔄 Resending verification code for:', email);
+  return requestEmailVerificationToken(email);
 }
 
 export async function forgotPassword(email: string): Promise<string> {
