@@ -1,4 +1,4 @@
-// File: C:\Users\HomePC\Desktop\ginilog_web\ginilog-spa\app\admin-dashboard\layout.tsx
+// File: /workspaces/ginilog_web/ginilog-spa/app/admin-dashboard/layout.tsx
 import * as entry from '../../../../app/admin-dashboard/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

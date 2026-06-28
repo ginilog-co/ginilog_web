@@ -1,7 +1,7 @@
 // lib/api.ts
 
 const DEFAULT_PRODUCTION_API = "https://api-data-connection.ginilog.org";
-const LOCAL_API = "http://localhost:5000";
+const LOCAL_API = "https://api-data-connection.ginilog.org";
 
 function resolveApiUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
@@ -11,7 +11,6 @@ function resolveApiUrl(): string {
     return LOCAL_API;
   }
 
-  // Check if we're on the production domain
   if (window.location.hostname === "www.ginilog.com" || 
       window.location.hostname === "ginilog.com" ||
       window.location.hostname.includes("vercel.app")) {
@@ -70,68 +69,44 @@ async function fetchWithRetry(
   }
 }
 
-// Enhanced fetch with auth wrapper
-async function fetchWithAuth(endpoint: string, options: RequestInit = {}): Promise<Response> {
-  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-  const url = `${API_URL}/api/${cleanEndpoint}`;
-  
-  console.log(`Fetching: ${url}`);
-  
-  const token = getToken();
-  
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    ...((options.headers as Record<string, string>) || {}),
-  };
-  
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+// Helper function to safely extract array from response
+function extractArrayFromResponse(data: any): any[] {
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+  if (typeof data === 'object') {
+    if (data.data && Array.isArray(data.data)) return data.data;
+    if (data.items && Array.isArray(data.items)) return data.items;
+    if (data.results && Array.isArray(data.results)) return data.results;
+    if (data.records && Array.isArray(data.records)) return data.records;
+    if (data.list && Array.isArray(data.list)) return data.list;
+    if (data.id) return [data];
   }
-  
-  try {
-    const response = await fetchWithRetry(url, { 
-      ...options, 
-      headers,
-      credentials: 'include',
-      mode: 'cors',
-    });
-    
-    if (!response.ok) {
-      let errorMessage = `HTTP error! status: ${response.status}`;
+  console.warn('Unexpected response format, expected array:', data);
+  return [];
+}
+
+// Check if user is authenticated
+export function isAuthenticated(): boolean {
+  if (typeof window !== "undefined") {
+    return !!localStorage.getItem("token");
+  }
+  return false;
+}
+
+// Get current user type
+export function getUserType(): string | null {
+  if (typeof window !== "undefined") {
+    const user = localStorage.getItem("user");
+    if (user) {
       try {
-        const error = await response.json();
-        if (error.errors && typeof error.errors === "object") {
-          const messages = Object.values(error.errors as Record<string, string[]>)
-            .flat()
-            .join(" ");
-          errorMessage = messages || error.title || errorMessage;
-        } else {
-          errorMessage = error.message || error.title || errorMessage;
-        }
+        const userData = JSON.parse(user);
+        return userData.userType || null;
       } catch {
-        const text = await response.text();
-        if (text) errorMessage = text;
+        return null;
       }
-      
-      if (response.status === 401) {
-        clearAuthData();
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('auth:unauthorized'));
-        }
-      }
-      
-      throw new Error(errorMessage);
     }
-    
-    return response;
-  } catch (error) {
-    console.error(`API Error for ${url}:`, error);
-    if (error instanceof Error) {
-      throw new Error(`Network error: ${error.message}`);
-    }
-    throw error;
   }
+  return null;
 }
 
 // Token helpers
@@ -181,29 +156,55 @@ export function clearAuthData(): void {
 // Refresh token function
 export async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = getRefreshToken();
-  if (!refreshToken) return null;
-  
-  try {
-    const response = await fetch(`${API_URL}/api/auth-users/refresh-token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ refreshToken }),
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-        return data.token;
-      }
-    }
-    return null;
-  } catch (error) {
-    console.error('Failed to refresh token:', error);
+  if (!refreshToken) {
+    console.warn('No refresh token available');
     return null;
   }
+  
+  const refreshEndpoints = [
+    `${API_URL}/api/auth-users/refresh-token`,
+    `${API_URL}/api/auth-users/token/refresh`,
+    `${API_URL}/api/auth/refresh-token`,
+    `${API_URL}/api/auth/token/refresh`,
+  ];
+  
+  let lastError: Error | null = null;
+  
+  for (const endpoint of refreshEndpoints) {
+    try {
+      console.log(`Attempting token refresh at: ${endpoint}`);
+      
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          refreshToken,
+          refresh_token: refreshToken,
+          token: refreshToken
+        }),
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const newToken = data.token || data.accessToken || data.access_token || null;
+        
+        if (newToken) {
+          localStorage.setItem('token', newToken);
+          console.log('Access token refreshed successfully');
+          return newToken;
+        }
+      }
+    } catch (error) {
+      console.warn(`Failed to refresh at ${endpoint}:`, error);
+      lastError = error instanceof Error ? error : new Error(String(error));
+    }
+  }
+  
+  console.error('All refresh attempts failed');
+  return null;
 }
 
 // Health check function
@@ -218,6 +219,176 @@ export async function checkApiHealth(): Promise<boolean> {
     return false;
   }
 }
+
+// ***** Public fetch for authentication endpoints (no token required) *****
+async function fetchPublic(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<Response> {
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+  const url = `${API_URL}/api/${cleanEndpoint}`;
+
+  console.log(`📡 Fetching (public): ${url}`);
+  console.log(`📤 Request body:`, options.body);
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    ...((options.headers as Record<string, string>) || {}),
+  };
+
+  try {
+    const response = await fetchWithRetry(url, {
+      ...options,
+      headers,
+      credentials: 'include',
+      mode: 'cors',
+    });
+
+    // Log response for debugging
+    const clonedResponse = response.clone();
+    const responseText = await clonedResponse.text();
+    console.log(`📥 Response status: ${response.status}`);
+    console.log(`📥 Response body:`, responseText);
+
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+
+      try {
+        const errorResponse = response.clone();
+        const contentType = errorResponse.headers.get('content-type') || '';
+
+        if (contentType.includes('application/json')) {
+          const errorData = await errorResponse.json();
+          console.log('📥 Error details:', JSON.stringify(errorData, null, 2));
+          
+          // ASP.NET Core validation errors format
+          if (errorData.errors && typeof errorData.errors === "object") {
+            const messages = Object.values(errorData.errors as Record<string, string[]>)
+              .flat()
+              .join(" ");
+            errorMessage = messages || errorData.title || errorMessage;
+          } 
+          // Custom error format
+          else if (errorData.message) {
+            errorMessage = errorData.message;
+          } 
+          // Title format
+          else if (errorData.title) {
+            errorMessage = errorData.title;
+          } 
+          // Stringify if nothing else
+          else {
+            errorMessage = JSON.stringify(errorData);
+          }
+        } else {
+          const text = await errorResponse.text();
+          if (text && text.length > 0) {
+            errorMessage = text.length > 300 ? text.slice(0, 300) + "…" : text;
+          }
+        }
+      } catch (error) {
+        console.warn('Could not read error response body:', error);
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    return response;
+  } catch (error) {
+    console.error(`Public API Error for ${url}:`, error);
+    throw error;
+  }
+}
+
+// ***** fetchWithAuth with proper token refresh and retry logic *****
+async function fetchWithAuth(
+  endpoint: string,
+  options: RequestInit = {},
+  isRetry: boolean = false
+): Promise<Response> {
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+  const url = `${API_URL}/api/${cleanEndpoint}`;
+
+  console.log(`🔐 Fetching (auth): ${url}`);
+
+  const token = getToken();
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    ...((options.headers as Record<string, string>) || {}),
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  } else {
+    console.warn(`⚠️ No token found for request to ${url}`);
+  }
+
+  try {
+    const response = await fetchWithRetry(url, {
+      ...options,
+      headers,
+      credentials: 'include',
+      mode: 'cors',
+    });
+
+    if (response.status === 401 && !isRetry) {
+      console.log(`🔄 Token expired, attempting refresh...`);
+      const refreshed = await refreshAccessToken();
+      
+      if (refreshed) {
+        console.log(`✅ Token refreshed, retrying...`);
+        return fetchWithAuth(endpoint, options, true);
+      } else {
+        clearAuthData();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+        }
+        throw new Error('Your session has expired. Please log in again.');
+      }
+    }
+
+    if (response.status === 401 && isRetry) {
+      clearAuthData();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      }
+      throw new Error('Your session has expired. Please log in again.');
+    }
+
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+
+      try {
+        const errorResponse = response.clone();
+        const contentType = errorResponse.headers.get('content-type') || '';
+
+        if (contentType.includes('application/json')) {
+          const errorData = await errorResponse.json();
+          errorMessage = errorData.message || errorData.title || errorMessage;
+        } else {
+          const text = await errorResponse.text();
+          if (text && text.length > 0) {
+            errorMessage = text.length > 300 ? text.slice(0, 300) + "…" : text;
+          }
+        }
+      } catch (error) {
+        console.warn('Could not read error response body:', error);
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    return response;
+  } catch (error) {
+    console.error(`API Error for ${url}:`, error);
+    throw error;
+  }
+}
+
+// ============ INTERFACES ============
 
 export interface LoginRequest {
   Email_PhoneNo: string;
@@ -311,6 +482,23 @@ export interface GoogleAuthRequest {
   FirstName?: string;
   LastName?: string;
   ProfilePicture?: string;
+}
+
+export interface FirebaseAuthRequest {
+  idToken: string;
+  provider: string;
+  email: string;
+  name: string;
+  profilePicture: string;
+  firebaseUid: string;
+}
+
+export interface SocialLoginRequest {
+  idToken: string;
+  provider: 'google' | 'apple';
+  email?: string;
+  name?: string;
+  photoURL?: string;
 }
 
 export interface UpdateUserRequest {
@@ -553,9 +741,10 @@ export interface RegisterManagerRequest {
   CompanyType?: string[];
 }
 
-// Auth Functions
+// ============ AUTH FUNCTIONS ============
+
 export async function login(credentials: LoginRequest): Promise<LoginResponse> {
-  const response = await fetchWithAuth("auth-users/login", {
+  const response = await fetchPublic("auth-users/login", {
     method: "POST",
     body: JSON.stringify(credentials),
   });
@@ -565,11 +754,19 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
 }
 
 export async function register(userData: RegisterRequest): Promise<RegisterResponse> {
-  const response = await fetchWithAuth("auth-users", {
+  const response = await fetchPublic("auth-users", {
     method: "POST",
     body: JSON.stringify(userData),
   });
-  return response.json();
+  
+  // Check if response contains validation errors
+  const data = await response.json();
+  if (data.errors) {
+    const errorMessages = Object.values(data.errors).flat().join(" ");
+    throw new Error(errorMessages);
+  }
+  
+  return data;
 }
 
 export async function getProfile(): Promise<UserProfile> {
@@ -586,14 +783,145 @@ export async function logout(): Promise<void> {
 }
 
 export async function googleAuth(data: GoogleAuthRequest): Promise<LoginResponse> {
-  const response = await fetchWithAuth("auth-users/auth-login", {
-    method: "POST",
-    body: JSON.stringify(data),
+  console.log('🔄 googleAuth called with:', {
+    Email: data.Email,
+    ExternalId: data.ExternalId,
   });
-  const loginData = await response.json();
-  setAuthData(loginData);
-  return loginData;
+
+  try {
+    const response = await fetchPublic("auth-users/auth-login", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    
+    const loginData = await response.json();
+    console.log('✅ googleAuth response received');
+    
+    setAuthData(loginData);
+    console.log('✅ Auth data stored');
+    
+    return loginData;
+  } catch (error: any) {
+    console.error('❌ googleAuth error:', error);
+    throw error;
+  }
 }
+
+export async function firebaseAuth(data: FirebaseAuthRequest): Promise<LoginResponse> {
+  console.log('🔄 firebaseAuth called with:', {
+    provider: data.provider,
+    email: data.email,
+    firebaseUid: data.firebaseUid,
+  });
+
+  const endpoints = [
+    "auth-users/firebase-auth",
+    "auth-users/auth-login",
+    "auth-users/auth-login",
+    "auth-users/auth-login",
+    "auth-users/firebase",
+  ];
+  
+  let lastError: Error | null = null;
+  
+  for (const endpoint of endpoints) {
+    try {
+      console.log(`📡 Trying firebase auth with endpoint: ${endpoint}`);
+      const response = await fetchPublic(endpoint, {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+      
+      const loginData = await response.json();
+      setAuthData(loginData);
+      console.log(`✅ Success with endpoint: ${endpoint}`);
+      return loginData;
+    } catch (error) {
+      console.warn(`❌ Failed with endpoint ${endpoint}:`, error);
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (error instanceof Error) {
+        if (!error.message.includes('404') && !error.message.includes('405')) {
+          throw error;
+        }
+      }
+    }
+  }
+  
+  throw lastError || new Error('All Firebase authentication endpoints failed');
+}
+
+// ***** Unified social login function *****
+export async function socialLogin(data: SocialLoginRequest): Promise<LoginResponse> {
+  console.log('🔄 socialLogin called with:', {
+    provider: data.provider,
+    email: data.email,
+    hasToken: !!data.idToken,
+    tokenLength: data.idToken?.length || 0,
+  });
+
+  // Try multiple approaches
+  const attempts = [
+    {
+      endpoint: "auth-users/auth-login",
+      payload: {
+        idToken: data.idToken,
+        provider: data.provider,
+        email: data.email || '',
+        name: data.name || '',
+        photoURL: data.photoURL || '',
+      }
+    },
+    {
+      endpoint: "auth-users/firebase-auth",
+      payload: {
+        idToken: data.idToken,
+        provider: data.provider,
+        email: data.email || '',
+        name: data.name || '',
+        profilePicture: data.photoURL || '',
+        firebaseUid: '',
+      }
+    },
+    {
+      endpoint: "auth-users/auth-login",
+      payload: {
+        Email: data.email || '',
+        ExternalId: '',
+        FirstName: data.name?.split(" ")[0] || '',
+        LastName: data.name?.split(" ").slice(1).join(" ") || '',
+        ProfilePicture: data.photoURL || '',
+        idToken: data.idToken,
+      }
+    }
+  ];
+
+  let lastError: Error | null = null;
+
+  for (const attempt of attempts) {
+    try {
+      console.log(`📡 Trying social login with endpoint: ${attempt.endpoint}`);
+      const response = await fetchPublic(attempt.endpoint, {
+        method: "POST",
+        body: JSON.stringify(attempt.payload),
+      });
+
+      const loginData = await response.json();
+      console.log(`✅ Success with endpoint: ${attempt.endpoint}`);
+      
+      setAuthData(loginData);
+      console.log('✅ Auth data stored');
+      
+      return loginData;
+    } catch (error) {
+      console.warn(`❌ Failed with endpoint ${attempt.endpoint}:`, error);
+      lastError = error instanceof Error ? error : new Error(String(error));
+    }
+  }
+
+  throw lastError || new Error('All social login attempts failed');
+}
+
+// ============ PROFILE FUNCTIONS ============
 
 export async function updateProfile(data: UpdateUserRequest): Promise<UserProfile> {
   const response = await fetchWithAuth("auth-users/update-user", {
@@ -613,7 +941,8 @@ export async function updateDeviceToken(deviceToken: string): Promise<any> {
 
 export async function getDeliveryAddresses(): Promise<DeliveryAddress[]> {
   const response = await fetchWithAuth("auth-users/delivery-address", { method: "GET" });
-  return response.json();
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function addNewAddress(data: AddDeliveryAddressRequest): Promise<UserProfile> {
@@ -636,10 +965,20 @@ export async function deleteDeliveryAddress(id: string): Promise<void> {
   await fetchWithAuth(`auth-users/delete-delivery-address/${id}`, { method: "DELETE" });
 }
 
+// ============ VERIFICATION FUNCTIONS ============
+
 export async function verifyEmail(data: EmailVerificationRequest): Promise<LoginResponse> {
-  const response = await fetchWithAuth("auth-users/email-verification", {
+  console.log('🔄 Verifying email with:', { 
+    Token: data.Token, 
+    hasPassword: !!data.Password 
+  });
+  
+  const response = await fetchPublic("auth-users/email-verification", {
     method: "POST",
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      Token: data.Token,
+      Password: data.Password
+    }),
   });
   const loginData = await response.json();
   setAuthData(loginData);
@@ -647,15 +986,23 @@ export async function verifyEmail(data: EmailVerificationRequest): Promise<Login
 }
 
 export async function requestEmailVerificationToken(email: string): Promise<string> {
-  const response = await fetchWithAuth("auth-users/email-verification-request-token", {
+  console.log('🔄 Requesting email verification token for:', email);
+  
+  const response = await fetchPublic("auth-users/email-verification-request-token", {
     method: "POST",
     body: JSON.stringify({ Email: email }),
   });
   return response.json();
 }
 
+// Alias for resend verification code - same as requestEmailVerificationToken
+export async function resendVerificationCode(email: string): Promise<string> {
+  console.log('🔄 Resending verification code for:', email);
+  return requestEmailVerificationToken(email);
+}
+
 export async function forgotPassword(email: string): Promise<string> {
-  const response = await fetchWithAuth("auth-users/forgot-password-request-token", {
+  const response = await fetchPublic("auth-users/forgot-password-request-token", {
     method: "POST",
     body: JSON.stringify({ Email: email }),
   });
@@ -663,7 +1010,7 @@ export async function forgotPassword(email: string): Promise<string> {
 }
 
 export async function resetPassword(data: ResetPasswordRequest): Promise<string> {
-  const response = await fetchWithAuth("auth-users/reset-password", {
+  const response = await fetchPublic("auth-users/reset-password", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -671,7 +1018,7 @@ export async function resetPassword(data: ResetPasswordRequest): Promise<string>
 }
 
 export async function verifyPhoneNumber(otp: string): Promise<string> {
-  const response = await fetchWithAuth("auth-users/phone-no-verification", {
+  const response = await fetchPublic("auth-users/phone-no-verification", {
     method: "POST",
     body: JSON.stringify({ Otp: otp }),
   });
@@ -683,19 +1030,21 @@ export async function enableTwoFactor(id: string): Promise<string> {
   return response.json();
 }
 
-// Logistics Functions
+// ============ LOGISTICS FUNCTIONS ============
+
 export async function getCompanies(): Promise<Company[]> {
-  const response = await fetchWithAuth("Logistics", { method: "GET" });
-  return response.json();
+  const response = await fetchWithAuth("logistics-controller", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function getCompanyById(id: string): Promise<Company> {
-  const response = await fetchWithAuth(`Logistics/${id}`, { method: "GET" });
+  const response = await fetchWithAuth(`logistics-controller/${id}`, { method: "GET" });
   return response.json();
 }
 
 export async function createOrder(companyId: string, orderData: AddOrder): Promise<any> {
-  const response = await fetchWithAuth("Logistics/package-orders", {
+  const response = await fetchWithAuth("logistics-controller/package-orders", {
     method: "POST",
     headers: { companyId },
     body: JSON.stringify(orderData),
@@ -704,26 +1053,29 @@ export async function createOrder(companyId: string, orderData: AddOrder): Promi
 }
 
 export async function getCustomerOrders(): Promise<any[]> {
-  const response = await fetchWithAuth("Logistics/package-orders", { method: "GET" });
-  return response.json();
+  const response = await fetchWithAuth("logistics-controller/package-orders", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function getOrderById(id: string): Promise<OrderTrackingResult> {
-  const response = await fetchWithAuth(`Logistics/package-orders/${id}`, { method: "GET" });
+  const response = await fetchWithAuth(`logistics-controller/package-orders/${id}`, { method: "GET" });
   return response.json();
 }
 
 export async function trackOrder(trackingNumber: string): Promise<OrderTrackingResult> {
-  const response = await fetchWithAuth(`Logistics/track-order?trackingNum=${encodeURIComponent(trackingNumber)}`, { 
+  const response = await fetchWithAuth(`logistics-controller/track-order?trackingNum=${encodeURIComponent(trackingNumber)}`, { 
     method: "GET" 
   });
   return response.json();
 }
 
-// Bookings Functions
+// ============ BOOKINGS FUNCTIONS ============
+
 export async function getAccommodations(): Promise<Accommodation[]> {
   const response = await fetchWithAuth("Bookings/accomodation", { method: "GET" });
-  return response.json();
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function getAccommodationById(id: string): Promise<Accommodation> {
@@ -733,11 +1085,12 @@ export async function getAccommodationById(id: string): Promise<Accommodation> {
 
 export async function getRooms(accommodationId: string): Promise<any[]> {
   const response = await fetchWithAuth(`Bookings/accomodation-reservations?id=${accommodationId}`, { method: "GET" });
-  return response.json();
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function bookAccommodation(reservationId: string, bookingData: AddCustomerBookedReservation): Promise<any> {
-  const response = await fetchWithAuth("Bookings/accomodation-reservations-customer", {
+  const response = await fetchWithAuth("bookings/accomodation-reservations-customer", {
     method: "POST",
     headers: { reservationId },
     body: JSON.stringify(bookingData),
@@ -745,37 +1098,178 @@ export async function bookAccommodation(reservationId: string, bookingData: AddC
   return response.json();
 }
 
+// Enhanced booking function with CORS handling and retry logic
+export async function bookAccommodationWithRetry(
+  reservationId: string,
+  bookingData: AddCustomerBookedReservation,
+  retries: number = 3
+): Promise<any> {
+  let lastError: Error | null = null;
+  
+  // Define multiple endpoints to try
+  const endpoints = [
+    "bookings/accomodation-reservations-customer",
+    "Bookings/accomodation-reservations-customer",
+  ];
+  
+  // Try each endpoint with different methods
+  for (const endpoint of endpoints) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        console.log(`🔄 Booking attempt ${attempt} with endpoint: ${endpoint}`);
+        
+        const token = getToken();
+        if (!token) {
+          throw new Error('No authentication token found. Please log in again.');
+        }
+        
+        // Prepare headers
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Authorization": `Bearer ${token}`,
+          "reservationId": reservationId,
+        };
+        
+        // Make the request
+        const response = await fetchWithAuth(endpoint, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(bookingData),
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          console.log(`✅ Booking successful with endpoint: ${endpoint}`);
+          return result;
+        }
+        
+        // Handle specific status codes
+        if (response.status === 500) {
+          console.warn(`⚠️ Server error (500) with ${endpoint}, trying next...`);
+          continue;
+        }
+        
+        if (response.status === 401) {
+          // Try to refresh token
+          console.log('🔄 Token expired, attempting refresh...');
+          const refreshed = await refreshAccessToken();
+          if (refreshed) {
+            console.log('✅ Token refreshed, retrying...');
+            // Retry with new token
+            const newToken = getToken();
+            const retryHeaders = {
+              ...headers,
+              "Authorization": `Bearer ${newToken}`,
+            };
+            
+            const retryResponse = await fetchWithAuth(endpoint, {
+              method: "POST",
+              headers: retryHeaders,
+              body: JSON.stringify(bookingData),
+            });
+            
+            if (retryResponse.ok) {
+              const result = await retryResponse.json();
+              console.log(`✅ Booking successful after token refresh`);
+              return result;
+            }
+          } else {
+            throw new Error('Your session has expired. Please log in again.');
+          }
+        }
+        
+        // If we get here, try without the reservationId header (some APIs expect it differently)
+        if (attempt === retries) {
+          console.warn(`⚠️ Trying without reservationId header for ${endpoint}`);
+          const altHeaders = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": `Bearer ${token}`,
+          };
+          
+          // Try with reservationId in body instead
+          const altData = {
+            ...bookingData,
+            reservationId: reservationId,
+          };
+          
+          const altResponse = await fetchWithAuth(endpoint, {
+            method: "POST",
+            headers: altHeaders,
+            body: JSON.stringify(altData),
+          });
+          
+          if (altResponse.ok) {
+            const result = await altResponse.json();
+            console.log(`✅ Booking successful with reservationId in body`);
+            return result;
+          }
+        }
+        
+        // Wait before retry
+        if (attempt < retries) {
+          const waitTime = 1000 * attempt;
+          console.log(`⏳ Waiting ${waitTime}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+        }
+        
+      } catch (error) {
+        console.warn(`❌ Error with ${endpoint} attempt ${attempt}:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+        
+        // If it's a network/CORS error, wait longer before retry
+        if (error instanceof Error && 
+            (error.message.includes('NetworkError') || 
+             error.message.includes('CORS') ||
+             error.message.includes('Failed to fetch'))) {
+          console.log(`⏳ Network/CORS error, waiting ${attempt * 2}s before retry...`);
+          await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+        } else if (error instanceof Error && error.message.includes('401')) {
+          // Don't retry on auth errors
+          throw error;
+        }
+      }
+    }
+  }
+  
+  throw lastError || new Error('All booking attempts failed. Please try again later.');
+}
+
 export async function getCustomerBookings(): Promise<any[]> {
-  const response = await fetchWithAuth("Bookings/accomodation-reservations-customer", { method: "GET" });
-  return response.json();
+  const response = await fetchWithAuth("bookings/accomodation-reservations-customer", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function getCustomerBookingById(id: string): Promise<BookingTrackingResult> {
-  const response = await fetchWithAuth(`Bookings/accomodation-reservations-customer/${id}`, { method: "GET" });
+  const response = await fetchWithAuth(`bookings/accomodation-reservations-customer/${id}`, { method: "GET" });
   return response.json();
 }
 
 export async function cancelCustomerBooking(id: string): Promise<void> {
-  await fetchWithAuth(`Bookings/accomodation-reservations-customer/${id}`, { method: "DELETE" });
+  await fetchWithAuth(`bookings/accomodation-reservations-customer/${id}`, { method: "DELETE" });
 }
 
 export async function getAirlines(): Promise<Airline[]> {
-  const response = await fetchWithAuth("Bookings/airline", { method: "GET" });
-  return response.json();
+  const response = await fetchWithAuth("bookings/airline", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function getAirlineById(id: string): Promise<Airline> {
-  const response = await fetchWithAuth(`Bookings/airline/${id}`, { method: "GET" });
+  const response = await fetchWithAuth(`bookings/airline/${id}`, { method: "GET" });
   return response.json();
 }
 
 export async function getFlightTickets(): Promise<FlightTicket[]> {
-  const response = await fetchWithAuth("Bookings/airline-flight-ticket", { method: "GET" });
-  return response.json();
+  const response = await fetchWithAuth("bookings/airline-flight-ticket", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function trackBooking(bookingRef: string): Promise<BookingTrackingResult> {
-  const response = await fetchWithAuth(`Bookings/track-booking?ticketRef=${encodeURIComponent(bookingRef)}`, { 
+  const response = await fetchWithAuth(`bookings/track-booking?ticketRef=${encodeURIComponent(bookingRef)}`, { 
     method: "GET" 
   });
   return response.json();
@@ -797,7 +1291,8 @@ export async function trackParcelOrBooking(
   }
 }
 
-// Payments Functions
+// ============ PAYMENTS FUNCTIONS ============
+
 export async function initializePaystackPayment(orderId: string, amount: number, email: string): Promise<any> {
   const response = await fetchWithAuth("Wallet/initialize", {
     method: "POST",
@@ -819,10 +1314,12 @@ export async function initializeFlutterwavePayment(amount: number, email: string
   return response.json();
 }
 
-// Notifications Functions
+// ============ NOTIFICATIONS FUNCTIONS ============
+
 export async function getNotifications(): Promise<Notification[]> {
   const response = await fetchWithAuth("Notifications", { method: "GET" });
-  return response.json();
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function getNotificationById(id: string): Promise<Notification> {
@@ -838,7 +1335,8 @@ export async function markNotificationRead(id: string, data: UpdateNotificationR
   return response.json();
 }
 
-// Feedback Functions
+// ============ FEEDBACK FUNCTIONS ============
+
 export async function submitFeedback(data: AddFeedbackRequest): Promise<any> {
   const response = await fetchWithAuth("Info/feedback", {
     method: "POST",
@@ -847,9 +1345,10 @@ export async function submitFeedback(data: AddFeedbackRequest): Promise<any> {
   return response.json();
 }
 
-// Admin Auth Functions
+// ============ ADMIN FUNCTIONS ============
+
 export async function adminLogin(credentials: LoginRequest): Promise<LoginResponse> {
-  const response = await fetchWithAuth("Admin/login", {
+  const response = await fetchPublic("admin-controller/login", {
     method: "POST",
     body: JSON.stringify(credentials),
   });
@@ -859,7 +1358,7 @@ export async function adminLogin(credentials: LoginRequest): Promise<LoginRespon
 }
 
 export async function loginManager(credentials: LoginRequest): Promise<LoginResponse> {
-  const response = await fetchWithAuth("Admin/login-manager", {
+  const response = await fetchPublic("admin-controller/login", {
     method: "POST",
     body: JSON.stringify(credentials),
   });
@@ -869,31 +1368,69 @@ export async function loginManager(credentials: LoginRequest): Promise<LoginResp
 }
 
 export async function registerManager(data: RegisterManagerRequest): Promise<any> {
-  const response = await fetchWithAuth("Admin/add-manager", {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
-  return response.json();
+  if (!isAuthenticated()) {
+    throw new Error('You must be logged in as an admin to register a new manager. Please log in first.');
+  }
+  
+  const endpoints = [
+    "admin-controller/register",
+    "admin-controller/add-manager",
+    "Admin/add-manager",
+    "auth-users/add-manager",
+    "admin/register"
+  ];
+  
+  let lastError: Error | null = null;
+  
+  for (const endpoint of endpoints) {
+    try {
+      console.log(`Trying to register manager with endpoint: ${endpoint}`);
+      const response = await fetchWithAuth(endpoint, {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+      console.log(`Successfully registered manager with endpoint: ${endpoint}`);
+      return result;
+    } catch (error) {
+      console.warn(`Failed with endpoint ${endpoint}:`, error);
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (error instanceof Error) {
+        if (!error.message.includes('404') && !error.message.includes('401')) {
+          throw error;
+        }
+      }
+    }
+  }
+  
+  console.error('All registration endpoints failed');
+  if (lastError) {
+    throw lastError;
+  }
+  throw new Error('Failed to register manager. Please contact support or use a different method to create an admin account.');
 }
 
 export async function adminGetProfile(): Promise<any> {
-  const response = await fetchWithAuth("Admin/profile", { method: "GET" });
+  const response = await fetchWithAuth("admin-controller/profile", { method: "GET" });
   return response.json();
 }
 
-// Admin Data Functions
+// ============ ADMIN DATA FUNCTIONS ============
+
 export async function getAllUsers(): Promise<any[]> {
   const response = await fetchWithAuth("auth-users", { method: "GET" });
-  return response.json();
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function getAllOrders(): Promise<any[]> {
-  const response = await fetchWithAuth("Logistics/package-orders", { method: "GET" });
-  return response.json();
+  const response = await fetchWithAuth("logistics-controller/package-orders", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function updateOrderStatus(id: string, data: Record<string, unknown>): Promise<any> {
-  const response = await fetchWithAuth(`Logistics/package-orders/${id}`, {
+  const response = await fetchWithAuth(`logistics-controller/package-orders/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -902,7 +1439,8 @@ export async function updateOrderStatus(id: string, data: Record<string, unknown
 
 export async function getAllReservations(): Promise<any[]> {
   const response = await fetchWithAuth("Bookings/accomodation-reservations", { method: "GET" });
-  return response.json();
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function updateReservation(id: string, data: Record<string, unknown>): Promise<any> {
@@ -914,12 +1452,13 @@ export async function updateReservation(id: string, data: Record<string, unknown
 }
 
 export async function getAllCustomerReservations(): Promise<any[]> {
-  const response = await fetchWithAuth("Bookings/accomodation-reservations-customer", { method: "GET" });
-  return response.json();
+  const response = await fetchWithAuth("bookings/accomodation-reservations-customer", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function updateCustomerReservation(id: string, data: Record<string, unknown>): Promise<any> {
-  const response = await fetchWithAuth(`Bookings/accomodation-reservations-customer/${id}`, {
+  const response = await fetchWithAuth(`bookings/accomodation-reservations-customer/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -927,13 +1466,17 @@ export async function updateCustomerReservation(id: string, data: Record<string,
 }
 
 export async function getAllStaff(): Promise<any[]> {
-  const response = await fetchWithAuth("Admin/staff-users", { method: "GET" });
-  return response.json();
+  const response = await fetchWithAuth("admin-controller/staff-users", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
 
 export async function getAllAdverts(): Promise<any[]> {
-  const response = await fetchWithAuth("Admin/advert", { method: "GET" });
-  return response.json();
+  const response = await fetchWithAuth("admin-controller/advert", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
 }
+
+// ============ EXPORT ALL FUNCTIONS ============
 
 export { API_URL };
