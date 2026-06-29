@@ -361,30 +361,6 @@
         "x-next-revalidate-tag-token"
       ]
     },
-    "/customer-portal/profile": {
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "Next-Action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/customer-portal/profile",
-      "dataRoute": "/customer-portal/profile.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
-    },
     "/customer-portal/register": {
       "experimentalBypassFor": [
         {
@@ -400,6 +376,30 @@
       "initialRevalidateSeconds": false,
       "srcRoute": "/customer-portal/register",
       "dataRoute": "/customer-portal/register.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
+    "/customer-portal/profile": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "Next-Action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/customer-portal/profile",
+      "dataRoute": "/customer-portal/profile.rsc",
       "allowHeader": [
         "host",
         "x-matched-path",
@@ -437,8 +437,8 @@
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "261f396eec2c4d69e541ce76905c840e",
-    "previewModeSigningKey": "bb031f1d87f78726ee4562adcaa2e9dbf59db60477001b1878db165159cc338c",
-    "previewModeEncryptionKey": "1ae6701c45a57659cbb4662001d62e8754e998114d6d3312868d03f91ea20516"
+    "previewModeId": "4f74bf4acb715901054e0b88fc2f37a4",
+    "previewModeSigningKey": "3545a5c1edb30aef1e9cb505edcfa2cf5c7297551e9430991d222922e32b704b",
+    "previewModeEncryptionKey": "4f919e964beb936829583d61520a35f318e2a23f6c3903aa503d54dff56f5172"
   }
 }

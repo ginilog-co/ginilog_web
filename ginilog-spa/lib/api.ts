@@ -1089,151 +1089,60 @@ export async function getRooms(accommodationId: string): Promise<any[]> {
   return extractArrayFromResponse(data);
 }
 
+// ============ UPDATED BOOK ACCOMMODATION WITH PROXY ============
 export async function bookAccommodation(reservationId: string, bookingData: AddCustomerBookedReservation): Promise<any> {
-  const response = await fetchWithAuth("bookings/accomodation-reservations-customer", {
-    method: "POST",
-    headers: { reservationId },
+  console.log('📝 ====== BOOKING REQUEST ======');
+  console.log('Reservation ID:', reservationId);
+  console.log('Booking Data:', JSON.stringify(bookingData, null, 2));
+  
+  // Get the auth token
+  const token = getToken();
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'reservationId': reservationId,
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  console.log('📤 Using proxy with headers:', Object.keys(headers));
+
+  // Use the Next.js API route proxy
+  const response = await fetch('/api/proxy/bookings', {
+    method: 'POST',
+    headers,
     body: JSON.stringify(bookingData),
   });
-  return response.json();
-}
 
-// Enhanced booking function with CORS handling and retry logic
-export async function bookAccommodationWithRetry(
-  reservationId: string,
-  bookingData: AddCustomerBookedReservation,
-  retries: number = 3
-): Promise<any> {
-  let lastError: Error | null = null;
-  
-  // Define multiple endpoints to try
-  const endpoints = [
-    "bookings/accomodation-reservations-customer",
-    "Bookings/accomodation-reservations-customer",
-  ];
-  
-  // Try each endpoint with different methods
-  for (const endpoint of endpoints) {
-    for (let attempt = 1; attempt <= retries; attempt++) {
-      try {
-        console.log(`🔄 Booking attempt ${attempt} with endpoint: ${endpoint}`);
-        
-        const token = getToken();
-        if (!token) {
-          throw new Error('No authentication token found. Please log in again.');
-        }
-        
-        // Prepare headers
-        const headers: Record<string, string> = {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "Authorization": `Bearer ${token}`,
-          "reservationId": reservationId,
-        };
-        
-        // Make the request
-        const response = await fetchWithAuth(endpoint, {
-          method: "POST",
-          headers,
-          body: JSON.stringify(bookingData),
-        });
-        
-        if (response.ok) {
-          const result = await response.json();
-          console.log(`✅ Booking successful with endpoint: ${endpoint}`);
-          return result;
-        }
-        
-        // Handle specific status codes
-        if (response.status === 500) {
-          console.warn(`⚠️ Server error (500) with ${endpoint}, trying next...`);
-          continue;
-        }
-        
-        if (response.status === 401) {
-          // Try to refresh token
-          console.log('🔄 Token expired, attempting refresh...');
-          const refreshed = await refreshAccessToken();
-          if (refreshed) {
-            console.log('✅ Token refreshed, retrying...');
-            // Retry with new token
-            const newToken = getToken();
-            const retryHeaders = {
-              ...headers,
-              "Authorization": `Bearer ${newToken}`,
-            };
-            
-            const retryResponse = await fetchWithAuth(endpoint, {
-              method: "POST",
-              headers: retryHeaders,
-              body: JSON.stringify(bookingData),
-            });
-            
-            if (retryResponse.ok) {
-              const result = await retryResponse.json();
-              console.log(`✅ Booking successful after token refresh`);
-              return result;
-            }
-          } else {
-            throw new Error('Your session has expired. Please log in again.');
-          }
-        }
-        
-        // If we get here, try without the reservationId header (some APIs expect it differently)
-        if (attempt === retries) {
-          console.warn(`⚠️ Trying without reservationId header for ${endpoint}`);
-          const altHeaders = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Authorization": `Bearer ${token}`,
-          };
-          
-          // Try with reservationId in body instead
-          const altData = {
-            ...bookingData,
-            reservationId: reservationId,
-          };
-          
-          const altResponse = await fetchWithAuth(endpoint, {
-            method: "POST",
-            headers: altHeaders,
-            body: JSON.stringify(altData),
-          });
-          
-          if (altResponse.ok) {
-            const result = await altResponse.json();
-            console.log(`✅ Booking successful with reservationId in body`);
-            return result;
-          }
-        }
-        
-        // Wait before retry
-        if (attempt < retries) {
-          const waitTime = 1000 * attempt;
-          console.log(`⏳ Waiting ${waitTime}ms before retry...`);
-          await new Promise(resolve => setTimeout(resolve, waitTime));
-        }
-        
-      } catch (error) {
-        console.warn(`❌ Error with ${endpoint} attempt ${attempt}:`, error);
-        lastError = error instanceof Error ? error : new Error(String(error));
-        
-        // If it's a network/CORS error, wait longer before retry
-        if (error instanceof Error && 
-            (error.message.includes('NetworkError') || 
-             error.message.includes('CORS') ||
-             error.message.includes('Failed to fetch'))) {
-          console.log(`⏳ Network/CORS error, waiting ${attempt * 2}s before retry...`);
-          await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
-        } else if (error instanceof Error && error.message.includes('401')) {
-          // Don't retry on auth errors
-          throw error;
-        }
+  const responseText = await response.text();
+  console.log('📥 Response status:', response.status);
+  console.log('📥 Response body:', responseText);
+
+  if (!response.ok) {
+    let errorMessage = `Booking failed with status ${response.status}`;
+    try {
+      const errorJson = JSON.parse(responseText);
+      if (errorJson.message) errorMessage = errorJson.message;
+      if (errorJson.errors) {
+        const errorDetails = Object.values(errorJson.errors).flat().join(' ');
+        errorMessage = errorDetails || errorMessage;
+      }
+    } catch {
+      if (responseText && responseText.length > 0 && responseText.length < 500) {
+        errorMessage = responseText;
       }
     }
+    throw new Error(errorMessage);
   }
-  
-  throw lastError || new Error('All booking attempts failed. Please try again later.');
+
+  try {
+    return JSON.parse(responseText);
+  } catch {
+    return responseText;
+  }
 }
 
 export async function getCustomerBookings(): Promise<any[]> {
