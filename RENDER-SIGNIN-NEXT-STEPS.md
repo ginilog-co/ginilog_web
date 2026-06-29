@@ -63,7 +63,7 @@ Set any that are missing (values are secrets — do not commit them):
 1. In Vercel project **Settings → Environment Variables**, set:
    ```
    NEXT_PUBLIC_API_URL=https://api-data-connection.ginilog.org
-   NEXT_PUBLIC_WS_URL=wss://ginilog-web.onrender.com/ws
+   NEXT_PUBLIC_WS_URL=wss://api-data-connection.ginilog.org/ws
    ```
 2. Redeploy (production build must pick up these vars).
 3. Confirm the site URL is allowed by CORS (any `*.vercel.app` origin is allowed after API redeploy).
