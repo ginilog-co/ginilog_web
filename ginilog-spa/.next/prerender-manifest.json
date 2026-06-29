@@ -193,30 +193,6 @@
         "x-next-revalidate-tag-token"
       ]
     },
-    "/customer-portal/accommodations": {
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "Next-Action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/customer-portal/accommodations",
-      "dataRoute": "/customer-portal/accommodations.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
-    },
     "/customer-portal/dashboard": {
       "experimentalBypassFor": [
         {
@@ -232,6 +208,30 @@
       "initialRevalidateSeconds": false,
       "srcRoute": "/customer-portal/dashboard",
       "dataRoute": "/customer-portal/dashboard.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
+    "/customer-portal/accommodations": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "Next-Action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/customer-portal/accommodations",
+      "dataRoute": "/customer-portal/accommodations.rsc",
       "allowHeader": [
         "host",
         "x-matched-path",
@@ -437,8 +437,8 @@
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "44399427f31409b122588bd08291aa1d",
-    "previewModeSigningKey": "29635fcb79e36e9e5d692320bfff25e7ffe50ad781dd338dd1ad2a570da3857a",
-    "previewModeEncryptionKey": "c7ea5bfa184542953afc0046e900e3db04d81f08ab199450fef06e42c089c13f"
+    "previewModeId": "6f0bd691240133e960faff35e74357b5",
+    "previewModeSigningKey": "a67d16827cf1c5a5e7d485abf072151484ce4b8af6c288d470c55865d41cd017",
+    "previewModeEncryptionKey": "46a8a250edcb77cccd9f0689af7e6d0048777e7269ec8694396b7661a342956a"
   }
 }
