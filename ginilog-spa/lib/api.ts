@@ -1111,7 +1111,7 @@ export async function bookAccommodation(reservationId: string, bookingData: AddC
   console.log('📤 Using proxy with headers:', Object.keys(headers));
 
   // Use the Next.js API route proxy
-  const response = await fetch('/api/proxy/bookings', {
+  const response = await fetch('/bookings/accomodation', {
     method: 'POST',
     headers,
     body: JSON.stringify(bookingData),
