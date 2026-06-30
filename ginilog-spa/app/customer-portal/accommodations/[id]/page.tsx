@@ -58,7 +58,7 @@ export default function AccommodationDetailsPage() {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(4);
+  const [itemsPerPage] = useState(10);
   const [totalRooms, setTotalRooms] = useState(0);
 
   const [formData, setFormData] = useState({
