@@ -40,8 +40,19 @@ import {
   Star,
   Phone,
   ChevronLeft,
-  ChevronRight as ChevronRightIcon
+  ChevronRight as ChevronRightIcon,
+  CreditCard,
+  Wallet
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export default function AccommodationDetailsPage() {
   const router = useRouter();
@@ -55,6 +66,9 @@ export default function AccommodationDetailsPage() {
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("");
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -119,22 +133,59 @@ export default function AccommodationDetailsPage() {
     }
   };
 
-  const handleBook = async (e: React.FormEvent) => {
+  // Calculate total price
+  const calculateTotalPrice = () => {
+    if (!formData.startDate || !formData.endDate) return 0;
+    const start = new Date(formData.startDate);
+    const end = new Date(formData.endDate);
+    const nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const selectedRoom = rooms.find(r => r.id === formData.roomId);
+    return nights * (selectedRoom?.roomPrice || 0);
+  };
+
+  // Handle confirm booking - show payment modal
+  const handleConfirmBooking = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
     
-    setIsBooking(true);
+    // Validate form
+    if (!formData.customerPhone || formData.customerPhone.trim() === "") {
+      setError("Phone number is required");
+      return;
+    }
+    if (!formData.startDate) {
+      setError("Check-in date is required");
+      return;
+    }
+    if (!formData.endDate) {
+      setError("Check-out date is required");
+      return;
+    }
+    if (!formData.roomId) {
+      setError("Please select a room");
+      return;
+    }
+
+    // Show payment modal
+    setShowPaymentModal(true);
+    setError(null);
+  };
+
+  // Handle payment method selection and proceed
+  const handleProceedToPayment = async () => {
+    if (!selectedPaymentMethod) {
+      setError("Please select a payment method");
+      return;
+    }
+
+    setIsProcessingPayment(true);
     setError(null);
 
     try {
-      if (!formData.customerPhone || formData.customerPhone.trim() === "") {
-        throw new Error("Phone number is required");
-      }
-
+      // Proceed with booking
       const bookingData: AddCustomerBookedReservation = {
-        userId: user.id,
-        customerName: `${user.firstName} ${user.lastName}`,
-        customerEmail: user.email,
+        userId: user?.id || "",
+        customerName: `${user?.firstName || ""} ${user?.lastName || ""}`,
+        customerEmail: user?.email || "",
         customerPhoneNumber: formData.customerPhone.trim(),
         numberOfGuests: formData.guests,
         reservationStartDate: formData.startDate,
@@ -144,12 +195,17 @@ export default function AccommodationDetailsPage() {
       };
 
       await bookAccommodation(formData.roomId, bookingData);
+      
+      // Close modal
+      setShowPaymentModal(false);
       setBookingSuccess(true);
+      
+      // Redirect to orders page
       setTimeout(() => router.push("/customer-portal/orders"), 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Booking failed. Please try again.");
     } finally {
-      setIsBooking(false);
+      setIsProcessingPayment(false);
     }
   };
 
@@ -496,7 +552,7 @@ export default function AccommodationDetailsPage() {
                     <CardTitle>Book Your Stay</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <form onSubmit={handleBook} className="space-y-4">
+                    <form onSubmit={handleConfirmBooking} className="space-y-4">
                       {error && (
                         <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm flex items-center gap-2">
                           <AlertCircle className="h-4 w-4" />
@@ -520,7 +576,7 @@ export default function AccommodationDetailsPage() {
                       </div>
                       
                       <div className="space-y-2">
-                        <Label>Check-in Date</Label>
+                        <Label>Check-in Date <span className="text-red-500">*</span></Label>
                         <Input 
                           type="date" 
                           required 
@@ -530,7 +586,7 @@ export default function AccommodationDetailsPage() {
                       </div>
                       
                       <div className="space-y-2">
-                        <Label>Check-out Date</Label>
+                        <Label>Check-out Date <span className="text-red-500">*</span></Label>
                         <Input 
                           type="date" 
                           required 
@@ -540,7 +596,7 @@ export default function AccommodationDetailsPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Number of Guests</Label>
+                        <Label>Number of Guests <span className="text-red-500">*</span></Label>
                         <Input 
                           type="number" 
                           min="1" 
@@ -560,10 +616,21 @@ export default function AccommodationDetailsPage() {
                         />
                       </div>
 
+                      {/* Show total price if dates are selected */}
+                      {formData.startDate && formData.endDate && formData.roomId && (
+                        <div className="p-3 bg-primary/5 rounded-md border border-primary/20">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-600">Total Amount:</span>
+                            <span className="text-xl font-bold text-primary">₦{calculateTotalPrice().toLocaleString()}</span>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">* Payment will be processed after confirming</p>
+                        </div>
+                      )}
+
                       <Button 
                         type="submit" 
                         className="w-full h-12" 
-                        disabled={isBooking || !formData.roomId}
+                        disabled={!formData.roomId || isBooking}
                       >
                         {isBooking ? (
                           <>
@@ -586,6 +653,132 @@ export default function AccommodationDetailsPage() {
           )}
         </div>
       </main>
+
+      {/* Payment Method Modal */}
+      <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-center">Select Payment Method</DialogTitle>
+            <DialogDescription className="text-center">
+              Choose your preferred payment method to complete the booking
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-6">
+            {/* Order Summary */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <h4 className="font-semibold text-gray-700 mb-2">Booking Summary</h4>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Room:</span>
+                  <span className="font-medium">{rooms.find(r => r.id === formData.roomId)?.roomType || "Selected Room"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Check-in:</span>
+                  <span className="font-medium">{formData.startDate}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Check-out:</span>
+                  <span className="font-medium">{formData.endDate}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Guests:</span>
+                  <span className="font-medium">{formData.guests}</span>
+                </div>
+                <div className="flex justify-between pt-2 border-t border-gray-200">
+                  <span className="font-semibold text-gray-700">Total:</span>
+                  <span className="font-bold text-primary">₦{calculateTotalPrice().toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+
+            <RadioGroup 
+              value={selectedPaymentMethod} 
+              onValueChange={setSelectedPaymentMethod}
+              className="space-y-3"
+            >
+              <div 
+                className={`flex items-center space-x-3 border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                  selectedPaymentMethod === "flutterwave" 
+                    ? "border-primary bg-primary/5" 
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+                onClick={() => setSelectedPaymentMethod("flutterwave")}
+              >
+                <RadioGroupItem value="flutterwave" id="flutterwave" />
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                    <CreditCard className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <Label htmlFor="flutterwave" className="font-semibold cursor-pointer">
+                      Flutterwave
+                    </Label>
+                    <p className="text-xs text-gray-500">Pay with card, bank transfer, or USSD</p>
+                  </div>
+                </div>
+              </div>
+
+              <div 
+                className={`flex items-center space-x-3 border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                  selectedPaymentMethod === "paystack" 
+                    ? "border-primary bg-primary/5" 
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+                onClick={() => setSelectedPaymentMethod("paystack")}
+              >
+                <RadioGroupItem value="paystack" id="paystack" />
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="h-10 w-10 rounded-lg bg-green-50 flex items-center justify-center">
+                    <Wallet className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <Label htmlFor="paystack" className="font-semibold cursor-pointer">
+                      Paystack
+                    </Label>
+                    <p className="text-xs text-gray-500">Secure payment with cards, bank accounts, or QR</p>
+                  </div>
+                </div>
+              </div>
+            </RadioGroup>
+
+            {error && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                {error}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex flex-col sm:flex-row gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowPaymentModal(false);
+                setSelectedPaymentMethod("");
+                setError(null);
+              }}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleProceedToPayment}
+              disabled={!selectedPaymentMethod || isProcessingPayment}
+              className="w-full sm:w-auto"
+            >
+              {isProcessingPayment ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                "Proceed to Pay"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

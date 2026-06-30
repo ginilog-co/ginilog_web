@@ -1,1 +1,0 @@
-self.__NEXT_FONT_MANIFEST='{"pages":{},"app":{"/workspaces/ginilog_web/ginilog-spa/app/layout":["static/media/e4af272ccee01ff0-s.p.woff2"],"/workspaces/ginilog_web/ginilog-spa/app/admin-dashboard/layout":["static/media/e4af272ccee01ff0-s.p.woff2"]},"appUsingSizeAdjust":true,"pagesUsingSizeAdjust":false}';
