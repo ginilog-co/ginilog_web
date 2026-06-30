@@ -38,7 +38,9 @@ import {
   Sparkles,
   LogOut as LogOutIcon,
   Star,
-  Phone
+  Phone,
+  ChevronLeft,
+  ChevronRight as ChevronRightIcon
 } from "lucide-react";
 
 export default function AccommodationDetailsPage() {
@@ -54,12 +56,17 @@ export default function AccommodationDetailsPage() {
   const [error, setError] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(4);
+  const [totalRooms, setTotalRooms] = useState(0);
+
   const [formData, setFormData] = useState({
     roomId: "",
     startDate: "",
     endDate: "",
     guests: 1,
-    customerPhone: "", // Added this
+    customerPhone: "",
     comment: ""
   });
 
@@ -77,6 +84,7 @@ export default function AccommodationDetailsPage() {
         ]);
         setUser(profile);
         setRooms(roomList || []);
+        setTotalRooms(roomList?.length || 0);
       } catch (err) {
         console.error("Failed to fetch details:", err);
         setError("Failed to load accommodation details.");
@@ -88,6 +96,29 @@ export default function AccommodationDetailsPage() {
     if (accommodationId) fetchData();
   }, [accommodationId, router]);
 
+  // Get current rooms for pagination
+  const indexOfLastRoom = currentPage * itemsPerPage;
+  const indexOfFirstRoom = indexOfLastRoom - itemsPerPage;
+  const currentRooms = rooms.slice(indexOfFirstRoom, indexOfLastRoom);
+  const totalPages = Math.ceil(rooms.length / itemsPerPage);
+
+  // Change page
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+
+  // Go to next page
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Go to previous page
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
   const handleBook = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -96,7 +127,6 @@ export default function AccommodationDetailsPage() {
     setError(null);
 
     try {
-      // Validate phone number
       if (!formData.customerPhone || formData.customerPhone.trim() === "") {
         throw new Error("Phone number is required");
       }
@@ -105,7 +135,7 @@ export default function AccommodationDetailsPage() {
         userId: user.id,
         customerName: `${user.firstName} ${user.lastName}`,
         customerEmail: user.email,
-        customerPhoneNumber: formData.customerPhone.trim(), // Use the form value
+        customerPhoneNumber: formData.customerPhone.trim(),
         numberOfGuests: formData.guests,
         reservationStartDate: formData.startDate,
         reservationEndDate: formData.endDate,
@@ -134,7 +164,6 @@ export default function AccommodationDetailsPage() {
     return `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase();
   };
 
-  // Mobile menu items
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/customer-portal/dashboard" },
     { icon: ShoppingBag, label: "My Orders & Bookings", href: "/customer-portal/orders" },
@@ -160,7 +189,6 @@ export default function AccommodationDetailsPage() {
               GINILOG
             </Link>
 
-            {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
               <Link href="/customer-portal/dashboard" className="text-gray-600 hover:text-gray-900 transition-colors">
                 Dashboard
@@ -173,7 +201,6 @@ export default function AccommodationDetailsPage() {
               </Link>
             </nav>
 
-            {/* Desktop Right Side */}
             <div className="hidden md:flex items-center gap-4">
               <Link href="/customer-portal/accommodations">
                 <Button variant="ghost" size="sm" className="text-gray-600">
@@ -213,7 +240,6 @@ export default function AccommodationDetailsPage() {
               </Button>
             </div>
 
-            {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none"
@@ -228,7 +254,6 @@ export default function AccommodationDetailsPage() {
           </div>
         </div>
 
-        {/* Mobile Menu Overlay */}
         {isMobileMenuOpen && (
           <div className="md:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setIsMobileMenuOpen(false)}>
             <div className="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -349,7 +374,9 @@ export default function AccommodationDetailsPage() {
                     </Button>
                   </Link>
                 </div>
-                {rooms.map((room) => (
+                
+                {/* Rooms List */}
+                {currentRooms.map((room) => (
                   <Card 
                     key={room.id} 
                     className={`cursor-pointer transition-all border-2 ${formData.roomId === room.id ? 'border-primary bg-primary/5' : 'border-transparent hover:border-gray-200'}`}
@@ -387,6 +414,80 @@ export default function AccommodationDetailsPage() {
                     </CardContent>
                   </Card>
                 ))}
+
+                {/* Pagination Controls */}
+                {rooms.length > itemsPerPage && (
+                  <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg shadow-sm">
+                    <div className="flex flex-1 justify-between sm:hidden">
+                      <Button
+                        onClick={prevPage}
+                        disabled={currentPage === 1}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        onClick={nextPage}
+                        disabled={currentPage === totalPages}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                    <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-sm text-gray-700">
+                          Showing <span className="font-medium">{indexOfFirstRoom + 1}</span> to{" "}
+                          <span className="font-medium">
+                            {Math.min(indexOfLastRoom, rooms.length)}
+                          </span>{" "}
+                          of <span className="font-medium">{rooms.length}</span> rooms
+                        </p>
+                      </div>
+                      <div>
+                        <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                          <Button
+                            onClick={prevPage}
+                            disabled={currentPage === 1}
+                            variant="outline"
+                            size="sm"
+                            className="rounded-l-md"
+                          >
+                            <span className="sr-only">Previous</span>
+                            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                          </Button>
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                            <Button
+                              key={page}
+                              onClick={() => paginate(page)}
+                              variant={currentPage === page ? "default" : "outline"}
+                              size="sm"
+                              className={`relative z-10 ${
+                                currentPage === page
+                                  ? "bg-primary text-white hover:bg-primary/90"
+                                  : "text-gray-900 hover:bg-gray-50"
+                              }`}
+                            >
+                              {page}
+                            </Button>
+                          ))}
+                          <Button
+                            onClick={nextPage}
+                            disabled={currentPage === totalPages}
+                            variant="outline"
+                            size="sm"
+                            className="rounded-r-md"
+                          >
+                            <span className="sr-only">Next</span>
+                            <ChevronRightIcon className="h-4 w-4" aria-hidden="true" />
+                          </Button>
+                        </nav>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="lg:col-span-1">
@@ -403,7 +504,6 @@ export default function AccommodationDetailsPage() {
                         </div>
                       )}
                       
-                      {/* Phone Number Input - NEW */}
                       <div className="space-y-2">
                         <Label htmlFor="customerPhone" className="flex items-center gap-2">
                           <Phone className="h-4 w-4 text-gray-500" />
