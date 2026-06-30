@@ -5,11 +5,9 @@ import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { 
   getRooms, 
-  bookAccommodation, 
   getStoredUser, 
   getProfile,
   UserProfile,
-  AddCustomerBookedReservation,
   logout,
   clearAuthData,
   getToken,
@@ -22,24 +20,18 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { 
   Loader2, 
-  MapPin, 
-  Calendar, 
-  Users, 
   CheckCircle2, 
   AlertCircle,
   ArrowLeft,
   Home,
   LogOut,
-  User,
   Menu,
   X,
   LayoutDashboard,
   ShoppingBag,
   UserCircle,
   ChevronRight,
-  Sparkles,
   LogOut as LogOutIcon,
-  Star,
   Phone,
   ChevronLeft,
   ChevronRight as ChevronRightIcon,
@@ -56,7 +48,7 @@ import {
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-// Get API URL from env or use default
+// Get API URL
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api-data-connection.ginilog.org";
 
 export default function AccommodationDetailsPage() {
@@ -122,17 +114,12 @@ export default function AccommodationDetailsPage() {
   const currentRooms = rooms.slice(indexOfFirstRoom, indexOfLastRoom);
   const totalPages = Math.ceil(rooms.length / itemsPerPage);
 
-  // Change page
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
-
-  // Go to next page
   const nextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
   };
-
-  // Go to previous page
   const prevPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -171,6 +158,14 @@ export default function AccommodationDetailsPage() {
       return;
     }
 
+    // Validate dates
+    const start = new Date(formData.startDate);
+    const end = new Date(formData.endDate);
+    if (end <= start) {
+      setError("Check-out date must be after check-in date");
+      return;
+    }
+
     // Show payment modal
     setShowPaymentModal(true);
     setError(null);
@@ -185,10 +180,9 @@ export default function AccommodationDetailsPage() {
 
     setIsProcessingPayment(true);
     setError(null);
-    setDebugInfo("");
+    setDebugInfo("Starting booking process...");
 
     try {
-      // Get the token
       const token = getToken();
       if (!token) {
         throw new Error("No authentication token found. Please log in again.");
@@ -200,128 +194,177 @@ export default function AccommodationDetailsPage() {
         throw new Error("Selected room not found");
       }
 
-      // Prepare booking data
-      const bookingData = {
+      // Format dates properly
+      const startDate = new Date(formData.startDate);
+      const endDate = new Date(formData.endDate);
+      
+      // Format dates as ISO strings
+      const formattedStartDate = startDate.toISOString();
+      const formattedEndDate = endDate.toISOString();
+
+      // Prepare booking data - TRY DIFFERENT FORMATS
+      // Format 1: Original format from your interface
+      const bookingData1 = {
         userId: user?.id || "",
         customerName: `${user?.firstName || ""} ${user?.lastName || ""}`.trim(),
-        customerEmail: user?.email || "",
         customerPhoneNumber: formData.customerPhone.trim(),
+        customerEmail: user?.email || "",
         numberOfGuests: formData.guests,
-        reservationStartDate: formData.startDate,
-        reservationEndDate: formData.endDate,
+        reservationStartDate: formattedStartDate,
+        reservationEndDate: formattedEndDate,
         comment: formData.comment || "",
         userType: "Registered"
       };
 
-      console.log("🔍 Booking Data:", JSON.stringify(bookingData, null, 2));
-      console.log("🔍 Room ID:", formData.roomId);
-      console.log("🔍 Token:", token.substring(0, 20) + "...");
+      // Format 2: Alternative field names (in case API expects different names)
+      const bookingData2 = {
+        UserId: user?.id || "",
+        CustomerName: `${user?.firstName || ""} ${user?.lastName || ""}`.trim(),
+        CustomerPhoneNumber: formData.customerPhone.trim(),
+        CustomerEmail: user?.email || "",
+        NumberOfGuests: formData.guests,
+        ReservationStartDate: formattedStartDate,
+        ReservationEndDate: formattedEndDate,
+        Comment: formData.comment || "",
+        UserType: "Registered"
+      };
+
+      // Format 3: Try without userId
+      const bookingData3 = {
+        customerName: `${user?.firstName || ""} ${user?.lastName || ""}`.trim(),
+        customerPhoneNumber: formData.customerPhone.trim(),
+        customerEmail: user?.email || "",
+        numberOfGuests: formData.guests,
+        reservationStartDate: formattedStartDate,
+        reservationEndDate: formattedEndDate,
+        comment: formData.comment || "",
+        userType: "Registered"
+      };
+
+      // Log all formats for debugging
+      console.log("🔍 Booking Data Format 1:", JSON.stringify(bookingData1, null, 2));
+      console.log("🔍 Booking Data Format 2:", JSON.stringify(bookingData2, null, 2));
+      console.log("🔍 Booking Data Format 3:", JSON.stringify(bookingData3, null, 2));
 
       setDebugInfo("Sending booking request...");
 
-      // Method 1: Try with the library function
-      try {
-        const result = await bookAccommodation(formData.roomId, bookingData);
-        console.log("✅ Booking successful:", result);
-        setDebugInfo("✅ Booking successful!");
-        setShowPaymentModal(false);
-        setBookingSuccess(true);
-        setTimeout(() => router.push("/customer-portal/orders"), 2000);
-        return;
-      } catch (libError) {
-        console.warn("⚠️ Library function failed, trying direct fetch:", libError);
-        setDebugInfo("Library function failed, trying direct fetch...");
-      }
+      // Try each format
+      const formats = [
+        { data: bookingData1, label: "Format 1" },
+        { data: bookingData2, label: "Format 2" },
+        { data: bookingData3, label: "Format 3" }
+      ];
 
-      // Method 2: Direct fetch with proper headers
-      const url = `${API_URL}/api/bookings/accomodation-reservations-customer`;
-      
-      // Prepare headers - try both ways
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "Authorization": `Bearer ${token}`,
-      };
+      let lastError: any = null;
 
-      // Try with reservationId as header
-      const requestOptions = {
-        method: "POST",
-        headers: {
-          ...headers,
-          "reservationId": formData.roomId,
-        },
-        body: JSON.stringify(bookingData),
-      };
-
-      console.log("🔍 Direct fetch URL:", url);
-      console.log("🔍 Request options:", {
-        ...requestOptions,
-        headers: { ...requestOptions.headers, Authorization: "Bearer [REDACTED]" }
-      });
-
-      setDebugInfo("Sending direct request...");
-
-      const response = await fetch(url, requestOptions);
-
-      // Log response details
-      console.log("📥 Response status:", response.status);
-      console.log("📥 Response headers:", Object.fromEntries(response.headers.entries()));
-
-      // Try to get response body
-      let responseData;
-      const responseText = await response.text();
-      console.log("📥 Response body:", responseText);
-
-      try {
-        responseData = JSON.parse(responseText);
-      } catch {
-        responseData = { message: responseText };
-      }
-
-      if (!response.ok) {
-        // If 401, try to refresh token
-        if (response.status === 401) {
-          setDebugInfo("Token expired, refreshing...");
-          const newToken = await refreshAccessToken();
-          if (newToken) {
-            setDebugInfo("Token refreshed, retrying...");
-            // Retry with new token
-            const retryResponse = await fetch(url, {
-              ...requestOptions,
+      for (const format of formats) {
+        try {
+          setDebugInfo(`Trying ${format.label}...`);
+          
+          const response = await fetch(
+            `${API_URL}/api/bookings/accomodation-reservations-customer`,
+            {
+              method: "POST",
               headers: {
-                ...requestOptions.headers,
-                "Authorization": `Bearer ${newToken}`,
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "Authorization": `Bearer ${token}`,
+                // Try with and without reservationId header
+                "reservationId": formData.roomId,
               },
-            });
+              body: JSON.stringify(format.data),
+            }
+          );
+
+          console.log(`📥 Response for ${format.label}:`, response.status);
+
+          // Get response text
+          const responseText = await response.text();
+          console.log(`📥 Response body for ${format.label}:`, responseText);
+
+          let responseData;
+          try {
+            responseData = JSON.parse(responseText);
+          } catch {
+            responseData = { message: responseText };
+          }
+
+          if (response.ok) {
+            console.log(`✅ Booking successful with ${format.label}:`, responseData);
+            setDebugInfo(`✅ Booking successful with ${format.label}!`);
+            setShowPaymentModal(false);
+            setBookingSuccess(true);
+            setTimeout(() => router.push("/customer-portal/orders"), 2000);
+            return;
+          }
+
+          // If we get a 400, try without the reservationId header
+          if (response.status === 400) {
+            console.log(`⚠️ 400 error with ${format.label}, trying without reservationId header...`);
             
+            const retryResponse = await fetch(
+              `${API_URL}/api/bookings/accomodation-reservations-customer`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Accept": "application/json",
+                  "Authorization": `Bearer ${token}`,
+                  // Remove reservationId header, put it in body
+                },
+                body: JSON.stringify({
+                  ...format.data,
+                  reservationId: formData.roomId,
+                  roomId: formData.roomId,
+                }),
+              }
+            );
+
+            const retryText = await retryResponse.text();
+            console.log(`📥 Retry response body:`, retryText);
+
             if (retryResponse.ok) {
-              const retryData = await retryResponse.json();
-              console.log("✅ Booking successful after token refresh:", retryData);
-              setDebugInfo("✅ Booking successful!");
+              const retryData = JSON.parse(retryText);
+              console.log(`✅ Booking successful with ${format.label} (without header):`, retryData);
+              setDebugInfo(`✅ Booking successful!`);
               setShowPaymentModal(false);
               setBookingSuccess(true);
               setTimeout(() => router.push("/customer-portal/orders"), 2000);
               return;
             }
+
+            // Store the error for later
+            lastError = { status: retryResponse.status, data: retryText };
           }
-          throw new Error("Session expired. Please log in again.");
-        }
 
-        // Handle validation errors
-        if (response.status === 400) {
-          const errorMsg = responseData?.message || responseData?.title || "Invalid booking data";
-          throw new Error(`Validation error: ${errorMsg}`);
-        }
+          // Store the error
+          lastError = { status: response.status, data: responseData };
 
-        throw new Error(responseData?.message || `Server error (${response.status})`);
+        } catch (err) {
+          console.error(`❌ Error with ${format.label}:`, err);
+          lastError = err;
+        }
       }
 
-      // Success
-      console.log("✅ Booking successful:", responseData);
-      setDebugInfo("✅ Booking successful!");
-      setShowPaymentModal(false);
-      setBookingSuccess(true);
-      setTimeout(() => router.push("/customer-portal/orders"), 2000);
+      // If we get here, all formats failed
+      if (lastError) {
+        let errorMessage = "Booking failed. Please try again.";
+        
+        if (lastError.data) {
+          try {
+            const errorData = typeof lastError.data === 'string' ? JSON.parse(lastError.data) : lastError.data;
+            errorMessage = errorData.message || errorData.title || errorData.error || JSON.stringify(errorData);
+          } catch {
+            errorMessage = lastError.data || errorMessage;
+          }
+        } else if (lastError.message) {
+          errorMessage = lastError.message;
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      throw new Error("All booking attempts failed. Please try again.");
 
     } catch (err) {
       console.error("❌ Booking error:", err);
@@ -361,7 +404,7 @@ export default function AccommodationDetailsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header (same as before) */}
+      {/* Header */}
       <header className="bg-white border-b sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
@@ -726,7 +769,7 @@ export default function AccommodationDetailsPage() {
                           min="1" 
                           required 
                           value={formData.guests}
-                          onChange={(e) => setFormData({ ...formData, guests: parseInt(e.target.value) })}
+                          onChange={(e) => setFormData({ ...formData, guests: parseInt(e.target.value) || 1 })}
                         />
                       </div>
 
