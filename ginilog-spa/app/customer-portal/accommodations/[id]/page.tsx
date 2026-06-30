@@ -11,7 +11,9 @@ import {
   UserProfile,
   AddCustomerBookedReservation,
   logout,
-  clearAuthData
+  clearAuthData,
+  getToken,
+  refreshAccessToken
 } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,6 +56,9 @@ import {
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
+// Get API URL from env or use default
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api-data-connection.ginilog.org";
+
 export default function AccommodationDetailsPage() {
   const router = useRouter();
   const params = useParams();
@@ -69,6 +74,7 @@ export default function AccommodationDetailsPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string>("");
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -179,31 +185,149 @@ export default function AccommodationDetailsPage() {
 
     setIsProcessingPayment(true);
     setError(null);
+    setDebugInfo("");
 
     try {
-      // Proceed with booking
-      const bookingData: AddCustomerBookedReservation = {
+      // Get the token
+      const token = getToken();
+      if (!token) {
+        throw new Error("No authentication token found. Please log in again.");
+      }
+
+      // Find the selected room
+      const selectedRoom = rooms.find(r => r.id === formData.roomId);
+      if (!selectedRoom) {
+        throw new Error("Selected room not found");
+      }
+
+      // Prepare booking data
+      const bookingData = {
         userId: user?.id || "",
-        customerName: `${user?.firstName || ""} ${user?.lastName || ""}`,
+        customerName: `${user?.firstName || ""} ${user?.lastName || ""}`.trim(),
         customerEmail: user?.email || "",
         customerPhoneNumber: formData.customerPhone.trim(),
         numberOfGuests: formData.guests,
         reservationStartDate: formData.startDate,
         reservationEndDate: formData.endDate,
-        comment: formData.comment,
+        comment: formData.comment || "",
         userType: "Registered"
       };
 
-      await bookAccommodation(formData.roomId, bookingData);
+      console.log("🔍 Booking Data:", JSON.stringify(bookingData, null, 2));
+      console.log("🔍 Room ID:", formData.roomId);
+      console.log("🔍 Token:", token.substring(0, 20) + "...");
+
+      setDebugInfo("Sending booking request...");
+
+      // Method 1: Try with the library function
+      try {
+        const result = await bookAccommodation(formData.roomId, bookingData);
+        console.log("✅ Booking successful:", result);
+        setDebugInfo("✅ Booking successful!");
+        setShowPaymentModal(false);
+        setBookingSuccess(true);
+        setTimeout(() => router.push("/customer-portal/orders"), 2000);
+        return;
+      } catch (libError) {
+        console.warn("⚠️ Library function failed, trying direct fetch:", libError);
+        setDebugInfo("Library function failed, trying direct fetch...");
+      }
+
+      // Method 2: Direct fetch with proper headers
+      const url = `${API_URL}/api/bookings/accomodation-reservations-customer`;
       
-      // Close modal
+      // Prepare headers - try both ways
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": `Bearer ${token}`,
+      };
+
+      // Try with reservationId as header
+      const requestOptions = {
+        method: "POST",
+        headers: {
+          ...headers,
+          "reservationId": formData.roomId,
+        },
+        body: JSON.stringify(bookingData),
+      };
+
+      console.log("🔍 Direct fetch URL:", url);
+      console.log("🔍 Request options:", {
+        ...requestOptions,
+        headers: { ...requestOptions.headers, Authorization: "Bearer [REDACTED]" }
+      });
+
+      setDebugInfo("Sending direct request...");
+
+      const response = await fetch(url, requestOptions);
+
+      // Log response details
+      console.log("📥 Response status:", response.status);
+      console.log("📥 Response headers:", Object.fromEntries(response.headers.entries()));
+
+      // Try to get response body
+      let responseData;
+      const responseText = await response.text();
+      console.log("📥 Response body:", responseText);
+
+      try {
+        responseData = JSON.parse(responseText);
+      } catch {
+        responseData = { message: responseText };
+      }
+
+      if (!response.ok) {
+        // If 401, try to refresh token
+        if (response.status === 401) {
+          setDebugInfo("Token expired, refreshing...");
+          const newToken = await refreshAccessToken();
+          if (newToken) {
+            setDebugInfo("Token refreshed, retrying...");
+            // Retry with new token
+            const retryResponse = await fetch(url, {
+              ...requestOptions,
+              headers: {
+                ...requestOptions.headers,
+                "Authorization": `Bearer ${newToken}`,
+              },
+            });
+            
+            if (retryResponse.ok) {
+              const retryData = await retryResponse.json();
+              console.log("✅ Booking successful after token refresh:", retryData);
+              setDebugInfo("✅ Booking successful!");
+              setShowPaymentModal(false);
+              setBookingSuccess(true);
+              setTimeout(() => router.push("/customer-portal/orders"), 2000);
+              return;
+            }
+          }
+          throw new Error("Session expired. Please log in again.");
+        }
+
+        // Handle validation errors
+        if (response.status === 400) {
+          const errorMsg = responseData?.message || responseData?.title || "Invalid booking data";
+          throw new Error(`Validation error: ${errorMsg}`);
+        }
+
+        throw new Error(responseData?.message || `Server error (${response.status})`);
+      }
+
+      // Success
+      console.log("✅ Booking successful:", responseData);
+      setDebugInfo("✅ Booking successful!");
       setShowPaymentModal(false);
       setBookingSuccess(true);
-      
-      // Redirect to orders page
       setTimeout(() => router.push("/customer-portal/orders"), 2000);
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Booking failed. Please try again.");
+      console.error("❌ Booking error:", err);
+      const errorMessage = err instanceof Error ? err.message : "Booking failed. Please try again.";
+      setError(errorMessage);
+      setDebugInfo(`❌ Error: ${errorMessage}`);
     } finally {
       setIsProcessingPayment(false);
     }
@@ -237,7 +361,7 @@ export default function AccommodationDetailsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Header (same as before) */}
       <header className="bg-white border-b sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
@@ -692,6 +816,14 @@ export default function AccommodationDetailsPage() {
               </div>
             </div>
 
+            {/* Debug Info */}
+            {debugInfo && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-700 text-xs font-mono">
+                <p className="font-semibold">Debug Info:</p>
+                <p>{debugInfo}</p>
+              </div>
+            )}
+
             <RadioGroup 
               value={selectedPaymentMethod} 
               onValueChange={setSelectedPaymentMethod}
@@ -757,6 +889,7 @@ export default function AccommodationDetailsPage() {
                 setShowPaymentModal(false);
                 setSelectedPaymentMethod("");
                 setError(null);
+                setDebugInfo("");
               }}
               className="w-full sm:w-auto"
             >
