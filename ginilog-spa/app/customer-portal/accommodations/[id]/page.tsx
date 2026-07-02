@@ -48,10 +48,6 @@ import {
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-// Import payment libraries
-import { useFlutterwave, closePaymentModal } from 'flutterwave-react-v3';
-import { usePaystackPayment } from 'react-paystack';
-
 // Helper function to generate unique reference
 const generateReference = () => {
   return `REF-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
@@ -69,6 +65,7 @@ export default function AccommodationDetailsPage() {
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -149,137 +146,85 @@ export default function AccommodationDetailsPage() {
     }
   };
 
-  // Payment Success Handler
-  const handlePaymentSuccess = async (response: any) => {
-    console.log('Payment successful:', response);
-    setIsProcessingPayment(false);
-    setShowPaymentModal(false);
-    setSelectedPaymentMethod("");
-    
+  // Initialize payment with backend API
+  const initializePayment = async () => {
+    setIsProcessingPayment(true);
+    setError(null);
+
     try {
-      // Proceed with booking after successful payment
-      const bookingData: AddCustomerBookedReservation = {
-        userId: user?.id || "",
-        customerName: `${user?.firstName || ""} ${user?.lastName || ""}`,
-        customerEmail: user?.email || "",
-        customerPhoneNumber: formData.customerPhone.trim(),
-        numberOfGuests: formData.guests,
-        reservationStartDate: formData.startDate,
-        reservationEndDate: formData.endDate,
-        comment: formData.comment,
-        userType: "Registered",
-        paymentReference: response?.reference || response?.tx_ref || '',
-        paymentStatus: 'completed'
+      const totalAmount = calculateTotalPrice();
+      const reference = generateReference();
+      
+      // Prepare payment data
+      const paymentData = {
+        amount: totalAmount,
+        email: user?.email || '',
+        reference: reference,
+        currency: 'NGN',
+        customerName: `${user?.firstName || ''} ${user?.lastName || ''}`,
+        customerPhone: formData.customerPhone,
+        metadata: {
+          room_id: formData.roomId,
+          accommodation_id: accommodationId,
+          user_id: user?.id || '',
+          room_type: getSelectedRoom()?.roomType || '',
+          check_in: formData.startDate,
+          check_out: formData.endDate,
+          guests: formData.guests,
+          booking_comment: formData.comment
+        }
       };
 
-      await bookAccommodation(formData.roomId, bookingData);
-      
-      setBookingSuccess(true);
-      
-      // Redirect to orders page after success
-      setTimeout(() => router.push("/customer-portal/orders"), 2000);
+      // Call backend API to initialize payment based on selected method
+      const endpoint = selectedPaymentMethod === 'flutterwave' 
+        ? 'https://api-data-connection.ginilog.org/api/bookings/initialize-flutterwave-accomodation-reservations-customer'
+        : 'https://api-data-connection.ginilog.org/api/bookings/initialize-paystack-accomodation-reservations-customer';
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`,
+        },
+        body: JSON.stringify(paymentData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to initialize payment');
+      }
+
+      const data = await response.json();
+
+      // Redirect to payment URL (for Flutterwave) or show Paystack popup
+      if (selectedPaymentMethod === 'flutterwave') {
+        // Flutterwave returns a payment link
+        if (data.data?.link) {
+          window.location.href = data.data.link;
+        } else if (data.data?.authorization_url) {
+          window.location.href = data.data.authorization_url;
+        } else {
+          throw new Error('No payment link received');
+        }
+      } else if (selectedPaymentMethod === 'paystack') {
+        // Paystack returns authorization URL
+        if (data.data?.authorization_url) {
+          window.location.href = data.data.authorization_url;
+        } else if (data.data?.link) {
+          window.location.href = data.data.link;
+        } else {
+          // If using Paystack inline, you can use their SDK
+          // For now, redirect to the payment page
+          throw new Error('No payment link received');
+        }
+      }
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Booking failed. Please try again.");
-      setBookingSuccess(false);
+      console.error('Payment initialization error:', err);
+      setError(err instanceof Error ? err.message : "Failed to initialize payment. Please try again.");
+      setIsProcessingPayment(false);
     }
   };
-
-  // Payment Close Handler
-  const handlePaymentClose = () => {
-    console.log('Payment modal closed');
-    setIsProcessingPayment(false);
-    setShowPaymentModal(false);
-    setSelectedPaymentMethod("");
-    setError("Payment was cancelled. Please try again.");
-  };
-
-  // Flutterwave Configuration
-  const getFlutterwaveConfig = () => {
-    const selectedRoom = getSelectedRoom();
-    const totalAmount = calculateTotalPrice();
-    
-    return {
-      public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY || '',
-      tx_ref: generateReference(),
-      amount: totalAmount,
-      currency: 'NGN',
-      payment_options: 'card,mobilemoney,ussd,banktransfer',
-      customer: {
-        email: user?.email || '',
-        phone_number: formData.customerPhone || '',
-        name: `${user?.firstName || ''} ${user?.lastName || ''}`,
-      },
-      customizations: {
-        title: 'GINILOG Accommodation Booking',
-        description: `Booking for ${selectedRoom?.roomType || 'Room'} - ${formData.startDate} to ${formData.endDate}`,
-        logo: 'https://your-logo-url.com/logo.png',
-      },
-      meta: {
-        room_id: formData.roomId,
-        accommodation_id: accommodationId,
-        user_id: user?.id || '',
-      },
-    };
-  };
-
-  // Paystack Configuration
-  const getPaystackConfig = () => {
-    const selectedRoom = getSelectedRoom();
-    const totalAmount = calculateTotalPrice();
-    
-    return {
-      publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
-      email: user?.email || '',
-      amount: totalAmount * 100, // Paystack uses kobo (multiply by 100)
-      reference: generateReference(),
-      currency: 'NGN',
-      metadata: {
-        custom_fields: [
-          {
-            display_name: "Room Type",
-            variable_name: "room_type",
-            value: selectedRoom?.roomType || '',
-          },
-          {
-            display_name: "Check-in",
-            variable_name: "check_in",
-            value: formData.startDate,
-          },
-          {
-            display_name: "Check-out",
-            variable_name: "check_out",
-            value: formData.endDate,
-          },
-          {
-            display_name: "Guests",
-            variable_name: "guests",
-            value: formData.guests.toString(),
-          },
-          {
-            display_name: "User ID",
-            variable_name: "user_id",
-            value: user?.id || '',
-          },
-          {
-            display_name: "Room ID",
-            variable_name: "room_id",
-            value: formData.roomId,
-          },
-          {
-            display_name: "Accommodation ID",
-            variable_name: "accommodation_id",
-            value: accommodationId,
-          }
-        ]
-      },
-    };
-  };
-
-  // Initialize Flutterwave
-  const initializeFlutterwave = useFlutterwave(getFlutterwaveConfig());
-  
-  // Initialize Paystack
-  const initializePaystack = usePaystackPayment(getPaystackConfig());
 
   // Handle payment method selection and proceed
   const handleProceedToPayment = async () => {
@@ -288,31 +233,10 @@ export default function AccommodationDetailsPage() {
       return;
     }
 
-    setIsProcessingPayment(true);
-    setError(null);
-
-    try {
-      if (selectedPaymentMethod === "flutterwave") {
-        // Initialize Flutterwave payment
-        initializeFlutterwave({
-          callback: handlePaymentSuccess,
-          onClose: handlePaymentClose,
-        });
-      } else if (selectedPaymentMethod === "paystack") {
-        // Initialize Paystack payment
-        initializePaystack({
-          onSuccess: handlePaymentSuccess,
-          onClose: handlePaymentClose,
-        });
-      }
-    } catch (err) {
-      console.error('Payment initialization error:', err);
-      setError("Failed to initialize payment. Please try again.");
-      setIsProcessingPayment(false);
-    }
+    await initializePayment();
   };
 
-  // Handle confirm booking - show payment modal
+  // Handle confirm booking - show confirmation modal first
   const handleConfirmBooking = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -340,7 +264,14 @@ export default function AccommodationDetailsPage() {
       return;
     }
 
-    // Show payment modal
+    // Show confirmation modal
+    setShowConfirmModal(true);
+    setError(null);
+  };
+
+  // Handle confirmation - then show payment modal
+  const handleConfirmAndProceedToPayment = () => {
+    setShowConfirmModal(false);
     setShowPaymentModal(true);
     setError(null);
   };
@@ -790,6 +721,83 @@ export default function AccommodationDetailsPage() {
         </div>
       </main>
 
+      {/* Confirmation Modal */}
+      <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-center">Confirm Booking</DialogTitle>
+            <DialogDescription className="text-center">
+              Please review your booking details before proceeding to payment
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-6">
+            {/* Order Summary */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="font-semibold text-gray-700 mb-2">Booking Summary</h4>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Room:</span>
+                  <span className="font-medium">{rooms.find(r => r.id === formData.roomId)?.roomType || "Selected Room"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Check-in:</span>
+                  <span className="font-medium">{formData.startDate}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Check-out:</span>
+                  <span className="font-medium">{formData.endDate}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Guests:</span>
+                  <span className="font-medium">{formData.guests}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Phone:</span>
+                  <span className="font-medium">{formData.customerPhone}</span>
+                </div>
+                {formData.comment && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Special Requests:</span>
+                    <span className="font-medium text-right max-w-[60%]">{formData.comment}</span>
+                  </div>
+                )}
+                <div className="flex justify-between pt-2 border-t border-gray-200">
+                  <span className="font-semibold text-gray-700">Total:</span>
+                  <span className="font-bold text-primary">₦{calculateTotalPrice().toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+
+            {error && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                {error}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex flex-col sm:flex-row gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowConfirmModal(false);
+                setError(null);
+              }}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmAndProceedToPayment}
+              className="w-full sm:w-auto"
+            >
+              Proceed to Payment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Payment Method Modal */}
       <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
         <DialogContent className="sm:max-w-md">
@@ -825,12 +833,6 @@ export default function AccommodationDetailsPage() {
                   <span className="text-gray-600">Phone:</span>
                   <span className="font-medium">{formData.customerPhone}</span>
                 </div>
-                {formData.comment && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Special Requests:</span>
-                    <span className="font-medium text-right max-w-[60%]">{formData.comment}</span>
-                  </div>
-                )}
                 <div className="flex justify-between pt-2 border-t border-gray-200">
                   <span className="font-semibold text-gray-700">Total:</span>
                   <span className="font-bold text-primary">₦{calculateTotalPrice().toLocaleString()}</span>
@@ -919,7 +921,7 @@ export default function AccommodationDetailsPage() {
                   Processing...
                 </>
               ) : (
-                "Proceed to Pay"
+                "Pay Now"
               )}
             </Button>
           </DialogFooter>
