@@ -1,0 +1,3 @@
+module.exports=[69816,(a,b,c)=>{let{createClientModuleProxy:d}=a.r(86740);a.n(d("[project]/ginilog-spa/node_modules/next/dist/client/components/builtin/global-error.js <module evaluation>"))},45230,(a,b,c)=>{let{createClientModuleProxy:d}=a.r(86740);a.n(d("[project]/ginilog-spa/node_modules/next/dist/client/components/builtin/global-error.js"))},58404,a=>{"use strict";a.i(69816);var b=a.i(45230);a.n(b)},88622,a=>{a.n(a.i(58404))}];
+
+//# sourceMappingURL=19rx_next_dist_client_components_builtin_global-error_1nhk0gw.js.map

@@ -1294,7 +1294,7 @@ export async function trackParcelOrBooking(
 // ============ PAYMENTS FUNCTIONS ============
 
 export async function initializePaystackPayment(orderId: string, amount: number, email: string): Promise<any> {
-  const response = await fetchWithAuth("Wallet/initialize", {
+  const response = await fetchWithAuth("bookings/initialize-paystack-accomodation-reservations-customer", {
     method: "POST",
     body: JSON.stringify({ amount, email, orderId }),
   });

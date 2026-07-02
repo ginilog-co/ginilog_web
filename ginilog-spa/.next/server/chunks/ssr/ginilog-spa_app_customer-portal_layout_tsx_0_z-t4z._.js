@@ -1,0 +1,3 @@
+module.exports=[50226,a=>{"use strict";var b=a.i(97118);a.s(["default",0,function({children:a}){return(0,b.jsx)("div",{className:"min-h-screen bg-gray-50",children:a})},"metadata",0,{title:"GINILOG - Customer Portal",description:"Customer portal for GINILOG logistics and accommodation services"}])},87100,a=>{a.n(a.i(50226))}];
+
+//# sourceMappingURL=ginilog-spa_app_customer-portal_layout_tsx_0_z-t4z._.js.map

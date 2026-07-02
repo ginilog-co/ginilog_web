@@ -8,7 +8,6 @@ import {
   bookAccommodation, 
   getStoredUser, 
   getProfile,
-  UserProfile,
   AddCustomerBookedReservation,
   logout,
   clearAuthData
@@ -20,29 +19,21 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { 
   Loader2, 
-  MapPin, 
-  Calendar, 
-  Users, 
   CheckCircle2, 
   AlertCircle,
   ArrowLeft,
   Home,
   LogOut,
-  User,
   Menu,
   X,
   LayoutDashboard,
   ShoppingBag,
   UserCircle,
   ChevronRight,
-  Sparkles,
   LogOut as LogOutIcon,
-  Star,
   Phone,
   ChevronLeft,
   ChevronRight as ChevronRightIcon,
-  CreditCard,
-  Wallet
 } from "lucide-react";
 import {
   Dialog,
@@ -52,7 +43,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export default function AccommodationDetailsPage() {
   const router = useRouter();
@@ -66,14 +56,11 @@ export default function AccommodationDetailsPage() {
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("");
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  const [totalRooms, setTotalRooms] = useState(0);
 
   const [formData, setFormData] = useState({
     roomId: "",
@@ -83,6 +70,16 @@ export default function AccommodationDetailsPage() {
     customerPhone: "",
     comment: ""
   });
+
+  // Calculate total price
+  const calculateTotalPrice = () => {
+    if (!formData.startDate || !formData.endDate) return 0;
+    const start = new Date(formData.startDate);
+    const end = new Date(formData.endDate);
+    const nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const selectedRoom = rooms.find(r => r.id === formData.roomId);
+    return nights * (selectedRoom?.roomPrice || 0);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -98,7 +95,6 @@ export default function AccommodationDetailsPage() {
         ]);
         setUser(profile);
         setRooms(roomList || []);
-        setTotalRooms(roomList?.length || 0);
       } catch (err) {
         console.error("Failed to fetch details:", err);
         setError("Failed to load accommodation details.");
@@ -133,17 +129,7 @@ export default function AccommodationDetailsPage() {
     }
   };
 
-  // Calculate total price
-  const calculateTotalPrice = () => {
-    if (!formData.startDate || !formData.endDate) return 0;
-    const start = new Date(formData.startDate);
-    const end = new Date(formData.endDate);
-    const nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    const selectedRoom = rooms.find(r => r.id === formData.roomId);
-    return nights * (selectedRoom?.roomPrice || 0);
-  };
-
-  // Handle confirm booking - show payment modal
+  // Handle confirm booking - show confirmation modal
   const handleConfirmBooking = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -165,23 +151,17 @@ export default function AccommodationDetailsPage() {
       return;
     }
 
-    // Show payment modal
-    setShowPaymentModal(true);
+    // Show confirmation modal
+    setShowConfirmModal(true);
     setError(null);
   };
 
-  // Handle payment method selection and proceed
-  const handleProceedToPayment = async () => {
-    if (!selectedPaymentMethod) {
-      setError("Please select a payment method");
-      return;
-    }
-
-    setIsProcessingPayment(true);
+  // Handle booking confirmation
+  const handleConfirmBookingSubmit = async () => {
+    setIsBooking(true);
     setError(null);
 
     try {
-      // Proceed with booking
       const bookingData: AddCustomerBookedReservation = {
         userId: user?.id || "",
         customerName: `${user?.firstName || ""} ${user?.lastName || ""}`,
@@ -196,16 +176,16 @@ export default function AccommodationDetailsPage() {
 
       await bookAccommodation(formData.roomId, bookingData);
       
-      // Close modal
-      setShowPaymentModal(false);
+      setShowConfirmModal(false);
       setBookingSuccess(true);
       
-      // Redirect to orders page
+      // Redirect to orders page after success
       setTimeout(() => router.push("/customer-portal/orders"), 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Booking failed. Please try again.");
+      setShowConfirmModal(false);
     } finally {
-      setIsProcessingPayment(false);
+      setIsBooking(false);
     }
   };
 
@@ -623,7 +603,7 @@ export default function AccommodationDetailsPage() {
                             <span className="text-sm font-medium text-gray-600">Total Amount:</span>
                             <span className="text-xl font-bold text-primary">₦{calculateTotalPrice().toLocaleString()}</span>
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">* Payment will be processed after confirming</p>
+                          <p className="text-xs text-gray-500 mt-1">* No payment required at this time</p>
                         </div>
                       )}
 
@@ -654,19 +634,19 @@ export default function AccommodationDetailsPage() {
         </div>
       </main>
 
-      {/* Payment Method Modal */}
-      <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
+      {/* Confirmation Modal */}
+      <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-center">Select Payment Method</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-center">Confirm Booking</DialogTitle>
             <DialogDescription className="text-center">
-              Choose your preferred payment method to complete the booking
+              Please review your booking details before confirming
             </DialogDescription>
           </DialogHeader>
           
           <div className="py-6">
             {/* Order Summary */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <div className="bg-gray-50 rounded-lg p-4">
               <h4 className="font-semibold text-gray-700 mb-2">Booking Summary</h4>
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
@@ -685,62 +665,22 @@ export default function AccommodationDetailsPage() {
                   <span className="text-gray-600">Guests:</span>
                   <span className="font-medium">{formData.guests}</span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Phone:</span>
+                  <span className="font-medium">{formData.customerPhone}</span>
+                </div>
+                {formData.comment && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Special Requests:</span>
+                    <span className="font-medium text-right max-w-[60%]">{formData.comment}</span>
+                  </div>
+                )}
                 <div className="flex justify-between pt-2 border-t border-gray-200">
                   <span className="font-semibold text-gray-700">Total:</span>
                   <span className="font-bold text-primary">₦{calculateTotalPrice().toLocaleString()}</span>
                 </div>
               </div>
             </div>
-
-            <RadioGroup 
-              value={selectedPaymentMethod} 
-              onValueChange={setSelectedPaymentMethod}
-              className="space-y-3"
-            >
-              <div 
-                className={`flex items-center space-x-3 border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                  selectedPaymentMethod === "flutterwave" 
-                    ? "border-primary bg-primary/5" 
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-                onClick={() => setSelectedPaymentMethod("flutterwave")}
-              >
-                <RadioGroupItem value="flutterwave" id="flutterwave" />
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                    <CreditCard className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <Label htmlFor="flutterwave" className="font-semibold cursor-pointer">
-                      Flutterwave
-                    </Label>
-                    <p className="text-xs text-gray-500">Pay with card, bank transfer, or USSD</p>
-                  </div>
-                </div>
-              </div>
-
-              <div 
-                className={`flex items-center space-x-3 border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                  selectedPaymentMethod === "paystack" 
-                    ? "border-primary bg-primary/5" 
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-                onClick={() => setSelectedPaymentMethod("paystack")}
-              >
-                <RadioGroupItem value="paystack" id="paystack" />
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="h-10 w-10 rounded-lg bg-green-50 flex items-center justify-center">
-                    <Wallet className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <Label htmlFor="paystack" className="font-semibold cursor-pointer">
-                      Paystack
-                    </Label>
-                    <p className="text-xs text-gray-500">Secure payment with cards, bank accounts, or QR</p>
-                  </div>
-                </div>
-              </div>
-            </RadioGroup>
 
             {error && (
               <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm flex items-center gap-2">
@@ -754,8 +694,7 @@ export default function AccommodationDetailsPage() {
             <Button
               variant="outline"
               onClick={() => {
-                setShowPaymentModal(false);
-                setSelectedPaymentMethod("");
+                setShowConfirmModal(false);
                 setError(null);
               }}
               className="w-full sm:w-auto"
@@ -763,17 +702,17 @@ export default function AccommodationDetailsPage() {
               Cancel
             </Button>
             <Button
-              onClick={handleProceedToPayment}
-              disabled={!selectedPaymentMethod || isProcessingPayment}
+              onClick={handleConfirmBookingSubmit}
+              disabled={isBooking}
               className="w-full sm:w-auto"
             >
-              {isProcessingPayment ? (
+              {isBooking ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
+                  Confirming...
                 </>
               ) : (
-                "Proceed to Pay"
+                "Confirm Booking"
               )}
             </Button>
           </DialogFooter>
