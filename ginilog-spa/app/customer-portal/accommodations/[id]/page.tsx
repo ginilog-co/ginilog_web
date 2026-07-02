@@ -10,7 +10,8 @@ import {
   getProfile,
   AddCustomerBookedReservation,
   logout,
-  clearAuthData
+  clearAuthData,
+  UserProfile
 } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,8 @@ import {
   Phone,
   ChevronLeft,
   ChevronRight as ChevronRightIcon,
+  CreditCard,
+  Wallet
 } from "lucide-react";
 import {
   Dialog,
@@ -43,6 +46,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
+// Import payment libraries
+import { useFlutterwave, closePaymentModal } from 'flutterwave-react-v3';
+import { usePaystackPayment } from 'react-paystack';
+
+// Helper function to generate unique reference
+const generateReference = () => {
+  return `REF-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+};
 
 export default function AccommodationDetailsPage() {
   const router = useRouter();
@@ -56,7 +69,9 @@ export default function AccommodationDetailsPage() {
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("");
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -79,6 +94,11 @@ export default function AccommodationDetailsPage() {
     const nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     const selectedRoom = rooms.find(r => r.id === formData.roomId);
     return nights * (selectedRoom?.roomPrice || 0);
+  };
+
+  // Get the selected room
+  const getSelectedRoom = () => {
+    return rooms.find(r => r.id === formData.roomId);
   };
 
   useEffect(() => {
@@ -129,7 +149,170 @@ export default function AccommodationDetailsPage() {
     }
   };
 
-  // Handle confirm booking - show confirmation modal
+  // Payment Success Handler
+  const handlePaymentSuccess = async (response: any) => {
+    console.log('Payment successful:', response);
+    setIsProcessingPayment(false);
+    setShowPaymentModal(false);
+    setSelectedPaymentMethod("");
+    
+    try {
+      // Proceed with booking after successful payment
+      const bookingData: AddCustomerBookedReservation = {
+        userId: user?.id || "",
+        customerName: `${user?.firstName || ""} ${user?.lastName || ""}`,
+        customerEmail: user?.email || "",
+        customerPhoneNumber: formData.customerPhone.trim(),
+        numberOfGuests: formData.guests,
+        reservationStartDate: formData.startDate,
+        reservationEndDate: formData.endDate,
+        comment: formData.comment,
+        userType: "Registered",
+        paymentReference: response?.reference || response?.tx_ref || '',
+        paymentStatus: 'completed'
+      };
+
+      await bookAccommodation(formData.roomId, bookingData);
+      
+      setBookingSuccess(true);
+      
+      // Redirect to orders page after success
+      setTimeout(() => router.push("/customer-portal/orders"), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Booking failed. Please try again.");
+      setBookingSuccess(false);
+    }
+  };
+
+  // Payment Close Handler
+  const handlePaymentClose = () => {
+    console.log('Payment modal closed');
+    setIsProcessingPayment(false);
+    setShowPaymentModal(false);
+    setSelectedPaymentMethod("");
+    setError("Payment was cancelled. Please try again.");
+  };
+
+  // Flutterwave Configuration
+  const getFlutterwaveConfig = () => {
+    const selectedRoom = getSelectedRoom();
+    const totalAmount = calculateTotalPrice();
+    
+    return {
+      public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY || '',
+      tx_ref: generateReference(),
+      amount: totalAmount,
+      currency: 'NGN',
+      payment_options: 'card,mobilemoney,ussd,banktransfer',
+      customer: {
+        email: user?.email || '',
+        phone_number: formData.customerPhone || '',
+        name: `${user?.firstName || ''} ${user?.lastName || ''}`,
+      },
+      customizations: {
+        title: 'GINILOG Accommodation Booking',
+        description: `Booking for ${selectedRoom?.roomType || 'Room'} - ${formData.startDate} to ${formData.endDate}`,
+        logo: 'https://your-logo-url.com/logo.png',
+      },
+      meta: {
+        room_id: formData.roomId,
+        accommodation_id: accommodationId,
+        user_id: user?.id || '',
+      },
+    };
+  };
+
+  // Paystack Configuration
+  const getPaystackConfig = () => {
+    const selectedRoom = getSelectedRoom();
+    const totalAmount = calculateTotalPrice();
+    
+    return {
+      publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
+      email: user?.email || '',
+      amount: totalAmount * 100, // Paystack uses kobo (multiply by 100)
+      reference: generateReference(),
+      currency: 'NGN',
+      metadata: {
+        custom_fields: [
+          {
+            display_name: "Room Type",
+            variable_name: "room_type",
+            value: selectedRoom?.roomType || '',
+          },
+          {
+            display_name: "Check-in",
+            variable_name: "check_in",
+            value: formData.startDate,
+          },
+          {
+            display_name: "Check-out",
+            variable_name: "check_out",
+            value: formData.endDate,
+          },
+          {
+            display_name: "Guests",
+            variable_name: "guests",
+            value: formData.guests.toString(),
+          },
+          {
+            display_name: "User ID",
+            variable_name: "user_id",
+            value: user?.id || '',
+          },
+          {
+            display_name: "Room ID",
+            variable_name: "room_id",
+            value: formData.roomId,
+          },
+          {
+            display_name: "Accommodation ID",
+            variable_name: "accommodation_id",
+            value: accommodationId,
+          }
+        ]
+      },
+    };
+  };
+
+  // Initialize Flutterwave
+  const initializeFlutterwave = useFlutterwave(getFlutterwaveConfig());
+  
+  // Initialize Paystack
+  const initializePaystack = usePaystackPayment(getPaystackConfig());
+
+  // Handle payment method selection and proceed
+  const handleProceedToPayment = async () => {
+    if (!selectedPaymentMethod) {
+      setError("Please select a payment method");
+      return;
+    }
+
+    setIsProcessingPayment(true);
+    setError(null);
+
+    try {
+      if (selectedPaymentMethod === "flutterwave") {
+        // Initialize Flutterwave payment
+        initializeFlutterwave({
+          callback: handlePaymentSuccess,
+          onClose: handlePaymentClose,
+        });
+      } else if (selectedPaymentMethod === "paystack") {
+        // Initialize Paystack payment
+        initializePaystack({
+          onSuccess: handlePaymentSuccess,
+          onClose: handlePaymentClose,
+        });
+      }
+    } catch (err) {
+      console.error('Payment initialization error:', err);
+      setError("Failed to initialize payment. Please try again.");
+      setIsProcessingPayment(false);
+    }
+  };
+
+  // Handle confirm booking - show payment modal
   const handleConfirmBooking = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -151,42 +334,15 @@ export default function AccommodationDetailsPage() {
       return;
     }
 
-    // Show confirmation modal
-    setShowConfirmModal(true);
-    setError(null);
-  };
-
-  // Handle booking confirmation
-  const handleConfirmBookingSubmit = async () => {
-    setIsBooking(true);
-    setError(null);
-
-    try {
-      const bookingData: AddCustomerBookedReservation = {
-        userId: user?.id || "",
-        customerName: `${user?.firstName || ""} ${user?.lastName || ""}`,
-        customerEmail: user?.email || "",
-        customerPhoneNumber: formData.customerPhone.trim(),
-        numberOfGuests: formData.guests,
-        reservationStartDate: formData.startDate,
-        reservationEndDate: formData.endDate,
-        comment: formData.comment,
-        userType: "Registered"
-      };
-
-      await bookAccommodation(formData.roomId, bookingData);
-      
-      setShowConfirmModal(false);
-      setBookingSuccess(true);
-      
-      // Redirect to orders page after success
-      setTimeout(() => router.push("/customer-portal/orders"), 2000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Booking failed. Please try again.");
-      setShowConfirmModal(false);
-    } finally {
-      setIsBooking(false);
+    // Check if user has email
+    if (!user?.email) {
+      setError("Please update your profile with an email address");
+      return;
     }
+
+    // Show payment modal
+    setShowPaymentModal(true);
+    setError(null);
   };
 
   const handleLogout = () => {
@@ -603,7 +759,7 @@ export default function AccommodationDetailsPage() {
                             <span className="text-sm font-medium text-gray-600">Total Amount:</span>
                             <span className="text-xl font-bold text-primary">₦{calculateTotalPrice().toLocaleString()}</span>
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">* No payment required at this time</p>
+                          <p className="text-xs text-gray-500 mt-1">* Payment will be processed after confirming</p>
                         </div>
                       )}
 
@@ -634,19 +790,19 @@ export default function AccommodationDetailsPage() {
         </div>
       </main>
 
-      {/* Confirmation Modal */}
-      <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
+      {/* Payment Method Modal */}
+      <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-center">Confirm Booking</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-center">Select Payment Method</DialogTitle>
             <DialogDescription className="text-center">
-              Please review your booking details before confirming
+              Choose your preferred payment method to complete the booking
             </DialogDescription>
           </DialogHeader>
           
           <div className="py-6">
             {/* Order Summary */}
-            <div className="bg-gray-50 rounded-lg p-4">
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
               <h4 className="font-semibold text-gray-700 mb-2">Booking Summary</h4>
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
@@ -682,6 +838,56 @@ export default function AccommodationDetailsPage() {
               </div>
             </div>
 
+            <RadioGroup 
+              value={selectedPaymentMethod} 
+              onValueChange={setSelectedPaymentMethod}
+              className="space-y-3"
+            >
+              <div 
+                className={`flex items-center space-x-3 border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                  selectedPaymentMethod === "flutterwave" 
+                    ? "border-primary bg-primary/5" 
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+                onClick={() => setSelectedPaymentMethod("flutterwave")}
+              >
+                <RadioGroupItem value="flutterwave" id="flutterwave" />
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                    <CreditCard className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <Label htmlFor="flutterwave" className="font-semibold cursor-pointer">
+                      Flutterwave
+                    </Label>
+                    <p className="text-xs text-gray-500">Pay with card, bank transfer, or USSD</p>
+                  </div>
+                </div>
+              </div>
+
+              <div 
+                className={`flex items-center space-x-3 border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                  selectedPaymentMethod === "paystack" 
+                    ? "border-primary bg-primary/5" 
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+                onClick={() => setSelectedPaymentMethod("paystack")}
+              >
+                <RadioGroupItem value="paystack" id="paystack" />
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="h-10 w-10 rounded-lg bg-green-50 flex items-center justify-center">
+                    <Wallet className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <Label htmlFor="paystack" className="font-semibold cursor-pointer">
+                      Paystack
+                    </Label>
+                    <p className="text-xs text-gray-500">Secure payment with cards, bank accounts, or QR</p>
+                  </div>
+                </div>
+              </div>
+            </RadioGroup>
+
             {error && (
               <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm flex items-center gap-2">
                 <AlertCircle className="h-4 w-4" />
@@ -694,7 +900,8 @@ export default function AccommodationDetailsPage() {
             <Button
               variant="outline"
               onClick={() => {
-                setShowConfirmModal(false);
+                setShowPaymentModal(false);
+                setSelectedPaymentMethod("");
                 setError(null);
               }}
               className="w-full sm:w-auto"
@@ -702,17 +909,17 @@ export default function AccommodationDetailsPage() {
               Cancel
             </Button>
             <Button
-              onClick={handleConfirmBookingSubmit}
-              disabled={isBooking}
+              onClick={handleProceedToPayment}
+              disabled={!selectedPaymentMethod || isProcessingPayment}
               className="w-full sm:w-auto"
             >
-              {isBooking ? (
+              {isProcessingPayment ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Confirming...
+                  Processing...
                 </>
               ) : (
-                "Confirm Booking"
+                "Proceed to Pay"
               )}
             </Button>
           </DialogFooter>
