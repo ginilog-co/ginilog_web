@@ -1073,18 +1073,18 @@ export async function trackOrder(trackingNumber: string): Promise<OrderTrackingR
 // ============ BOOKINGS FUNCTIONS ============
 
 export async function getAccommodations(): Promise<Accommodation[]> {
-  const response = await fetchWithAuth("Bookings/accomodation", { method: "GET" });
+  const response = await fetchWithAuth("bookings/accomodation", { method: "GET" });
   const data = await response.json();
   return extractArrayFromResponse(data);
 }
 
 export async function getAccommodationById(id: string): Promise<Accommodation> {
-  const response = await fetchWithAuth(`Bookings/accomodation/${id}`, { method: "GET" });
+  const response = await fetchWithAuth(`bookings/accomodation/${id}`, { method: "GET" });
   return response.json();
 }
 
 export async function getRooms(accommodationId: string): Promise<any[]> {
-  const response = await fetchWithAuth(`Bookings/accomodation-reservations?id=${accommodationId}`, { method: "GET" });
+  const response = await fetchWithAuth(`bookings/accomodation-reservations?id=${accommodationId}`, { method: "GET" });
   const data = await response.json();
   return extractArrayFromResponse(data);
 }
