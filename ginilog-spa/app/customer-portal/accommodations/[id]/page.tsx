@@ -178,7 +178,7 @@ export default function AccommodationDetailsPage() {
       // Call backend API to initialize payment based on selected method
       const endpoint = selectedPaymentMethod === 'flutterwave' 
         ? 'https://api-data-connection.ginilog.org/api/bookings/initialize-flutterwave-accomodation-reservations-customer'
-        : 'https://api-data-connection.ginilog.org/api/bookings/initialize-paystack-accomodation-reservations-customer';
+        : '/api/payments/paystack/initialize';
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
         method: 'POST',
