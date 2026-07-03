@@ -1092,7 +1092,7 @@ export async function getRooms(accommodationId: string): Promise<any[]> {
 export async function bookAccommodation(reservationId: string, bookingData: AddCustomerBookedReservation): Promise<any> {
   const response = await fetchWithAuth("bookings/accomodation-reservations-customer", {
     method: "POST",
-    "reservationId": reservationId,
+    headers: { reservationId },
     body: JSON.stringify(bookingData),
   });
   return response.json();
