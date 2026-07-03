@@ -1072,52 +1072,32 @@ export async function trackOrder(trackingNumber: string): Promise<OrderTrackingR
 
 // ============ BOOKINGS FUNCTIONS ============
 
-// ============ BOOKINGS FUNCTIONS ============
-
 export async function getAccommodations(): Promise<Accommodation[]> {
   const response = await fetchWithAuth("bookings/accomodation", { method: "GET" });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch accommodations: ${response.status}`);
-  }
   const data = await response.json();
   return extractArrayFromResponse(data);
 }
 
 export async function getAccommodationById(id: string): Promise<Accommodation> {
   const response = await fetchWithAuth(`bookings/accomodation/${id}`, { method: "GET" });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch accommodation ${id}: ${response.status}`);
-  }
-  const data = await response.json();
-  // Unwrap if the API wraps single responses too
-  return extractSingleFromResponse(data) || data;
+  return response.json();
 }
 
-export async function getRooms(accommodationId: string): Promise<Room[]> {
+export async function getRooms(accommodationId: string): Promise<any[]> {
   const response = await fetchWithAuth(`bookings/accomodation-reservations?id=${accommodationId}`, { method: "GET" });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch rooms for accommodation ${accommodationId}: ${response.status}`);
-  }
   const data = await response.json();
   return extractArrayFromResponse(data);
 }
 
-export async function bookAccommodation(reservationId: string, bookingData: AddCustomerBookedReservation): Promise<BookingResponse> {
+export async function bookAccommodation(reservationId: string, bookingData: AddCustomerBookedReservation): Promise<any> {
   const response = await fetchWithAuth("bookings/accomodation-reservations-customer", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Reservation-Id": reservationId, // Fixed: proper custom header format
-    },
+    headers: { reservationId },
     body: JSON.stringify(bookingData),
   });
-  if (!response.ok) {
-    throw new Error(`Failed to book accommodation: ${response.status}`);
-  }
-  const data = await response.json();
-  // Unwrap if the API wraps responses
-  return extractSingleFromResponse(data) || data;
+  return response.json();
 }
+
 // Enhanced booking function with CORS handling and retry logic
 export async function bookAccommodationWithRetry(
   reservationId: string,
