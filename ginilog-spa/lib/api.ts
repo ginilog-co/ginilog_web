@@ -1046,9 +1046,7 @@ export async function getCompanyById(id: string): Promise<Company> {
 export async function createOrder(companyId: string, orderData: AddOrder): Promise<any> {
   const response = await fetchWithAuth("logistics-controller/package-orders", {
     method: "POST",
-    headers: { 
-      "companyId": companyId  // Fixed: explicit header
-    },
+    headers: { companyId },
     body: JSON.stringify(orderData),
   });
   return response.json();
@@ -1091,13 +1089,10 @@ export async function getRooms(accommodationId: string): Promise<any[]> {
   return extractArrayFromResponse(data);
 }
 
-// Fixed: Proper header format with explicit reservationId
 export async function bookAccommodation(reservationId: string, bookingData: AddCustomerBookedReservation): Promise<any> {
   const response = await fetchWithAuth("bookings/accomodation-reservations-customer", {
     method: "POST",
-    headers: {
-      "reservationId": reservationId,  // Fixed: explicit header key-value
-    },
+    "reservationId": reservationId,
     body: JSON.stringify(bookingData),
   });
   return response.json();
@@ -1128,12 +1123,12 @@ export async function bookAccommodationWithRetry(
           throw new Error('No authentication token found. Please log in again.');
         }
         
-        // Fixed: Proper headers with explicit reservationId
+        // Prepare headers
         const headers: Record<string, string> = {
           "Content-Type": "application/json",
           "Accept": "application/json",
           "Authorization": `Bearer ${token}`,
-          "reservationId": reservationId,  // Fixed: explicit header
+          "reservationId": reservationId,
         };
         
         // Make the request
@@ -1161,13 +1156,11 @@ export async function bookAccommodationWithRetry(
           const refreshed = await refreshAccessToken();
           if (refreshed) {
             console.log('✅ Token refreshed, retrying...');
-            // Retry with new token and fixed headers
+            // Retry with new token
             const newToken = getToken();
-            const retryHeaders: Record<string, string> = {
-              "Content-Type": "application/json",
-              "Accept": "application/json",
+            const retryHeaders = {
+              ...headers,
               "Authorization": `Bearer ${newToken}`,
-              "reservationId": reservationId,  // Fixed: explicit header
             };
             
             const retryResponse = await fetchWithAuth(endpoint, {
@@ -1189,7 +1182,7 @@ export async function bookAccommodationWithRetry(
         // If we get here, try without the reservationId header (some APIs expect it differently)
         if (attempt === retries) {
           console.warn(`⚠️ Trying without reservationId header for ${endpoint}`);
-          const altHeaders: Record<string, string> = {
+          const altHeaders = {
             "Content-Type": "application/json",
             "Accept": "application/json",
             "Authorization": `Bearer ${token}`,
