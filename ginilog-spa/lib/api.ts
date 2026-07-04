@@ -26,6 +26,18 @@ function resolveApiUrl(): string {
 
 const API_URL = resolveApiUrl();
 
+function getApiBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    return "";
+  }
+  return API_URL;
+}
+
+function getProxyUrl(endpoint: string): string {
+  const cleanEndpoint = endpoint.startsWith("/") ? endpoint.slice(1) : endpoint;
+  return `/api/proxy/${cleanEndpoint}`;
+}
+
 // Enhanced fetch wrapper with timeout and retry logic
 async function fetchWithTimeout(
   url: string, 
@@ -226,7 +238,9 @@ async function fetchPublic(
   options: RequestInit = {}
 ): Promise<Response> {
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-  const url = `${API_URL}/api/${cleanEndpoint}`;
+  const url = typeof window !== 'undefined'
+    ? getProxyUrl(cleanEndpoint)
+    : `${getApiBaseUrl()}/api/${cleanEndpoint}`;
 
   console.log(`📡 Fetching (public): ${url}`);
   console.log(`📤 Request body:`, options.body);
@@ -308,7 +322,9 @@ async function fetchWithAuth(
   isRetry: boolean = false
 ): Promise<Response> {
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-  const url = `${API_URL}/api/${cleanEndpoint}`;
+  const url = typeof window !== 'undefined'
+    ? getProxyUrl(cleanEndpoint)
+    : `${getApiBaseUrl()}/api/${cleanEndpoint}`;
 
   console.log(`🔐 Fetching (auth): ${url}`);
 
@@ -1341,16 +1357,17 @@ export async function initializeFlutterwavePayment(
       ? amountOrData
       : { amount: amountOrData, email: email ?? "", fullName: fullName ?? "" };
 
-  // Map to API expected shape
+  // Map to API expected shape for Flutterwave booking initialization
   const body = {
     Amount: payload.amount,
     Email: payload.email,
-    FullName: payload.fullName || payload.fullName || "",
+    FullName: payload.fullName || "",
     PhoneNumber: payload.phoneNumber || undefined,
     TxRef: payload.tx_ref || undefined,
+    metadata: payload.metadata || undefined,
   };
 
-  const response = await fetchWithAuth("Wallet/initialize-flutterwave", {
+  const response = await fetchWithAuth("bookings/initialize-flutterwave-accomodation-reservations-customer", {
     method: "POST",
     body: JSON.stringify(body),
   });

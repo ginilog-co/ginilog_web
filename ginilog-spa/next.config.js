@@ -9,6 +9,10 @@ const nextConfig = {
         source: "/api/:path*",
         destination: `${API_BASE}/api/:path*`,
       },
+      {
+        source: "/api/proxy/:path*",
+        destination: `${API_BASE}/api/:path*`,
+      },
     ];
   },
   async headers() {
