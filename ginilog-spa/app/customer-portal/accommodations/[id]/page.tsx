@@ -8,6 +8,8 @@ import {
   bookAccommodation, 
   getStoredUser, 
   getProfile,
+  initializePaystackPayment,
+  initializeFlutterwavePayment,
   AddCustomerBookedReservation,
   logout,
   clearAuthData,
@@ -154,70 +156,60 @@ export default function AccommodationDetailsPage() {
     try {
       const totalAmount = calculateTotalPrice();
       const reference = generateReference();
-      
-      // Prepare payment data
-      const paymentData = {
-        amount: totalAmount,
-        email: user?.email || '',
-        reference: reference,
-        currency: 'NGN',
-        customerName: `${user?.firstName || ''} ${user?.lastName || ''}`,
-        customerPhone: formData.customerPhone,
-        metadata: {
-          room_id: formData.roomId,
-          accommodation_id: accommodationId,
-          user_id: user?.id || '',
-          room_type: getSelectedRoom()?.roomType || '',
-          check_in: formData.startDate,
-          check_out: formData.endDate,
-          guests: formData.guests,
-          booking_comment: formData.comment
-        }
+      const noOfDays = Math.ceil(
+        (new Date(formData.endDate).getTime() - new Date(formData.startDate).getTime()) /
+          (1000 * 60 * 60 * 24)
+      );
+
+      const paystackPayload = {
+        customerName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
+        customerPhoneNumber: formData.customerPhone,
+        customerEmail: user?.email || '',
+        numberOfGuests: formData.guests,
+        trnxReference: reference,
+        paymentChannel: 'paystack',
+        paymentStatus: true,
+        comment: formData.comment,
+        ticketClosed: true,
+        reservationStartDate: formData.startDate,
+        reservationEndDate: formData.endDate,
+        noOfDays,
+        staffId: user?.id || '',
+        staffName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
+        purchaseChannel: 'web',
+        userType: user?.userType || 'Registred User',
       };
 
-      // Call backend API to initialize payment based on selected method
-      const endpoint = selectedPaymentMethod === 'flutterwave' 
-        ? 'https://api-data-connection.ginilog.org/api/bookings/initialize-flutterwave-accomodation-reservations-customer'
-        : '/api/payments/paystack/initialize';
+      const flutterwavePayload = {
+        amount: totalAmount,
+        email: user?.email || '',
+        fullName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
+      };
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`,
-        },
-        body: JSON.stringify(paymentData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to initialize payment');
-      }
-
-      const data = await response.json();
-
-      // Redirect to payment URL (for Flutterwave) or show Paystack popup
+      let data: any;
       if (selectedPaymentMethod === 'flutterwave') {
-        // Flutterwave returns a payment link
-        if (data.data?.link) {
-          window.location.href = data.data.link;
-        } else if (data.data?.authorization_url) {
-          window.location.href = data.data.authorization_url;
-        } else {
-          throw new Error('No payment link received');
-        }
-      } else if (selectedPaymentMethod === 'paystack') {
-        // Paystack returns authorization URL
-        if (data.data?.authorization_url) {
-          window.location.href = data.data.authorization_url;
-        } else if (data.data?.link) {
-          window.location.href = data.data.link;
-        } else {
-          // If using Paystack inline, you can use their SDK
-          // For now, redirect to the payment page
-          throw new Error('No payment link received');
-        }
+        data = await initializeFlutterwavePayment(flutterwavePayload);
+      } else {
+        data = await initializePaystackPayment(paystackPayload);
       }
+
+      if (!data) {
+        throw new Error('Failed to initialize payment');
+      }
+
+      const result = data.data ?? data;
+      const paymentUrl =
+        result?.authorization_url ||
+        result?.link ||
+        result?.url ||
+        result?.payment_link;
+
+      if (!paymentUrl) {
+        console.error('Unexpected payment init response:', data);
+        throw new Error('No payment link received');
+      }
+
+      window.location.href = paymentUrl;
 
     } catch (err) {
       console.error('Payment initialization error:', err);

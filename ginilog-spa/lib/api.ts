@@ -449,6 +449,7 @@ export interface UserProfile {
   email: string;
   phoneNo: string;
   sex: string;
+  userType?: string;
   userStatus: boolean;
   profilePicture: string;
   referralCode: string;
@@ -1296,16 +1297,28 @@ export async function trackParcelOrBooking(
 
 // ============ PAYMENTS FUNCTIONS ============
 
-export async function initializePaystackPayment(
-  orderIdOrData: string | { amount: number; email: string; orderId?: string; metadata?: any },
-  amount?: number,
-  email?: string
-): Promise<any> {
-  const payload =
-    typeof orderIdOrData === "object"
-      ? orderIdOrData
-      : { amount: amount ?? 0, email: email ?? "", orderId: orderIdOrData };
+export interface PaystackReservationRequest {
+  customerName: string;
+  customerPhoneNumber: string;
+  customerEmail: string;
+  numberOfGuests: number;
+  trnxReference: string;
+  paymentChannel: string;
+  paymentStatus: boolean;
+  comment: string;
+  ticketClosed: boolean;
+  reservationStartDate: string;
+  reservationEndDate: string;
+  noOfDays: number;
+  staffId: string;
+  staffName: string;
+  purchaseChannel: string;
+  userType: string;
+}
 
+export async function initializePaystackPayment(
+  payload: PaystackReservationRequest | PaystackInitializeRequest
+): Promise<any> {
   const response = await fetchWithAuth("bookings/initialize-paystack-accomodation-reservations-customer", {
     method: "POST",
     body: JSON.stringify(payload),
