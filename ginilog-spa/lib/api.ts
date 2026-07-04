@@ -615,16 +615,31 @@ export interface Company {
   valueCharge: number;
 }
 
+// 
 export interface AddCustomerBookedReservation {
-  userId: string;
-  customerName: string;
-  customerPhoneNumber: string;
-  customerEmail: string;
-  numberOfGuests: number;
-  reservationStartDate: string;
-  reservationEndDate: string;
-  comment?: string;
-  userType?: string;
+  // Required fields
+  reservationId: string;          
+  userId: string;                  
+  customerName: string;            
+  customerPhoneNumber: string;     
+  customerEmail: string;           
+  numberOfGuests: number;          
+  reservationStartDate: string;    
+  reservationEndDate: string;      
+  
+
+  roomType?: string;               
+  roomNumber?: number;            
+  numberOfNights?: number;         
+  totalAmount?: number;            
+  comment?: string;                
+  userType?: string;               
+  paymentStatus?: boolean;        
+  
+  
+  bookingRefNo?: string;           
+  accomodationName?: string;       
+  accomodationType?: string;       
 }
 
 export interface AddOrder {
@@ -1089,22 +1104,149 @@ export async function getRooms(accommodationId: string): Promise<any[]> {
   return extractArrayFromResponse(data);
 }
 
-export async function bookAccommodation(reservationId: string, bookingData: AddCustomerBookedReservation): Promise<any> {
+// ============ UPDATED BOOKING FUNCTIONS ============
+
+/**
+ * Validates booking data before sending to API
+ * @param bookingData - The booking data to validate
+ * @throws Error if validation fails
+ */
+function validateBookingData(bookingData: AddCustomerBookedReservation): void {
+  const requiredFields: (keyof AddCustomerBookedReservation)[] = [
+    'reservationId',
+    'userId',
+    'customerName',
+    'customerPhoneNumber',
+    'customerEmail',
+    'numberOfGuests',
+    'reservationStartDate',
+    'reservationEndDate'
+  ];
+
+  const missingFields = requiredFields.filter(field => !bookingData[field]);
+  if (missingFields.length > 0) {
+    throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+  }
+
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(bookingData.customerEmail)) {
+    throw new Error('Invalid email format');
+  }
+
+  // Validate phone number (basic check)
+  if (!bookingData.customerPhoneNumber.match(/^\+?[\d\s-]{8,15}$/)) {
+    throw new Error('Invalid phone number format');
+  }
+
+  // Validate number of guests
+  if (bookingData.numberOfGuests < 1) {
+    throw new Error('Number of guests must be at least 1');
+  }
+
+  // Validate dates
+  const startDate = new Date(bookingData.reservationStartDate);
+  const endDate = new Date(bookingData.reservationEndDate);
+  
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    throw new Error('Invalid date format. Use ISO datetime (e.g., 2024-01-15T14:00:00)');
+  }
+  
+  if (startDate >= endDate) {
+    throw new Error('Reservation start date must be before end date');
+  }
+  
+  if (startDate < new Date()) {
+    throw new Error('Reservation start date cannot be in the past');
+  }
+}
+
+/**
+ * Calculates number of nights from start and end dates
+ */
+function calculateNights(startDate: string, endDate: string): number {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const diffTime = Math.abs(end.getTime() - start.getTime());
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * Simple booking function with validation
+ */
+export async function bookAccommodation(
+  bookingData: AddCustomerBookedReservation
+): Promise<any> {
+  // Validate required fields
+  validateBookingData(bookingData);
+  
+  // Calculate numberOfNights if not provided
+  if (!bookingData.numberOfNights) {
+    bookingData.numberOfNights = calculateNights(
+      bookingData.reservationStartDate,
+      bookingData.reservationEndDate
+    );
+  }
+  
+  // Set default values for optional fields
+  const payload = {
+    ...bookingData,
+    roomType: bookingData.roomType || 'standard',
+    roomNumber: bookingData.roomNumber || 0,
+    totalAmount: bookingData.totalAmount || 0,
+    comment: bookingData.comment || '',
+    userType: bookingData.userType || 'customer',
+    paymentStatus: bookingData.paymentStatus || false,
+  };
+  
+  console.log('📤 Booking payload:', payload);
+  
   const response = await fetchWithAuth("bookings/accomodation-reservations-customer", {
     method: "POST",
-    headers: { reservationId },
-    body: JSON.stringify(bookingData),
+    body: JSON.stringify(payload),
   });
+  
   return response.json();
 }
 
-// Enhanced booking function with CORS handling and retry logic
+/**
+ * Enhanced booking function with retry logic and multiple endpoint fallbacks
+ */
 export async function bookAccommodationWithRetry(
-  reservationId: string,
   bookingData: AddCustomerBookedReservation,
   retries: number = 3
 ): Promise<any> {
+  // Validate required fields
+  validateBookingData(bookingData);
+  
   let lastError: Error | null = null;
+  
+  // Calculate numberOfNights if not provided
+  if (!bookingData.numberOfNights) {
+    bookingData.numberOfNights = calculateNights(
+      bookingData.reservationStartDate,
+      bookingData.reservationEndDate
+    );
+  }
+  
+  // Set default values for optional fields
+  const payload = {
+    reservationId: bookingData.reservationId,
+    userId: bookingData.userId,
+    customerName: bookingData.customerName,
+    customerPhoneNumber: bookingData.customerPhoneNumber,
+    customerEmail: bookingData.customerEmail,
+    numberOfGuests: bookingData.numberOfGuests,
+    numberOfNights: bookingData.numberOfNights,
+    reservationStartDate: bookingData.reservationStartDate,
+    reservationEndDate: bookingData.reservationEndDate,
+    roomType: bookingData.roomType || 'standard',
+    roomNumber: bookingData.roomNumber || 0,
+    totalAmount: bookingData.totalAmount || 0,
+    comment: bookingData.comment || '',
+    userType: bookingData.userType || 'customer',
+    paymentStatus: bookingData.paymentStatus || false,
+  };
   
   // Define multiple endpoints to try
   const endpoints = [
@@ -1117,6 +1259,7 @@ export async function bookAccommodationWithRetry(
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         console.log(`🔄 Booking attempt ${attempt} with endpoint: ${endpoint}`);
+        console.log('📤 Payload:', JSON.stringify(payload, null, 2));
         
         const token = getToken();
         if (!token) {
@@ -1128,14 +1271,13 @@ export async function bookAccommodationWithRetry(
           "Content-Type": "application/json",
           "Accept": "application/json",
           "Authorization": `Bearer ${token}`,
-          "reservationId": reservationId,
         };
         
         // Make the request
         const response = await fetchWithAuth(endpoint, {
           method: "POST",
           headers,
-          body: JSON.stringify(bookingData),
+          body: JSON.stringify(payload),
         });
         
         if (response.ok) {
@@ -1145,9 +1287,11 @@ export async function bookAccommodationWithRetry(
         }
         
         // Handle specific status codes
-        if (response.status === 500) {
-          console.warn(`⚠️ Server error (500) with ${endpoint}, trying next...`);
-          continue;
+        if (response.status === 400) {
+          const errorData = await response.json();
+          const errorMessage = errorData.message || errorData.title || 'Invalid booking data';
+          console.error(`❌ Validation error:`, errorData);
+          throw new Error(errorMessage);
         }
         
         if (response.status === 401) {
@@ -1156,53 +1300,43 @@ export async function bookAccommodationWithRetry(
           const refreshed = await refreshAccessToken();
           if (refreshed) {
             console.log('✅ Token refreshed, retrying...');
-            // Retry with new token
-            const newToken = getToken();
-            const retryHeaders = {
-              ...headers,
-              "Authorization": `Bearer ${newToken}`,
-            };
-            
-            const retryResponse = await fetchWithAuth(endpoint, {
-              method: "POST",
-              headers: retryHeaders,
-              body: JSON.stringify(bookingData),
-            });
-            
-            if (retryResponse.ok) {
-              const result = await retryResponse.json();
-              console.log(`✅ Booking successful after token refresh`);
-              return result;
-            }
+            // Retry with new token (will use updated token from localStorage)
+            continue;
           } else {
             throw new Error('Your session has expired. Please log in again.');
           }
         }
         
-        // If we get here, try without the reservationId header (some APIs expect it differently)
+        if (response.status === 409) {
+          throw new Error('This room is already booked for the selected dates');
+        }
+        
+        if (response.status === 500) {
+          console.warn(`⚠️ Server error (500) with ${endpoint}, trying next...`);
+          // Don't retry immediately on 500, wait and try next endpoint
+          break;
+        }
+        
+        // If we get here, try without the reservationId in body (some APIs expect it differently)
         if (attempt === retries) {
-          console.warn(`⚠️ Trying without reservationId header for ${endpoint}`);
-          const altHeaders = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Authorization": `Bearer ${token}`,
-          };
-          
-          // Try with reservationId in body instead
-          const altData = {
-            ...bookingData,
-            reservationId: reservationId,
-          };
+          console.warn(`⚠️ Trying alternative payload format for ${endpoint}`);
+          const altPayload = { ...payload };
+          // Remove reservationId from body if it's being sent elsewhere
+          // Note: This is a fallback, ideally reservationId should be in body
           
           const altResponse = await fetchWithAuth(endpoint, {
             method: "POST",
-            headers: altHeaders,
-            body: JSON.stringify(altData),
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify(altPayload),
           });
           
           if (altResponse.ok) {
             const result = await altResponse.json();
-            console.log(`✅ Booking successful with reservationId in body`);
+            console.log(`✅ Booking successful with alternative payload format`);
             return result;
           }
         }
@@ -1218,6 +1352,15 @@ export async function bookAccommodationWithRetry(
         console.warn(`❌ Error with ${endpoint} attempt ${attempt}:`, error);
         lastError = error instanceof Error ? error : new Error(String(error));
         
+        // Don't retry on validation errors or booking conflicts
+        if (error instanceof Error && 
+            (error.message.includes('required') || 
+             error.message.includes('Invalid') ||
+             error.message.includes('already booked') ||
+             error.message.includes('expired'))) {
+          throw error;
+        }
+        
         // If it's a network/CORS error, wait longer before retry
         if (error instanceof Error && 
             (error.message.includes('NetworkError') || 
@@ -1225,9 +1368,6 @@ export async function bookAccommodationWithRetry(
              error.message.includes('Failed to fetch'))) {
           console.log(`⏳ Network/CORS error, waiting ${attempt * 2}s before retry...`);
           await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
-        } else if (error instanceof Error && error.message.includes('401')) {
-          // Don't retry on auth errors
-          throw error;
         }
       }
     }
@@ -1235,6 +1375,8 @@ export async function bookAccommodationWithRetry(
   
   throw lastError || new Error('All booking attempts failed. Please try again later.');
 }
+
+// ============ OTHER BOOKINGS FUNCTIONS ============
 
 export async function getCustomerBookings(): Promise<any[]> {
   const response = await fetchWithAuth("bookings/accomodation-reservations-customer", { method: "GET" });
