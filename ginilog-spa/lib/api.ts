@@ -404,6 +404,7 @@ export interface LoginResponse {
   userType: string;
   emailVerified: boolean;
   phoneVerified: boolean;
+  phoneNo?: string;
   fullName: string;
   profileImage: string;
 }
@@ -625,6 +626,8 @@ export interface AddCustomerBookedReservation {
   reservationEndDate: string;
   comment?: string;
   userType?: string;
+
+  
 }
 
 export interface AddOrder {
@@ -1293,10 +1296,19 @@ export async function trackParcelOrBooking(
 
 // ============ PAYMENTS FUNCTIONS ============
 
-export async function initializePaystackPayment(orderId: string, amount: number, email: string): Promise<any> {
+export async function initializePaystackPayment(
+  orderIdOrData: string | { amount: number; email: string; orderId?: string; metadata?: any },
+  amount?: number,
+  email?: string
+): Promise<any> {
+  const payload =
+    typeof orderIdOrData === "object"
+      ? orderIdOrData
+      : { amount: amount ?? 0, email: email ?? "", orderId: orderIdOrData };
+
   const response = await fetchWithAuth("bookings/initialize-paystack-accomodation-reservations-customer", {
     method: "POST",
-    body: JSON.stringify({ amount, email, orderId }),
+    body: JSON.stringify(payload),
   });
   return response.json();
 }
@@ -1306,12 +1318,59 @@ export async function verifyPaystackPayment(reference: string): Promise<any> {
   return response.json();
 }
 
-export async function initializeFlutterwavePayment(amount: number, email: string, fullName: string): Promise<any> {
+export async function initializeFlutterwavePayment(
+  amountOrData: number | FlutterwaveInitializeRequest,
+  email?: string,
+  fullName?: string
+): Promise<any> {
+  const payload =
+    typeof amountOrData === "object"
+      ? amountOrData
+      : { amount: amountOrData, email: email ?? "", fullName: fullName ?? "" };
+
+  // Map to API expected shape
+  const body = {
+    Amount: payload.amount,
+    Email: payload.email,
+    FullName: payload.fullName || payload.fullName || "",
+    PhoneNumber: payload.phoneNumber || undefined,
+    TxRef: payload.tx_ref || undefined,
+  };
+
   const response = await fetchWithAuth("Wallet/initialize-flutterwave", {
     method: "POST",
-    body: JSON.stringify({ Amount: amount, Email: email, FullName: fullName }),
+    body: JSON.stringify(body),
   });
   return response.json();
+}
+
+// Types and helper for payment-service compatibility
+export interface PaystackInitializeRequest {
+  amount: number;
+  email: string;
+  orderId?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface FlutterwaveInitializeRequest {
+  amount: number;
+  email: string;
+  fullName?: string;
+  phoneNumber?: string;
+  tx_ref?: string;
+  metadata?: Record<string, any>;
+}
+
+export async function verifyFlutterwavePayment(reference: string): Promise<any> {
+  // Attempt a couple of likely endpoints; primary one first
+  try {
+    const response = await fetchWithAuth(`Wallet/verify-flutterwave?reference=${encodeURIComponent(reference)}`, { method: 'GET' });
+    return response.json();
+  } catch (err) {
+    // Fallback to a generic endpoint
+    const fallback = await fetchWithAuth(`Wallet/verify?reference=${encodeURIComponent(reference)}`, { method: 'GET' });
+    return fallback.json();
+  }
 }
 
 // ============ NOTIFICATIONS FUNCTIONS ============
