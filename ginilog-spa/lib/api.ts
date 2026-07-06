@@ -1356,28 +1356,14 @@ export async function verifyPaystackPayment(reference: string): Promise<any> {
 }
 
 export async function initializeFlutterwavePayment(
-  amountOrData: number | FlutterwaveInitializeRequest,
-  email?: string,
-  fullName?: string
-): Promise<any> {
-  const payload =
-    typeof amountOrData === "object"
-      ? amountOrData
-      : { amount: amountOrData, email: email ?? "", fullName: fullName ?? "" };
-
-  // Map to API expected shape for Flutterwave booking initialization
-  const body = {
-    Amount: payload.amount,
-    Email: payload.email,
-    FullName: payload.fullName || "",
-    PhoneNumber: payload.phoneNumber || undefined,
-    TxRef: payload.tx_ref || undefined,
-    metadata: payload.metadata || undefined,
-  };
+ payload: PaystackReservationRequest | PaystackInitializeRequest
+): Promise<any>  {
+  
+ 
 
   const response = await fetchWithAuth("bookings/initialize-flutterwave-accomodation-reservations-customer", {
     method: "POST",
-    body: JSON.stringify(body),
+    body: JSON.stringify(payload),
   });
   return response.json();
 }

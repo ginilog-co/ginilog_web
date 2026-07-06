@@ -183,9 +183,24 @@ export default function AccommodationDetailsPage() {
       };
 
       const flutterwavePayload = {
-        amount: totalAmount,
-        email: user?.email || '',
-        fullName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
+       customerName: `${user?.firstName || ''} ${user?.lastName || ''} ${user?.email || ''}`.trim(),
+        customerPhoneNumber: formData.customerPhone,
+        customerEmail: user?.email || '',
+        numberOfGuests: formData.guests,
+        trnxReference: reference,
+        paymentChannel: 'paystack',
+        paymentStatus: true,
+        comment: formData.comment,
+        ticketClosed: true,
+        reservationStartDate: formData.startDate,
+        reservationEndDate: formData.endDate,
+        noOfDays,
+        reservationId: formData.roomId,
+       
+        staffId: user?.id || '',
+        staffName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
+        purchaseChannel: 'web',
+        userType: user?.userType || 'Registred User',
       };
 
       let data: any;
