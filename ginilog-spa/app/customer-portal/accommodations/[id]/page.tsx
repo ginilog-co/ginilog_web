@@ -174,6 +174,8 @@ export default function AccommodationDetailsPage() {
         reservationStartDate: formData.startDate,
         reservationEndDate: formData.endDate,
         noOfDays,
+        reservationId: formData.roomId,
+       
         staffId: user?.id || '',
         staffName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
         purchaseChannel: 'web',
@@ -199,7 +201,7 @@ export default function AccommodationDetailsPage() {
 
       const result = data.data ?? data;
       const paymentUrl =
-        result?.authorization_url ||
+        result?.authorizationUrl ||
         result?.link ||
         result?.url ||
         result?.payment_link;

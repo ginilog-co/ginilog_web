@@ -1343,6 +1343,9 @@ export async function initializePaystackPayment(
   const response = await fetchWithAuth("bookings/initialize-paystack-accomodation-reservations-customer", {
     method: "POST",
     body: JSON.stringify(payload),
+    headers: {
+        reservationId: "" + (payload as any).reservationId || "",
+      },
   });
   return response.json();
 }
