@@ -195,6 +195,7 @@ export default function AccommodationDetailsPage() {
         paymentChannel: 'paystack',
         paymentStatus: true,
         comment: formData.comment,
+        
         ticketClosed: true,
         reservationStartDate: formData.startDate,
         reservationEndDate: formData.endDate,
