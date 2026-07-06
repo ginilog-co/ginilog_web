@@ -162,7 +162,9 @@ export default function AccommodationDetailsPage() {
       );
 
       const paystackPayload = {
-        customerName: `${user?.firstName || ''} ${user?.lastName || ''} ${user?.email || ''}`.trim(),
+        customerName:
+          `${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
+          `${user?.email}`,
         customerPhoneNumber: formData.customerPhone,
         customerEmail: user?.email || '',
         numberOfGuests: formData.guests,
@@ -183,7 +185,9 @@ export default function AccommodationDetailsPage() {
       };
 
       const flutterwavePayload = {
-       customerName: `${user?.firstName || ''} ${user?.lastName || ''} ${user?.email || ''}`.trim(),
+       customerName:
+          `${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
+          `${user?.email}`,
         customerPhoneNumber: formData.customerPhone,
         customerEmail: user?.email || '',
         numberOfGuests: formData.guests,
