@@ -38,7 +38,8 @@ import {
   ChevronLeft,
   ChevronRight as ChevronRightIcon,
   CreditCard,
-  Wallet
+  Wallet,
+  User
 } from "lucide-react";
 import {
   Dialog,
@@ -81,6 +82,7 @@ export default function AccommodationDetailsPage() {
     startDate: "",
     endDate: "",
     guests: 1,
+    customerName: "",
     customerPhone: "",
     comment: ""
   });
@@ -163,8 +165,7 @@ export default function AccommodationDetailsPage() {
 
       const paystackPayload = {
         customerName:
-          `${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
-          `${user?.email}`,
+          formData.customerName,
         customerPhoneNumber: formData.customerPhone,
         customerEmail: user?.email || '',
         numberOfGuests: formData.guests,
@@ -186,8 +187,7 @@ export default function AccommodationDetailsPage() {
 
       const flutterwavePayload = {
        customerName:
-          `${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
-          `${user?.email}`,
+          formData.customerName,
         customerPhoneNumber: formData.customerPhone,
         customerEmail: user?.email || '',
         numberOfGuests: formData.guests,
@@ -255,6 +255,10 @@ export default function AccommodationDetailsPage() {
     e.preventDefault();
     
     // Validate form
+    if (!formData.customerName || formData.customerName.trim() === "") {
+      setError("Full name is required");
+      return;
+    }
     if (!formData.customerPhone || formData.customerPhone.trim() === "") {
       setError("Phone number is required");
       return;
@@ -641,6 +645,21 @@ export default function AccommodationDetailsPage() {
                         </div>
                       )}
                       
+                      <div className="space-y-2">
+                        <Label htmlFor="customerName" className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-gray-500" />
+                          Full Name <span className="text-red-500">*</span>
+                        </Label>
+                        <Input 
+                          id="customerName"
+                          type="text" 
+                          required 
+                          placeholder="Enter your full name"
+                          value={formData.customerName}
+                          onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+                        />
+                      </div>
+
                       <div className="space-y-2">
                         <Label htmlFor="customerPhone" className="flex items-center gap-2">
                           <Phone className="h-4 w-4 text-gray-500" />
