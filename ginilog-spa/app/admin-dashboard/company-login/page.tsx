@@ -335,7 +335,7 @@ export default function CompanyLogin() {
             <p className="mt-4 text-center text-xs text-gray-500">
               <Link href="/" className="hover:text-gray-700">← Back to Home</Link>
               {" · "}
-              <Link href="/admin-dashboard/admin-login" className="hover:text-primary">Super Admin Login</Link>
+              
             </p>
           </div>
         </div>
