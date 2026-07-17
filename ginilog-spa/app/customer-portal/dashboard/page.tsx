@@ -28,7 +28,10 @@ import {
   ChevronRight,
   LogOut as LogOutIcon,
   Sparkles,
-  Star
+  Star,
+  MapPin,
+  Phone,
+  Calendar,
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
@@ -45,6 +48,7 @@ import {
   Company
 } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
+import { TrackingModal } from "@/components/TrackingModal";
 
 function isUnauthorizedError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
@@ -79,11 +83,14 @@ export default function CustomerDashboard() {
   const [accommodations, setAccommodations] = useState<Accommodation[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [allOrders, setAllOrders] = useState<any[]>([]);
+  const [allBookings, setAllBookings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [trackingNumber, setTrackingNumber] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [needsManualLogin, setNeedsManualLogin] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -147,19 +154,38 @@ export default function CustomerDashboard() {
           console.error("Failed to fetch companies:", compsResult.reason);
         }
 
-        const orders = ordersResult.status === "fulfilled" ? ordersResult.value : [];
-        if (ordersResult.status === "rejected") {
+        // Store all orders and bookings
+        if (ordersResult.status === "fulfilled") {
+          setAllOrders(ordersResult.value || []);
+        } else {
           console.error("Failed to fetch orders:", ordersResult.reason);
+          setAllOrders([]);
         }
 
-        const bookings = bookingsResult.status === "fulfilled" ? bookingsResult.value : [];
-        if (bookingsResult.status === "rejected") {
+        if (bookingsResult.status === "fulfilled") {
+          setAllBookings(bookingsResult.value || []);
+        } else {
           console.error("Failed to fetch bookings:", bookingsResult.reason);
+          setAllBookings([]);
         }
+
+        // Get orders for recent activity
+        const orders = ordersResult.status === "fulfilled" ? ordersResult.value : [];
+        const bookings = bookingsResult.status === "fulfilled" ? bookingsResult.value : [];
 
         const combined = [
-          ...(orders || []).map((o: any) => ({ ...o, kind: "logistics", label: o.itemName || "Package", ref: o.trackingNum || o.id })),
-          ...(bookings || []).map((b: any) => ({ ...b, kind: "accommodation", label: b.accomodationName || "Hotel", ref: b.bookingRefNo || b.id })),
+          ...(orders || []).map((o: any) => ({ 
+            ...o, 
+            kind: "logistics", 
+            label: o.itemName || "Package", 
+            ref: o.trackingNum || o.id 
+          })),
+          ...(bookings || []).map((b: any) => ({ 
+            ...b, 
+            kind: "accommodation", 
+            label: b.accomodationName || "Hotel", 
+            ref: b.bookingRefNo || b.id 
+          })),
         ]
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .slice(0, 3);
@@ -186,8 +212,8 @@ export default function CustomerDashboard() {
 
   const handleTracking = (e: React.FormEvent) => {
     e.preventDefault();
-    if (trackingNumber) {
-      router.push(`/tracking?id=${encodeURIComponent(trackingNumber)}`);
+    if (trackingNumber.trim()) {
+      router.push(`/customer-portal/tracking?id=${encodeURIComponent(trackingNumber.trim())}`);
     }
   };
 
@@ -197,10 +223,11 @@ export default function CustomerDashboard() {
     router.push("/customer-portal/login");
   };
 
-  // Mobile menu navigation items - includes Logout as a menu item
+  // Mobile menu navigation items
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/customer-portal/dashboard" },
     { icon: ShoppingBag, label: "My Orders & Bookings", href: "/customer-portal/orders" },
+    { icon: Search, label: "Track Package", href: "#", isTrack: true },
     { icon: UserCircle, label: "Profile", href: "/customer-portal/profile" },
     { icon: LogOutIcon, label: "Logout", href: "#", isLogout: true },
   ];
@@ -275,7 +302,6 @@ export default function CustomerDashboard() {
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <Link href="/" className="text-2xl font-bold text-primary flex items-center gap-2">
-          
               GINILOG
             </Link>
 
@@ -287,6 +313,12 @@ export default function CustomerDashboard() {
               <Link href="/customer-portal/orders" className="text-gray-600 hover:text-gray-900 transition-colors">
                 My Orders & Bookings
               </Link>
+              <button
+                onClick={() => setIsTrackingModalOpen(true)}
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Track Package
+              </button>
               <Link href="/customer-portal/profile" className="text-gray-600 hover:text-gray-900 transition-colors">
                 Profile
               </Link>
@@ -379,7 +411,6 @@ export default function CustomerDashboard() {
                     <X className="h-5 w-5" />
                   </button>
                 </div>
-                {/* Quick stats in mobile menu */}
                 <div className="flex items-center gap-4 text-xs">
                   <div className="flex items-center gap-1">
                     <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
@@ -392,48 +423,72 @@ export default function CustomerDashboard() {
                 </div>
               </div>
 
-              {/* Mobile Menu Items - includes Logout */}
+              {/* Mobile Menu Items */}
               <nav className="p-4 space-y-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
-                {menuItems.map((item) => (
-                  item.isLogout ? (
-                    // Logout button in mobile menu
-                    <button
-                      key={item.label}
-                      onClick={() => {
-                        setIsMobileMenuOpen(false);
-                        handleLogout();
-                      }}
-                      className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-red-50 transition-colors group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-lg bg-red-50 group-hover:bg-red-100 flex items-center justify-center transition-colors">
-                          <item.icon className="h-4 w-4 text-red-600 group-hover:text-red-700 transition-colors" />
+                {menuItems.map((item) => {
+                  if (item.isLogout) {
+                    return (
+                      <button
+                        key={item.label}
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          handleLogout();
+                        }}
+                        className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-red-50 transition-colors group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-lg bg-red-50 group-hover:bg-red-100 flex items-center justify-center transition-colors">
+                            <item.icon className="h-4 w-4 text-red-600 group-hover:text-red-700 transition-colors" />
+                          </div>
+                          <span className="text-red-600 group-hover:text-red-700 font-medium transition-colors">
+                            {item.label}
+                          </span>
                         </div>
-                        <span className="text-red-600 group-hover:text-red-700 font-medium transition-colors">
-                          {item.label}
-                        </span>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-red-400 group-hover:text-red-500 transition-colors" />
-                    </button>
-                  ) : (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-lg bg-gray-100 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
-                          <item.icon className="h-4 w-4 text-gray-500 group-hover:text-primary transition-colors" />
+                        <ChevronRight className="h-4 w-4 text-red-400 group-hover:text-red-500 transition-colors" />
+                      </button>
+                    );
+                  } else if (item.isTrack) {
+                    return (
+                      <button
+                        key={item.label}
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          setIsTrackingModalOpen(true);
+                        }}
+                        className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-lg bg-gray-100 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+                            <item.icon className="h-4 w-4 text-gray-500 group-hover:text-primary transition-colors" />
+                          </div>
+                          <span className="text-gray-700 group-hover:text-primary font-medium transition-colors">
+                            {item.label}
+                          </span>
                         </div>
-                        <span className="text-gray-700 group-hover:text-primary font-medium transition-colors">
-                          {item.label}
-                        </span>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-primary transition-colors" />
-                    </Link>
-                  )
-                ))}
+                        <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-primary transition-colors" />
+                      </button>
+                    );
+                  } else {
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-lg bg-gray-100 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+                            <item.icon className="h-4 w-4 text-gray-500 group-hover:text-primary transition-colors" />
+                          </div>
+                          <span className="text-gray-700 group-hover:text-primary font-medium transition-colors">
+                            {item.label}
+                          </span>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-primary transition-colors" />
+                      </Link>
+                    );
+                  }
+                })}
               </nav>
             </div>
           </div>
@@ -477,18 +532,24 @@ export default function CustomerDashboard() {
           </Card>
           <Card className="shadow-md hover:shadow-lg transition-shadow">
             <CardContent className="p-6">
-              <form onSubmit={handleTracking} className="space-y-2">
-                <Label htmlFor="track" className="text-sm text-gray-500">Track Package/Booking</Label>
-                <div className="flex gap-2">
-                  <Input 
-                    id="track" 
-                    placeholder="Enter ID..." 
-                    value={trackingNumber}
-                    onChange={(e) => setTrackingNumber(e.target.value)}
-                  />
-                  <Button size="icon" type="submit"><Search className="h-4 w-4" /></Button>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Search className="h-4 w-4 text-primary" />
+                  <Label className="text-sm font-medium text-gray-700">
+                    Track Package or Booking
+                  </Label>
                 </div>
-              </form>
+                <Button 
+                  onClick={() => setIsTrackingModalOpen(true)}
+                  className="w-full"
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  Track Item
+                </Button>
+                <p className="text-xs text-gray-400">
+                  Click to track a package or booking
+                </p>
+              </div>
             </CardContent>
           </Card>
           <Card className="shadow-md hover:shadow-lg transition-shadow">
@@ -617,7 +678,10 @@ export default function CustomerDashboard() {
                 </CardContent>
               </Card>
             </Link>
-            <Link href="/tracking">
+            <button 
+              onClick={() => setIsTrackingModalOpen(true)}
+              className="w-full text-left"
+            >
               <Card className="hover:shadow-lg transition-shadow cursor-pointer hover:scale-[1.02] transform duration-200">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
@@ -631,7 +695,7 @@ export default function CustomerDashboard() {
                   </div>
                 </CardContent>
               </Card>
-            </Link>
+            </button>
           </div>
 
           {/* Recent Activity */}
@@ -671,6 +735,14 @@ export default function CustomerDashboard() {
           </Card>
         </div>
       </main>
+
+      {/* Tracking Modal */}
+      <TrackingModal
+        isOpen={isTrackingModalOpen}
+        onClose={() => setIsTrackingModalOpen(false)}
+        orders={allOrders}
+        bookings={allBookings}
+      />
     </div>
   );
 }
