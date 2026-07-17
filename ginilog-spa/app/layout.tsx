@@ -4,6 +4,13 @@ import "./globals.css";
 import { AppShell } from "@/components/app-shell";
 import { Analytics } from "@vercel/analytics/next";
 import { cn } from "@/lib/utils";
+import { DownloadAppBanner } from "@/components/DownloadAppBanner";
+
+// floating variant
+<DownloadAppBanner
+  variant="floating"
+  isDismissible={true}
+/>
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 

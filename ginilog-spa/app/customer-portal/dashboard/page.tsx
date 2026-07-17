@@ -32,6 +32,10 @@ import {
   MapPin,
   Phone,
   Calendar,
+  Smartphone,
+  Download,
+  Apple,
+  PlayCircle,
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
@@ -49,6 +53,7 @@ import {
 } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { TrackingModal } from "@/components/TrackingModal";
+import { DownloadAppBanner } from "@/components/DownloadAppBanner";
 
 function isUnauthorizedError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
@@ -91,6 +96,7 @@ export default function CustomerDashboard() {
   const [needsManualLogin, setNeedsManualLogin] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
+  const [showAppBanner, setShowAppBanner] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -489,6 +495,27 @@ export default function CustomerDashboard() {
                     );
                   }
                 })}
+
+                {/* Mobile App Download Section */}
+                <div className="border-t pt-4 mt-4">
+                  <div className="p-3 bg-gradient-to-r from-primary/5 to-blue-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Smartphone className="h-5 w-5 text-primary flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">Get the App</p>
+                        <p className="text-xs text-gray-500">Better experience on mobile</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        className="h-8 text-xs gap-1"
+                        onClick={() => window.open("/download-app", "_blank")}
+                      >
+                        <Download className="h-3 w-3" />
+                        Download
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </nav>
             </div>
           </div>
@@ -496,6 +523,17 @@ export default function CustomerDashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {/* Download App Banner */}
+        {showAppBanner && (
+          <div className="mb-6">
+            <DownloadAppBanner
+              variant="banner"
+              onClose={() => setShowAppBanner(false)}
+              isDismissible={true}
+            />
+          </div>
+        )}
+
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
