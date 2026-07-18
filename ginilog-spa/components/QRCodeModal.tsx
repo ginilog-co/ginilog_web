@@ -28,8 +28,9 @@ export function QRCodeModal({
   iosAppId = "6751465248",
   appDownloadUrl = "https://ginilog.com/download",
 }: QRCodeModalProps) {
-  const qrContainerRef = useRef<HTMLDivElement>(null);
-  const qrGeneratedRef = useRef<boolean>(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [qrError, setQrError] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [deviceType, setDeviceType] = useState<"android" | "ios" | "other">("other");
 
   // Clean device detection
@@ -37,22 +38,22 @@ export function QRCodeModal({
     if (typeof window === "undefined") return;
 
     const userAgent = navigator.userAgent.toLowerCase();
-    
+
     if (/android/i.test(userAgent)) {
       setDeviceType("android");
       return;
     }
-    
+
     if (/iphone|ipad|ipod/i.test(userAgent)) {
       setDeviceType("ios");
       return;
     }
-    
+
     if (/macintosh/i.test(userAgent) && navigator.maxTouchPoints > 1) {
       setDeviceType("ios");
       return;
     }
-    
+
     setDeviceType("other");
   }, []);
 
@@ -72,60 +73,44 @@ export function QRCodeModal({
     }
   };
 
-  // Generate QR code
+  const generateQRCode = async () => {
+    if (typeof window === "undefined") return;
+
+    setIsGenerating(true);
+    setQrError(false);
+
+    try {
+      const qrDataUrl = await QRCode.toDataURL(getSmartDownloadUrl(), {
+        width: 192,
+        margin: 2,
+        color: {
+          dark: "#1a1a1a",
+          light: "#ffffff",
+        },
+        errorCorrectionLevel: "H",
+      });
+
+      setQrDataUrl(qrDataUrl);
+    } catch (error) {
+      console.error("Failed to generate QR code:", error);
+      setQrDataUrl(null);
+      setQrError(true);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   useEffect(() => {
-    if (!isOpen || !qrContainerRef.current || qrGeneratedRef.current) return;
-
-    const generateQR = async () => {
-      try {
-        // Clear previous QR code
-        qrContainerRef.current!.innerHTML = "";
-
-        // Generate QR code with proper error handling
-        const qrDataUrl = await QRCode.toDataURL(getSmartDownloadUrl(), {
-          width: 192,
-          margin: 2,
-          color: {
-            dark: "#1a1a1a",
-            light: "#ffffff",
-          },
-          errorCorrectionLevel: "H",
-        });
-
-        // Create and append the QR image
-        const img = document.createElement("img");
-        img.src = qrDataUrl;
-        img.alt = "Scan to download Ginilog app";
-        img.className = "w-48 h-48";
-        qrContainerRef.current!.appendChild(img);
-        qrGeneratedRef.current = true;
-      } catch (error) {
-        console.error("Failed to generate QR code:", error);
-        // Show fallback with better visual
-        qrContainerRef.current!.innerHTML = `
-          <div class="w-48 h-48 bg-gray-100 flex items-center justify-center">
-            <div class="text-center">
-              <svg class="h-24 w-24 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
-              </svg>
-              <p class="text-xs text-gray-500 mt-2">Tap to retry</p>
-            </div>
-          </div>
-        `;
-      }
-    };
-
-    const timer = setTimeout(generateQR, 100);
-    return () => clearTimeout(timer);
+    if (!isOpen) return;
+    generateQRCode();
   }, [isOpen, androidAppId, iosAppId]);
 
   // Reset when modal closes
   useEffect(() => {
     if (!isOpen) {
-      qrGeneratedRef.current = false;
-      if (qrContainerRef.current) {
-        qrContainerRef.current.innerHTML = "";
-      }
+      setQrDataUrl(null);
+      setQrError(false);
+      setIsGenerating(false);
     }
   }, [isOpen]);
 
@@ -182,8 +167,35 @@ export function QRCodeModal({
           <div className="mb-4">{getStoreBadge()}</div>
 
           <div className="bg-white p-4 rounded-xl border-2 border-gray-200">
-            <div ref={qrContainerRef} className="w-48 h-48 bg-gray-100 flex items-center justify-center">
-              {/* QR code generated here */}
+            <div className="w-48 h-48 bg-gray-100 flex items-center justify-center">
+              {qrDataUrl && !qrError ? (
+                <img
+                  src={qrDataUrl}
+                  alt="Scan to download Ginilog app"
+                  className="w-48 h-48"
+                />
+              ) : qrError ? (
+                <div className="w-48 h-48 bg-gray-100 flex flex-col items-center justify-center text-center px-4">
+                  <svg
+                    className="h-16 w-16 text-gray-400 mb-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 8v4m0 4h.01M4.93 4.93l14.14 14.14M4.93 19.07L19.07 4.93"
+                    />
+                  </svg>
+                  <p className="text-xs text-gray-500">Unable to generate QR code.</p>
+                </div>
+              ) : (
+                <div className="w-48 h-48 bg-gray-100 flex items-center justify-center">
+                  <span className="text-xs text-gray-400">Generating QR code...</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -212,6 +224,14 @@ export function QRCodeModal({
               App Store
             </a>
           </div>
+
+          {qrError && (
+            <div className="mt-3 w-full flex justify-center">
+              <Button variant="secondary" className="w-full sm:w-auto" onClick={generateQRCode}>
+                Retry QR Code
+              </Button>
+            </div>
+          )}
 
           <div className="flex gap-3 mt-6 w-full">
             <Button variant="outline" className="flex-1" onClick={onClose}>
