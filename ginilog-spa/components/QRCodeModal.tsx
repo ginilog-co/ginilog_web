@@ -212,7 +212,7 @@ export function QRCodeModal({
               rel="noopener noreferrer"
               className="text-gray-500 hover:text-primary transition-colors"
             >
-              Google Play
+              Google PlayPlay
             </a>
             <span className="text-gray-300">|</span>
             <a
