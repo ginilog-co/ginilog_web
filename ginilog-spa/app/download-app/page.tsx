@@ -80,7 +80,7 @@ export default function DownloadAppPage() {
                 className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
                 onClick={() =>
                   window.open(
-                    "https://play.google.com/store/apps/details?id=com.ginilog",
+                    "https://play.google.com/store/apps/details?id=com.app.ginilog_customer_app",
                     "_blank"
                   )
                 }
@@ -103,7 +103,7 @@ export default function DownloadAppPage() {
               <Button
                 className="w-full bg-gray-900 hover:bg-gray-800"
                 onClick={() =>
-                  window.open("https://apps.apple.com/app/ginilog", "_blank")
+                  window.open("https://apps.apple.com/ng/app/ginilog/id6751465248", "_blank")
                 }
               >
                 <Apple className="h-5 w-5 mr-2" />
