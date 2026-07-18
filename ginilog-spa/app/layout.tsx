@@ -19,6 +19,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Ginilog - Logistics and Accommodation Solutions",
   description: "Your one-stop shop for logistics and accommodation services",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
