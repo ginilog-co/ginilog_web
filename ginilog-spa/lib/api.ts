@@ -1444,7 +1444,7 @@ export async function adminLogin(credentials: LoginRequest): Promise<LoginRespon
 }
 
 export async function loginManager(credentials: LoginRequest): Promise<LoginResponse> {
-  const response = await fetchPublic("admin-controller/login", {
+  const response = await fetchPublic("admin-controller/login-manager-staff", {
     method: "POST",
     body: JSON.stringify(credentials),
   });
