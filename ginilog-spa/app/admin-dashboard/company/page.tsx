@@ -11,23 +11,36 @@ import {
   Package, Building2, Megaphone, UserCheck, TrendingUp, LayoutDashboard,
   Menu, X, ChevronRight, Plus, Edit, Trash2, Eye, Filter,
   Download, RefreshCw, Settings, Home, BarChart3, MessageSquare,
-  Shield, UserPlus, Phone, Mail, MapPin, Car, IdCard, Star,
-  Calendar, Clock, CheckCircle, XCircle
+  Shield, UserPlus, Phone, Mail, MapPin, Car, IdCard
 } from "lucide-react";
 import {
   getStoredUser, logout, adminGetProfile,
   getAllOrders, getAllCustomerReservations, getAllUsers,
   updateOrderStatus, updateCustomerReservation,
   getAllStaff, getAllAdverts,
-  getAllDrivers, addDriver, updateDriver, deleteDriver,
-  updateDriverStatus, getDriverStats,
-  type Driver, type AddDriverRequest
 } from "@/lib/api";
 
 const ORDER_STATUSES = ["Open", "Accepted", "Picked", "Ongoing", "Completed", "Delivered", "Closed", "Cancelled", "Rejected"];
 const BOOKING_STATUSES = ["Pending", "Confirmed", "Completed", "Cancelled"];
 
 type Section = "dashboard" | "logistics" | "accommodation" | "staff" | "adverts" | "users" | "drivers" | "add-driver";
+
+// Driver interface
+interface Driver {
+  id: string;
+  firstName: string;
+  surName: string;
+  email: string;
+  phoneNo: string;
+  vehicleType: string;
+  licenseNumber: string;
+  status: "Available" | "On Delivery" | "Off Duty";
+  rating: number;
+  deliveries: number;
+  joined: string;
+  address: string;
+  emergencyContact: string;
+}
 
 export default function CompanyDashboard() {
   const router = useRouter();
@@ -39,15 +52,59 @@ export default function CompanyDashboard() {
   const [users, setUsers] = useState<any[]>([]);
   const [staff, setStaff] = useState<any[]>([]);
   const [adverts, setAdverts] = useState<any[]>([]);
-  const [drivers, setDrivers] = useState<Driver[]>([]);
-  const [driverStats, setDriverStats] = useState({ total: 0, available: 0, onDelivery: 0, offDuty: 0 });
+  const [drivers, setDrivers] = useState<Driver[]>([
+    {
+      id: "1",
+      firstName: "Mike",
+      surName: "Johnson",
+      email: "mike@company.com",
+      phoneNo: "08012345678",
+      vehicleType: "Motorcycle",
+      licenseNumber: "DL-2024-001",
+      status: "Available",
+      rating: 4.7,
+      deliveries: 145,
+      joined: "2024-01-10",
+      address: "123 Main St, Lagos",
+      emergencyContact: "08012345679"
+    },
+    {
+      id: "2",
+      firstName: "Sara",
+      surName: "Chen",
+      email: "sara@company.com",
+      phoneNo: "08087654321",
+      vehicleType: "Van",
+      licenseNumber: "DL-2024-002",
+      status: "On Delivery",
+      rating: 4.9,
+      deliveries: 203,
+      joined: "2023-11-15",
+      address: "456 Oak Ave, Abuja",
+      emergencyContact: "08087654322"
+    },
+    {
+      id: "3",
+      firstName: "Carlos",
+      surName: "Mendez",
+      email: "carlos@company.com",
+      phoneNo: "08055555555",
+      vehicleType: "Bicycle",
+      licenseNumber: "DL-2024-003",
+      status: "Off Duty",
+      rating: 4.3,
+      deliveries: 89,
+      joined: "2024-02-01",
+      address: "789 Pine Rd, Port Harcourt",
+      emergencyContact: "08055555556"
+    }
+  ]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [showAddDriver, setShowAddDriver] = useState(false);
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Driver form state
   const [driverForm, setDriverForm] = useState({
@@ -70,15 +127,13 @@ export default function CompanyDashboard() {
     }
     const fetchData = async () => {
       try {
-        const [profile, allOrders, allReservations, allUsers, allStaff, allAdverts, allDrivers, stats] = await Promise.all([
+        const [profile, allOrders, allReservations, allUsers, allStaff, allAdverts] = await Promise.all([
           adminGetProfile().catch(() => null),
           getAllOrders().catch(() => []),
           getAllCustomerReservations().catch(() => []),
           getAllUsers().catch(() => []),
           getAllStaff().catch(() => []),
           getAllAdverts().catch(() => []),
-          getAllDrivers().catch(() => []),
-          getDriverStats().catch(() => ({ total: 0, available: 0, onDelivery: 0, offDuty: 0 }))
         ]);
         setAdminProfile(profile);
         setOrders(allOrders || []);
@@ -86,8 +141,6 @@ export default function CompanyDashboard() {
         setUsers(allUsers || []);
         setStaff(allStaff || []);
         setAdverts(allAdverts || []);
-        setDrivers(allDrivers || []);
-        setDriverStats(stats || { total: 0, available: 0, onDelivery: 0, offDuty: 0 });
       } catch (err) {
         setError("Failed to load company data.");
         console.error(err);
@@ -134,108 +187,16 @@ export default function CompanyDashboard() {
     }
   };
 
-  // Driver CRUD operations with API integration
-  const handleAddDriver = async () => {
-    setIsSubmitting(true);
-    try {
-      const newDriver = await addDriver({
-        firstName: driverForm.firstName,
-        surName: driverForm.surName,
-        email: driverForm.email,
-        phoneNo: driverForm.phoneNo,
-        vehicleType: driverForm.vehicleType,
-        licenseNumber: driverForm.licenseNumber,
-        status: driverForm.status,
-        address: driverForm.address,
-        emergencyContact: driverForm.emergencyContact,
-      });
-      setDrivers(prev => [...prev, newDriver]);
-      // Refresh stats
-      const stats = await getDriverStats();
-      setDriverStats(stats);
-      resetDriverForm();
-      setShowAddDriver(false);
-      setActiveSection("drivers");
-    } catch (err) {
-      console.error("Failed to add driver:", err);
-      setError("Failed to add driver. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleEditDriver = (driver: Driver) => {
-    setEditingDriver(driver);
-    setDriverForm({
-      firstName: driver.firstName,
-      surName: driver.surName,
-      email: driver.email,
-      phoneNo: driver.phoneNo,
-      vehicleType: driver.vehicleType,
-      licenseNumber: driver.licenseNumber,
-      address: driver.address || "",
-      emergencyContact: driver.emergencyContact || "",
-      status: driver.status
-    });
-    setShowAddDriver(true);
-  };
-
-  const handleUpdateDriver = async () => {
-    if (!editingDriver) return;
-    setIsSubmitting(true);
-    try {
-      const updated = await updateDriver(editingDriver.id, {
-        firstName: driverForm.firstName,
-        surName: driverForm.surName,
-        email: driverForm.email,
-        phoneNo: driverForm.phoneNo,
-        vehicleType: driverForm.vehicleType,
-        licenseNumber: driverForm.licenseNumber,
-        status: driverForm.status,
-        address: driverForm.address,
-        emergencyContact: driverForm.emergencyContact,
-      });
-      setDrivers(prev => prev.map(d => d.id === editingDriver.id ? updated : d));
-      resetDriverForm();
-      setEditingDriver(null);
-      setShowAddDriver(false);
-      setActiveSection("drivers");
-    } catch (err) {
-      console.error("Failed to update driver:", err);
-      setError("Failed to update driver. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleDeleteDriver = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this driver?")) return;
-    try {
-      await deleteDriver(id);
-      setDrivers(prev => prev.filter(d => d.id !== id));
-      // Refresh stats
-      const stats = await getDriverStats();
-      setDriverStats(stats);
-    } catch (err) {
-      console.error("Failed to delete driver:", err);
-      setError("Failed to delete driver. Please try again.");
-    }
-  };
-
-  const handleDriverStatusChange = async (id: string, newStatus: "Available" | "On Delivery" | "Off Duty") => {
-    try {
-      const updated = await updateDriverStatus(id, newStatus);
-      setDrivers(prev => prev.map(d => d.id === id ? updated : d));
-      // Refresh stats
-      const stats = await getDriverStats();
-      setDriverStats(stats);
-    } catch (err) {
-      console.error("Failed to update driver status:", err);
-      setError("Failed to update driver status. Please try again.");
-    }
-  };
-
-  const resetDriverForm = () => {
+  // Driver CRUD operations
+  const handleAddDriver = () => {
+    const newDriver: Driver = {
+      id: Date.now().toString(),
+      ...driverForm,
+      rating: 0,
+      deliveries: 0,
+      joined: new Date().toISOString().split("T")[0]
+    };
+    setDrivers(prev => [...prev, newDriver]);
     setDriverForm({
       firstName: "",
       surName: "",
@@ -247,6 +208,58 @@ export default function CompanyDashboard() {
       emergencyContact: "",
       status: "Available"
     });
+    setShowAddDriver(false);
+    setActiveSection("drivers");
+  };
+
+  const handleEditDriver = (driver: Driver) => {
+    setEditingDriver(driver);
+    setDriverForm({
+      firstName: driver.firstName,
+      surName: driver.surName,
+      email: driver.email,
+      phoneNo: driver.phoneNo,
+      vehicleType: driver.vehicleType,
+      licenseNumber: driver.licenseNumber,
+      address: driver.address,
+      emergencyContact: driver.emergencyContact,
+      status: driver.status
+    });
+    setShowAddDriver(true);
+  };
+
+  const handleUpdateDriver = () => {
+    if (!editingDriver) return;
+    const updatedDrivers = drivers.map(d => 
+      d.id === editingDriver.id ? { ...d, ...driverForm } : d
+    );
+    setDrivers(updatedDrivers);
+    setEditingDriver(null);
+    setDriverForm({
+      firstName: "",
+      surName: "",
+      email: "",
+      phoneNo: "",
+      vehicleType: "",
+      licenseNumber: "",
+      address: "",
+      emergencyContact: "",
+      status: "Available"
+    });
+    setShowAddDriver(false);
+    setActiveSection("drivers");
+  };
+
+  const handleDeleteDriver = (id: string) => {
+    if (confirm("Are you sure you want to delete this driver?")) {
+      setDrivers(prev => prev.filter(d => d.id !== id));
+    }
+  };
+
+  const handleDriverStatusChange = (id: string, newStatus: "Available" | "On Delivery" | "Off Duty") => {
+    setDrivers(prev => prev.map(d => 
+      d.id === id ? { ...d, status: newStatus } : d
+    ));
   };
 
   const getStatusBadge = (status: string) => {
@@ -344,13 +357,12 @@ export default function CompanyDashboard() {
     if (section !== "add-driver") {
       setShowAddDriver(false);
       setEditingDriver(null);
-      resetDriverForm();
     }
   };
 
   const handleLogout = () => {
     logout();
-    router.push("/admin-dashboard/admin-login");
+    router.push("/admin-dashboard/company-login");
   };
 
   const SearchBar = () => (
@@ -493,12 +505,6 @@ export default function CompanyDashboard() {
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-600 text-sm">
               <AlertCircle className="h-4 w-4 flex-shrink-0" />
               <span>{error}</span>
-              <button 
-                onClick={() => setError(null)}
-                className="ml-auto text-red-600 hover:text-red-800"
-              >
-                <XCircle className="h-4 w-4" />
-              </button>
             </div>
           )}
 
@@ -550,7 +556,7 @@ export default function CompanyDashboard() {
               </div>
 
               {/* Quick-nav count cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleNav("logistics")}>
                   <CardContent className="p-5 flex items-center gap-4">
                     <div className="h-12 w-12 rounded-lg flex items-center justify-center bg-red-100" style={{ color: "#8B0000" }}>
@@ -570,17 +576,6 @@ export default function CompanyDashboard() {
                     <div>
                       <p className="text-2xl font-bold text-gray-900">{reservations.length}</p>
                       <p className="text-sm text-gray-500">Total Bookings</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleNav("drivers")}>
-                  <CardContent className="p-5 flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-lg flex items-center justify-center bg-green-100 text-green-600">
-                      <Users className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-gray-900">{driverStats.total}</p>
-                      <p className="text-sm text-gray-500">Total Drivers</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -637,6 +632,54 @@ export default function CompanyDashboard() {
                               </td>
                               <td className="py-2 px-4 text-gray-500">
                                 {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "—"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Recent Bookings */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-3">
+                  <CardTitle>Recent Bookings</CardTitle>
+                  <button
+                    onClick={() => handleNav("accommodation")}
+                    className="text-sm font-medium hover:underline"
+                    style={{ color: "#8B0000" }}
+                  >
+                    View all →
+                  </button>
+                </CardHeader>
+                <CardContent>
+                  {reservations.length === 0 ? (
+                    <p className="text-gray-500 text-sm text-center py-6">No bookings yet.</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b bg-gray-50">
+                            <th className="text-left py-2 px-4 font-medium text-gray-600">Accommodation</th>
+                            <th className="text-left py-2 px-4 font-medium text-gray-600">Guest</th>
+                            <th className="text-left py-2 px-4 font-medium text-gray-600">Check In</th>
+                            <th className="text-left py-2 px-4 font-medium text-gray-600">Check Out</th>
+                            <th className="text-left py-2 px-4 font-medium text-gray-600">Total</th>
+                            <th className="text-left py-2 px-4 font-medium text-gray-600">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {reservations.slice(0, 5).map((res) => (
+                            <tr key={res.id} className="border-b hover:bg-gray-50">
+                              <td className="py-2 px-4">{res.accomodationName}</td>
+                              <td className="py-2 px-4">{res.guestName || res.customerName || "—"}</td>
+                              <td className="py-2 px-4">{res.checkInDate ? new Date(res.checkInDate).toLocaleDateString() : "—"}</td>
+                              <td className="py-2 px-4">{res.checkOutDate ? new Date(res.checkOutDate).toLocaleDateString() : "—"}</td>
+                              <td className="py-2 px-4 font-medium">₦{(res.totalAmount || res.totalCost || 0).toLocaleString()}</td>
+                              <td className="py-2 px-4">
+                                <Badge className={getStatusBadge(res.bookingStatus)}>{res.bookingStatus || "Pending"}</Badge>
                               </td>
                             </tr>
                           ))}
@@ -737,13 +780,14 @@ export default function CompanyDashboard() {
                           <th className="text-left py-3 px-4 font-medium text-gray-600">Accommodation Name</th>
                           <th className="text-left py-3 px-4 font-medium text-gray-600">Customer Name</th>
                           <th className="text-left py-3 px-4 font-medium text-gray-600">Ticket Num</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-600">Check In</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-600">Check Out</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-600">Reservation Start Date</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-600">Reservation End Date</th>
                           <th className="text-left py-3 px-4 font-medium text-gray-600">Total Cost</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-600">Nights</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-600">Room</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-600">No Of Days</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-600">Room Number</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-600">Date</th>
                           <th className="text-left py-3 px-4 font-medium text-gray-600">Status</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-600">Update</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-600">Update Status</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -752,12 +796,15 @@ export default function CompanyDashboard() {
                             <td className="py-3 px-4">{res.accomodationName}</td>
                             <td className="py-3 px-4">{res.guestName || res.customerName || "—"}</td>
                             <td className="py-3 px-4 font-mono text-xs">{res.bookingRefNo || res.ticketNum || res.id?.slice(0, 8)}</td>
-                            <td className="py-3 px-4">{res.checkInDate ? new Date(res.checkInDate).toLocaleDateString() : "—"}</td>
-                            <td className="py-3 px-4">{res.checkOutDate ? new Date(res.checkOutDate).toLocaleDateString() : "—"}</td>
-                            <td className="py-3 px-4 font-medium">₦{(res.totalAmount || res.totalCost || 0).toLocaleString()}</td>
+                            <td className="py-3 px-4">{res.checkInDate ? new Date(res.checkInDate).toLocaleDateString() : res.reservationStartDate || "—"}</td>
+                            <td className="py-3 px-4">{res.checkOutDate ? new Date(res.checkOutDate).toLocaleDateString() : res.reservationEndDate || "—"}</td>
+                            <td className="py-3 px-4 font-medium text-primary">₦{(res.totalAmount || res.totalCost || 0).toLocaleString()}</td>
                             <td className="py-3 px-4">{res.numberOfNights || res.noOfDays || "—"}</td>
                             <td className="py-3 px-4">
                               <Badge className="bg-gray-100 text-gray-700">{res.roomNumber || "—"}</Badge>
+                            </td>
+                            <td className="py-3 px-4 text-gray-500">
+                              {res.createdAt ? new Date(res.createdAt).toLocaleDateString() : "—"}
                             </td>
                             <td className="py-3 px-4">
                               <Badge className={getStatusBadge(res.bookingStatus)}>{res.bookingStatus || "Pending"}</Badge>
@@ -797,8 +844,18 @@ export default function CompanyDashboard() {
                       style={{ backgroundColor: "#8B0000" }} 
                       className="text-white gap-1"
                       onClick={() => {
-                        resetDriverForm();
                         setEditingDriver(null);
+                        setDriverForm({
+                          firstName: "",
+                          surName: "",
+                          email: "",
+                          phoneNo: "",
+                          vehicleType: "",
+                          licenseNumber: "",
+                          address: "",
+                          emergencyContact: "",
+                          status: "Available"
+                        });
                         setShowAddDriver(true);
                         setActiveSection("add-driver");
                       }}
@@ -809,29 +866,25 @@ export default function CompanyDashboard() {
                 </CardHeader>
                 <CardContent>
                   {/* Driver stats summary */}
-                  <div className="grid grid-cols-4 gap-3 mb-4">
-                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                      <p className="text-sm text-blue-600 font-medium">Total</p>
-                      <p className="text-xl font-bold">{driverStats.total}</p>
-                    </div>
+                  <div className="grid grid-cols-3 gap-3 mb-4">
                     <div className="bg-green-50 p-3 rounded-lg border border-green-200">
                       <p className="text-sm text-green-600 font-medium">Available</p>
-                      <p className="text-xl font-bold">{driverStats.available}</p>
+                      <p className="text-xl font-bold">{drivers.filter(d => d.status === "Available").length}</p>
                     </div>
                     <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
                       <p className="text-sm text-orange-600 font-medium">On Delivery</p>
-                      <p className="text-xl font-bold">{driverStats.onDelivery}</p>
+                      <p className="text-xl font-bold">{drivers.filter(d => d.status === "On Delivery").length}</p>
                     </div>
                     <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
                       <p className="text-sm text-gray-600 font-medium">Off Duty</p>
-                      <p className="text-xl font-bold">{driverStats.offDuty}</p>
+                      <p className="text-xl font-bold">{drivers.filter(d => d.status === "Off Duty").length}</p>
                     </div>
                   </div>
 
                   {filteredDrivers.length === 0 ? (
                     <div className="text-center py-12">
                       <Users className="h-12 w-12 text-gray-200 mx-auto mb-3" />
-                      <p className="text-gray-500">No drivers found. Click "Add Driver" to get started.</p>
+                      <p className="text-gray-500">No drivers found.</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -868,7 +921,7 @@ export default function CompanyDashboard() {
                               </div>
                               <div>
                                 <p className="text-gray-500">Deliveries</p>
-                                <p className="font-medium">{driver.deliveries || 0}</p>
+                                <p className="font-medium">{driver.deliveries}</p>
                               </div>
                             </div>
 
@@ -928,7 +981,6 @@ export default function CompanyDashboard() {
                   onClick={() => {
                     setShowAddDriver(false);
                     setEditingDriver(null);
-                    resetDriverForm();
                     setActiveSection("drivers");
                   }}
                 >
@@ -1067,12 +1119,8 @@ export default function CompanyDashboard() {
                       type="submit"
                       style={{ backgroundColor: "#8B0000" }} 
                       className="text-white"
-                      disabled={isSubmitting}
                     >
-                      {isSubmitting ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : null}
-                      {isSubmitting ? "Saving..." : (editingDriver ? "Update Driver" : "Add Driver")}
+                      {editingDriver ? "Update Driver" : "Add Driver"}
                     </Button>
                     <Button 
                       type="button"
@@ -1080,7 +1128,6 @@ export default function CompanyDashboard() {
                       onClick={() => {
                         setShowAddDriver(false);
                         setEditingDriver(null);
-                        resetDriverForm();
                         setActiveSection("drivers");
                       }}
                     >

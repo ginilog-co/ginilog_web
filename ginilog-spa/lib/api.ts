@@ -648,6 +648,8 @@ export interface AddCustomerBookedReservation {
   reservationEndDate: string;
   comment?: string;
   userType?: string;
+
+  
 }
 
 export interface AddOrder {
@@ -762,158 +764,6 @@ export interface RegisterManagerRequest {
   CompanyName?: string;
   CompanyUserName?: string;
   CompanyType?: string[];
-}
-
-// ============ DRIVER / RIDER INTERFACES ============
-
-export interface Driver {
-  id: string;
-  firstName: string;
-  surName: string;
-  email: string;
-  phoneNo: string;
-  vehicleType: string;
-  licenseNumber: string;
-  status: "Available" | "On Delivery" | "Off Duty";
-  rating: number;
-  deliveries: number;
-  address: string;
-  emergencyContact: string;
-  joined: string;
-  companyId?: string;
-  companyName?: string;
-  profilePicture?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface AddDriverRequest {
-  firstName: string;
-  surName: string;
-  email: string;
-  phoneNo: string;
-  vehicleType: string;
-  licenseNumber: string;
-  status: "Available" | "On Delivery" | "Off Duty";
-  address?: string;
-  emergencyContact?: string;
-  companyId?: string;
-}
-
-export interface UpdateDriverRequest {
-  firstName?: string;
-  surName?: string;
-  email?: string;
-  phoneNo?: string;
-  vehicleType?: string;
-  licenseNumber?: string;
-  status?: "Available" | "On Delivery" | "Off Duty";
-  address?: string;
-  emergencyContact?: string;
-}
-
-// ============ DRIVER / RIDER API FUNCTIONS ============
-
-/**
- * Get all drivers for the current company
- */
-export async function getAllDrivers(): Promise<Driver[]> {
-  const response = await fetchWithAuth("admin-controller/drivers", { method: "GET" });
-  const data = await response.json();
-  return extractArrayFromResponse(data);
-}
-
-/**
- * Get a single driver by ID
- */
-export async function getDriverById(id: string): Promise<Driver> {
-  const response = await fetchWithAuth(`admin-controller/drivers/${id}`, { method: "GET" });
-  return response.json();
-}
-
-/**
- * Add a new driver/rider
- */
-export async function addDriver(driverData: AddDriverRequest): Promise<Driver> {
-  const response = await fetchWithAuth("admin-controller/drivers", {
-    method: "POST",
-    body: JSON.stringify(driverData),
-  });
-  return response.json();
-}
-
-/**
- * Update an existing driver
- */
-export async function updateDriver(id: string, driverData: UpdateDriverRequest): Promise<Driver> {
-  const response = await fetchWithAuth(`admin-controller/drivers/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(driverData),
-  });
-  return response.json();
-}
-
-/**
- * Delete a driver by ID
- */
-export async function deleteDriver(id: string): Promise<void> {
-  await fetchWithAuth(`admin-controller/drivers/${id}`, { method: "DELETE" });
-}
-
-/**
- * Update driver status
- */
-export async function updateDriverStatus(
-  id: string, 
-  status: "Available" | "On Delivery" | "Off Duty"
-): Promise<Driver> {
-  const response = await fetchWithAuth(`admin-controller/drivers/${id}/status`, {
-    method: "PATCH",
-    body: JSON.stringify({ status }),
-  });
-  return response.json();
-}
-
-/**
- * Get available drivers for assignment
- */
-export async function getAvailableDrivers(): Promise<Driver[]> {
-  const response = await fetchWithAuth("admin-controller/drivers/available", { method: "GET" });
-  const data = await response.json();
-  return extractArrayFromResponse(data);
-}
-
-/**
- * Assign a driver to an order
- */
-export async function assignDriverToOrder(orderId: string, driverId: string): Promise<any> {
-  const response = await fetchWithAuth(`logistics-controller/package-orders/${orderId}/assign`, {
-    method: "PUT",
-    body: JSON.stringify({ driverId }),
-  });
-  return response.json();
-}
-
-/**
- * Get drivers by company
- */
-export async function getDriversByCompany(companyId: string): Promise<Driver[]> {
-  const response = await fetchWithAuth(`admin-controller/companies/${companyId}/drivers`, { method: "GET" });
-  const data = await response.json();
-  return extractArrayFromResponse(data);
-}
-
-/**
- * Get driver statistics for dashboard
- */
-export async function getDriverStats(): Promise<{
-  total: number;
-  available: number;
-  onDelivery: number;
-  offDuty: number;
-}> {
-  const response = await fetchWithAuth("admin-controller/drivers/stats", { method: "GET" });
-  return response.json();
 }
 
 // ============ AUTH FUNCTIONS ============
@@ -1711,32 +1561,6 @@ export async function getAllAdverts(): Promise<any[]> {
   const response = await fetchWithAuth("admin-controller/advert", { method: "GET" });
   const data = await response.json();
   return extractArrayFromResponse(data);
-}
-
-// ============ COMPANY MANAGEMENT FUNCTIONS ============
-
-export async function getCompanyDrivers(companyId: string): Promise<Driver[]> {
-  const response = await fetchWithAuth(`admin-controller/companies/${companyId}/drivers`, { method: "GET" });
-  const data = await response.json();
-  return extractArrayFromResponse(data);
-}
-
-export async function updateCompanyProfile(data: Record<string, unknown>): Promise<any> {
-  const response = await fetchWithAuth("admin-controller/company-profile", {
-    method: "PUT",
-    body: JSON.stringify(data),
-  });
-  return response.json();
-}
-
-export async function getCompanyStats(): Promise<{
-  totalOrders: number;
-  totalRevenue: number;
-  activeDrivers: number;
-  pendingBookings: number;
-}> {
-  const response = await fetchWithAuth("admin-controller/company-stats", { method: "GET" });
-  return response.json();
 }
 
 // ============ EXPORT ALL FUNCTIONS ============
