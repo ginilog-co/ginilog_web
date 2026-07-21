@@ -1194,7 +1194,7 @@ export default function CompanyDashboard() {
           {activeSection === "adverts" && (
             <Card>
               <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <CardTitle>Advert List ({filteredAdverts.length})</CardTitle>
+                <CardTitle>Adverteddd List ({filteredAdverts.length})</CardTitle>
                 <SearchBar />
               </CardHeader>
               <CardContent>
