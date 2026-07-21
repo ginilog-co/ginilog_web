@@ -362,7 +362,7 @@ export default function CompanyDashboard() {
 
   const handleLogout = () => {
     logout();
-    router.push("/admin-dashboard/admin-login");
+    router.push("/admin-dashboard/company-login");
   };
 
   const SearchBar = () => (
