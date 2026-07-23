@@ -172,7 +172,6 @@
       "imgOptTimeoutInSeconds": 7,
       "imgOptMaxInputPixels": 268402689,
       "imgOptSequentialRead": null,
-      "imgOptSkipMetadata": null,
       "isrFlushToDisk": true,
       "workerThreads": false,
       "optimizeCss": false,
@@ -313,6 +312,10 @@
         {
           "source": "/api/:path*",
           "destination": "https://api-data-connection.ginilog.org/api/:path*"
+        },
+        {
+          "source": "/api/bookings/:path*",
+          "destination": "https://api-data-connection.ginilog.org/api/bookings/:path*"
         }
       ],
       "fallback": []

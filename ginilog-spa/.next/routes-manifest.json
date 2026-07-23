@@ -44,6 +44,11 @@
         "source": "/api/:path*",
         "destination": "https://api-data-connection.ginilog.org/api/:path*",
         "regex": "^/api(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))?(?:/)?$"
+      },
+      {
+        "source": "/api/bookings/:path*",
+        "destination": "https://api-data-connection.ginilog.org/api/bookings/:path*",
+        "regex": "^/api/bookings(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))?(?:/)?$"
       }
     ],
     "fallback": []
@@ -168,6 +173,12 @@
       "regex": "^/customer\\-portal/verify\\-email(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/customer\\-portal/verify\\-email(?:/)?$"
+    },
+    {
+      "page": "/download-app",
+      "regex": "^/download\\-app(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/download\\-app(?:/)?$"
     },
     {
       "page": "/landing-page",

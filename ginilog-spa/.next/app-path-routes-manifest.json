@@ -17,6 +17,7 @@
   "/customer-portal/profile/page": "/customer-portal/profile",
   "/customer-portal/register/page": "/customer-portal/register",
   "/customer-portal/verify-email/page": "/customer-portal/verify-email",
+  "/download-app/page": "/download-app",
   "/landing-page/page": "/landing-page",
   "/page": "/",
   "/privacy/page": "/privacy",

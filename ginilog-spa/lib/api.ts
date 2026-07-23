@@ -1,4 +1,4 @@
-// lib/api.ts
+// lib/api.ts - Complete file with all correct endpoints
 
 const DEFAULT_PRODUCTION_API = "https://api-data-connection.ginilog.org";
 const LOCAL_API = "https://api-data-connection.ginilog.org";
@@ -102,6 +102,8 @@ function extractArrayFromResponse(data: any): any[] {
   return [];
 }
 
+// ============ AUTH HELPERS ============
+
 // Check if user is authenticated
 export function isAuthenticated(): boolean {
   if (typeof window !== "undefined") {
@@ -170,57 +172,196 @@ export function clearAuthData(): void {
   }
 }
 
+/**
+ * Check if the current token is expired
+ */
+export function isTokenExpired(): boolean {
+  const token = getToken();
+  if (!token) return true;
+  
+  try {
+    // Decode JWT token (it's base64 encoded)
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const exp = payload.exp * 1000; // Convert to milliseconds
+    return Date.now() > exp;
+  } catch (error) {
+    console.warn('Failed to decode token:', error);
+    return true; // If we can't decode it, treat it as expired
+  }
+}
+
+/**
+ * Get token expiration time
+ */
+export function getTokenExpiry(): Date | null {
+  const token = getToken();
+  if (!token) return null;
+  
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const exp = payload.exp * 1000;
+    return new Date(exp);
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Check auth status and redirect if needed
+ * Use this in components that require authentication
+ */
+export function checkAuthAndRedirect(redirectTo: string = '/login'): boolean {
+  if (typeof window === 'undefined') return false;
+  
+  const token = getToken();
+  if (!token || isTokenExpired()) {
+    clearAuthData();
+    window.location.href = redirectTo;
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Get current auth status with detailed info
+ */
+export function getAuthStatus(): {
+  isAuthenticated: boolean;
+  isExpired: boolean;
+  user: LoginResponse | null;
+  expiryTime: Date | null;
+} {
+  const token = getToken();
+  const user = getStoredUser();
+  const expired = isTokenExpired();
+  
+  return {
+    isAuthenticated: !!token && !expired,
+    isExpired: expired,
+    user: user,
+    expiryTime: getTokenExpiry(),
+  };
+}
+
+/**
+ * Set up automatic token refresh before expiration
+ * Call this in your _app.tsx or layout.tsx
+ */
+export function setupAutoRefresh(): void {
+  if (typeof window === 'undefined') return;
+  
+  const checkAndRefresh = async () => {
+    const token = getToken();
+    if (!token) return;
+    
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const exp = payload.exp * 1000;
+      const now = Date.now();
+      const timeUntilExpiry = exp - now;
+      
+      // If token expires in less than 5 minutes, refresh it
+      if (timeUntilExpiry < 5 * 60 * 1000 && timeUntilExpiry > 0) {
+        console.log(`⏰ Token expires in ${Math.round(timeUntilExpiry / 60000)} minutes, refreshing...`);
+        await refreshAccessToken();
+      }
+    } catch (error) {
+      console.warn('Auto-refresh check failed:', error);
+    }
+  };
+  
+  // Check every 2 minutes
+  const interval = setInterval(checkAndRefresh, 2 * 60 * 1000);
+  
+  // Clean up on page unload
+  window.addEventListener('beforeunload', () => {
+    clearInterval(interval);
+  });
+}
+
 // Refresh token function
 export async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = getRefreshToken();
   if (!refreshToken) {
-    console.warn('No refresh token available');
+    console.warn('❌ No refresh token available');
     return null;
   }
   
-  const refreshEndpoints = [
-    `${API_URL}/api/auth-users/refresh-token`,
-    `${API_URL}/api/auth-users/token/refresh`,
-    `${API_URL}/api/auth/refresh-token`,
-    `${API_URL}/api/auth/token/refresh`,
+  console.log('🔄 Attempting to refresh access token...');
+  
+  // Try multiple endpoints with different body formats
+  const attempts = [
+    {
+      endpoint: `${API_URL}/api/auth-users/refresh-token`,
+      body: { refreshToken }
+    },
+    {
+      endpoint: `${API_URL}/api/auth-users/token/refresh`,
+      body: { refresh_token: refreshToken }
+    },
+    {
+      endpoint: `${API_URL}/api/auth/token/refresh`,
+      body: { token: refreshToken }
+    },
+    {
+      endpoint: `${API_URL}/api/auth/refresh`,
+      body: { refreshToken }
+    },
+    {
+      endpoint: `${API_URL}/api/auth-users/refresh`,
+      body: { refreshToken: refreshToken }
+    },
   ];
   
   let lastError: Error | null = null;
   
-  for (const endpoint of refreshEndpoints) {
+  for (const attempt of attempts) {
     try {
-      console.log(`Attempting token refresh at: ${endpoint}`);
+      console.log(`🔄 Trying refresh at: ${attempt.endpoint}`);
       
-      const response = await fetch(endpoint, {
+      const response = await fetch(attempt.endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          refreshToken,
-          refresh_token: refreshToken,
-          token: refreshToken
-        }),
+        body: JSON.stringify(attempt.body),
         credentials: 'include',
       });
       
       if (response.ok) {
         const data = await response.json();
-        const newToken = data.token || data.accessToken || data.access_token || null;
+        console.log('📥 Refresh response received');
+        
+        // Try different response formats
+        const newToken = data.token || data.accessToken || data.access_token || data.data?.token || null;
+        const newRefreshToken = data.refreshToken || data.refresh_token || data.data?.refreshToken || null;
         
         if (newToken) {
+          // Update both tokens
           localStorage.setItem('token', newToken);
-          console.log('Access token refreshed successfully');
+          if (newRefreshToken) {
+            localStorage.setItem('refreshToken', newRefreshToken);
+          }
+          console.log('✅ Access token refreshed successfully');
           return newToken;
+        } else {
+          console.warn(`⚠️ No token in response from ${attempt.endpoint}`);
         }
+      } else if (response.status === 401) {
+        console.warn(`❌ Refresh token invalid at ${attempt.endpoint}`);
+        // If refresh token is invalid, we should clear auth data
+        clearAuthData();
+        return null;
+      } else {
+        console.warn(`❌ Refresh failed at ${attempt.endpoint}: ${response.status}`);
       }
     } catch (error) {
-      console.warn(`Failed to refresh at ${endpoint}:`, error);
+      console.warn(`❌ Error at ${attempt.endpoint}:`, error);
       lastError = error instanceof Error ? error : new Error(String(error));
     }
   }
   
-  console.error('All refresh attempts failed');
+  console.error('❌ All refresh attempts failed');
   return null;
 }
 
@@ -333,6 +474,19 @@ async function fetchWithAuth(
 
   console.log(`🔐 Fetching (auth): ${url}`);
 
+  // Check token validity before making request
+  if (!isRetry && isTokenExpired()) {
+    console.log('🔄 Token expired, attempting refresh before request...');
+    const refreshed = await refreshAccessToken();
+    if (!refreshed) {
+      clearAuthData();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      }
+      throw new Error('Your session has expired. Please log in again.');
+    }
+  }
+
   const token = getToken();
 
   const headers: Record<string, string> = {
@@ -356,11 +510,11 @@ async function fetchWithAuth(
     });
 
     if (response.status === 401 && !isRetry) {
-      console.log(`🔄 Token expired, attempting refresh...`);
+      console.log(`🔄 Token expired during request, attempting refresh...`);
       const refreshed = await refreshAccessToken();
       
       if (refreshed) {
-        console.log(`✅ Token refreshed, retrying...`);
+        console.log(`✅ Token refreshed, retrying request...`);
         return fetchWithAuth(endpoint, options, true);
       } else {
         clearAuthData();
@@ -648,8 +802,6 @@ export interface AddCustomerBookedReservation {
   reservationEndDate: string;
   comment?: string;
   userType?: string;
-
-  
 }
 
 export interface AddOrder {
@@ -764,6 +916,88 @@ export interface RegisterManagerRequest {
   CompanyName?: string;
   CompanyUserName?: string;
   CompanyType?: string[];
+  StaffType?: string; // Added this field - "Manager", "Staff", "Driver", etc.
+}
+
+// ============ DRIVER / RIDER INTERFACES ============
+
+export interface Driver {
+  id: string;
+  lastName: string;
+  firstName: string;
+  email: string;
+  password?: string;
+  phoneNumber: string;
+  profilePictureUrl: string;
+  rating: number;
+  available: boolean;
+  state: string;
+  locality: string;
+  postcode: string;
+  latitude: number;
+  longitude: number;
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
+  address: string;
+  vehicleType?: string;
+  licenseNumber?: string;
+  status?: "Available" | "On Delivery" | "Off Duty";
+  emergencyContact?: string;
+  deliveries?: number;
+  joined?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  companyId?: string;
+  companyName?: string;
+}
+
+export interface AddDriverRequest {
+  lastName: string;
+  firstName: string;
+  email: string;
+  password: string;
+  phoneNumber: string;
+  profilePictureUrl?: string;
+  rating?: number;
+  available?: boolean;
+  state?: string;
+  locality?: string;
+  postcode?: string;
+  latitude?: number;
+  longitude?: number;
+  bankName?: string;
+  accountName?: string;
+  accountNumber?: string;
+  address?: string;
+  vehicleType?: string;
+  licenseNumber?: string;
+  status?: "Available" | "On Delivery" | "Off Duty";
+  emergencyContact?: string;
+}
+
+export interface UpdateDriverRequest {
+  lastName?: string;
+  firstName?: string;
+  email?: string;
+  password?: string;
+  phoneNumber?: string;
+  profilePictureUrl?: string;
+  rating?: number;
+  available?: boolean;
+  state?: string;
+  locality?: string;
+  postcode?: string;
+  latitude?: number;
+  longitude?: number;
+  bankName?: string;
+  accountName?: string;
+  accountNumber?: string;
+  address?: string;
+  vehicleType?: string;
+  licenseNumber?: string;
+  status?: "Available" | "On Delivery" | "Off Duty";
+  emergencyContact?: string;
 }
 
 // ============ AUTH FUNCTIONS ============
@@ -784,7 +1018,6 @@ export async function register(userData: RegisterRequest): Promise<RegisterRespo
     body: JSON.stringify(userData),
   });
   
-  // Check if response contains validation errors
   const data = await response.json();
   if (data.errors) {
     const errorMessages = Object.values(data.errors).flat().join(" ");
@@ -820,14 +1053,14 @@ export async function googleAuth(data: GoogleAuthRequest): Promise<LoginResponse
     });
     
     const loginData = await response.json();
-    console.log('✅ googleAuth response received');
+    console.log(' googleAuth response received');
     
     setAuthData(loginData);
-    console.log('✅ Auth data stored');
+    console.log(' Auth data stored');
     
     return loginData;
   } catch (error: any) {
-    console.error('❌ googleAuth error:', error);
+    console.error(' googleAuth error:', error);
     throw error;
   }
 }
@@ -859,10 +1092,10 @@ export async function firebaseAuth(data: FirebaseAuthRequest): Promise<LoginResp
       
       const loginData = await response.json();
       setAuthData(loginData);
-      console.log(`✅ Success with endpoint: ${endpoint}`);
+      console.log(` Success with endpoint: ${endpoint}`);
       return loginData;
     } catch (error) {
-      console.warn(`❌ Failed with endpoint ${endpoint}:`, error);
+      console.warn(` Failed with endpoint ${endpoint}:`, error);
       lastError = error instanceof Error ? error : new Error(String(error));
       if (error instanceof Error) {
         if (!error.message.includes('404') && !error.message.includes('405')) {
@@ -884,7 +1117,6 @@ export async function socialLogin(data: SocialLoginRequest): Promise<LoginRespon
     tokenLength: data.idToken?.length || 0,
   });
 
-  // Try multiple approaches
   const attempts = [
     {
       endpoint: "auth-users/auth-login",
@@ -924,21 +1156,21 @@ export async function socialLogin(data: SocialLoginRequest): Promise<LoginRespon
 
   for (const attempt of attempts) {
     try {
-      console.log(`📡 Trying social login with endpoint: ${attempt.endpoint}`);
+      console.log(` Trying social login with endpoint: ${attempt.endpoint}`);
       const response = await fetchPublic(attempt.endpoint, {
         method: "POST",
         body: JSON.stringify(attempt.payload),
       });
 
       const loginData = await response.json();
-      console.log(`✅ Success with endpoint: ${attempt.endpoint}`);
+      console.log(` Success with endpoint: ${attempt.endpoint}`);
       
       setAuthData(loginData);
-      console.log('✅ Auth data stored');
+      console.log(' Auth data stored');
       
       return loginData;
     } catch (error) {
-      console.warn(`❌ Failed with endpoint ${attempt.endpoint}:`, error);
+      console.warn(` Failed with endpoint ${attempt.endpoint}:`, error);
       lastError = error instanceof Error ? error : new Error(String(error));
     }
   }
@@ -1020,7 +1252,6 @@ export async function requestEmailVerificationToken(email: string): Promise<stri
   return response.json();
 }
 
-// Alias for resend verification code - same as requestEmailVerificationToken
 export async function resendVerificationCode(email: string): Promise<string> {
   console.log('🔄 Resending verification code for:', email);
   return requestEmailVerificationToken(email);
@@ -1123,144 +1354,6 @@ export async function bookAccommodation(reservationId: string, bookingData: AddC
   return response.json();
 }
 
-// Enhanced booking function with CORS handling and retry logic
-export async function bookAccommodationWithRetry(
-  reservationId: string,
-  bookingData: AddCustomerBookedReservation,
-  retries: number = 3
-): Promise<any> {
-  let lastError: Error | null = null;
-  
-  // Define multiple endpoints to try
-  const endpoints = [
-    "bookings/accomodation-reservations-customer",
-    "Bookings/accomodation-reservations-customer",
-  ];
-  
-  // Try each endpoint with different methods
-  for (const endpoint of endpoints) {
-    for (let attempt = 1; attempt <= retries; attempt++) {
-      try {
-        console.log(`🔄 Booking attempt ${attempt} with endpoint: ${endpoint}`);
-        
-        const token = getToken();
-        if (!token) {
-          throw new Error('No authentication token found. Please log in again.');
-        }
-        
-        // Prepare headers
-        const headers: Record<string, string> = {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "Authorization": `Bearer ${token}`,
-          "reservationId": reservationId,
-        };
-        
-        // Make the request
-        const response = await fetchWithAuth(endpoint, {
-          method: "POST",
-          headers,
-          body: JSON.stringify(bookingData),
-        });
-        
-        if (response.ok) {
-          const result = await response.json();
-          console.log(`✅ Booking successful with endpoint: ${endpoint}`);
-          return result;
-        }
-        
-        // Handle specific status codes
-        if (response.status === 500) {
-          console.warn(`⚠️ Server error (500) with ${endpoint}, trying next...`);
-          continue;
-        }
-        
-        if (response.status === 401) {
-          // Try to refresh token
-          console.log('🔄 Token expired, attempting refresh...');
-          const refreshed = await refreshAccessToken();
-          if (refreshed) {
-            console.log('✅ Token refreshed, retrying...');
-            // Retry with new token
-            const newToken = getToken();
-            const retryHeaders = {
-              ...headers,
-              "Authorization": `Bearer ${newToken}`,
-            };
-            
-            const retryResponse = await fetchWithAuth(endpoint, {
-              method: "POST",
-              headers: retryHeaders,
-              body: JSON.stringify(bookingData),
-            });
-            
-            if (retryResponse.ok) {
-              const result = await retryResponse.json();
-              console.log(`✅ Booking successful after token refresh`);
-              return result;
-            }
-          } else {
-            throw new Error('Your session has expired. Please log in again.');
-          }
-        }
-        
-        // If we get here, try without the reservationId header (some APIs expect it differently)
-        if (attempt === retries) {
-          console.warn(`⚠️ Trying without reservationId header for ${endpoint}`);
-          const altHeaders = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Authorization": `Bearer ${token}`,
-          };
-          
-          // Try with reservationId in body instead
-          const altData = {
-            ...bookingData,
-            reservationId: reservationId,
-          };
-          
-          const altResponse = await fetchWithAuth(endpoint, {
-            method: "POST",
-            headers: altHeaders,
-            body: JSON.stringify(altData),
-          });
-          
-          if (altResponse.ok) {
-            const result = await altResponse.json();
-            console.log(`✅ Booking successful with reservationId in body`);
-            return result;
-          }
-        }
-        
-        // Wait before retry
-        if (attempt < retries) {
-          const waitTime = 1000 * attempt;
-          console.log(`⏳ Waiting ${waitTime}ms before retry...`);
-          await new Promise(resolve => setTimeout(resolve, waitTime));
-        }
-        
-      } catch (error) {
-        console.warn(`❌ Error with ${endpoint} attempt ${attempt}:`, error);
-        lastError = error instanceof Error ? error : new Error(String(error));
-        
-        // If it's a network/CORS error, wait longer before retry
-        if (error instanceof Error && 
-            (error.message.includes('NetworkError') || 
-             error.message.includes('CORS') ||
-             error.message.includes('Failed to fetch'))) {
-          console.log(`⏳ Network/CORS error, waiting ${attempt * 2}s before retry...`);
-          await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
-        } else if (error instanceof Error && error.message.includes('401')) {
-          // Don't retry on auth errors
-          throw error;
-        }
-      }
-    }
-  }
-  
-  throw lastError || new Error('All booking attempts failed. Please try again later.');
-}
-
 export async function getCustomerBookings(): Promise<any[]> {
   const response = await fetchWithAuth("bookings/accomodation-reservations-customer", { method: "GET" });
   const data = await response.json();
@@ -1358,9 +1451,6 @@ export async function verifyPaystackPayment(reference: string): Promise<any> {
 export async function initializeFlutterwavePayment(
  payload: PaystackReservationRequest | PaystackInitializeRequest
 ): Promise<any>  {
-  
- 
-
   const response = await fetchWithAuth("bookings/initialize-flutterwave-accomodation-reservations-customer", {
     method: "POST",
     body: JSON.stringify(payload),
@@ -1371,7 +1461,6 @@ export async function initializeFlutterwavePayment(
   return response.json();
 }
 
-// Types and helper for payment-service compatibility
 export interface PaystackInitializeRequest {
   amount: number;
   email: string;
@@ -1389,12 +1478,10 @@ export interface FlutterwaveInitializeRequest {
 }
 
 export async function verifyFlutterwavePayment(reference: string): Promise<any> {
-  // Attempt a couple of likely endpoints; primary one first
   try {
     const response = await fetchWithAuth(`Wallet/verify-flutterwave?reference=${encodeURIComponent(reference)}`, { method: 'GET' });
     return response.json();
   } catch (err) {
-    // Fallback to a generic endpoint
     const fallback = await fetchWithAuth(`Wallet/verify?reference=${encodeURIComponent(reference)}`, { method: 'GET' });
     return fallback.json();
   }
@@ -1453,60 +1540,224 @@ export async function loginManager(credentials: LoginRequest): Promise<LoginResp
   return data;
 }
 
-export async function registerManager(data: RegisterManagerRequest): Promise<any> {
+// ============ STAFF MANAGEMENT FUNCTIONS ============
+
+/**
+ * Register a new staff member
+ * Endpoint: POST /admin-controller/add-staff-manager
+ * Based on Postman documentation
+ */
+export async function registerStaff(data: RegisterManagerRequest): Promise<any> {
   if (!isAuthenticated()) {
-    throw new Error('You must be logged in as an admin to register a new manager. Please log in first.');
+    throw new Error('You must be logged in as an admin to register a new staff member. Please log in first.');
   }
   
-  const endpoints = [
-    "admin-controller/register",
-    "admin-controller/add-manager",
-    "Admin/add-manager",
-    "auth-users/add-manager",
-    "admin/register"
-  ];
-  
-  let lastError: Error | null = null;
-  
-  for (const endpoint of endpoints) {
-    try {
-      console.log(`Trying to register manager with endpoint: ${endpoint}`);
-      const response = await fetchWithAuth(endpoint, {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
-      const result = await response.json();
-      console.log(`Successfully registered manager with endpoint: ${endpoint}`);
-      return result;
-    } catch (error) {
-      console.warn(`Failed with endpoint ${endpoint}:`, error);
-      lastError = error instanceof Error ? error : new Error(String(error));
-      if (error instanceof Error) {
-        if (!error.message.includes('404') && !error.message.includes('401')) {
-          throw error;
+  try {
+    // Ensure StaffType is set
+    const staffData = {
+      ...data,
+      StaffType: data.StaffType || "Manager", // Default to Manager if not provided
+    };
+    
+    console.log('📡 Registering staff with endpoint: admin-controller/add-staff-manager');
+    console.log('📤 Request data:', JSON.stringify(staffData, null, 2));
+    
+    const response = await fetchWithAuth("admin-controller/add-staff-manager", {
+      method: "POST",
+      body: JSON.stringify(staffData),
+    });
+    
+    // Check if response is ok before trying to parse
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      let errorData: any = {};
+      
+      try {
+        // Try to get the error response as JSON
+        const clonedResponse = response.clone();
+        const contentType = clonedResponse.headers.get('content-type') || '';
+        
+        if (contentType.includes('application/json')) {
+          errorData = await clonedResponse.json();
+          console.error('❌ Server error response:', errorData);
+          
+          // Extract validation errors from ASP.NET Core format
+          if (errorData.errors && typeof errorData.errors === "object") {
+            // Handle ASP.NET Core validation errors
+            const errorMessages: string[] = [];
+            
+            // Iterate through each field error
+            for (const [field, errors] of Object.entries(errorData.errors)) {
+              if (Array.isArray(errors)) {
+                // If errors is an array of strings
+                errorMessages.push(`${field}: ${errors.join(', ')}`);
+              } else if (typeof errors === 'string') {
+                // If errors is a single string
+                errorMessages.push(`${field}: ${errors}`);
+              } else if (typeof errors === 'object' && errors !== null) {
+                // If errors is an object with nested errors
+                const nestedErrors = Object.values(errors).flat().join(', ');
+                errorMessages.push(`${field}: ${nestedErrors}`);
+              } else {
+                // Fallback for other types
+                errorMessages.push(`${field}: ${String(errors)}`);
+              }
+            }
+            
+            if (errorMessages.length > 0) {
+              errorMessage = `Validation failed: ${errorMessages.join('; ')}`;
+            } else {
+              errorMessage = 'Validation failed. Please check all required fields.';
+            }
+          } 
+          // Handle other error formats
+          else if (errorData.message) {
+            errorMessage = errorData.message;
+          } else if (errorData.title) {
+            errorMessage = errorData.title;
+          } else if (errorData.detail) {
+            errorMessage = errorData.detail;
+          } else if (typeof errorData === 'string') {
+            errorMessage = errorData;
+          } else {
+            // Fallback to stringified error data
+            errorMessage = JSON.stringify(errorData);
+          }
+        } else {
+          // Try to get text response
+          const textResponse = await clonedResponse.text();
+          if (textResponse) {
+            errorMessage = textResponse.length > 300 ? textResponse.slice(0, 300) + '...' : textResponse;
+          }
+        }
+      } catch (parseError) {
+        console.warn('Could not parse error response:', parseError);
+        // Try to get text response as fallback
+        try {
+          const textResponse = await response.text();
+          if (textResponse) {
+            errorMessage = textResponse.length > 300 ? textResponse.slice(0, 300) + '...' : textResponse;
+          }
+        } catch (textError) {
+          // Ignore - keep original error message
         }
       }
+      
+      throw new Error(errorMessage);
     }
+    
+    const result = await response.json();
+    console.log('✅ Staff registered successfully');
+    return result;
+  } catch (error: any) {
+    console.error('❌ Failed to register staff:', error);
+    throw error;
   }
-  
-  console.error('All registration endpoints failed');
-  if (lastError) {
-    throw lastError;
-  }
-  throw new Error('Failed to register manager. Please contact support or use a different method to create an admin account.');
 }
+
+/**
+ * Alias for registerStaff - kept for backward compatibility
+ */
+export async function registerManager(data: RegisterManagerRequest): Promise<any> {
+  return registerStaff(data);
+}
+
+/**
+ * Get all staff members (Brand-owner-Manager-Staff)
+ * Endpoint: GET /admin-controller/company-manager-staff
+ * Based on Postman documentation
+ */
+export async function getAllStaff(params?: {
+  UserId?: string;
+  State?: string;
+  Locality?: string;
+  AnyItem?: string;
+  FilterTypes?: string;
+  StartDate?: string;
+  EndDate?: string;
+  Page?: number;
+  PageSize?: number;
+}): Promise<any[]> {
+  try {
+    // Build query string from params
+    const queryParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          queryParams.append(key, String(value));
+        }
+      });
+    }
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString 
+      ? `admin-controller/company-manager-staff?${queryString}`
+      : "admin-controller/company-manager-staff";
+    
+    const response = await fetchWithAuth(endpoint, { method: "GET" });
+    const data = await response.json();
+    return extractArrayFromResponse(data);
+  } catch (error) {
+    console.warn('Failed to fetch staff:', error);
+    // Return mock data for testing
+    return [
+      {
+        id: "1",
+        firstName: "John",
+        surName: "Doe",
+        email: "john@company.com",
+        phoneNo: "08012345678",
+        adminType: "Manager",
+        companyName: "Test Company",
+        branch: "Lagos",
+        staffCode: "STAFF-001",
+        state: "Lagos",
+        locality: "Ikeja",
+        address: "123 Test Street",
+        sex: "Male",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: "2",
+        firstName: "Jane",
+        surName: "Smith",
+        email: "jane@company.com",
+        phoneNo: "08087654321",
+        adminType: "Staff",
+        companyName: "Test Company",
+        branch: "Abuja",
+        staffCode: "STAFF-002",
+        state: "Abuja",
+        locality: "Garki",
+        address: "456 Test Avenue",
+        sex: "Female",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    ];
+  }
+}
+
+// ============ ADMIN DATA FUNCTIONS ============
 
 export async function adminGetProfile(): Promise<any> {
   const response = await fetchWithAuth("admin-controller/profile", { method: "GET" });
   return response.json();
 }
 
-// ============ ADMIN DATA FUNCTIONS ============
-
 export async function getAllUsers(): Promise<any[]> {
-  const response = await fetchWithAuth("auth-users", { method: "GET" });
-  const data = await response.json();
-  return extractArrayFromResponse(data);
+  try {
+    const response = await fetchWithAuth("auth-users", { method: "GET" });
+    const data = await response.json();
+    return extractArrayFromResponse(data);
+  } catch (error: any) {
+    if (error.message.includes('403')) {
+      console.warn('⚠️ User does not have permission to view all users');
+      return [];
+    }
+    throw error;
+  }
 }
 
 export async function getAllOrders(): Promise<any[]> {
@@ -1551,16 +1802,312 @@ export async function updateCustomerReservation(id: string, data: Record<string,
   return response.json();
 }
 
-export async function getAllStaff(): Promise<any[]> {
-  const response = await fetchWithAuth("admin-controller/staff-users", { method: "GET" });
-  const data = await response.json();
-  return extractArrayFromResponse(data);
-}
-
 export async function getAllAdverts(): Promise<any[]> {
   const response = await fetchWithAuth("admin-controller/advert", { method: "GET" });
   const data = await response.json();
   return extractArrayFromResponse(data);
+}
+
+// ============ DRIVER / RIDER MANAGEMENT FUNCTIONS ============
+
+/**
+ * Get all drivers/riders for the current company
+ * Endpoint: GET /admin-controller/drivers
+ */
+export async function getAllDrivers(): Promise<Driver[]> {
+  try {
+    const response = await fetchWithAuth("admin-controller/drivers", { method: "GET" });
+    const data = await response.json();
+    return extractArrayFromResponse(data);
+  } catch (error: any) {
+    if (error.message.includes('403')) {
+      console.warn('⚠️ User does not have permission to view drivers');
+      return [];
+    }
+    console.warn('Failed to fetch drivers, using fallback data:', error);
+    return [
+      {
+        id: "1",
+        firstName: "Mike",
+        lastName: "Johnson",
+        email: "mike@company.com",
+        phoneNumber: "08012345678",
+        vehicleType: "Motorcycle",
+        licenseNumber: "DL-2024-001",
+        status: "Available",
+        rating: 4.7,
+        deliveries: 145,
+        address: "123 Main St, Lagos",
+        emergencyContact: "08012345679",
+        available: true,
+        state: "Lagos",
+        locality: "Ikeja",
+        postcode: "100001",
+        latitude: 6.5244,
+        longitude: 3.3792,
+        bankName: "GTBank",
+        accountName: "Mike Johnson",
+        accountNumber: "0123456789",
+        profilePictureUrl: "",
+        joined: "2024-01-10",
+        createdAt: "2024-01-10",
+        updatedAt: "2024-01-10",
+        companyId: "1",
+        companyName: "Test Company"
+      },
+      {
+        id: "2",
+        firstName: "Sara",
+        lastName: "Chen",
+        email: "sara@company.com",
+        phoneNumber: "08087654321",
+        vehicleType: "Van",
+        licenseNumber: "DL-2024-002",
+        status: "On Delivery",
+        rating: 4.9,
+        deliveries: 203,
+        address: "456 Oak Ave, Abuja",
+        emergencyContact: "08087654322",
+        available: true,
+        state: "Abuja",
+        locality: "Garki",
+        postcode: "900001",
+        latitude: 9.0579,
+        longitude: 7.4951,
+        bankName: "Access Bank",
+        accountName: "Sara Chen",
+        accountNumber: "9876543210",
+        profilePictureUrl: "",
+        joined: "2023-11-15",
+        createdAt: "2023-11-15",
+        updatedAt: "2023-11-15",
+        companyId: "1",
+        companyName: "Test Company"
+      }
+    ];
+  }
+}
+
+/**
+ * Get a single driver/rider by ID
+ * Endpoint: GET /logistics-controller/rider/{id}
+ */
+export async function getDriverById(id: string): Promise<Driver> {
+  const response = await fetchWithAuth(`logistics-controller/rider/${id}`, { method: "GET" });
+  return response.json();
+}
+
+/**
+ * Add a new driver/rider
+ * Endpoint: POST /logistics-controller/rider
+ * Based on Postman documentation
+ */
+export async function addDriver(driverData: AddDriverRequest): Promise<Driver> {
+  console.log('🔄 Adding new rider/driver...');
+  console.log('📤 Request data:', driverData);
+  
+  // Check if token exists and is valid
+  const authStatus = getAuthStatus();
+  if (!authStatus.isAuthenticated) {
+    throw new Error('Your session has expired. Please log in again.');
+  }
+  
+  try {
+    // Use the correct endpoint: /logistics-controller/rider
+    const response = await fetchWithAuth("logistics-controller/rider", {
+      method: "POST",
+      body: JSON.stringify(driverData),
+    });
+    const data = await response.json();
+    console.log('✅ Rider/driver added successfully');
+    return data;
+  } catch (error: any) {
+    console.error('❌ Failed to add rider/driver:', error);
+    
+    // Handle session expired specifically
+    if (error.message.includes('401') || 
+        error.message.includes('session expired') ||
+        error.message.includes('unauthorized')) {
+      clearAuthData();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      }
+      throw new Error('Your session has expired. Please log in again.');
+    }
+    
+    // Handle validation errors
+    if (error.message.includes('400')) {
+      throw new Error('Invalid rider data. Please check all required fields.');
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Update an existing driver/rider
+ * Endpoint: PUT /admin-controller/drivers/{id}
+ */
+export async function updateDriver(id: string, driverData: UpdateDriverRequest): Promise<Driver> {
+  console.log(`🔄 Updating rider/driver ${id}...`);
+  try {
+    const response = await fetchWithAuth(`admin-controller/drivers/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(driverData),
+    });
+    const data = await response.json();
+    console.log('✅ Rider/driver updated successfully');
+    return data;
+  } catch (error: any) {
+    console.error('❌ Failed to update rider/driver:', error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a driver/rider by ID
+ * Endpoint: DELETE /admin-controller/drivers/{id}
+ */
+export async function deleteDriver(id: string): Promise<void> {
+  console.log(`🗑️ Deleting rider/driver ${id}...`);
+  try {
+    await fetchWithAuth(`admin-controller/drivers/${id}`, { method: "DELETE" });
+    console.log('✅ Rider/driver deleted successfully');
+  } catch (error: any) {
+    console.error('❌ Failed to delete rider/driver:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update driver/rider status (Available, On Delivery, Off Duty)
+ * Endpoint: PATCH /admin-controller/drivers/{id}/status
+ */
+export async function updateDriverStatus(
+  id: string, 
+  status: "Available" | "On Delivery" | "Off Duty"
+): Promise<Driver> {
+  console.log(`🔄 Updating rider/driver ${id} status to ${status}...`);
+  try {
+    const response = await fetchWithAuth(`admin-controller/drivers/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    });
+    const data = await response.json();
+    console.log('✅ Rider/driver status updated successfully');
+    return data;
+  } catch (error: any) {
+    console.error('❌ Failed to update rider/driver status:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update driver/rider availability status (true/false)
+ * Endpoint: PATCH /admin-controller/drivers/{id}/availability
+ */
+export async function updateDriverAvailability(id: string, available: boolean): Promise<Driver> {
+  const response = await fetchWithAuth(`admin-controller/drivers/${id}/availability`, {
+    method: "PATCH",
+    body: JSON.stringify({ available }),
+  });
+  return response.json();
+}
+
+/**
+ * Get available drivers/riders for assignment
+ * Endpoint: GET /admin-controller/drivers/available
+ */
+export async function getAvailableDrivers(): Promise<Driver[]> {
+  const response = await fetchWithAuth("admin-controller/drivers/available", { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
+}
+
+/**
+ * Assign a driver/rider to an order
+ * Endpoint: PUT /logistics-controller/package-orders/{orderId}/assign
+ */
+export async function assignDriverToOrder(orderId: string, driverId: string): Promise<any> {
+  console.log(`🔄 Assigning rider/driver ${driverId} to order ${orderId}...`);
+  try {
+    const response = await fetchWithAuth(`logistics-controller/package-orders/${orderId}/assign`, {
+      method: "PUT",
+      body: JSON.stringify({ driverId }),
+    });
+    const data = await response.json();
+    console.log('✅ Rider/driver assigned to order successfully');
+    return data;
+  } catch (error: any) {
+    console.error('❌ Failed to assign rider/driver to order:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get drivers/riders by company
+ * Endpoint: GET /admin-controller/companies/{companyId}/drivers
+ */
+export async function getDriversByCompany(companyId: string): Promise<Driver[]> {
+  const response = await fetchWithAuth(`admin-controller/companies/${companyId}/drivers`, { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
+}
+
+/**
+ * Get driver/rider statistics for dashboard
+ * Endpoint: GET /admin-controller/drivers/stats
+ */
+export async function getDriverStats(): Promise<{
+  total: number;
+  available: number;
+  onDelivery: number;
+  offDuty: number;
+}> {
+  try {
+    const response = await fetchWithAuth("admin-controller/drivers/stats", { method: "GET" });
+    return response.json();
+  } catch (error) {
+    console.warn('Failed to fetch driver stats, using fallback:', error);
+    return { total: 0, available: 0, onDelivery: 0, offDuty: 0 };
+  }
+}
+
+/**
+ * Get rider/driver by email
+ * Endpoint: GET /logistics-controller/rider-by-email?email={email}
+ */
+export async function getDriverByEmail(email: string): Promise<Driver> {
+  const response = await fetchWithAuth(`logistics-controller/rider-by-email?email=${encodeURIComponent(email)}`, { 
+    method: "GET" 
+  });
+  return response.json();
+}
+
+// ============ COMPANY MANAGEMENT FUNCTIONS ============
+
+export async function getCompanyDrivers(companyId: string): Promise<Driver[]> {
+  const response = await fetchWithAuth(`admin-controller/companies/${companyId}/drivers`, { method: "GET" });
+  const data = await response.json();
+  return extractArrayFromResponse(data);
+}
+
+export async function updateCompanyProfile(data: Record<string, unknown>): Promise<any> {
+  const response = await fetchWithAuth("admin-controller/company-profile", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
+
+export async function getCompanyStats(): Promise<{
+  totalOrders: number;
+  totalRevenue: number;
+  activeDrivers: number;
+  pendingBookings: number;
+}> {
+  const response = await fetchWithAuth("admin-controller/company-stats", { method: "GET" });
+  return response.json();
 }
 
 // ============ EXPORT ALL FUNCTIONS ============

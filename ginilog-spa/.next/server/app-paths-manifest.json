@@ -17,6 +17,7 @@
   "/customer-portal/profile/page": "app/customer-portal/profile/page.js",
   "/customer-portal/register/page": "app/customer-portal/register/page.js",
   "/customer-portal/verify-email/page": "app/customer-portal/verify-email/page.js",
+  "/download-app/page": "app/download-app/page.js",
   "/landing-page/page": "app/landing-page/page.js",
   "/page": "app/page.js",
   "/privacy/page": "app/privacy/page.js",

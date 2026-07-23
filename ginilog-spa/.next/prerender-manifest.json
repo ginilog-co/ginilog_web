@@ -410,6 +410,30 @@
         "x-next-revalidate-tag-token"
       ]
     },
+    "/download-app": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/download-app",
+      "dataRoute": "/download-app.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
     "/landing-page": {
       "experimentalBypassFor": [
         {
@@ -486,8 +510,8 @@
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "f2a42343e32b7d38dd5927b008d6c0a9",
-    "previewModeSigningKey": "7cffa422c28d950e3edf43d3ff846ba98ad2bbbb519e384310b8017d23d4db68",
-    "previewModeEncryptionKey": "4edae4fa911c75477abb7b9c6f15d30a50b1574c0cfb5cb9586f11c499106e56"
+    "previewModeId": "36ab3f91f144a9d9e118c5420fd5b0dd",
+    "previewModeSigningKey": "8539365660984f034edc45d2f786a29c15b99ae14dd6d1d493c195370bae6a30",
+    "previewModeEncryptionKey": "5699d40a95a674d4c59fce4ca4707c0774e57cf71f23124da98a07265588a62d"
   }
 }

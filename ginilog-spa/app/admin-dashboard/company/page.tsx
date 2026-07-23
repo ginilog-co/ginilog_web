@@ -11,35 +11,44 @@ import {
   Package, Building2, Megaphone, UserCheck, TrendingUp, LayoutDashboard,
   Menu, X, ChevronRight, Plus, Edit, Trash2, Eye, Filter,
   Download, RefreshCw, Settings, Home, BarChart3, MessageSquare,
-  Shield, UserPlus, Phone, Mail, MapPin, Car, IdCard
+  Shield, UserPlus, Phone, Mail, MapPin, Car, IdCard, Star,
+  Calendar, Clock, CheckCircle, XCircle, Briefcase, Key, UserCog
 } from "lucide-react";
 import {
   getStoredUser, logout, adminGetProfile,
   getAllOrders, getAllCustomerReservations, getAllUsers,
   updateOrderStatus, updateCustomerReservation,
   getAllStaff, getAllAdverts,
+  getAllDrivers, addDriver, updateDriver, deleteDriver,
+  updateDriverStatus, getDriverStats,
+  registerManager,
+  type Driver, type AddDriverRequest,
+  type RegisterManagerRequest
 } from "@/lib/api";
 
 const ORDER_STATUSES = ["Open", "Accepted", "Picked", "Ongoing", "Completed", "Delivered", "Closed", "Cancelled", "Rejected"];
 const BOOKING_STATUSES = ["Pending", "Confirmed", "Completed", "Cancelled"];
 
-type Section = "dashboard" | "logistics" | "accommodation" | "staff" | "adverts" | "users" | "drivers" | "add-driver";
+type Section = "dashboard" | "logistics" | "accommodation" | "staff" | "add-staff" | "adverts" | "users" | "drivers" | "add-driver";
 
-// Driver interface
-interface Driver {
+// Staff interface matching the API
+interface StaffMember {
   id: string;
   firstName: string;
   surName: string;
   email: string;
   phoneNo: string;
-  vehicleType: string;
-  licenseNumber: string;
-  status: "Available" | "On Delivery" | "Off Duty";
-  rating: number;
-  deliveries: number;
-  joined: string;
+  adminType: string;
+  companyName: string;
+  branch: string;
+  staffCode: string;
+  state: string;
+  locality: string;
   address: string;
-  emergencyContact: string;
+  sex: string;
+  createdAt: string;
+  updatedAt: string;
+  profilePicture?: string;
 }
 
 export default function CompanyDashboard() {
@@ -50,73 +59,56 @@ export default function CompanyDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
   const [reservations, setReservations] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
-  const [staff, setStaff] = useState<any[]>([]);
+  const [staffList, setStaffList] = useState<StaffMember[]>([]);
   const [adverts, setAdverts] = useState<any[]>([]);
-  const [drivers, setDrivers] = useState<Driver[]>([
-    {
-      id: "1",
-      firstName: "Mike",
-      surName: "Johnson",
-      email: "mike@company.com",
-      phoneNo: "08012345678",
-      vehicleType: "Motorcycle",
-      licenseNumber: "DL-2024-001",
-      status: "Available",
-      rating: 4.7,
-      deliveries: 145,
-      joined: "2024-01-10",
-      address: "123 Main St, Lagos",
-      emergencyContact: "08012345679"
-    },
-    {
-      id: "2",
-      firstName: "Sara",
-      surName: "Chen",
-      email: "sara@company.com",
-      phoneNo: "08087654321",
-      vehicleType: "Van",
-      licenseNumber: "DL-2024-002",
-      status: "On Delivery",
-      rating: 4.9,
-      deliveries: 203,
-      joined: "2023-11-15",
-      address: "456 Oak Ave, Abuja",
-      emergencyContact: "08087654322"
-    },
-    {
-      id: "3",
-      firstName: "Carlos",
-      surName: "Mendez",
-      email: "carlos@company.com",
-      phoneNo: "08055555555",
-      vehicleType: "Bicycle",
-      licenseNumber: "DL-2024-003",
-      status: "Off Duty",
-      rating: 4.3,
-      deliveries: 89,
-      joined: "2024-02-01",
-      address: "789 Pine Rd, Port Harcourt",
-      emergencyContact: "08055555556"
-    }
-  ]);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [driverStats, setDriverStats] = useState({ total: 0, available: 0, onDelivery: 0, offDuty: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  
+  // Driver state
   const [showAddDriver, setShowAddDriver] = useState(false);
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Driver form state
+  // Staff state
+  const [showAddStaff, setShowAddStaff] = useState(false);
+  const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
+  const [isStaffSubmitting, setIsStaffSubmitting] = useState(false);
+
+  // Driver form state - Fixed field names to match API
   const [driverForm, setDriverForm] = useState({
     firstName: "",
-    surName: "",
+    lastName: "",
     email: "",
-    phoneNo: "",
+    phoneNumber: "",
     vehicleType: "",
     licenseNumber: "",
     address: "",
     emergencyContact: "",
     status: "Available" as "Available" | "On Delivery" | "Off Duty"
+  });
+
+  // Staff form state - matches RegisterManagerRequest with StaffType
+  const [staffForm, setStaffForm] = useState<RegisterManagerRequest>({
+    AdminType: "Manager" as const,
+    FirstName: "",
+    SurName: "",
+    Email: "",
+    Password: "",
+    Sex: "Male",
+    StaffCode: "",
+    PhoneNo: "",
+    State: "",
+    Locality: "",
+    Address: "",
+    Branch: "",
+    CompanyName: "",
+    CompanyUserName: "",
+    CompanyType: ["Logistics", "Accommodation"],
+    StaffType: "Manager"
   });
 
   useEffect(() => {
@@ -127,20 +119,37 @@ export default function CompanyDashboard() {
     }
     const fetchData = async () => {
       try {
-        const [profile, allOrders, allReservations, allUsers, allStaff, allAdverts] = await Promise.all([
+        const [profile, allOrders, allReservations, allUsers, allStaff, allAdverts, allDrivers, stats] = await Promise.all([
           adminGetProfile().catch(() => null),
           getAllOrders().catch(() => []),
           getAllCustomerReservations().catch(() => []),
           getAllUsers().catch(() => []),
           getAllStaff().catch(() => []),
           getAllAdverts().catch(() => []),
+          getAllDrivers().catch(() => []),
+          getDriverStats().catch(() => ({ total: 0, available: 0, onDelivery: 0, offDuty: 0 }))
         ]);
         setAdminProfile(profile);
         setOrders(allOrders || []);
         setReservations(allReservations || []);
         setUsers(allUsers || []);
-        setStaff(allStaff || []);
+        setStaffList(allStaff || []);
         setAdverts(allAdverts || []);
+        setDrivers(allDrivers || []);
+        setDriverStats(stats || { total: 0, available: 0, onDelivery: 0, offDuty: 0 });
+
+        // Pre-fill staff form with company info
+        if (profile) {
+          setStaffForm(prev => ({
+            ...prev,
+            CompanyName: profile.companyName || "",
+            CompanyUserName: profile.companyUserName || profile.email || "",
+            Branch: profile.branch || "",
+            State: profile.state || "",
+            Locality: profile.locality || "",
+            Address: profile.address || "",
+          }));
+        }
       } catch (err) {
         setError("Failed to load company data.");
         console.error(err);
@@ -187,81 +196,311 @@ export default function CompanyDashboard() {
     }
   };
 
-  // Driver CRUD operations
-  const handleAddDriver = () => {
-    const newDriver: Driver = {
-      id: Date.now().toString(),
-      ...driverForm,
-      rating: 0,
-      deliveries: 0,
-      joined: new Date().toISOString().split("T")[0]
-    };
-    setDrivers(prev => [...prev, newDriver]);
-    setDriverForm({
-      firstName: "",
-      surName: "",
-      email: "",
-      phoneNo: "",
-      vehicleType: "",
-      licenseNumber: "",
-      address: "",
-      emergencyContact: "",
-      status: "Available"
-    });
-    setShowAddDriver(false);
-    setActiveSection("drivers");
+  // ============ DRIVER CRUD OPERATIONS ============
+  const handleAddDriver = async () => {
+    setIsSubmitting(true);
+    try {
+      const driverData: AddDriverRequest = {
+        firstName: driverForm.firstName,
+        lastName: driverForm.lastName,
+        email: driverForm.email,
+        phoneNumber: driverForm.phoneNumber,
+        vehicleType: driverForm.vehicleType,
+        licenseNumber: driverForm.licenseNumber,
+        status: driverForm.status,
+        address: driverForm.address,
+        emergencyContact: driverForm.emergencyContact,
+        password: "TempPass123!",
+        available: driverForm.status === "Available",
+      };
+      
+      const newDriver = await addDriver(driverData);
+      setDrivers(prev => [...prev, newDriver]);
+      const stats = await getDriverStats();
+      setDriverStats(stats || { total: 0, available: 0, onDelivery: 0, offDuty: 0 });
+      resetDriverForm();
+      setShowAddDriver(false);
+      setActiveSection("drivers");
+    } catch (err) {
+      console.error("Failed to add driver:", err);
+      setError("Failed to add driver. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleEditDriver = (driver: Driver) => {
     setEditingDriver(driver);
     setDriverForm({
-      firstName: driver.firstName,
-      surName: driver.surName,
-      email: driver.email,
-      phoneNo: driver.phoneNo,
-      vehicleType: driver.vehicleType,
-      licenseNumber: driver.licenseNumber,
-      address: driver.address,
-      emergencyContact: driver.emergencyContact,
-      status: driver.status
+      firstName: driver.firstName || "",
+      lastName: driver.lastName || "",
+      email: driver.email || "",
+      phoneNumber: driver.phoneNumber || "",
+      vehicleType: driver.vehicleType || "",
+      licenseNumber: driver.licenseNumber || "",
+      address: driver.address || "",
+      emergencyContact: driver.emergencyContact || "",
+      status: driver.status || "Available"
     });
     setShowAddDriver(true);
   };
 
-  const handleUpdateDriver = () => {
+  const handleUpdateDriver = async () => {
     if (!editingDriver) return;
-    const updatedDrivers = drivers.map(d => 
-      d.id === editingDriver.id ? { ...d, ...driverForm } : d
-    );
-    setDrivers(updatedDrivers);
-    setEditingDriver(null);
+    setIsSubmitting(true);
+    try {
+      const updated = await updateDriver(editingDriver.id, {
+        firstName: driverForm.firstName,
+        lastName: driverForm.lastName,
+        email: driverForm.email,
+        phoneNumber: driverForm.phoneNumber,
+        vehicleType: driverForm.vehicleType,
+        licenseNumber: driverForm.licenseNumber,
+        status: driverForm.status,
+        address: driverForm.address,
+        emergencyContact: driverForm.emergencyContact,
+        available: driverForm.status === "Available",
+      });
+      setDrivers(prev => prev.map(d => d.id === editingDriver.id ? updated : d));
+      resetDriverForm();
+      setEditingDriver(null);
+      setShowAddDriver(false);
+      setActiveSection("drivers");
+    } catch (err) {
+      console.error("Failed to update driver:", err);
+      setError("Failed to update driver. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteDriver = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this driver?")) return;
+    try {
+      await deleteDriver(id);
+      setDrivers(prev => prev.filter(d => d.id !== id));
+      const stats = await getDriverStats();
+      setDriverStats(stats || { total: 0, available: 0, onDelivery: 0, offDuty: 0 });
+    } catch (err) {
+      console.error("Failed to delete driver:", err);
+      setError("Failed to delete driver. Please try again.");
+    }
+  };
+
+  const handleDriverStatusChange = async (id: string, newStatus: "Available" | "On Delivery" | "Off Duty") => {
+    try {
+      const updated = await updateDriverStatus(id, newStatus);
+      setDrivers(prev => prev.map(d => d.id === id ? { ...updated, status: newStatus } : d));
+      const stats = await getDriverStats();
+      setDriverStats(stats || { total: 0, available: 0, onDelivery: 0, offDuty: 0 });
+    } catch (err) {
+      console.error("Failed to update driver status:", err);
+      setError("Failed to update driver status. Please try again.");
+    }
+  };
+
+  const resetDriverForm = () => {
     setDriverForm({
       firstName: "",
-      surName: "",
+      lastName: "",
       email: "",
-      phoneNo: "",
+      phoneNumber: "",
       vehicleType: "",
       licenseNumber: "",
       address: "",
       emergencyContact: "",
       status: "Available"
     });
-    setShowAddDriver(false);
-    setActiveSection("drivers");
   };
 
-  const handleDeleteDriver = (id: string) => {
-    if (confirm("Are you sure you want to delete this driver?")) {
-      setDrivers(prev => prev.filter(d => d.id !== id));
+  // ============ STAFF CRUD OPERATIONS ============
+  const handleAddStaff = async () => {
+    setIsStaffSubmitting(true);
+    setError(null);
+    
+    try {
+      // Validate required fields
+      if (!staffForm.FirstName || !staffForm.SurName || !staffForm.Email || !staffForm.PhoneNo) {
+        setError('Please fill in all required fields: First Name, Surname, Email, and Phone Number');
+        setIsStaffSubmitting(false);
+        return;
+      }
+      
+      if (!staffForm.Password && !editingStaff) {
+        setError('Password is required for new staff members');
+        setIsStaffSubmitting(false);
+        return;
+      }
+      
+      // Generate a staff code if not provided
+      const staffCode = staffForm.StaffCode || `STAFF-${Date.now().toString().slice(-6)}`;
+      
+      // Prepare the data exactly as the API expects with proper typing
+      const staffData: RegisterManagerRequest = {
+        AdminType: "Manager",
+        FirstName: staffForm.FirstName.trim(),
+        SurName: staffForm.SurName.trim(),
+        Email: staffForm.Email.trim().toLowerCase(),
+        Password: staffForm.Password || "TempPass123!",
+        Sex: staffForm.Sex || "Male",
+        StaffCode: staffCode,
+        PhoneNo: staffForm.PhoneNo.trim(),
+        State: staffForm.State || "",
+        Locality: staffForm.Locality || "",
+        Address: staffForm.Address || "",
+        Branch: staffForm.Branch || "",
+        CompanyName: staffForm.CompanyName || adminProfile?.companyName || "",
+        CompanyUserName: staffForm.CompanyUserName || adminProfile?.companyUserName || adminProfile?.email || "",
+        CompanyType: staffForm.CompanyType || ["Logistics", "Accommodation"],
+        StaffType: staffForm.StaffType || "Manager"
+      };
+      
+      console.log('📤 Sending staff data:', staffData);
+      
+      const newStaff = await registerManager(staffData);
+      
+      // Refresh staff list
+      const updatedStaff = await getAllStaff();
+      setStaffList(updatedStaff);
+      
+      resetStaffForm();
+      setShowAddStaff(false);
+      setActiveSection("staff");
+      setError(null);
+      
+      console.log('✅ Staff added successfully');
+      
+    } catch (err: any) {
+      console.error("Failed to add staff:", err);
+      
+      // Extract and display validation errors
+      if (err.message.includes('Validation failed')) {
+        setError(`Validation Error: ${err.message}`);
+      } else {
+        setError(err.message || "Failed to add staff. Please check all fields and try again.");
+      }
+    } finally {
+      setIsStaffSubmitting(false);
     }
   };
 
-  const handleDriverStatusChange = (id: string, newStatus: "Available" | "On Delivery" | "Off Duty") => {
-    setDrivers(prev => prev.map(d => 
-      d.id === id ? { ...d, status: newStatus } : d
-    ));
+  const handleEditStaff = (staff: StaffMember) => {
+    setEditingStaff(staff);
+    setStaffForm({
+      AdminType: "Manager" as const,
+      FirstName: staff.firstName || "",
+      SurName: staff.surName || "",
+      Email: staff.email || "",
+      Password: "",
+      Sex: staff.sex || "Male",
+      StaffCode: staff.staffCode || "",
+      PhoneNo: staff.phoneNo || "",
+      State: staff.state || "",
+      Locality: staff.locality || "",
+      Address: staff.address || "",
+      Branch: staff.branch || "",
+      CompanyName: staff.companyName || adminProfile?.companyName || "",
+      CompanyUserName: adminProfile?.companyUserName || adminProfile?.email || "",
+      CompanyType: ["Logistics", "Accommodation"],
+      StaffType: staff.adminType || "Manager"
+    });
+    setShowAddStaff(true);
   };
 
+  const handleUpdateStaff = async () => {
+    if (!editingStaff) return;
+    setIsStaffSubmitting(true);
+    setError(null);
+    
+    try {
+      // Validate required fields
+      if (!staffForm.FirstName || !staffForm.SurName || !staffForm.Email || !staffForm.PhoneNo) {
+        setError('Please fill in all required fields: First Name, Surname, Email, and Phone Number');
+        setIsStaffSubmitting(false);
+        return;
+      }
+      
+      const staffData: RegisterManagerRequest = {
+        AdminType: "Manager",
+        FirstName: staffForm.FirstName.trim(),
+        SurName: staffForm.SurName.trim(),
+        Email: staffForm.Email.trim().toLowerCase(),
+        Password: staffForm.Password || "TempPass123!",
+        Sex: staffForm.Sex || "Male",
+        StaffCode: staffForm.StaffCode || editingStaff.staffCode,
+        PhoneNo: staffForm.PhoneNo.trim(),
+        State: staffForm.State || "",
+        Locality: staffForm.Locality || "",
+        Address: staffForm.Address || "",
+        Branch: staffForm.Branch || "",
+        CompanyName: staffForm.CompanyName || adminProfile?.companyName || "",
+        CompanyUserName: staffForm.CompanyUserName || adminProfile?.companyUserName || adminProfile?.email || "",
+        CompanyType: staffForm.CompanyType || ["Logistics", "Accommodation"],
+        StaffType: staffForm.StaffType || "Manager"
+      };
+      
+      console.log('📤 Updating staff data:', staffData);
+      
+      const updated = await registerManager(staffData);
+      
+      // Refresh staff list
+      const updatedStaff = await getAllStaff();
+      setStaffList(updatedStaff);
+      
+      resetStaffForm();
+      setEditingStaff(null);
+      setShowAddStaff(false);
+      setActiveSection("staff");
+      setError(null);
+      
+      console.log('✅ Staff updated successfully');
+      
+    } catch (err: any) {
+      console.error("Failed to update staff:", err);
+      
+      if (err.message.includes('Validation failed')) {
+        setError(`Validation Error: ${err.message}`);
+      } else {
+        setError(err.message || "Failed to update staff. Please try again.");
+      }
+    } finally {
+      setIsStaffSubmitting(false);
+    }
+  };
+
+  const handleDeleteStaff = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this staff member?")) return;
+    try {
+      setStaffList(prev => prev.filter(s => s.id !== id));
+      setError(null);
+    } catch (err) {
+      console.error("Failed to delete staff:", err);
+      setError("Failed to delete staff. Please try again.");
+    }
+  };
+
+  const resetStaffForm = () => {
+    setStaffForm({
+      AdminType: "Manager" as const,
+      FirstName: "",
+      SurName: "",
+      Email: "",
+      Password: "",
+      Sex: "Male",
+      StaffCode: "",
+      PhoneNo: "",
+      State: adminProfile?.state || "",
+      Locality: adminProfile?.locality || "",
+      Address: adminProfile?.address || "",
+      Branch: adminProfile?.branch || "",
+      CompanyName: adminProfile?.companyName || "",
+      CompanyUserName: adminProfile?.companyUserName || adminProfile?.email || "",
+      CompanyType: ["Logistics", "Accommodation"],
+      StaffType: "Manager"
+    });
+  };
+
+  // ============ UI HELPERS ============
   const getStatusBadge = (status: string) => {
     const s = (status || "").toLowerCase();
     if (["delivered", "confirmed", "completed", "closed"].includes(s)) return "bg-green-100 text-green-800";
@@ -271,7 +510,7 @@ export default function CompanyDashboard() {
     return "bg-yellow-100 text-yellow-800";
   };
 
-  const getDriverStatusBadge = (status: string) => {
+  const getDriverStatusBadge = (status: string | undefined) => {
     const s = (status || "").toLowerCase();
     if (s === "available") return "bg-green-100 text-green-800";
     if (s === "on delivery") return "bg-orange-100 text-orange-800";
@@ -279,6 +518,15 @@ export default function CompanyDashboard() {
     return "bg-yellow-100 text-yellow-800";
   };
 
+  const getRoleBadge = (role: string) => {
+    const r = (role || "").toLowerCase();
+    if (r === "manager" || r === "admin") return "bg-purple-100 text-purple-800";
+    if (r === "staff") return "bg-blue-100 text-blue-800";
+    if (r === "driver") return "bg-green-100 text-green-800";
+    return "bg-gray-100 text-gray-600";
+  };
+
+  // ============ FILTERING ============
   const filteredOrders = orders.filter(
     (o) =>
       !search ||
@@ -297,13 +545,14 @@ export default function CompanyDashboard() {
       (r.customerName || "").toLowerCase().includes(search.toLowerCase())
   );
 
-  const filteredStaff = staff.filter(
+  const filteredStaff = staffList.filter(
     (s) =>
       !search ||
       (s.firstName || "").toLowerCase().includes(search.toLowerCase()) ||
       (s.surName || "").toLowerCase().includes(search.toLowerCase()) ||
       (s.email || "").toLowerCase().includes(search.toLowerCase()) ||
-      (s.companyName || "").toLowerCase().includes(search.toLowerCase())
+      (s.companyName || "").toLowerCase().includes(search.toLowerCase()) ||
+      (s.staffCode || "").toLowerCase().includes(search.toLowerCase())
   );
 
   const filteredAdverts = adverts.filter(
@@ -325,11 +574,11 @@ export default function CompanyDashboard() {
   const filteredDrivers = drivers.filter(
     (d) =>
       !search ||
-      d.firstName.toLowerCase().includes(search.toLowerCase()) ||
-      d.surName.toLowerCase().includes(search.toLowerCase()) ||
-      d.email.toLowerCase().includes(search.toLowerCase()) ||
-      d.vehicleType.toLowerCase().includes(search.toLowerCase()) ||
-      d.licenseNumber.toLowerCase().includes(search.toLowerCase())
+      (d.firstName || "").toLowerCase().includes(search.toLowerCase()) ||
+      (d.lastName || "").toLowerCase().includes(search.toLowerCase()) ||
+      (d.email || "").toLowerCase().includes(search.toLowerCase()) ||
+      (d.vehicleType || "").toLowerCase().includes(search.toLowerCase()) ||
+      (d.licenseNumber || "").toLowerCase().includes(search.toLowerCase())
   );
 
   if (isLoading) {
@@ -345,7 +594,7 @@ export default function CompanyDashboard() {
     { key: "logistics", label: "Parcel Orders", icon: Truck },
     { key: "accommodation", label: "Bookings List", icon: Building2 },
     { key: "drivers", label: "Drivers/Riders", icon: Users, managerOnly: true },
-    { key: "staff", label: "Staff List", icon: UserCheck, managerOnly: true },
+    { key: "staff", label: "Staff Management", icon: UserCog, managerOnly: true },
     { key: "adverts", label: "Advert List", icon: Megaphone },
     { key: "users", label: "Users", icon: Users },
   ];
@@ -354,15 +603,19 @@ export default function CompanyDashboard() {
     setActiveSection(section);
     setSearch("");
     setSidebarOpen(false);
-    if (section !== "add-driver") {
+    if (section !== "add-driver" && section !== "add-staff") {
       setShowAddDriver(false);
+      setShowAddStaff(false);
       setEditingDriver(null);
+      setEditingStaff(null);
+      resetDriverForm();
+      resetStaffForm();
     }
   };
 
   const handleLogout = () => {
     logout();
-    router.push("/admin-dashboard/company-login");
+    router.push("/admin-dashboard/admin-login");
   };
 
   const SearchBar = () => (
@@ -505,6 +758,12 @@ export default function CompanyDashboard() {
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-600 text-sm">
               <AlertCircle className="h-4 w-4 flex-shrink-0" />
               <span>{error}</span>
+              <button 
+                onClick={() => setError(null)}
+                className="ml-auto text-red-600 hover:text-red-800"
+              >
+                <XCircle className="h-4 w-4" />
+              </button>
             </div>
           )}
 
@@ -556,7 +815,7 @@ export default function CompanyDashboard() {
               </div>
 
               {/* Quick-nav count cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleNav("logistics")}>
                   <CardContent className="p-5 flex items-center gap-4">
                     <div className="h-12 w-12 rounded-lg flex items-center justify-center bg-red-100" style={{ color: "#8B0000" }}>
@@ -579,14 +838,25 @@ export default function CompanyDashboard() {
                     </div>
                   </CardContent>
                 </Card>
-                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleNav("users")}>
+                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleNav("drivers")}>
                   <CardContent className="p-5 flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-lg flex items-center justify-center bg-purple-100 text-purple-600">
+                    <div className="h-12 w-12 rounded-lg flex items-center justify-center bg-green-100 text-green-600">
                       <Users className="h-6 w-6" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-gray-900">{users.length}</p>
-                      <p className="text-sm text-gray-500">Registered Users</p>
+                      <p className="text-2xl font-bold text-gray-900">{driverStats.total}</p>
+                      <p className="text-sm text-gray-500">Total Drivers</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleNav("staff")}>
+                  <CardContent className="p-5 flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-lg flex items-center justify-center bg-purple-100 text-purple-600">
+                      <UserCog className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-gray-900">{staffList.length}</p>
+                      <p className="text-sm text-gray-500">Total Staff</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -632,54 +902,6 @@ export default function CompanyDashboard() {
                               </td>
                               <td className="py-2 px-4 text-gray-500">
                                 {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "—"}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Recent Bookings */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-3">
-                  <CardTitle>Recent Bookings</CardTitle>
-                  <button
-                    onClick={() => handleNav("accommodation")}
-                    className="text-sm font-medium hover:underline"
-                    style={{ color: "#8B0000" }}
-                  >
-                    View all →
-                  </button>
-                </CardHeader>
-                <CardContent>
-                  {reservations.length === 0 ? (
-                    <p className="text-gray-500 text-sm text-center py-6">No bookings yet.</p>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b bg-gray-50">
-                            <th className="text-left py-2 px-4 font-medium text-gray-600">Accommodation</th>
-                            <th className="text-left py-2 px-4 font-medium text-gray-600">Guest</th>
-                            <th className="text-left py-2 px-4 font-medium text-gray-600">Check In</th>
-                            <th className="text-left py-2 px-4 font-medium text-gray-600">Check Out</th>
-                            <th className="text-left py-2 px-4 font-medium text-gray-600">Total</th>
-                            <th className="text-left py-2 px-4 font-medium text-gray-600">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {reservations.slice(0, 5).map((res) => (
-                            <tr key={res.id} className="border-b hover:bg-gray-50">
-                              <td className="py-2 px-4">{res.accomodationName}</td>
-                              <td className="py-2 px-4">{res.guestName || res.customerName || "—"}</td>
-                              <td className="py-2 px-4">{res.checkInDate ? new Date(res.checkInDate).toLocaleDateString() : "—"}</td>
-                              <td className="py-2 px-4">{res.checkOutDate ? new Date(res.checkOutDate).toLocaleDateString() : "—"}</td>
-                              <td className="py-2 px-4 font-medium">₦{(res.totalAmount || res.totalCost || 0).toLocaleString()}</td>
-                              <td className="py-2 px-4">
-                                <Badge className={getStatusBadge(res.bookingStatus)}>{res.bookingStatus || "Pending"}</Badge>
                               </td>
                             </tr>
                           ))}
@@ -780,14 +1002,13 @@ export default function CompanyDashboard() {
                           <th className="text-left py-3 px-4 font-medium text-gray-600">Accommodation Name</th>
                           <th className="text-left py-3 px-4 font-medium text-gray-600">Customer Name</th>
                           <th className="text-left py-3 px-4 font-medium text-gray-600">Ticket Num</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-600">Reservation Start Date</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-600">Reservation End Date</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-600">Check In</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-600">Check Out</th>
                           <th className="text-left py-3 px-4 font-medium text-gray-600">Total Cost</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-600">No Of Days</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-600">Room Number</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-600">Date</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-600">Nights</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-600">Room</th>
                           <th className="text-left py-3 px-4 font-medium text-gray-600">Status</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-600">Update Status</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-600">Update</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -796,15 +1017,12 @@ export default function CompanyDashboard() {
                             <td className="py-3 px-4">{res.accomodationName}</td>
                             <td className="py-3 px-4">{res.guestName || res.customerName || "—"}</td>
                             <td className="py-3 px-4 font-mono text-xs">{res.bookingRefNo || res.ticketNum || res.id?.slice(0, 8)}</td>
-                            <td className="py-3 px-4">{res.checkInDate ? new Date(res.checkInDate).toLocaleDateString() : res.reservationStartDate || "—"}</td>
-                            <td className="py-3 px-4">{res.checkOutDate ? new Date(res.checkOutDate).toLocaleDateString() : res.reservationEndDate || "—"}</td>
-                            <td className="py-3 px-4 font-medium text-primary">₦{(res.totalAmount || res.totalCost || 0).toLocaleString()}</td>
+                            <td className="py-3 px-4">{res.checkInDate ? new Date(res.checkInDate).toLocaleDateString() : "—"}</td>
+                            <td className="py-3 px-4">{res.checkOutDate ? new Date(res.checkOutDate).toLocaleDateString() : "—"}</td>
+                            <td className="py-3 px-4 font-medium">₦{(res.totalAmount || res.totalCost || 0).toLocaleString()}</td>
                             <td className="py-3 px-4">{res.numberOfNights || res.noOfDays || "—"}</td>
                             <td className="py-3 px-4">
                               <Badge className="bg-gray-100 text-gray-700">{res.roomNumber || "—"}</Badge>
-                            </td>
-                            <td className="py-3 px-4 text-gray-500">
-                              {res.createdAt ? new Date(res.createdAt).toLocaleDateString() : "—"}
                             </td>
                             <td className="py-3 px-4">
                               <Badge className={getStatusBadge(res.bookingStatus)}>{res.bookingStatus || "Pending"}</Badge>
@@ -844,18 +1062,8 @@ export default function CompanyDashboard() {
                       style={{ backgroundColor: "#8B0000" }} 
                       className="text-white gap-1"
                       onClick={() => {
+                        resetDriverForm();
                         setEditingDriver(null);
-                        setDriverForm({
-                          firstName: "",
-                          surName: "",
-                          email: "",
-                          phoneNo: "",
-                          vehicleType: "",
-                          licenseNumber: "",
-                          address: "",
-                          emergencyContact: "",
-                          status: "Available"
-                        });
                         setShowAddDriver(true);
                         setActiveSection("add-driver");
                       }}
@@ -866,25 +1074,29 @@ export default function CompanyDashboard() {
                 </CardHeader>
                 <CardContent>
                   {/* Driver stats summary */}
-                  <div className="grid grid-cols-3 gap-3 mb-4">
+                  <div className="grid grid-cols-4 gap-3 mb-4">
+                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                      <p className="text-sm text-blue-600 font-medium">Total</p>
+                      <p className="text-xl font-bold">{driverStats.total || 0}</p>
+                    </div>
                     <div className="bg-green-50 p-3 rounded-lg border border-green-200">
                       <p className="text-sm text-green-600 font-medium">Available</p>
-                      <p className="text-xl font-bold">{drivers.filter(d => d.status === "Available").length}</p>
+                      <p className="text-xl font-bold">{driverStats.available || 0}</p>
                     </div>
                     <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
                       <p className="text-sm text-orange-600 font-medium">On Delivery</p>
-                      <p className="text-xl font-bold">{drivers.filter(d => d.status === "On Delivery").length}</p>
+                      <p className="text-xl font-bold">{driverStats.onDelivery || 0}</p>
                     </div>
                     <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
                       <p className="text-sm text-gray-600 font-medium">Off Duty</p>
-                      <p className="text-xl font-bold">{drivers.filter(d => d.status === "Off Duty").length}</p>
+                      <p className="text-xl font-bold">{driverStats.offDuty || 0}</p>
                     </div>
                   </div>
 
                   {filteredDrivers.length === 0 ? (
                     <div className="text-center py-12">
                       <Users className="h-12 w-12 text-gray-200 mx-auto mb-3" />
-                      <p className="text-gray-500">No drivers found.</p>
+                      <p className="text-gray-500">No drivers found. Click "Add Driver" to get started.</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -894,38 +1106,40 @@ export default function CompanyDashboard() {
                             <div className="flex items-start justify-between">
                               <div className="flex items-center gap-3">
                                 <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center text-red-700 font-semibold text-lg">
-                                  {driver.firstName[0]}{driver.surName[0]}
+                                  {driver?.firstName?.[0] || ''}{driver?.lastName?.[0] || ''}
                                 </div>
                                 <div>
-                                  <h4 className="font-semibold">{driver.firstName} {driver.surName}</h4>
+                                  <h4 className="font-semibold">{driver.firstName || ''} {driver.lastName || ''}</h4>
                                   <p className="text-sm text-gray-500 flex items-center gap-1">
-                                    <Car className="h-3 w-3" /> {driver.vehicleType}
+                                    <Car className="h-3 w-3" /> {driver.vehicleType || "Not specified"}
                                   </p>
                                 </div>
                               </div>
-                              <Badge className={getDriverStatusBadge(driver.status)}>{driver.status}</Badge>
+                              <Badge className={getDriverStatusBadge(driver.status)}>
+                                {driver.status || "Available"}
+                              </Badge>
                             </div>
                             
                             <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
                               <div>
                                 <p className="text-gray-500">Email</p>
-                                <p className="font-medium text-xs truncate">{driver.email}</p>
+                                <p className="font-medium text-xs truncate">{driver.email || '—'}</p>
                               </div>
                               <div>
                                 <p className="text-gray-500">Phone</p>
-                                <p className="font-medium text-xs">{driver.phoneNo}</p>
+                                <p className="font-medium text-xs">{driver.phoneNumber || '—'}</p>
                               </div>
                               <div>
                                 <p className="text-gray-500">License</p>
-                                <p className="font-medium text-xs">{driver.licenseNumber}</p>
+                                <p className="font-medium text-xs">{driver.licenseNumber || "—"}</p>
                               </div>
                               <div>
                                 <p className="text-gray-500">Deliveries</p>
-                                <p className="font-medium">{driver.deliveries}</p>
+                                <p className="font-medium">{driver.deliveries || 0}</p>
                               </div>
                             </div>
 
-                            {driver.rating > 0 && (
+                            {driver.rating && driver.rating > 0 && (
                               <div className="mt-2 flex items-center gap-1 text-sm">
                                 <span className="text-gray-500">Rating:</span>
                                 <span className="font-medium text-yellow-600">★ {driver.rating}</span>
@@ -950,8 +1164,8 @@ export default function CompanyDashboard() {
                                 <Trash2 className="h-3 w-3" /> Delete
                               </Button>
                               <select
-                                value={driver.status}
-                                onChange={(e) => handleDriverStatusChange(driver.id, e.target.value as any)}
+                                value={driver.status || "Available"}
+                                onChange={(e) => handleDriverStatusChange(driver.id, e.target.value as "Available" | "On Delivery" | "Off Duty")}
                                 className="text-xs border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-red-800"
                               >
                                 <option value="Available">Available</option>
@@ -981,6 +1195,7 @@ export default function CompanyDashboard() {
                   onClick={() => {
                     setShowAddDriver(false);
                     setEditingDriver(null);
+                    resetDriverForm();
                     setActiveSection("drivers");
                   }}
                 >
@@ -1009,14 +1224,14 @@ export default function CompanyDashboard() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">Surname *</label>
+                      <label className="block text-sm font-medium mb-1">Last Name *</label>
                       <input
                         type="text"
                         required
-                        value={driverForm.surName}
-                        onChange={(e) => setDriverForm({...driverForm, surName: e.target.value})}
+                        value={driverForm.lastName}
+                        onChange={(e) => setDriverForm({...driverForm, lastName: e.target.value})}
                         className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-800"
-                        placeholder="Enter surname"
+                        placeholder="Enter last name"
                       />
                     </div>
                     <div>
@@ -1040,8 +1255,8 @@ export default function CompanyDashboard() {
                         <input
                           type="tel"
                           required
-                          value={driverForm.phoneNo}
-                          onChange={(e) => setDriverForm({...driverForm, phoneNo: e.target.value})}
+                          value={driverForm.phoneNumber}
+                          onChange={(e) => setDriverForm({...driverForm, phoneNumber: e.target.value})}
                           className="w-full pl-9 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-800"
                           placeholder="08012345678"
                         />
@@ -1081,7 +1296,7 @@ export default function CompanyDashboard() {
                       <label className="block text-sm font-medium mb-1">Status</label>
                       <select
                         value={driverForm.status}
-                        onChange={(e) => setDriverForm({...driverForm, status: e.target.value as any})}
+                        onChange={(e) => setDriverForm({...driverForm, status: e.target.value as "Available" | "On Delivery" | "Off Duty"})}
                         className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-800"
                       >
                         <option value="Available">Available</option>
@@ -1119,8 +1334,12 @@ export default function CompanyDashboard() {
                       type="submit"
                       style={{ backgroundColor: "#8B0000" }} 
                       className="text-white"
+                      disabled={isSubmitting}
                     >
-                      {editingDriver ? "Update Driver" : "Add Driver"}
+                      {isSubmitting ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : null}
+                      {isSubmitting ? "Saving..." : (editingDriver ? "Update Driver" : "Add Driver")}
                     </Button>
                     <Button 
                       type="button"
@@ -1128,6 +1347,7 @@ export default function CompanyDashboard() {
                       onClick={() => {
                         setShowAddDriver(false);
                         setEditingDriver(null);
+                        resetDriverForm();
                         setActiveSection("drivers");
                       }}
                     >
@@ -1139,53 +1359,353 @@ export default function CompanyDashboard() {
             </Card>
           )}
 
-          {/* ── STAFF LIST ── */}
+          {/* ── STAFF MANAGEMENT ── */}
           {activeSection === "staff" && (
+            <>
+              <Card>
+                <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <CardTitle>Staff Management ({filteredStaff.length})</CardTitle>
+                  <div className="flex flex-wrap gap-2">
+                    <SearchBar />
+                    <Button 
+                      style={{ backgroundColor: "#8B0000" }} 
+                      className="text-white gap-1"
+                      onClick={() => {
+                        resetStaffForm();
+                        setEditingStaff(null);
+                        setShowAddStaff(true);
+                        setActiveSection("add-staff");
+                      }}
+                    >
+                      <UserPlus className="h-4 w-4" /> Add Staff
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {filteredStaff.length === 0 ? (
+                    <div className="text-center py-12">
+                      <UserCog className="h-12 w-12 text-gray-200 mx-auto mb-3" />
+                      <p className="text-gray-500">No staff members found. Click "Add Staff" to get started.</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b bg-gray-50">
+                            <th className="text-left py-3 px-4 font-medium text-gray-600">Staff</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-600">Email</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-600">Phone</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-600">Role</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-600">Staff Code</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-600">Branch</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-600">Joined</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-600">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredStaff.map((staff) => (
+                            <tr key={staff.id} className="border-b hover:bg-gray-50">
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-2">
+                                  <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-semibold text-xs">
+                                    {staff.firstName?.[0] || ''}{staff.surName?.[0] || ''}
+                                  </div>
+                                  <div>
+                                    <p className="font-medium">{staff.firstName} {staff.surName}</p>
+                                    <p className="text-xs text-gray-500">{staff.staffCode || "—"}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4 text-gray-500">{staff.email}</td>
+                              <td className="py-3 px-4">{staff.phoneNo || "—"}</td>
+                              <td className="py-3 px-4">
+                                <Badge className={getRoleBadge(staff.adminType)}>{staff.adminType || "Staff"}</Badge>
+                              </td>
+                              <td className="py-3 px-4 font-mono text-xs">{staff.staffCode || "—"}</td>
+                              <td className="py-3 px-4">{staff.branch || "—"}</td>
+                              <td className="py-3 px-4 text-gray-500">
+                                {staff.createdAt ? new Date(staff.createdAt).toLocaleDateString() : "—"}
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="flex gap-2">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="gap-1"
+                                    onClick={() => handleEditStaff(staff)}
+                                  >
+                                    <Edit className="h-3 w-3" /> Edit
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="gap-1 text-red-600 hover:text-red-700"
+                                    onClick={() => handleDeleteStaff(staff.id)}
+                                  >
+                                    <Trash2 className="h-3 w-3" /> Delete
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {/* ── ADD / EDIT STAFF FORM ── */}
+          {activeSection === "add-staff" && showAddStaff && (
             <Card>
               <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <CardTitle>Staff List ({filteredStaff.length})</CardTitle>
-                <SearchBar />
+                <CardTitle>
+                  {editingStaff ? "Edit Staff Member" : "Add New Staff Member"}
+                </CardTitle>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowAddStaff(false);
+                    setEditingStaff(null);
+                    resetStaffForm();
+                    setActiveSection("staff");
+                  }}
+                >
+                  <X className="h-4 w-4 mr-1" /> Cancel
+                </Button>
               </CardHeader>
               <CardContent>
-                {filteredStaff.length === 0 ? (
-                  <div className="text-center py-12">
-                    <UserCheck className="h-12 w-12 text-gray-200 mx-auto mb-3" />
-                    <p className="text-gray-500">No staff found.</p>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  if (editingStaff) {
+                    handleUpdateStaff();
+                  } else {
+                    handleAddStaff();
+                  }
+                }}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Personal Information */}
+                    <div className="md:col-span-2">
+                      <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                        <User className="h-4 w-4" /> Personal Information
+                      </h4>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">First Name *</label>
+                      <input
+                        type="text"
+                        required
+                        value={staffForm.FirstName}
+                        onChange={(e) => setStaffForm({...staffForm, FirstName: e.target.value})}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-800"
+                        placeholder="Enter first name"
+                        minLength={2}
+                        maxLength={50}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Surname *</label>
+                      <input
+                        type="text"
+                        required
+                        value={staffForm.SurName}
+                        onChange={(e) => setStaffForm({...staffForm, SurName: e.target.value})}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-800"
+                        placeholder="Enter surname"
+                        minLength={2}
+                        maxLength={50}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Email *</label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <input
+                          type="email"
+                          required
+                          value={staffForm.Email}
+                          onChange={(e) => setStaffForm({...staffForm, Email: e.target.value})}
+                          className="w-full pl-9 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-800"
+                          placeholder="staff@company.com"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Phone Number *</label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <input
+                          type="tel"
+                          required
+                          value={staffForm.PhoneNo}
+                          onChange={(e) => setStaffForm({...staffForm, PhoneNo: e.target.value})}
+                          className="w-full pl-9 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-800"
+                          placeholder="08012345678"
+                          pattern="[0-9]{10,15}"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Gender</label>
+                      <select
+                        value={staffForm.Sex}
+                        onChange={(e) => setStaffForm({...staffForm, Sex: e.target.value})}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-800"
+                      >
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Staff Type *</label>
+                      <select
+                        required
+                        value={staffForm.StaffType || "Manager"}
+                        onChange={(e) => setStaffForm({...staffForm, StaffType: e.target.value})}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-800"
+                      >
+                        <option value="Manager">Manager</option>
+                        <option value="Staff">Staff</option>
+                        <option value="Driver">Driver</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Supervisor">Supervisor</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Password {!editingStaff && "*"}</label>
+                      <div className="relative">
+                        <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <input
+                          type="password"
+                          required={!editingStaff}
+                          value={staffForm.Password}
+                          onChange={(e) => setStaffForm({...staffForm, Password: e.target.value})}
+                          className="w-full pl-9 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-800"
+                          placeholder={editingStaff ? "Leave blank to keep current" : "Enter password (min 8 chars)"}
+                          minLength={8}
+                        />
+                      </div>
+                      {!editingStaff && (
+                        <p className="text-xs text-gray-400 mt-1">Password must be at least 8 characters</p>
+                      )}
+                    </div>
+
+                    {/* Company Information */}
+                    <div className="md:col-span-2 mt-2">
+                      <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                        <Briefcase className="h-4 w-4" /> Company Information
+                      </h4>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Company Name</label>
+                      <input                        type="text"
+                        value={staffForm.CompanyName}
+                        onChange={(e) => setStaffForm({...staffForm, CompanyName: e.target.value})}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-800"
+                        placeholder="Company name"
+                        disabled
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Branch *</label>
+                      <input
+                        type="text"
+                        required
+                        value={staffForm.Branch}
+                        onChange={(e) => setStaffForm({...staffForm, Branch: e.target.value})}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-800"
+                        placeholder="Branch name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Staff Code</label>
+                      <input
+                        type="text"
+                        value={staffForm.StaffCode}
+                        onChange={(e) => setStaffForm({...staffForm, StaffCode: e.target.value})}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-800"
+                        placeholder="Auto-generated if left blank"
+                      />
+                      <p className="text-xs text-gray-400 mt-1">Leave blank to auto-generate</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Company Username</label>
+                      <input
+                        type="text"
+                        value={staffForm.CompanyUserName}
+                        onChange={(e) => setStaffForm({...staffForm, CompanyUserName: e.target.value})}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-800"
+                        placeholder="Company username"
+                      />
+                    </div>
+
+                    {/* Address Information */}
+                    <div className="md:col-span-2 mt-2">
+                      <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                        <MapPin className="h-4 w-4" /> Address Information
+                      </h4>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">State</label>
+                      <input
+                        type="text"
+                        value={staffForm.State}
+                        onChange={(e) => setStaffForm({...staffForm, State: e.target.value})}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-800"
+                        placeholder="State"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Locality</label>
+                      <input
+                        type="text"
+                        value={staffForm.Locality}
+                        onChange={(e) => setStaffForm({...staffForm, Locality: e.target.value})}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-800"
+                        placeholder="City/Locality"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium mb-1">Address</label>
+                      <input
+                        type="text"
+                        value={staffForm.Address}
+                        onChange={(e) => setStaffForm({...staffForm, Address: e.target.value})}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-800"
+                        placeholder="Street address"
+                      />
+                    </div>
                   </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b bg-gray-50">
-                          <th className="text-left py-3 px-4 font-medium text-gray-600">Name</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-600">Email</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-600">Phone</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-600">Role</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-600">Company</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-600">Branch</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-600">Joined</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredStaff.map((s) => (
-                          <tr key={s.id} className="border-b hover:bg-gray-50">
-                            <td className="py-3 px-4 font-medium">{s.firstName} {s.surName}</td>
-                            <td className="py-3 px-4 text-gray-500">{s.email}</td>
-                            <td className="py-3 px-4">{s.phoneNo || "—"}</td>
-                            <td className="py-3 px-4">
-                              <Badge className="bg-blue-100 text-blue-800">{s.adminType || "—"}</Badge>
-                            </td>
-                            <td className="py-3 px-4">{s.companyName || "—"}</td>
-                            <td className="py-3 px-4">{s.branch || "—"}</td>
-                            <td className="py-3 px-4 text-gray-500">
-                              {s.createdAt ? new Date(s.createdAt).toLocaleDateString() : "—"}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+
+                  <div className="mt-6 flex gap-3">
+                    <Button 
+                      type="submit"
+                      style={{ backgroundColor: "#8B0000" }} 
+                      className="text-white"
+                      disabled={isStaffSubmitting}
+                    >
+                      {isStaffSubmitting ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : null}
+                      {isStaffSubmitting ? "Saving..." : (editingStaff ? "Update Staff" : "Add Staff")}
+                    </Button>
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowAddStaff(false);
+                        setEditingStaff(null);
+                        resetStaffForm();
+                        setActiveSection("staff");
+                      }}
+                    >
+                      Cancel
+                    </Button>
                   </div>
-                )}
+                </form>
               </CardContent>
             </Card>
           )}
@@ -1194,7 +1714,7 @@ export default function CompanyDashboard() {
           {activeSection === "adverts" && (
             <Card>
               <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <CardTitle>Adverteddd List ({filteredAdverts.length})</CardTitle>
+                <CardTitle>Advert List ({filteredAdverts.length})</CardTitle>
                 <SearchBar />
               </CardHeader>
               <CardContent>
