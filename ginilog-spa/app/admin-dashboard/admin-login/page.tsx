@@ -149,10 +149,7 @@ export default function AdminAuth() {
               </Button>
             </form>
 
-            <div className="mt-6 p-3 bg-gray-50 border border-gray-200 rounded-md text-center text-sm text-gray-500">
-              Admin accounts are created by the Super Admin.
-              <br />Contact your Super Admin for access.
-            </div>
+            
 
             <p className="mt-4 text-center text-xs text-gray-500">
               <Link href="/" className="hover:text-gray-700">← Back to Home</Link>
