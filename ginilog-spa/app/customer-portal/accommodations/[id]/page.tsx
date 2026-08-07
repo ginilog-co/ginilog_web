@@ -164,8 +164,9 @@ export default function AccommodationDetailsPage() {
       );
 
       const paystackPayload = {
-        customerName:
-          formData.customerName,
+        amount: totalAmount,
+        email: user?.email || '',
+        customerName: formData.customerName,
         customerPhoneNumber: formData.customerPhone,
         customerEmail: user?.email || '',
         numberOfGuests: formData.guests,
@@ -178,7 +179,6 @@ export default function AccommodationDetailsPage() {
         reservationEndDate: formData.endDate,
         noOfDays,
         reservationId: formData.roomId,
-       
         staffId: user?.id || '',
         staffName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
         purchaseChannel: 'web',
@@ -186,22 +186,21 @@ export default function AccommodationDetailsPage() {
       };
 
       const flutterwavePayload = {
-       customerName:
-          formData.customerName,
+        amount: totalAmount,
+        email: user?.email || '',
+        customerName: formData.customerName,
         customerPhoneNumber: formData.customerPhone,
         customerEmail: user?.email || '',
         numberOfGuests: formData.guests,
         trnxReference: reference,
-        paymentChannel: 'paystack',
+        paymentChannel: 'flutterwave',
         paymentStatus: true,
         comment: formData.comment,
-        
         ticketClosed: true,
         reservationStartDate: formData.startDate,
         reservationEndDate: formData.endDate,
         noOfDays,
         reservationId: formData.roomId,
-       
         staffId: user?.id || '',
         staffName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
         purchaseChannel: 'web',

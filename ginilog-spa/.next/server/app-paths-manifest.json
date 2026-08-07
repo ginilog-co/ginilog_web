@@ -3,8 +3,12 @@
   "/_not-found/page": "app/_not-found/page.js",
   "/admin-dashboard/admin-login/page": "app/admin-dashboard/admin-login/page.js",
   "/admin-dashboard/company-login/page": "app/admin-dashboard/company-login/page.js",
+  "/admin-dashboard/company-panel/page": "app/admin-dashboard/company-panel/page.js",
   "/admin-dashboard/company/page": "app/admin-dashboard/company/page.js",
+  "/admin-dashboard/manager-approvals/page": "app/admin-dashboard/manager-approvals/page.js",
   "/admin-dashboard/page": "app/admin-dashboard/page.js",
+  "/admin-dashboard/registered-users/page": "app/admin-dashboard/registered-users/page.js",
+  "/admin-dashboard/reset-password/page": "app/admin-dashboard/reset-password/page.js",
   "/customer-portal/accommodations/[id]/page": "app/customer-portal/accommodations/[id]/page.js",
   "/customer-portal/accommodations/page": "app/customer-portal/accommodations/page.js",
   "/customer-portal/dashboard/page": "app/customer-portal/dashboard/page.js",
@@ -21,5 +25,6 @@
   "/landing-page/page": "app/landing-page/page.js",
   "/page": "app/page.js",
   "/privacy/page": "app/privacy/page.js",
+  "/reset-passsword/page": "app/reset-passsword/page.js",
   "/terms/page": "app/terms/page.js"
 }
