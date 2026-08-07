@@ -105,7 +105,7 @@ export default function DeliveryRequestPage() {
         userType: "Registered"
       };
 
-      await createOrder(companyId, orderData);
+      await createOrder(orderData);
       setOrderSuccess(true);
       setTimeout(() => router.push("/customer-portal/orders"), 2000);
     } catch (err) {
