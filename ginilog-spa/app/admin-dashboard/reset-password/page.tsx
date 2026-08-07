@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Lock, Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
 import { adminResetPassword } from "@/lib/api";
 
-export default function AdminResetPasswordPage() {
+// Add this to prevent prerendering
+export const dynamic = 'force-dynamic';
+
+function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const [token, setToken] = useState("");
   const [password, setPassword] = useState("");
@@ -153,5 +156,17 @@ export default function AdminResetPasswordPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
