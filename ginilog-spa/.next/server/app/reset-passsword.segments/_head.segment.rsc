@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[71904,["/_next/static/chunks/145khz7-k-o6j.js","/_next/static/chunks/1t143gdem6q-r.js","/_next/static/chunks/300xk8e-13ej1.js"],"ViewportBoundary"]
+3:I[71904,["/_next/static/chunks/145khz7-k-o6j.js","/_next/static/chunks/1t143gdem6q-r.js","/_next/static/chunks/300xk8e-13ej1.js"],"MetadataBoundary"]
+4:"$Sreact.suspense"
+5:I[61365,["/_next/static/chunks/145khz7-k-o6j.js","/_next/static/chunks/1t143gdem6q-r.js","/_next/static/chunks/300xk8e-13ej1.js"],"IconMark"]
+0:{"rsc":["$","$1","h",{"children":[null,["$","$L2",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]}],["$","div",null,{"hidden":true,"children":["$","$L3",null,{"children":["$","$4",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Ginilog - Logistics and Accommodation Solutions"}],["$","meta","1",{"name":"description","content":"Your one-stop shop for logistics and accommodation services"}],["$","link","2",{"rel":"icon","href":"/favicon.ico"}],["$","$L5","3",{}]]}]}]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"LKlBI6vjKK96VPOQKrLBq"}

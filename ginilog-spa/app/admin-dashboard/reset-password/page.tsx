@@ -1,17 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react"; // ✅ Import Suspense
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Lock, Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
-import { adminResetPassword } from "@/lib/api"; // Or your password reset function
+import { adminResetPassword } from "@/lib/api";
 
-// Add this to prevent prerendering
+// ✅ Keep this to ensure dynamic rendering
 export const dynamic = 'force-dynamic';
 
+// ✅ Create a separate component that uses useSearchParams
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const [token, setToken] = useState("");
@@ -60,6 +61,7 @@ function ResetPasswordForm() {
     }
   };
 
+  // ✅ Your existing form JSX goes here (the entire return statement from your original component)
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-10">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
@@ -72,9 +74,9 @@ function ResetPasswordForm() {
             Back to Sign In
           </Link>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Reset Password</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Admin Reset Password</h1>
           <p className="text-sm text-gray-500 mb-6">
-            Enter the reset token and choose a new password for your account.
+            Enter the reset token and choose a new password for your admin account.
           </p>
 
           {error && (
@@ -132,7 +134,7 @@ function ResetPasswordForm() {
 
             <div>
               <Label htmlFor="confirmPassword" className="text-gray-700">
-                Confirm Password.
+                Confirm Password
               </Label>
               <div className="relative mt-1">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -159,7 +161,8 @@ function ResetPasswordForm() {
   );
 }
 
-export default function ResetPasswordPage() {
+// ✅ Main page export with Suspense boundary
+export default function AdminResetPasswordPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-gray-50">

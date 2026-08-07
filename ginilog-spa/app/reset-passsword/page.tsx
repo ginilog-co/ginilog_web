@@ -1,15 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react"; // ✅ Import Suspense
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Lock, Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
-import { adminResetPassword } from "@/lib/api";
+import { adminResetPassword } from "@/lib/api"; // Or your password reset function
 
-export default function AdminResetPasswordPage() {
+// ✅ Keep this to ensure dynamic rendering
+export const dynamic = 'force-dynamic';
+
+// ✅ Create a separate component that uses useSearchParams
+function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const [token, setToken] = useState("");
   const [password, setPassword] = useState("");
@@ -57,6 +61,7 @@ export default function AdminResetPasswordPage() {
     }
   };
 
+  // ✅ Your existing form JSX goes here (the entire return statement from your original component)
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-10">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
@@ -69,9 +74,9 @@ export default function AdminResetPasswordPage() {
             Back to Sign In
           </Link>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Admin Reset Password</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Reset Password</h1>
           <p className="text-sm text-gray-500 mb-6">
-            Enter the reset token and choose a new password for your admin account.
+            Enter the reset token and choose a new password for your account.
           </p>
 
           {error && (
@@ -153,5 +158,18 @@ export default function AdminResetPasswordPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// ✅ Main page export with Suspense boundary
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
