@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Lock, Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
-import { adminResetPassword } from "@/lib/api";
+import { adminResetPassword } from "@/lib/api"; // Or your password reset function
 
 // Add this to prevent prerendering
 export const dynamic = 'force-dynamic';
@@ -72,9 +72,9 @@ function ResetPasswordForm() {
             Back to Sign In
           </Link>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Admin Reset Password</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Reset Password</h1>
           <p className="text-sm text-gray-500 mb-6">
-            Enter the reset token and choose a new password for your admin account.
+            Enter the reset token and choose a new password for your account.
           </p>
 
           {error && (
@@ -159,7 +159,7 @@ function ResetPasswordForm() {
   );
 }
 
-export default function AdminResetPasswordPage() {
+export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
