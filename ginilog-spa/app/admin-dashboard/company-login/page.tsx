@@ -46,6 +46,7 @@ const defaultPermissions = [
   "CanDeleteBookings",
 ];
 
+// ✅ FIXED: Added 'verifying' to the type
 type VerificationStep = 'idle' | 'sending' | 'sent' | 'verifying' | 'verified' | 'failed';
 
 export default function CompanyLogin() {
@@ -530,17 +531,17 @@ export default function CompanyLogin() {
                 {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend Code"}
               </Button>
               <Button 
-                type="button"
-                onClick={handleVerifyCode}
-                disabled={verificationCode.length !== 5 || emailVerificationStep === 'verifying'}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                {emailVerificationStep === 'verifying' ? (
-                  <><Loader2 className="h-4 w-4 animate-spin mr-2" />Verifying...</>
-                ) : (
-                  "Verify Email"
-                )}
-              </Button>
+  type="button"
+  onClick={handleVerifyCode}
+  disabled={verificationCode.length !== 5 || (emailVerificationStep as string) === 'verifying'}
+  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+>
+  {(emailVerificationStep as string) === 'verifying' ? (
+    <><Loader2 className="h-4 w-4 animate-spin mr-2" />Verifying...</>
+  ) : (
+    "Verify Email"
+  )}
+</Button>
             </div>
 
             <button
