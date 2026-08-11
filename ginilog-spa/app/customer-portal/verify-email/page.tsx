@@ -7,7 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, CheckCircle, Loader2, ArrowLeft, AlertCircle, Eye, EyeOff, Lock, Key } from "lucide-react";
-import { verifyEmail, resendVerificationCode, getStoredUser } from "@/lib/api";
+import { 
+  verifyAuthUserEmail,
+  resendAuthUserVerificationCode,
+  requestAuthUserEmailVerificationToken,
+  getStoredUser 
+} from "@/lib/api";
 
 function VerifyEmailContent() {
   const router = useRouter();
@@ -66,7 +71,7 @@ function VerifyEmailContent() {
     setIsLoading(true);
 
     try {
-      // Validate code length
+      // Validate code length (5 digits for company verification)
       if (verificationCode.length !== 5) {
         setVerificationError("Please enter a valid 5-digit verification code.");
         setIsLoading(false);
@@ -98,7 +103,8 @@ function VerifyEmailContent() {
         hasPassword: !!verificationData.Password 
       });
 
-      const result = await verifyEmail(verificationData);
+      // Use the correct function for auth user verification
+      const result = await verifyAuthUserEmail(verificationData);
       console.log('✅ Verification successful:', result);
       
       setSuccess(true);
@@ -147,7 +153,8 @@ function VerifyEmailContent() {
       }
 
       console.log('📤 Resending verification code to:', userEmail);
-      await resendVerificationCode(userEmail);
+      // Use the correct function for auth user resend
+      await resendAuthUserVerificationCode(userEmail);
       setResendSuccess(true);
       setCountdown(60); // 60 second cooldown
       
@@ -352,4 +359,4 @@ export default function VerifyEmail() {
       <VerifyEmailContent />
     </Suspense>
   );
-} 
+}
