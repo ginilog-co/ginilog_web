@@ -11,19 +11,20 @@ import {
   verifyCompanyEmailWithCode,
   sendCompanyVerificationCode,
   resendCompanyVerificationCode,
-  registerBrandOwner,
-  RegisterBrandOwnerRequest,
   getStoredUser
 } from "@/lib/api";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailParam = searchParams.get("email") || "";
-  const [brandOwnerData, setBrandOwnerData] = useState<RegisterBrandOwnerRequest | null>(null);
   
   const [email, setEmail] = useState(emailParam);
   const [verificationCode, setVerificationCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,26 +48,12 @@ export default function VerifyEmailPage() {
     }
   }, [resendTimer]);
 
-  // Load brand owner data from session storage
-  useEffect(() => {
-    const storedData = sessionStorage.getItem("brandOwnerData");
-    if (storedData) {
-      try {
-        const parsed = JSON.parse(storedData);
-        setBrandOwnerData(parsed);
-        if (!email && parsed.email) {
-          setEmail(parsed.email);
-        }
-      } catch (e) {
-        console.error("Failed to parse brand owner data:", e);
-      }
-    }
-  }, []);
-
   // If email is provided in URL, auto-send verification
   useEffect(() => {
     if (emailParam) {
-      handleSendVerification();
+      setTimeout(() => {
+        handleSendVerification();
+      }, 500);
     }
   }, [emailParam]);
 
@@ -109,6 +96,9 @@ export default function VerifyEmailPage() {
       return;
     }
 
+    // Password is optional for company verification
+    // If password is provided, it will be set during registration
+
     setIsLoading(true);
 
     try {
@@ -116,24 +106,17 @@ export default function VerifyEmailPage() {
       const result = await verifyCompanyEmailWithCode(email, verificationCode);
       
       if (result.isValid) {
-        setSuccess("Email verified successfully!");
+        setSuccess("Email verified successfully! Redirecting to company registration...");
         setStep('complete');
         
         // Store verification status
         sessionStorage.setItem("emailVerified", "true");
         sessionStorage.setItem("verifiedEmail", email);
+        sessionStorage.setItem("verificationToken", result.token || "");
         
-        // If we have brand owner data, we can proceed to company registration
-        if (brandOwnerData) {
-          setTimeout(() => {
-            router.push("/admin-dashboard/company-register");
-          }, 1500);
-        } else {
-          // Redirect to company login or dashboard
-          setTimeout(() => {
-            router.push("/admin-dashboard/company-login");
-          }, 1500);
-        }
+        setTimeout(() => {
+          router.push("/admin-dashboard/company-login?verified=true");
+        }, 1500);
       } else {
         throw new Error(result.message || 'Invalid verification code');
       }
@@ -228,12 +211,24 @@ export default function VerifyEmailPage() {
                 "Send Verification Code"
               )}
             </Button>
+
+            <div className="text-center">
+              <Link href="/admin-dashboard/company-login" className="text-sm text-gray-600 hover:text-gray-900">
+                ← Back to Login
+              </Link>
+            </div>
           </form>
         )}
 
         {/* Step 2: Verify Code */}
         {step === 'verify' && (
           <form onSubmit={handleVerifyEmail} className="space-y-4">
+            <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
+              <p className="text-sm text-blue-700">
+                A 5-digit verification code was sent to <strong>{email}</strong>
+              </p>
+            </div>
+
             <div>
               <Label htmlFor="verificationCode">Verification Code</Label>
               <div className="relative mt-1">
@@ -300,31 +295,29 @@ export default function VerifyEmailPage() {
             </div>
             <p className="text-sm text-gray-600">
               Your company email has been verified successfully!
-              {brandOwnerData && " You can now complete your company registration."}
-              {!brandOwnerData && " You can now log in to your company dashboard."}
+              <br />
+              <span className="text-xs text-gray-500">You can now complete your company registration.</span>
             </p>
             <Button
-              onClick={() => {
-                if (brandOwnerData) {
-                  router.push("/admin-dashboard/company-register");
-                } else {
-                  router.push("/admin-dashboard/company-login");
-                }
-              }}
+              onClick={() => router.push("/admin-dashboard/company-login?verified=true")}
               className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white"
             >
-              {brandOwnerData ? "Complete Registration" : "Go to Login"}
+              Go to Company Login
+            </Button>
+            <Button
+              onClick={() => router.push("/admin-dashboard/company-register")}
+              variant="outline"
+              className="w-full h-11"
+            >
+              Complete Registration
             </Button>
           </div>
         )}
-
-        {/* Back to Login */}
-        <div className="mt-4 text-center border-t pt-4">
-          <Link href="/admin-dashboard/company-login" className="text-sm text-gray-600 hover:text-gray-900">
-            ← Back to Company Login
-          </Link>
-        </div>
       </div>
     </div>
   );
+}
+
+export default function VerifyEmailPage() {
+  return <VerifyEmailContent />;
 }
