@@ -6,20 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Mail, Lock, User, Phone, Building2, Loader2, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Phone, Building2, Loader2, CheckCircle, XCircle, ArrowLeft, Store } from "lucide-react";
 import { 
   loginManager, 
-  registerManager, 
   LoginRequest, 
-  RegisterManagerRequest,
   registerBrandOwner,
   RegisterBrandOwnerRequest,
   sendCompanyVerificationCode,
   verifyCompanyEmailWithCode,
-  resendCompanyVerificationCode
+  resendCompanyVerificationCode,
+  addCompany,
+  getStoredUser,
+  isAuthenticated
 } from "@/lib/api";
 
-type AuthMode = "signin" | "signup" | "brandowner" | "verify";
+type AuthMode = "signin" | "signup" | "verify" | "company-register";
 
 const SERVICES = ["Logistics", "Accommodation"];
 
@@ -71,9 +72,27 @@ export default function CompanyLogin() {
     address: "",
   });
 
-  // Brand Owner Registration States
-  const [brandOwnerStep, setBrandOwnerStep] = useState<'idle' | 'registering' | 'success' | 'failed'>('idle');
-  const [brandOwnerData, setBrandOwnerData] = useState<RegisterBrandOwnerRequest | null>(null);
+  // Company Registration Data
+  const [companyData, setCompanyData] = useState({
+    companyName: "",
+    companyEmail: "",
+    phoneNumber: "",
+    companyAddress: "",
+    state: "",
+    locality: "",
+    valueCharge: 0,
+    companyInfo: "",
+    noOfTrucks: 0,
+    nofOfBikes: 0,
+    bankName: "",
+    accountName: "",
+    accountNumber: "",
+    deliveryTypes: [] as string[],
+    serviceAreas: [] as string[],
+  });
+
+  const [deliveryTypeInput, setDeliveryTypeInput] = useState("");
+  const [serviceAreaInput, setServiceAreaInput] = useState("");
 
   // Email verification states
   const [emailVerificationStep, setEmailVerificationStep] = useState<VerificationStep>('idle');
@@ -81,7 +100,7 @@ export default function CompanyLogin() {
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [verificationSuccess, setVerificationSuccess] = useState<string | null>(null);
   const [resendTimer, setResendTimer] = useState(0);
-  const [showCompanyForm, setShowCompanyForm] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
 
   // Resend timer countdown
   useEffect(() => {
@@ -91,14 +110,30 @@ export default function CompanyLogin() {
     }
   }, [resendTimer]);
 
+  // Check if user is already authenticated
+  useEffect(() => {
+    if (isAuthenticated()) {
+      const user = getStoredUser();
+      if (user?.userType === "BrandOwner" || user?.userType === "Manager") {
+        router.push("/admin-dashboard/company");
+      }
+    }
+  }, [router]);
+
   const handleSignIn = async (e: { preventDefault(): void }) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
     try {
       const credentials: LoginRequest = { Email_PhoneNo: signInData.email, Password: signInData.password };
-      await loginManager(credentials);
-      router.push("/admin-dashboard/company");
+      const result = await loginManager(credentials);
+      
+      // Check if user is brand owner or manager
+      if (result.userType === "BrandOwner" || result.userType === "Manager") {
+        router.push("/admin-dashboard/company");
+      } else {
+        setError("This account is not authorized for company access.");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed. Check your credentials.");
     } finally {
@@ -113,6 +148,40 @@ export default function CompanyLogin() {
         ? prev.services.filter((s) => s !== service)
         : [...prev.services, service],
     }));
+  };
+
+  const addDeliveryType = () => {
+    if (deliveryTypeInput.trim() && !companyData.deliveryTypes.includes(deliveryTypeInput.trim())) {
+      setCompanyData({
+        ...companyData,
+        deliveryTypes: [...companyData.deliveryTypes, deliveryTypeInput.trim()]
+      });
+      setDeliveryTypeInput("");
+    }
+  };
+
+  const removeDeliveryType = (type: string) => {
+    setCompanyData({
+      ...companyData,
+      deliveryTypes: companyData.deliveryTypes.filter(t => t !== type)
+    });
+  };
+
+  const addServiceArea = () => {
+    if (serviceAreaInput.trim() && !companyData.serviceAreas.includes(serviceAreaInput.trim())) {
+      setCompanyData({
+        ...companyData,
+        serviceAreas: [...companyData.serviceAreas, serviceAreaInput.trim()]
+      });
+      setServiceAreaInput("");
+    }
+  };
+
+  const removeServiceArea = (area: string) => {
+    setCompanyData({
+      ...companyData,
+      serviceAreas: companyData.serviceAreas.filter(a => a !== area)
+    });
   };
 
   // Step 1: Register Brand Owner
@@ -148,7 +217,6 @@ export default function CompanyLogin() {
     }
 
     setIsLoading(true);
-    setBrandOwnerStep('registering');
 
     try {
       const staffCode = signUpData.firstName.slice(0, 3).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
@@ -174,15 +242,13 @@ export default function CompanyLogin() {
         locality: signUpData.locality,
       };
 
-      setBrandOwnerData(payload);
-      const result = await registerBrandOwner(payload);
+      await registerBrandOwner(payload);
       
-      setBrandOwnerStep('success');
-      setSuccess("Brand Owner registered successfully! Please verify your email to continue.");
+      setRegisteredEmail(signUpData.email);
+      setSuccess("Brand Owner registered successfully! Please verify your email.");
       
       // Move to verification step
       setMode('verify');
-      setShowCompanyForm(false);
       
       // Send verification code
       await sendCompanyVerificationCode(signUpData.email);
@@ -191,7 +257,6 @@ export default function CompanyLogin() {
       setVerificationSuccess("Verification code sent! Please check your email.");
       
     } catch (err) {
-      setBrandOwnerStep('failed');
       setError(err instanceof Error ? err.message : "Brand Owner registration failed. Please try again.");
     } finally {
       setIsLoading(false);
@@ -204,7 +269,7 @@ export default function CompanyLogin() {
     setVerificationError(null);
     setVerificationSuccess(null);
     
-    if (!signUpData.email) {
+    if (!registeredEmail) {
       setVerificationError("No email found. Please go back and register.");
       return;
     }
@@ -212,7 +277,7 @@ export default function CompanyLogin() {
     setEmailVerificationStep('sending');
     
     try {
-      await sendCompanyVerificationCode(signUpData.email);
+      await sendCompanyVerificationCode(registeredEmail);
       setEmailVerificationStep('sent');
       setResendTimer(60);
       setVerificationSuccess("Verification code sent! Please check your email.");
@@ -235,16 +300,27 @@ export default function CompanyLogin() {
     setEmailVerificationStep('verifying');
     
     try {
-      const result = await verifyCompanyEmailWithCode(signUpData.email, verificationCode);
+      const result = await verifyCompanyEmailWithCode(registeredEmail, verificationCode);
       
       if (result.isValid) {
         setEmailVerificationStep('verified');
-        setVerificationSuccess("Email verified successfully!");
-        setShowCompanyForm(true);
-        setMode('verify');
+        setVerificationSuccess("Email verified successfully! Now complete your company registration.");
+        
+        // Move to company registration
         setTimeout(() => {
-          document.getElementById('company-form')?.scrollIntoView({ behavior: 'smooth' });
-        }, 300);
+          setMode('company-register');
+          // Pre-fill company data
+          setCompanyData({
+            ...companyData,
+            companyName: signUpData.companyName,
+            companyEmail: registeredEmail,
+            phoneNumber: signUpData.phone,
+            state: signUpData.state,
+            locality: signUpData.locality,
+          });
+          setEmailVerificationStep('idle');
+          setVerificationSuccess(null);
+        }, 1500);
       } else {
         throw new Error(result.message || 'Invalid verification code');
       }
@@ -263,7 +339,7 @@ export default function CompanyLogin() {
     setEmailVerificationStep('sending');
     
     try {
-      await resendCompanyVerificationCode(signUpData.email);
+      await resendCompanyVerificationCode(registeredEmail);
       setEmailVerificationStep('sent');
       setResendTimer(60);
       setVerificationSuccess("New verification code sent!");
@@ -273,13 +349,109 @@ export default function CompanyLogin() {
     }
   };
 
+  // Step 3: Company Registration
+  const handleCompanyRegistration = async (e: { preventDefault(): void }) => {
+    e.preventDefault();
+    setError(null);
+
+    // Validate company data
+    if (!companyData.companyName) {
+      setError("Company name is required.");
+      return;
+    }
+    if (!companyData.companyEmail) {
+      setError("Company email is required.");
+      return;
+    }
+    if (!companyData.phoneNumber) {
+      setError("Phone number is required.");
+      return;
+    }
+    if (companyData.valueCharge <= 0) {
+      setError("Value charge must be greater than 0.");
+      return;
+    }
+    if (!companyData.state) {
+      setError("State is required.");
+      return;
+    }
+    if (!companyData.locality) {
+      setError("Locality is required.");
+      return;
+    }
+    if (!companyData.companyAddress) {
+      setError("Company address is required.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Add company
+      await addCompany({
+        companyName: companyData.companyName,
+        companyEmail: companyData.companyEmail,
+        phoneNumber: companyData.phoneNumber,
+        companyAddress: companyData.companyAddress,
+        state: companyData.state,
+        locality: companyData.locality,
+        valueCharge: companyData.valueCharge,
+        companyInfo: companyData.companyInfo,
+        noOfTrucks: companyData.noOfTrucks,
+        nofOfBikes: companyData.nofOfBikes,
+        bankName: companyData.bankName,
+        accountName: companyData.accountName,
+        accountNumber: companyData.accountNumber,
+        deliveryTypes: companyData.deliveryTypes,
+        serviceAreas: companyData.serviceAreas,
+        companyStatus: "pending",
+      });
+
+      setSuccess("Company registered successfully! Redirecting to dashboard...");
+      
+      // Redirect to company dashboard after 2 seconds
+      setTimeout(() => {
+        router.push("/admin-dashboard/company");
+      }, 2000);
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Company registration failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const goBackToRegistration = () => {
     setMode('signup');
     setEmailVerificationStep('idle');
     setVerificationError(null);
     setVerificationSuccess(null);
     setVerificationCode("");
-    setShowCompanyForm(false);
+    setRegisteredEmail("");
+  };
+
+  const goBackToVerification = () => {
+    setMode('verify');
+    setEmailVerificationStep('sent');
+    setVerificationError(null);
+    setVerificationSuccess(null);
+    setCompanyData({
+      companyName: "",
+      companyEmail: "",
+      phoneNumber: "",
+      companyAddress: "",
+      state: "",
+      locality: "",
+      valueCharge: 0,
+      companyInfo: "",
+      noOfTrucks: 0,
+      nofOfBikes: 0,
+      bankName: "",
+      accountName: "",
+      accountNumber: "",
+      deliveryTypes: [],
+      serviceAreas: [],
+    });
   };
 
   // Render verification screen
@@ -291,7 +463,7 @@ export default function CompanyLogin() {
         </div>
         <h2 className="text-2xl font-semibold text-gray-900">Verify Your Email</h2>
         <p className="mt-2 text-sm text-gray-600">
-          We'll send a verification code to <strong>{signUpData.email}</strong>
+          We sent a verification code to <strong>{registeredEmail}</strong>
         </p>
       </div>
 
@@ -309,150 +481,364 @@ export default function CompanyLogin() {
         </div>
       )}
 
-      {!showCompanyForm ? (
-        <form onSubmit={handleSendVerification} className="space-y-4">
-          {emailVerificationStep === 'idle' && (
-            <Button 
-              type="submit" 
-              disabled={isLoading}
-              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium"
-            >
-              Send Verification Code
-            </Button>
-          )}
+      <div className="space-y-4">
+        {emailVerificationStep === 'idle' && (
+          <Button 
+            type="button"
+            onClick={handleSendVerification}
+            disabled={isLoading}
+            className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+          >
+            Send Verification Code
+          </Button>
+        )}
 
-          {emailVerificationStep === 'sending' && (
-            <Button disabled className="w-full h-12 bg-blue-600 text-white font-medium">
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              Sending Code...
-            </Button>
-          )}
+        {emailVerificationStep === 'sending' && (
+          <Button disabled className="w-full h-12 bg-blue-600 text-white font-medium">
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            Sending Code...
+          </Button>
+        )}
 
-          {emailVerificationStep === 'sent' && (
-            <div className="space-y-4">
-              <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-medium text-blue-800">Verification code sent!</p>
-                    <p className="text-sm text-blue-700">Please check your email for the 5-digit code.</p>
-                  </div>
+        {emailVerificationStep === 'sent' && (
+          <div className="space-y-4">
+            <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-blue-800">Verification code sent!</p>
+                  <p className="text-sm text-blue-700">Please check your email for the 5-digit code.</p>
                 </div>
               </div>
+            </div>
 
-              <div>
-                <Label htmlFor="verificationCode" className="text-gray-700">Verification Code</Label>
-                <Input
-                  id="verificationCode"
-                  type="text"
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
-                  placeholder="Enter 5-digit code"
-                  maxLength={5}
-                  className="mt-1 text-center text-2xl tracking-widest"
-                  autoFocus
-                />
-                <p className="text-xs text-gray-500 mt-1">Enter the 5-digit code sent to your email</p>
-              </div>
+            <div>
+              <Label htmlFor="verificationCode" className="text-gray-700">Verification Code</Label>
+              <Input
+                id="verificationCode"
+                type="text"
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                placeholder="Enter 5-digit code"
+                maxLength={5}
+                className="mt-1 text-center text-2xl tracking-widest"
+                autoFocus
+              />
+              <p className="text-xs text-gray-500 mt-1">Enter the 5-digit code sent to your email</p>
+            </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Button 
-                  type="button"
-                  onClick={handleResendCode}
-                  disabled={resendTimer > 0}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend Code"}
-                </Button>
-                <Button 
-                  type="button"
-                  onClick={handleVerifyCode}
-                  disabled={verificationCode.length !== 5 || emailVerificationStep === 'verifying'}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  {emailVerificationStep === 'verifying' ? (
-                    <><Loader2 className="h-4 w-4 animate-spin mr-2" />Verifying...</>
-                  ) : (
-                    "Verify Email"
-                  )}
-                </Button>
-              </div>
-
-              <button
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button 
                 type="button"
-                onClick={goBackToRegistration}
-                className="text-sm text-gray-600 hover:text-gray-900 underline flex items-center gap-1 mx-auto"
+                onClick={handleResendCode}
+                disabled={resendTimer > 0}
+                variant="outline"
+                className="flex-1"
               >
-                <ArrowLeft className="h-3 w-3" />
-                Back to registration
-              </button>
+                {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend Code"}
+              </Button>
+              <Button 
+                type="button"
+                onClick={handleVerifyCode}
+                disabled={verificationCode.length !== 5 || emailVerificationStep === 'verifying'}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {emailVerificationStep === 'verifying' ? (
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" />Verifying...</>
+                ) : (
+                  "Verify Email"
+                )}
+              </Button>
             </div>
-          )}
 
-          {emailVerificationStep === 'verifying' && (
-            <div className="w-full h-12 bg-blue-600 text-white font-medium rounded-lg flex items-center justify-center">
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              Verifying...
-            </div>
-          )}
-        </form>
-      ) : (
-        // Company Registration Form (Step 3)
-        <div id="company-form" className="space-y-4">
-          <div className="mb-4 p-4 rounded-lg bg-green-50 border border-green-200">
-            <div className="flex items-start gap-3">
-              <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-medium text-green-800">Email Verified Successfully!</p>
-                <p className="text-sm text-green-700">Now complete your company registration.</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4">
-            <p className="text-sm text-yellow-800">
-              <strong>Brand Owner:</strong> {signUpData.firstName} {signUpData.lastName} ({signUpData.email})
-            </p>
-            <p className="text-sm text-yellow-700">
-              <strong>Company:</strong> {signUpData.companyName}
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button 
+            <button
               type="button"
-              onClick={() => {
-                // Navigate to company dashboard or login
-                router.push("/admin-dashboard/company-login");
-              }}
-              className="flex-1 bg-primary hover:bg-primary/90 text-white h-12"
+              onClick={goBackToRegistration}
+              className="text-sm text-gray-600 hover:text-gray-900 underline flex items-center gap-1 mx-auto"
             >
-              Go to Company Login
-            </Button>
-            <Button 
-              type="button"
-              onClick={() => {
-                // Navigate to company dashboard
-                router.push("/admin-dashboard/company");
-              }}
-              variant="outline"
-              className="flex-1 h-12"
-            >
-              Go to Dashboard
-            </Button>
+              <ArrowLeft className="h-3 w-3" />
+              Back to registration
+            </button>
           </div>
-          
-          <button
-            type="button"
-            onClick={goBackToRegistration}
-            className="text-sm text-gray-600 hover:text-gray-900 underline flex items-center gap-1 mx-auto"
-          >
-            <ArrowLeft className="h-3 w-3" />
-            Back to verification
-          </button>
+        )}
+
+        {emailVerificationStep === 'verifying' && (
+          <div className="w-full h-12 bg-blue-600 text-white font-medium rounded-lg flex items-center justify-center">
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            Verifying...
+          </div>
+        )}
+
+        {emailVerificationStep === 'verified' && (
+          <div className="rounded-lg bg-green-50 border border-green-200 p-4 text-green-800 flex items-start gap-2">
+            <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium">Email Verified Successfully!</p>
+              <p className="text-sm">Redirecting to company registration...</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // Render company registration form
+  const renderCompanyRegistration = () => (
+    <div className="space-y-6">
+      <div className="text-center">
+        <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+          <Store className="h-8 w-8 text-green-600" />
+        </div>
+        <h2 className="text-2xl font-semibold text-gray-900">Complete Company Registration</h2>
+        <p className="mt-2 text-sm text-gray-600">
+          Fill in your company details to complete the registration.
+        </p>
+      </div>
+
+      {error && (
+        <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-800 flex items-start gap-2">
+          <XCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+          <span>{error}</span>
         </div>
       )}
+
+      {success && (
+        <div className="rounded-lg bg-green-50 border border-green-200 p-4 text-green-800 flex items-start gap-2">
+          <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium">Company Registered Successfully!</p>
+            <p className="text-sm">Redirecting to dashboard...</p>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleCompanyRegistration} className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+        {/* Basic Company Info */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label htmlFor="companyName">Company Name *</Label>
+            <Input
+              id="companyName"
+              placeholder="Acme Logistics Ltd"
+              value={companyData.companyName}
+              onChange={(e) => setCompanyData({ ...companyData, companyName: e.target.value })}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="companyEmail">Company Email *</Label>
+            <Input
+              id="companyEmail"
+              type="email"
+              placeholder="info@company.com"
+              value={companyData.companyEmail}
+              onChange={(e) => setCompanyData({ ...companyData, companyEmail: e.target.value })}
+              required
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label htmlFor="phoneNumber">Phone Number *</Label>
+            <Input
+              id="phoneNumber"
+              type="tel"
+              placeholder="+2348000000000"
+              value={companyData.phoneNumber}
+              onChange={(e) => setCompanyData({ ...companyData, phoneNumber: e.target.value })}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="valueCharge">Value Charge *</Label>
+            <Input
+              id="valueCharge"
+              type="number"
+              step="0.01"
+              placeholder="0.00"
+              value={companyData.valueCharge || ''}
+              onChange={(e) => setCompanyData({ ...companyData, valueCharge: parseFloat(e.target.value) || 0 })}
+              required
+            />
+          </div>
+        </div>
+
+        {/* Location */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label htmlFor="companyState">State *</Label>
+            <Input
+              id="companyState"
+              placeholder="Lagos"
+              value={companyData.state}
+              onChange={(e) => setCompanyData({ ...companyData, state: e.target.value })}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="companyLocality">Locality *</Label>
+            <Input
+              id="companyLocality"
+              placeholder="Ikeja"
+              value={companyData.locality}
+              onChange={(e) => setCompanyData({ ...companyData, locality: e.target.value })}
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <Label htmlFor="companyAddress">Company Address *</Label>
+          <Input
+            id="companyAddress"
+            placeholder="123 Main Street"
+            value={companyData.companyAddress}
+            onChange={(e) => setCompanyData({ ...companyData, companyAddress: e.target.value })}
+            required
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="companyInfo">Company Info (Optional)</Label>
+          <Input
+            id="companyInfo"
+            placeholder="Brief description of your company"
+            value={companyData.companyInfo}
+            onChange={(e) => setCompanyData({ ...companyData, companyInfo: e.target.value })}
+          />
+        </div>
+
+        {/* Fleet */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label htmlFor="noOfTrucks">Number of Trucks</Label>
+            <Input
+              id="noOfTrucks"
+              type="number"
+              placeholder="0"
+              value={companyData.noOfTrucks || ''}
+              onChange={(e) => setCompanyData({ ...companyData, noOfTrucks: parseInt(e.target.value) || 0 })}
+            />
+          </div>
+          <div>
+            <Label htmlFor="nofOfBikes">Number of Bikes</Label>
+            <Input
+              id="nofOfBikes"
+              type="number"
+              placeholder="0"
+              value={companyData.nofOfBikes || ''}
+              onChange={(e) => setCompanyData({ ...companyData, nofOfBikes: parseInt(e.target.value) || 0 })}
+            />
+          </div>
+        </div>
+
+        {/* Bank Details */}
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <Label htmlFor="bankName">Bank Name</Label>
+            <Input
+              id="bankName"
+              placeholder="GTBank"
+              value={companyData.bankName}
+              onChange={(e) => setCompanyData({ ...companyData, bankName: e.target.value })}
+            />
+          </div>
+          <div>
+            <Label htmlFor="accountName">Account Name</Label>
+            <Input
+              id="accountName"
+              placeholder="John Doe"
+              value={companyData.accountName}
+              onChange={(e) => setCompanyData({ ...companyData, accountName: e.target.value })}
+            />
+          </div>
+          <div>
+            <Label htmlFor="accountNumber">Account Number</Label>
+            <Input
+              id="accountNumber"
+              placeholder="0123456789"
+              value={companyData.accountNumber}
+              onChange={(e) => setCompanyData({ ...companyData, accountNumber: e.target.value })}
+            />
+          </div>
+        </div>
+
+        {/* Delivery Types */}
+        <div>
+          <Label>Delivery Types</Label>
+          <div className="flex gap-2 mt-1">
+            <Input
+              placeholder="e.g. Express, Standard"
+              value={deliveryTypeInput}
+              onChange={(e) => setDeliveryTypeInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addDeliveryType())}
+            />
+            <Button type="button" onClick={addDeliveryType} variant="outline" size="sm">
+              Add
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {companyData.deliveryTypes.map((type) => (
+              <span key={type} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                {type}
+                <button type="button" onClick={() => removeDeliveryType(type)} className="text-blue-600 hover:text-blue-800">
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Service Areas */}
+        <div>
+          <Label>Service Areas</Label>
+          <div className="flex gap-2 mt-1">
+            <Input
+              placeholder="e.g. Lagos, Abuja"
+              value={serviceAreaInput}
+              onChange={(e) => setServiceAreaInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addServiceArea())}
+            />
+            <Button type="button" onClick={addServiceArea} variant="outline" size="sm">
+              Add
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {companyData.serviceAreas.map((area) => (
+              <span key={area} className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                {area}
+                <button type="button" onClick={() => removeServiceArea(area)} className="text-green-600 hover:text-green-800">
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button
+            type="button"
+            onClick={goBackToVerification}
+            variant="outline"
+            className="flex-1"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Verification
+          </Button>
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+          >
+            {isLoading ? (
+              <><Loader2 className="h-4 w-4 animate-spin mr-2" />Registering Company...</>
+            ) : (
+              "Complete Registration"
+            )}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 
@@ -495,31 +881,34 @@ export default function CompanyLogin() {
           </div>
 
           <div className="bg-white rounded-lg">
-            <div className="border-b border-gray-200 mb-6">
-              <div className="flex">
-                <button
-                  onClick={() => { setMode("signin"); setError(null); setSuccess(null); setBrandOwnerStep('idle'); }}
-                  className={`flex-1 py-3 text-center font-medium transition-colors ${
-                    mode === "signin" ? "text-primary border-b-2 border-primary" : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  Sign In
-                </button>
-                <button
-                  onClick={() => { setMode("signup"); setError(null); setSuccess(null); setBrandOwnerStep('idle'); }}
-                  className={`flex-1 py-3 text-center font-medium transition-colors ${
-                    mode === "signup" ? "text-primary border-b-2 border-primary" : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  Register Company
-                </button>
+            {/* Tabs - Only show Sign In and Register when not in verify or company-register mode */}
+            {mode !== 'verify' && mode !== 'company-register' && (
+              <div className="border-b border-gray-200 mb-6">
+                <div className="flex">
+                  <button
+                    onClick={() => { setMode("signin"); setError(null); setSuccess(null); }}
+                    className={`flex-1 py-3 text-center font-medium transition-colors ${
+                      mode === "signin" ? "text-primary border-b-2 border-primary" : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    onClick={() => { setMode("signup"); setError(null); setSuccess(null); }}
+                    className={`flex-1 py-3 text-center font-medium transition-colors ${
+                      mode === "signup" ? "text-primary border-b-2 border-primary" : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    Register Company
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
-            {error && (
+            {error && mode !== 'company-register' && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">{error}</div>
             )}
-            {success && (
+            {success && mode !== 'company-register' && mode !== 'verify' && (
               <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md text-green-700 text-sm">{success}</div>
             )}
 
@@ -566,9 +955,11 @@ export default function CompanyLogin() {
               </form>
             ) : mode === "verify" ? (
               renderVerification()
+            ) : mode === "company-register" ? (
+              renderCompanyRegistration()
             ) : (
               // Sign Up Form - Brand Owner Registration
-              <form onSubmit={handleBrandOwnerRegistration} className="space-y-4">
+              <form onSubmit={handleBrandOwnerRegistration} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
                 {/* Name */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -699,25 +1090,25 @@ export default function CompanyLogin() {
                   </div>
                 </div>
 
-                <Button type="submit" disabled={isLoading || brandOwnerStep === 'registering'} className="w-full h-12 bg-primary hover:bg-primary/90 text-white">
-                  {isLoading || brandOwnerStep === 'registering' ? (
+                <Button type="submit" disabled={isLoading} className="w-full h-12 bg-primary hover:bg-primary/90 text-white">
+                  {isLoading ? (
                     <><Loader2 className="h-4 w-4 animate-spin mr-2" />Registering Brand Owner...</>
                   ) : (
                     "Register Brand Owner"
                   )}
                 </Button>
 
-                {brandOwnerStep === 'success' && (
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-md text-green-700 text-sm">
-                    ✅ Brand Owner registered successfully! Now verify your email.
-                  </div>
-                )}
+                <div className="text-center text-xs text-gray-500">
+                  <p>After registration, you'll verify your email and complete company setup.</p>
+                </div>
               </form>
             )}
 
-            <p className="mt-4 text-center text-xs text-gray-500">
-              <Link href="/" className="hover:text-gray-700">← Back to Home</Link>
-            </p>
+            {mode !== 'verify' && mode !== 'company-register' && (
+              <p className="mt-4 text-center text-xs text-gray-500">
+                <Link href="/" className="hover:text-gray-700">← Back to Home</Link>
+              </p>
+            )}
           </div>
         </div>
       </main>
