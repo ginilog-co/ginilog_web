@@ -1422,12 +1422,12 @@ export async function deleteDeliveryAddress(id: string): Promise<void> {
   });
 }
 
-// ============ VERIFICATION FUNCTIONS ============
+// ============ AUTH USER VERIFICATION (for regular users) ============
 
-export async function verifyEmail(
+export async function verifyAuthUserEmail(
   data: EmailVerificationRequest,
 ): Promise<LoginResponse> {
-  console.log("🔄 Verifying email with:", {
+  console.log("🔄 Verifying auth user email with:", {
     Token: data.Token,
     hasPassword: !!data.Password,
   });
@@ -1444,10 +1444,10 @@ export async function verifyEmail(
   return loginData;
 }
 
-export async function requestEmailVerificationToken(
+export async function requestAuthUserEmailVerificationToken(
   email: string,
 ): Promise<string> {
-  console.log("🔄 Requesting email verification token for:", email);
+  console.log("🔄 Requesting auth user email verification token for:", email);
 
   const response = await fetchPublic(
     "auth-users/email-verification-request-token",
@@ -1459,10 +1459,200 @@ export async function requestEmailVerificationToken(
   return response.json();
 }
 
-export async function resendVerificationCode(email: string): Promise<string> {
-  console.log("🔄 Resending verification code for:", email);
-  return requestEmailVerificationToken(email);
+export async function resendAuthUserVerificationCode(email: string): Promise<string> {
+  console.log("🔄 Resending auth user verification code for:", email);
+  return requestAuthUserEmailVerificationToken(email);
 }
+
+// ============ COMPANY/BRAND OWNER VERIFICATION ============
+
+/**
+ * Send verification code to company/brand owner email
+ * Uses admin-controller endpoints
+ */
+export async function sendCompanyVerificationCode(email: string): Promise<{ message: string; code?: string }> {
+  try {
+    console.log(`📧 Sending company verification code to: ${email}`);
+    
+    // Try admin-controller endpoints for company verification
+    const endpoints = [
+      { endpoint: "admin-controller/send-verification", method: "POST" },
+      { endpoint: "admin-controller/email-verification-request-token", method: "POST" },
+      { endpoint: "admin-controller/verify-request", method: "POST" },
+    ];
+    
+    let lastError: Error | null = null;
+    
+    for (const attempt of endpoints) {
+      try {
+        console.log(`📡 Trying company verification endpoint: ${attempt.endpoint} (${attempt.method})`);
+        const response = await fetchPublic(attempt.endpoint, {
+          method: attempt.method,
+          body: JSON.stringify({ Email: email }),
+        });
+        
+        const data = await response.json();
+        console.log(`✅ Company verification code sent via ${attempt.endpoint}`);
+        return data;
+      } catch (error) {
+        console.warn(`❌ Failed with endpoint ${attempt.endpoint}:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+      }
+    }
+    
+    // Fallback to auth-users endpoint if admin endpoints fail
+    try {
+      console.log("📡 Falling back to auth-users endpoint for company verification");
+      const response = await fetchPublic("auth-users/email-verification-request-token", {
+        method: "POST",
+        body: JSON.stringify({ Email: email }),
+      });
+      const data = await response.json();
+      console.log("✅ Company verification code sent via fallback");
+      return data;
+    } catch (error) {
+      console.warn("❌ Fallback also failed:", error);
+      if (lastError) throw lastError;
+      throw error;
+    }
+    
+  } catch (error) {
+    console.error("❌ Failed to send company verification code:", error);
+    throw error;
+  }
+}
+
+/**
+ * Verify company/brand owner email with code
+ * Uses admin-controller endpoints
+ */
+export async function verifyCompanyEmailWithCode(email: string, code: string): Promise<{ isValid: boolean; message?: string; token?: string }> {
+  try {
+    console.log(`🔐 Verifying company email: ${email} with code: ${code}`);
+    
+    // Try admin-controller endpoints for company verification
+    const endpoints = [
+      { endpoint: "admin-controller/email-verification-request-token", method: "POST", body: { Email: email, Code: code } },
+      { endpoint: "admin-controller/email-verification-request-token", method: "POST", body: { Email: email, Token: code } },
+      { endpoint: "admin-controller/email-verification-request-token", method: "POST", body: { Email: email, Token: code } },
+      { endpoint: "admin-controller/email-verification-request-token", method: "POST", body: { Email: email, Otp: code } },
+    ];
+    
+    let lastError: Error | null = null;
+    
+    for (const attempt of endpoints) {
+      try {
+        console.log(`📡 Trying company verification with endpoint: ${attempt.endpoint} (${attempt.method})`);
+        const response = await fetchPublic(attempt.endpoint, {
+          method: attempt.method,
+          body: JSON.stringify(attempt.body),
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          console.log("✅ Company email verification successful");
+          return { 
+            isValid: true, 
+            message: data.message || "Company email verified successfully",
+            token: data.token || data.accessToken
+          };
+        }
+        
+        // If we got a 405, try the next endpoint
+        if (response.status === 405) {
+          console.warn(`⚠️ Method not allowed for ${attempt.endpoint}, trying next...`);
+          continue;
+        }
+        
+        lastError = new Error(data.message || data.error || `Verification failed with status ${response.status}`);
+        console.warn(`⚠️ Company verification attempt failed:`, lastError.message);
+        
+      } catch (error) {
+        console.warn(`❌ Failed with endpoint ${attempt.endpoint}:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+        // Continue to next endpoint
+      }
+    }
+    
+    // Fallback to auth-users endpoint if admin endpoints fail
+    try {
+      console.log("📡 Falling back to auth-users endpoint for company verification");
+      const response = await fetchPublic("auth-users/email-verification", {
+        method: "POST",
+        body: JSON.stringify({ Email: email, Token: code }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        console.log("✅ Company email verification successful via fallback");
+        return { 
+          isValid: true, 
+          message: data.message || "Company email verified successfully",
+          token: data.token
+        };
+      }
+    } catch (error) {
+      console.warn("❌ Fallback verification failed:", error);
+    }
+    
+    if (lastError) {
+      throw lastError;
+    }
+    
+    throw new Error("Company verification failed. Please try again.");
+    
+  } catch (error) {
+    console.error("❌ Company email verification failed:", error);
+    throw error;
+  }
+}
+
+/**
+ * Resend company verification code
+ */
+export async function resendCompanyVerificationCode(email: string): Promise<{ message: string }> {
+  return sendCompanyVerificationCode(email);
+}
+
+/**
+ * Check if company email is verified
+ */
+export async function checkCompanyEmailVerification(email: string): Promise<{ isVerified: boolean; company?: any }> {
+  try {
+    const endpoints = [
+      `admin-controller/check-verification?email=${encodeURIComponent(email)}`,
+      `admin-controller/company-verification-status?email=${encodeURIComponent(email)}`,
+      `admin-controller/verify-status?email=${encodeURIComponent(email)}`,
+    ];
+    
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetchPublic(endpoint, {
+          method: "GET",
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          return { 
+            isVerified: data.isVerified || data.emailVerified || data.verified || false,
+            company: data.company || data
+          };
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+    
+    return { isVerified: false };
+  } catch (error) {
+    console.warn("Failed to check company email verification:", error);
+    return { isVerified: false };
+  }
+}
+
+// ============ FORGOT PASSWORD FUNCTIONS ============
 
 export async function forgotPassword(email: string): Promise<string> {
   const response = await fetchPublic(
