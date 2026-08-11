@@ -1748,7 +1748,9 @@ export async function getCompanyById(id: string): Promise<Company> {
   }
 }
 
-// FIXED: Enhanced addCompany with validation and better error handling
+/**
+ * Add a new company - FIXED version with multiple endpoint fallbacks
+ */
 export async function addCompany(companyData: {
   companyName: string;
   companyEmail: string;
@@ -1772,7 +1774,7 @@ export async function addCompany(companyData: {
     console.log("📤 Adding company with data:", JSON.stringify(companyData, null, 2));
     
     // Validate required fields
-    const requiredFields = ['companyName', 'companyEmail', 'phoneNumber', 'valueCharge'];
+    const requiredFields = ['companyName', 'companyEmail', 'phoneNumber'];
     const missingFields = requiredFields.filter(field => !companyData[field as keyof typeof companyData]);
     
     if (missingFields.length > 0) {
@@ -1793,9 +1795,10 @@ export async function addCompany(companyData: {
     // Get current user
     const user = getStoredUser();
     console.log("👤 Current user:", user?.userType || "Unknown");
+    console.log("👤 User ID:", user?.userId || "Unknown");
     
     // Prepare payload with proper data types
-    const payload = {
+    const payload: any = {
       companyName: companyData.companyName.trim(),
       companyEmail: companyData.companyEmail.trim().toLowerCase(),
       phoneNumber: companyData.phoneNumber.trim(),
@@ -1816,19 +1819,51 @@ export async function addCompany(companyData: {
         ? companyData.serviceAreas
         : (companyData.serviceAreas ? [companyData.serviceAreas] : []),
       companyStatus: companyData.companyStatus || "pending",
-      adminId: companyData.adminId || user?.userId || "",
     };
+
+    // Add adminId if provided or from current user
+    if (companyData.adminId) {
+      payload.adminId = companyData.adminId;
+    } else if (user?.userId) {
+      payload.adminId = user.userId;
+    }
     
     console.log("📤 Sending payload:", JSON.stringify(payload, null, 2));
     
-    const response = await fetchWithAuth("logistics-controller", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    // Try multiple endpoints
+    const endpoints = [
+      "logistics-controller",
+      "admin-controller/companies",
+      "admin-controller/add-company",
+    ];
     
-    const result = await response.json();
-    console.log("✅ Company added successfully:", result);
-    return result;
+    let lastError: Error | null = null;
+    
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`📡 Trying add company endpoint: ${endpoint}`);
+        const response = await fetchWithAuth(endpoint, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        
+        const result = await response.json();
+        console.log(`✅ Company added successfully via ${endpoint}:`, result);
+        return result;
+      } catch (error) {
+        console.warn(`❌ Failed with endpoint ${endpoint}:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+        // Continue to next endpoint
+      }
+    }
+    
+    // If all endpoints failed, throw the last error
+    if (lastError) {
+      throw lastError;
+    }
+    
+    throw new Error("Failed to add company. Please contact support.");
+    
   } catch (error) {
     console.error("❌ Failed to add company:", error);
     // Re-throw with more context
@@ -2061,6 +2096,12 @@ export async function registerBrandOwner(
         });
         const result = await response.json();
         console.log(`✅ Brand Owner registered successfully via ${endpoint}:`, result);
+        
+        // If the response contains user data, store it
+        if (result.token) {
+          setAuthData(result);
+        }
+        
         return result;
       } catch (error) {
         console.warn(`Failed Brand Owner registration with endpoint ${endpoint}:`, error);
