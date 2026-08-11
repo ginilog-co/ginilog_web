@@ -1474,7 +1474,6 @@ export async function sendCompanyVerificationCode(email: string): Promise<{ mess
   try {
     console.log(`📧 Sending company verification code to: ${email}`);
     
-    // Try admin-controller endpoints for company verification
     const endpoints = [
       { endpoint: "admin-controller/send-verification", method: "POST" },
       { endpoint: "admin-controller/email-verification-request-token", method: "POST" },
@@ -1500,7 +1499,6 @@ export async function sendCompanyVerificationCode(email: string): Promise<{ mess
       }
     }
     
-    // Fallback to auth-users endpoint if admin endpoints fail
     try {
       console.log("📡 Falling back to auth-users endpoint for company verification");
       const response = await fetchPublic("auth-users/email-verification-request-token", {
@@ -1530,12 +1528,11 @@ export async function verifyCompanyEmailWithCode(email: string, code: string): P
   try {
     console.log(`🔐 Verifying company email: ${email} with code: ${code}`);
     
-    // Try admin-controller endpoints for company verification
     const endpoints = [
-      { endpoint: "admin-controller/email-verification-request-token", method: "POST", body: { Email: email, Code: code } },
-      { endpoint: "admin-controller/email-verification-request-token", method: "POST", body: { Email: email, Token: code } },
-      { endpoint: "admin-controller/email-verification-request-token", method: "POST", body: { Email: email, Token: code } },
-      { endpoint: "admin-controller/email-verification-request-token", method: "POST", body: { Email: email, Otp: code } },
+      { endpoint: "admin-controller/verify-email", method: "POST", body: { Email: email, Code: code } },
+      { endpoint: "admin-controller/email-verification", method: "POST", body: { Email: email, Token: code } },
+      { endpoint: "admin-controller/verify", method: "POST", body: { Email: email, Token: code } },
+      { endpoint: "admin-controller/company-verify", method: "POST", body: { Email: email, Otp: code } },
     ];
     
     let lastError: Error | null = null;
@@ -1559,7 +1556,6 @@ export async function verifyCompanyEmailWithCode(email: string, code: string): P
           };
         }
         
-        // If we got a 405, try the next endpoint
         if (response.status === 405) {
           console.warn(`⚠️ Method not allowed for ${attempt.endpoint}, trying next...`);
           continue;
@@ -1571,11 +1567,9 @@ export async function verifyCompanyEmailWithCode(email: string, code: string): P
       } catch (error) {
         console.warn(`❌ Failed with endpoint ${attempt.endpoint}:`, error);
         lastError = error instanceof Error ? error : new Error(String(error));
-        // Continue to next endpoint
       }
     }
     
-    // Fallback to auth-users endpoint if admin endpoints fail
     try {
       console.log("📡 Falling back to auth-users endpoint for company verification");
       const response = await fetchPublic("auth-users/email-verification", {
@@ -1771,7 +1765,6 @@ export async function addCompany(companyData: {
   try {
     console.log("📤 Adding company with data:", JSON.stringify(companyData, null, 2));
     
-    // Validate required fields
     const requiredFields = ['companyName', 'companyEmail', 'phoneNumber', 'valueCharge'];
     const missingFields = requiredFields.filter(field => !companyData[field as keyof typeof companyData]);
     
@@ -1779,22 +1772,18 @@ export async function addCompany(companyData: {
       throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
     }
     
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(companyData.companyEmail)) {
       throw new Error('Invalid email format');
     }
     
-    // Validate phone number (basic check)
     if (!companyData.phoneNumber || companyData.phoneNumber.length < 10) {
       throw new Error('Invalid phone number');
     }
     
-    // Get current user
     const user = getStoredUser();
     console.log("👤 Current user:", user?.userType || "Unknown");
     
-    // Prepare payload with proper data types
     const payload = {
       companyName: companyData.companyName.trim(),
       companyEmail: companyData.companyEmail.trim().toLowerCase(),
@@ -1831,7 +1820,6 @@ export async function addCompany(companyData: {
     return result;
   } catch (error) {
     console.error("❌ Failed to add company:", error);
-    // Re-throw with more context
     if (error instanceof Error) {
       throw new Error(`Failed to add company: ${error.message}`);
     }
@@ -2055,12 +2043,19 @@ export async function registerBrandOwner(
     for (const endpoint of endpoints) {
       try {
         console.log(`Trying Brand Owner registration endpoint: ${endpoint}`);
-        const response = await fetchWithAuth(endpoint, {
+        // ✅ FIXED: Use fetchPublic instead of fetchWithAuth
+        const response = await fetchPublic(endpoint, {
           method: "POST",
           body: JSON.stringify(apiPayload),
         });
         const result = await response.json();
         console.log(`✅ Brand Owner registered successfully via ${endpoint}:`, result);
+        
+        // If the response contains authentication data, store it
+        if (result.token) {
+          setAuthData(result);
+        }
+        
         return result;
       } catch (error) {
         console.warn(`Failed Brand Owner registration with endpoint ${endpoint}:`, error);
@@ -2103,7 +2098,6 @@ export async function registerStaff(
   try {
     console.log("📤 Registering Staff with data:", JSON.stringify(data, null, 2));
     
-    // Validate required fields
     const requiredFields = ['firstName', 'surName', 'email', 'password', 'phoneNo', 'companyId'];
     const missingFields = requiredFields.filter(field => !data[field as keyof typeof data]);
     
@@ -2111,18 +2105,15 @@ export async function registerStaff(
       throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
     }
     
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(data.email)) {
       throw new Error('Invalid email format');
     }
     
-    // Validate phone number
     if (!data.phoneNo || data.phoneNo.length < 10) {
       throw new Error('Invalid phone number');
     }
     
-    // Validate password strength
     if (data.password.length < 8) {
       throw new Error('Password must be at least 8 characters long');
     }
@@ -2202,9 +2193,6 @@ export async function updateCompanyApplication(
 
 /**
  * Register a company (or brand owner) then submit an application to admin for approval.
- * - If `ownerData` is provided and the user is not authenticated, it will try `registerBrandOwner` first.
- * - If the current session is authenticated it will call `addCompany`.
- * - After company creation it will call `applyCompany` to submit for admin approval.
  */
 export async function registerCompanyAndSubmitForApproval(params: {
   companyData: {
@@ -2240,24 +2228,20 @@ export async function registerCompanyAndSubmitForApproval(params: {
     let company: Company | undefined;
     let registrationResult: any = null;
 
-    // If owner data present and user not authenticated, attempt to register brand owner
     if (ownerData && !isAuthenticated()) {
       try {
         console.log("📡 Registering brand owner (will create user/company on backend)");
         registrationResult = await registerBrandOwner(ownerData);
-        // Try to extract company from response
         if (registrationResult && registrationResult.company) {
           company = registrationResult.company as Company;
         } else if (registrationResult && registrationResult.id) {
           // some endpoints return id for company/user
-          // not much we can do here except include the raw result
         }
       } catch (err) {
         console.warn("Brand owner registration failed, will fallback to authenticated creation if possible:", err);
       }
     }
 
-    // If we don't have a company yet and user is authenticated, create company via addCompany
     if (!company && isAuthenticated()) {
       try {
         company = await addCompany(companyData as any);
@@ -2268,10 +2252,8 @@ export async function registerCompanyAndSubmitForApproval(params: {
       }
     }
 
-    // If still no company but registrationResult contains company-like data, try to normalize
     if (!company && registrationResult && typeof registrationResult === "object") {
       if ((registrationResult as any).companyId || (registrationResult as any).id) {
-        // construct shallow Company object where possible
         company = {
           id: (registrationResult as any).companyId || (registrationResult as any).id,
           adminId: (registrationResult as any).adminId || "",
@@ -3038,7 +3020,6 @@ export const deleteReservation = deleteAccommodationReservation;
 
 // Customer reservation aliases
 export const getAllCustomerReservations = getCustomerReservations;
-// Backwards-compatible names expected by older UI pages
 export const getCustomerBookings = getCustomerReservations;
 export const cancelCustomerBooking = deleteCustomerReservation;
 
