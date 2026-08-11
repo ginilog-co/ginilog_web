@@ -7,7 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Mail, Lock, Loader2, AlertCircle, CheckCircle } from "lucide-react";
-import { login, requestEmailVerificationToken, getStoredUser } from "@/lib/api";
+import { 
+  login, 
+  requestAuthUserEmailVerificationToken,
+  getStoredUser,
+  isAuthenticated 
+} from "@/lib/api";
 import { signInWithGoogle, signInWithApple } from "@/lib/firebase";
 
 function CustomerLoginContent() {
@@ -35,16 +40,13 @@ function CustomerLoginContent() {
     if (verified === "true" && email) {
       setFormData(prev => ({ ...prev, email }));
       setVerificationEmailSent(true);
-      // Show success message
       setTimeout(() => {
         setVerificationEmailSent(false);
       }, 5000);
     }
     
-    // If coming from registration, show a message
     if (fromRegistration && email) {
       setFormData(prev => ({ ...prev, email }));
-      // Show a message that they need to verify
       setError("Please verify your email before logging in. A verification code has been sent to your email.");
     }
   }, [searchParams]);
@@ -72,7 +74,6 @@ function CustomerLoginContent() {
       const result = await login(credentials);
       console.log('✅ Login successful:', result);
       
-      // Check if email is verified
       if (!result.emailVerified) {
         setError("Please verify your email before logging in. A verification code has been sent to your email.");
         setIsLoading(false);
@@ -106,18 +107,17 @@ function CustomerLoginContent() {
       }
 
       console.log('📤 Requesting verification token for:', userEmail);
-      await requestEmailVerificationToken(userEmail);
+      // Use the correct function name
+      await requestAuthUserEmailVerificationToken(userEmail);
       
       setResendSuccess(true);
-      setResendCountdown(60); // 60 second cooldown
+      setResendCountdown(60);
       setVerificationEmailSent(true);
       
-      // Auto-hide success message after 5 seconds
       setTimeout(() => {
         setVerificationEmailSent(false);
       }, 5000);
       
-      // Redirect to verification page with email
       router.push(`/customer-portal/verify-email?email=${encodeURIComponent(userEmail)}&from=login`);
     } catch (err) {
       console.error('❌ Resend verification error:', err);
@@ -137,7 +137,6 @@ function CustomerLoginContent() {
       console.log('✅ Google login result:', result);
       
       if (result && (result.token || result.refreshToken)) {
-        // Check if email needs verification
         const user = getStoredUser();
         if (user?.emailVerified) {
           console.log('✅ Email verified, redirecting to dashboard...');
@@ -179,7 +178,6 @@ function CustomerLoginContent() {
       console.log('✅ Apple login result:', result);
       
       if (result && (result.token || result.refreshToken)) {
-        // Check if email needs verification
         const user = getStoredUser();
         if (user?.emailVerified) {
           console.log('✅ Email verified, redirecting to dashboard...');
