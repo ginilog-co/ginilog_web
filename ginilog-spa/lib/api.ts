@@ -1532,10 +1532,10 @@ export async function verifyCompanyEmailWithCode(email: string, code: string): P
     
     // Try admin-controller endpoints for company verification
     const endpoints = [
-      { endpoint: "admin-controller/email-verification-request-token", method: "POST", body: { Email: email, Code: code } },
-      { endpoint: "admin-controller/email-verification-request-token", method: "POST", body: { Email: email, Token: code } },
-      { endpoint: "admin-controller/email-verification-request-token", method: "POST", body: { Email: email, Token: code } },
-      { endpoint: "admin-controller/email-verification-request-token", method: "POST", body: { Email: email, Otp: code } },
+      { endpoint: "admin-controller/verify-email", method: "POST", body: { Email: email, Code: code } },
+      { endpoint: "admin-controller/email-verification", method: "POST", body: { Email: email, Token: code } },
+      { endpoint: "admin-controller/verify", method: "POST", body: { Email: email, Token: code } },
+      { endpoint: "admin-controller/company-verify", method: "POST", body: { Email: email, Otp: code } },
     ];
     
     let lastError: Error | null = null;
