@@ -1476,7 +1476,7 @@ export async function sendCompanyVerificationCode(email: string): Promise<{ mess
     
     const endpoints = [
       { endpoint: "admin-controller/send-verification", method: "POST" },
-      { endpoint: "admin-controller/email-verification-request-token", method: "POST" },
+      { endpoint: "admin-controller/email-verification-request-token-request-token", method: "POST" },
       { endpoint: "admin-controller/verify-request", method: "POST" },
     ];
     
@@ -1530,7 +1530,7 @@ export async function verifyCompanyEmailWithCode(email: string, code: string): P
     
     const endpoints = [
       { endpoint: "admin-controller/verify-email", method: "POST", body: { Email: email, Code: code } },
-      { endpoint: "admin-controller/email-verification", method: "POST", body: { Email: email, Token: code } },
+      { endpoint: "admin-controller/email-verification-request-token", method: "POST", body: { Email: email, Token: code } },
       { endpoint: "admin-controller/verify", method: "POST", body: { Email: email, Token: code } },
       { endpoint: "admin-controller/company-verify", method: "POST", body: { Email: email, Otp: code } },
     ];
@@ -1615,7 +1615,7 @@ export async function resendCompanyVerificationCode(email: string): Promise<{ me
  */
 export async function checkCompanyEmailVerification(email: string): Promise<{ isVerified: boolean; company?: any }> {
   try {
-    const endpoints = [
+    const endpoints = [ 
       `admin-controller/check-verification?email=${encodeURIComponent(email)}`,
       `admin-controller/company-verification-status?email=${encodeURIComponent(email)}`,
       `admin-controller/verify-status?email=${encodeURIComponent(email)}`,
