@@ -94,7 +94,7 @@ export default function LandingPage() {
                 accommodation/logistics services with us for free.
               </p>
               <Link
-                href="/admin-dashboard/company"
+                href="brand-owner/login"
                 className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-base font-medium text-white hover:bg-primary/90 transition-colors"
               >
                 Manage Services

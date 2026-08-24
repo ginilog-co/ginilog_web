@@ -1,4 +1,4 @@
-// app/admin-dashboard/company-applications/[id]/page.tsx
+// appbrand-owner/login-applications/[id]/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -40,7 +40,7 @@ export default function CompanyApplicationDetailsPage() {
     setProcessing(true);
     try {
       await updateCompanyApplication(params.id as string, { status });
-      router.push("/admin-dashboard/company-applications");
+      router.push("brand-owner/login-applications");
     } catch (error) {
       console.error("Failed to update application:", error);
     } finally {
@@ -70,7 +70,7 @@ export default function CompanyApplicationDetailsPage() {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">Application not found</p>
-        <Link href="/admin-dashboard/company-applications">
+        <Link href="brand-owner/login-applications">
           <Button className="mt-4">Back to Applications</Button>
         </Link>
       </div>
@@ -83,7 +83,7 @@ export default function CompanyApplicationDetailsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/admin-dashboard/company-applications">
+        <Link href="brand-owner/login-applications">
           <Button variant="ghost" size="sm" className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back

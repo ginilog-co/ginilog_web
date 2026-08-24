@@ -26,7 +26,7 @@ export default function AdminAuth() {
         if (user.userType === "Super_Admin") {
           router.push("/admin-dashboard");
         } else if (user.userType === "Manager" || user.userType === "BrandOwner") {
-          router.push("/admin-dashboard/company");
+          router.push("brand-owner/login");
         } else {
           router.push("/admin-dashboard");
         }
@@ -61,7 +61,7 @@ export default function AdminAuth() {
         if (data.userType === "Super_Admin") {
           router.push("/admin-dashboard");
         } else {
-          router.push("/admin-dashboard/company");
+          router.push("brand-owner/login");
         }
       } else {
         setError("Invalid response from server. Please try again.");

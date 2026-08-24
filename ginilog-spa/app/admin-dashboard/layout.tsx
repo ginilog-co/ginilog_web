@@ -31,7 +31,7 @@ const navItems = [
   { icon: Users, label: "Admins", href: "/admin-dashboard/admins" },
   { icon: Building2, label: "Brand Owners", href: "/admin-dashboard/brand-owners" },
   { icon: Megaphone, label: "Adverts", href: "/admin-dashboard/adverts" },
-  { icon: Package, label: "Applications", href: "/admin-dashboard/company-applications" },
+  { icon: Package, label: "Applications", href: "brand-owner/login-applications" },
   { icon: DollarSign, label: "Payouts", href: "/admin-dashboard/payouts" },
   { icon: Bell, label: "Notifications", href: "/admin-dashboard/notifications" },
   { icon: BarChart3, label: "Reports", href: "/admin-dashboard/reports" },
