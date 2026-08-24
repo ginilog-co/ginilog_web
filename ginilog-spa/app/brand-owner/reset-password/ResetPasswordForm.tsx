@@ -1,4 +1,4 @@
-// app/brand-owner/reset-password/ResetPasswordForm.tsx
+// app/admin-dashboard/reset-password/ResetPasswordForm.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -50,7 +50,7 @@ export default function ResetPasswordForm() {
     try {
       await resetPassword({ Token: token, Password: password });
       setSuccess(true);
-      setTimeout(() => router.push("/brand-owner/login"), 3000);
+      setTimeout(() => router.push("/admin-dashboard/login"), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to reset password");
     } finally {
@@ -141,7 +141,7 @@ export default function ResetPasswordForm() {
           </form>
 
           <div className="mt-6 text-center">
-            <Link href="/brand-owner/login" className="text-sm text-primary hover:underline flex items-center justify-center gap-2">
+            <Link href="/admin-dashboard/login" className="text-sm text-primary hover:underline flex items-center justify-center gap-2">
               <ArrowLeft className="h-4 w-4" />
               Back to Login
             </Link>

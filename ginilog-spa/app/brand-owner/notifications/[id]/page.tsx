@@ -1,200 +1,279 @@
 // app/brand-owner/notifications/[id]/page.tsx
+
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect, use } from "react";
+import { useRouter } from "next/navigation";
+import { getNotificationById, updateNotification, deleteNotification } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Loader2,
   ArrowLeft,
-  Bell,
-  AlertCircle,
-  Info,
-  Clock,
+  Loader2,
   Calendar,
-  MessageSquare,
+  Bell,
   Mail,
-  CheckCircle,
+  MessageSquare,
+  AlertCircle,
   Trash2,
-  Copy,
-  Share2,
-  User,
-  Package,
+  CheckCircle,
+  Clock,
   DollarSign,
+  User,
+  Building2,
+  Package,
+  Truck,
+  Hotel,
+  Calendar as CalendarIcon,
+  CreditCard,
+  Users,
+  Megaphone,
+  FileText,
+  Settings,
+  Shield,
+  Star,
+  Gift,
+  Heart,
+  Info,
+  AlertTriangle
 } from "lucide-react";
-import { getNotificationById, markNotificationAsRead, deleteNotification } from "@/lib/api";
 
-export default function NotificationDetailsPage() {
+export default function NotificationDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-  const params = useParams();
+  const { id } = use(params);
+  
+  const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    const fetchNotification = async () => {
-      try {
-        setIsLoading(true);
-        const data = await getNotificationById(params.id as string);
-        setNotification(data);
-        
-        // Mark as read when viewed
-        if (data && !data.isRead) {
-          await markNotificationAsRead(data.id);
+    if (id) {
+      fetchNotification();
+    }
+  }, [id]);
+
+  const fetchNotification = async () => {
+    setLoading(true);
+    setError("");
+    
+    try {
+      const data = await getNotificationById(id);
+      setNotification(data);
+      
+      // Mark as read when viewed - using updateNotification with 2 arguments
+      if (data && !data.isRead) {
+        try {
+          await updateNotification(data.id, { isRead: true });
           data.isRead = true;
           setNotification(data);
+        } catch (markError) {
+          console.error("Failed to mark notification as read:", markError);
         }
-      } catch (error) {
-        console.error("Failed to fetch notification:", error);
-      } finally {
-        setIsLoading(false);
       }
-    };
-    fetchNotification();
-  }, [params.id]);
+    } catch (err: any) {
+      console.error("Error fetching notification:", err);
+      setError(err.message || "Failed to load notification");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this notification?")) return;
+    
     setDeleting(true);
     try {
-      await deleteNotification(params.id as string);
+      await deleteNotification(id);
       router.push("/brand-owner/notifications");
-    } catch (error) {
-      console.error("Failed to delete notification:", error);
+    } catch (err: any) {
+      console.error("Error deleting notification:", err);
+      setError(err.message || "Failed to delete notification");
     } finally {
       setDeleting(false);
     }
   };
 
-  const getIcon = (type: string) => {
+  const getNotificationIcon = (type: string) => {
     const iconMap: Record<string, any> = {
-      General: <Bell className="h-6 w-6" />,
-      Alert: <AlertCircle className="h-6 w-6" />,
-      Info: <Info className="h-6 w-6" />,
-      Reminder: <Clock className="h-6 w-6" />,
-      Booking: <Calendar className="h-6 w-6" />,
-      Message: <MessageSquare className="h-6 w-6" />,
-      Order: <Package className="h-6 w-6" />,
-      Payment: <DollarSign className="h-6 w-6" />,
+      booking: CalendarIcon,
+      order: Package,
+      payment: CreditCard,
+      delivery: Truck,
+      reservation: Hotel,
+      user: User,
+      company: Building2,
+      admin: Shield,
+      advert: Megaphone,
+      staff: Users,
+      feedback: MessageSquare,
+      alert: AlertCircle,
+      success: CheckCircle,
+      info: Info,
+      warning: AlertTriangle,
+      promotion: Gift,
+      review: Star,
+      system: Settings,
     };
-    return iconMap[type] || iconMap.General;
+    return iconMap[type?.toLowerCase()] || Bell;
   };
 
-  const getColor = (type: string) => {
+  const getNotificationColor = (type: string) => {
     const colorMap: Record<string, string> = {
-      General: "bg-blue-100 text-blue-600",
-      Alert: "bg-red-100 text-red-600",
-      Info: "bg-cyan-100 text-cyan-600",
-      Reminder: "bg-yellow-100 text-yellow-600",
-      Booking: "bg-green-100 text-green-600",
-      Message: "bg-purple-100 text-purple-600",
-      Order: "bg-orange-100 text-orange-600",
-      Payment: "bg-emerald-100 text-emerald-600",
+      booking: "bg-blue-100 text-blue-600",
+      order: "bg-orange-100 text-orange-600",
+      payment: "bg-green-100 text-green-600",
+      delivery: "bg-purple-100 text-purple-600",
+      reservation: "bg-cyan-100 text-cyan-600",
+      user: "bg-indigo-100 text-indigo-600",
+      company: "bg-slate-100 text-slate-600",
+      admin: "bg-red-100 text-red-600",
+      advert: "bg-pink-100 text-pink-600",
+      staff: "bg-teal-100 text-teal-600",
+      feedback: "bg-yellow-100 text-yellow-600",
+      alert: "bg-red-100 text-red-600",
+      success: "bg-green-100 text-green-600",
+      info: "bg-blue-100 text-blue-600",
+      warning: "bg-yellow-100 text-yellow-600",
+      promotion: "bg-purple-100 text-purple-600",
+      review: "bg-amber-100 text-amber-600",
+      system: "bg-gray-100 text-gray-600",
     };
-    return colorMap[type] || colorMap.General;
+    return colorMap[type?.toLowerCase()] || "bg-gray-100 text-gray-600";
   };
 
-  if (isLoading) {
+  const getTimeAgo = (date: string) => {
+    const now = new Date();
+    const past = new Date(date);
+    const diffMs = now.getTime() - past.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    return new Date(date).toLocaleDateString();
+  };
+
+  if (loading) {
     return (
-      <div className="flex justify-center py-12">
+      <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (!notification) {
+  if (error || !notification) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">Notification not found</p>
-        <Link href="/brand-owner/notifications">
-          <Button className="mt-4">Back to Notifications</Button>
-        </Link>
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <AlertCircle className="h-12 w-12 text-red-500" />
+        <p className="text-red-600 text-center">{error || "Notification not found"}</p>
+        <Button onClick={() => router.push("/brand-owner/notifications")}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Notifications
+        </Button>
       </div>
     );
   }
 
+  const Icon = getNotificationIcon(notification.notificationType);
+  const colorClass = getNotificationColor(notification.notificationType);
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/brand-owner/notifications">
-          <Button variant="ghost" size="sm" className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Notification Details</h1>
-          <p className="text-sm text-gray-500">View notification information</p>
-        </div>
+    <div className="max-w-3xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" onClick={() => router.push("/brand-owner/notifications")}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+        <Button 
+          variant="destructive" 
+          size="sm" 
+          onClick={handleDelete}
+          disabled={deleting}
+        >
+          {deleting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </>
+          )}
+        </Button>
       </div>
 
+      {/* Notification Card */}
       <Card>
-        <CardHeader>
+        <CardHeader className="border-b">
           <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`p-3 rounded-full ${getColor(notification.notificationType)}`}>
-                {getIcon(notification.notificationType)}
+            <div className="flex items-start gap-4">
+              <div className={`p-3 rounded-full ${colorClass}`}>
+                <Icon className="h-6 w-6" />
               </div>
               <div>
-                <CardTitle className="text-lg">{notification.title}</CardTitle>
+                <CardTitle className="text-xl">{notification.title}</CardTitle>
                 <div className="flex items-center gap-3 mt-1">
-                  <Badge variant="secondary">{notification.notificationType || "General"}</Badge>
+                  <Badge variant="outline" className="text-xs">
+                    {notification.notificationType || "General"}
+                  </Badge>
                   {notification.isRead ? (
-                    <Badge className="bg-gray-100 text-gray-600">Read</Badge>
+                    <Badge className="bg-gray-100 text-gray-600 text-xs">Read</Badge>
                   ) : (
-                    <Badge className="bg-blue-100 text-blue-600">Unread</Badge>
+                    <Badge className="bg-blue-100 text-blue-600 text-xs">Unread</Badge>
                   )}
                 </div>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="text-red-500 border-red-200 hover:bg-red-50"
-                onClick={handleDelete}
-                disabled={deleting}
-              >
-                {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-              </Button>
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <Calendar className="h-4 w-4" />
+              <span>{getTimeAgo(notification.createdAt)}</span>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="p-4 bg-gray-50 rounded-xl">
-            <p className="text-sm text-gray-500">Message</p>
-            <p className="text-gray-800 mt-1 whitespace-pre-wrap">{notification.body}</p>
+        <CardContent className="pt-6">
+          <div className="prose max-w-none">
+            <p className="text-gray-700 whitespace-pre-wrap">{notification.body}</p>
           </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-3 bg-gray-50 rounded-xl">
-              <p className="text-sm text-gray-500">Sent</p>
-              <p className="font-medium">{new Date(notification.createdAt).toLocaleString()}</p>
+          
+          {notification.imageUrl && (
+            <div className="mt-4">
+              <img 
+                src={notification.imageUrl} 
+                alt="Notification" 
+                className="rounded-lg max-h-64 w-auto object-cover border border-gray-200"
+              />
             </div>
-            <div className="p-3 bg-gray-50 rounded-xl">
-              <p className="text-sm text-gray-500">Last Updated</p>
-              <p className="font-medium">{new Date(notification.updatedAt).toLocaleString()}</p>
+          )}
+
+          {/* Additional metadata if available */}
+          {notification.metadata && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Additional Details</h4>
+              <pre className="text-xs text-gray-600 whitespace-pre-wrap">
+                {JSON.stringify(notification.metadata, null, 2)}
+              </pre>
             </div>
-          </div>
+          )}
 
-          <div className="p-3 bg-gray-50 rounded-xl">
-            <p className="text-sm text-gray-500">Notification ID</p>
-            <p className="font-mono text-xs">{notification.id}</p>
-          </div>
-
-          <div className="flex gap-3 pt-4 border-t">
-            <Button variant="outline" className="gap-2" onClick={() => {
-              navigator.clipboard.writeText(window.location.href);
-            }}>
-              <Copy className="h-4 w-4" />
-              Copy Link
-            </Button>
-            <Button variant="outline" className="gap-2">
-              <Share2 className="h-4 w-4" />
-              Share
-            </Button>
+          <div className="mt-6 pt-4 border-t flex items-center justify-between">
+            <div className="text-xs text-gray-400">
+              ID: {notification.id}
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => router.push("/brand-owner/notifications")}
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                View All
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

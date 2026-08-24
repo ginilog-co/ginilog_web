@@ -214,6 +214,90 @@ export function getTokenExpiry(): Date | null {
 }
 
 /**
+ * Get time remaining until token expires in minutes
+ */
+export function getTimeRemaining(): number {
+  const token = getToken();
+  if (!token) return 0;
+
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    const exp = payload.exp * 1000;
+    const now = Date.now();
+    const remaining = exp - now;
+    return Math.floor(remaining / 60000);
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Check if token is near expiry (less than 5 minutes)
+ */
+export function isTokenNearExpiry(): boolean {
+  const token = getToken();
+  if (!token) return true;
+
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    const exp = payload.exp * 1000;
+    const now = Date.now();
+    const remaining = exp - now;
+    return remaining < 5 * 60 * 1000;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Validate session and redirect if expired
+ */
+export function validateSession(): boolean {
+  if (typeof window === "undefined") return false;
+
+  const token = getToken();
+  if (!token) {
+    return false;
+  }
+
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    const exp = payload.exp * 1000;
+    const now = Date.now();
+    
+    if (now > exp - 30000) {
+      clearAuthData();
+      return false;
+    }
+    
+    return true;
+  } catch {
+    clearAuthData();
+    return false;
+  }
+}
+
+/**
+ * Check session and redirect if expired
+ */
+export function checkSessionAndRedirect(): boolean {
+  if (typeof window === "undefined") return false;
+
+  const token = getToken();
+  if (!token || isTokenExpired()) {
+    clearAuthData();
+    window.location.href = "/brand-owner/login";
+    return false;
+  }
+
+  if (isTokenNearExpiry()) {
+    refreshAccessToken();
+  }
+
+  return true;
+}
+
+/**
  * Check auth status and redirect if needed
  */
 export function checkAuthAndRedirect(redirectTo: string = "/login"): boolean {
@@ -873,10 +957,21 @@ export interface Accommodation {
   accomodationName: string;
   accomodationType: string;
   location: string;
+  state?: string;
+  country?: string;
   bookingAmount: number;
+  noOfRooms?: number;
   accomodationImages: string[];
   accomodationDescription: string;
+  accomodationFacilities?: string[];
+  available?: boolean;
   rating: number;
+  createdAt?: string;
+  updatedAt?: string;
+  userId?: string;
+  companyId?: string;
+  // Allow additional dynamic properties from API
+  [key: string]: any;
 }
 
 export interface Company {
@@ -994,6 +1089,8 @@ export interface OrderTrackingResult {
   companyName: string;
   companyPhoneNo: string;
   riderName: string;
+  riderId?: string;        // ✅ Added - Rider ID
+  riderPhoneNo?: string;   // ✅ Added - Rider Phone Number
   currentLocation: string;
   currentLatitude: number;
   currentLongitude: number;
@@ -2342,6 +2439,9 @@ export async function getRiderById(id: string): Promise<Driver> {
   }
 }
 
+// Alias for getRiders (backward compatibility)
+export const getRiders = getAllRiders;
+
 // FIXED: Enhanced addRider with better error handling and logging
 export async function addRider(riderData: AddDriverRequest): Promise<Driver> {
   try {
@@ -3081,26 +3181,52 @@ export const getNotificationById = async (id: string): Promise<Notification> => 
   }
 };
 
-export const markNotificationRead = updateNotification;
+// In lib/api.ts - Update the markNotificationAsRead function
 
-export async function updateNotification(
-  id: string,
-  data: any,
-): Promise<any> {
+export async function markNotificationAsRead(id: string): Promise<any> {
+  // Try both possible endpoints
+  const endpoints = [
+    `notifications/${id}`,
+    `notifications/read/${id}`,
+    `notifications/mark-read/${id}`,
+  ];
+  
+  let lastError: Error | null = null;
+  
+  for (const endpoint of endpoints) {
+    try {
+      // Try with PATCH method first
+      let response = await fetchWithAuth(endpoint, { 
+        method: "PATCH",
+        body: JSON.stringify({ isRead: true }),
+      });
+      
+      if (response.ok) {
+        return response.json();
+      }
+      
+      // If PATCH fails, try PUT
+      response = await fetchWithAuth(endpoint, {
+        method: "PUT",
+        body: JSON.stringify({ isRead: true }),
+      });
+      
+      if (response.ok) {
+        return response.json();
+      }
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+    }
+  }
+  
+  // Fallback: try the updateNotification function
   try {
-    const response = await fetchWithAuth(`notifications/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    });
-    return response.json();
+    return await updateNotification(id, { isRead: true });
   } catch (error) {
-    console.warn("Failed to update notification:", error);
-    throw error;
+    // If all fail, throw the last error
+    throw lastError || new Error("Failed to mark notification as read");
   }
 }
-
-// Feedback aliases
-export const submitFeedback = sendFeedback;
 
 // ============ NOTIFICATION FUNCTIONS ============
 
@@ -3129,6 +3255,43 @@ export async function sendNotification(notificationData: any): Promise<any> {
     throw error;
   }
 }
+
+export async function updateNotification(
+  id: string,
+  data: any,
+): Promise<any> {
+  try {
+    const response = await fetchWithAuth(`notifications/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  } catch (error) {
+    console.warn("Failed to update notification:", error);
+    throw error;
+  }
+}
+
+export async function deleteNotification(id: string): Promise<any> {
+  const endpoints = [`notifications/${id}`, `notifications/delete/${id}`];
+
+  let lastError: Error | null = null;
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetchWithAuth(endpoint, { method: "DELETE" });
+      if (response.ok) {
+        return response.status === 204 ? { success: true } : response.json();
+      }
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+    }
+  }
+
+  throw lastError || new Error("Failed to delete notification.");
+}
+
+
 
 // ============ INFO/FEEDBACK FUNCTIONS ============
 
@@ -3195,6 +3358,8 @@ export async function sendEmailToAll(emailData: any): Promise<any> {
     throw error;
   }
 }
+
+export const submitFeedback = sendFeedback;
 
 // ============ WALLET/PAYOUT FUNCTIONS ============
 
@@ -3306,6 +3471,8 @@ export async function getPayoutStatistics(): Promise<any> {
   }
 }
 
+export const getPayoutStats = getPayoutStatistics;
+
 // ============ UPLOAD FUNCTIONS ============
 
 export async function uploadImage(file: File): Promise<any> {
@@ -3392,108 +3559,14 @@ export async function adminLogin(
   }
 }
 
-// ============ UPDATED BRAND OWNER FUNCTIONS ============
-
-export async function brandOwnerLogin(credentials: LoginRequest): Promise<LoginResponse> {
+export async function adminGetProfile(): Promise<any> {
   try {
-    console.log("Brand owner login attempt with:", { email: credentials.Email_PhoneNo });
-    
-    const endpoints = [
-      "admin-controller/login-manager-staff",
-      "admin-controller/brand-owner/login",
-      "admin-controller/login",
-    ];
-    
-    let lastError: Error | null = null;
-    
-    for (const endpoint of endpoints) {
-      try {
-        console.log(`Trying brand owner login with endpoint: ${endpoint}`);
-        const response = await fetchPublic(endpoint, {
-          method: "POST",
-          body: JSON.stringify(credentials),
-        });
-        
-        if (!response.ok) {
-          console.warn(`Endpoint ${endpoint} returned ${response.status}`);
-          continue;
-        }
-        
-        const data = await response.json();
-        console.log(`Success with endpoint: ${endpoint}`);
-        
-        // Normalize user data
-        const userData = data.user || data;
-        const normalizedData = {
-          ...data,
-          ...userData,
-          userType: userData.userType || userData.staffType || userData.role || "BrandOwner",
-          staffType: userData.staffType || userData.userType || "BrandOwner",
-          userId: userData.userId || userData.id,
-          companyName: userData.companyName || userData.company?.name,
-          companyId: userData.companyId || userData.company?.id,
-          token: data.token || data.accessToken,
-          refreshToken: data.refreshToken || data.refresh_token,
-        };
-        
-        setAuthData(normalizedData);
-        return normalizedData;
-      } catch (error) {
-        console.warn(`Failed with endpoint ${endpoint}:`, error);
-        lastError = error instanceof Error ? error : new Error(String(error));
-      }
-    }
-    
-    console.error("All brand owner login endpoints failed");
-    throw lastError || new Error("Failed to login as brand owner. Please check your credentials.");
+    const response = await fetchWithAuth("admin-controller/profile", {
+      method: "GET",
+    });
+    return response.json();
   } catch (error) {
-    console.error("Brand owner login error:", error);
-    throw error;
-  }
-}
-
-/**
- * Login as a manager/staff user
- */
-export async function loginManager(
-  credentials: LoginRequest,
-): Promise<LoginResponse> {
-  try {
-    const endpoints = [
-      "admin-controller/login-manager-staff",
-      "admin-controller/login-manager",
-      "admin-controller/staff-login",
-      "admin-controller/login",
-    ];
-
-    let lastError: Error | null = null;
-
-    for (const endpoint of endpoints) {
-      try {
-        console.log(`Trying manager login with endpoint: ${endpoint}`);
-        const response = await fetchPublic(endpoint, {
-          method: "POST",
-          body: JSON.stringify(credentials),
-        });
-
-        const data = await response.json();
-        console.log(`Manager login successful with endpoint: ${endpoint}`);
-        setAuthData(data);
-        return data;
-      } catch (error) {
-        console.warn(`Failed with endpoint ${endpoint}:`, error);
-        lastError = error instanceof Error ? error : new Error(String(error));
-        if (error instanceof Error) {
-          if (!error.message.includes("404") && !error.message.includes("405")) {
-            throw error;
-          }
-        }
-      }
-    }
-
-    throw lastError || new Error("Failed to login as manager. Please check your credentials.");
-  } catch (error) {
-    console.warn("Failed to login as manager:", error);
+    console.warn("Failed to fetch admin profile:", error);
     throw error;
   }
 }
@@ -3530,69 +3603,19 @@ export async function adminResetPassword(data: {
   }
 }
 
-export async function getAdmins(params?: any): Promise<any[]> {
+export async function adminLogout(): Promise<void> {
   try {
-    let endpoint = "admin-controller";
-    if (params) {
-      const query = new URLSearchParams(params).toString();
-      endpoint += `?${query}`;
-    }
-    
-    const response = await fetchWithAuth(endpoint, { method: "GET" });
-    const data = await response.json();
-    const admins = extractArrayFromResponse(data);
-    
-    console.log(`Fetched ${admins.length} admins`);
-    return admins;
-  } catch (error) {
-    console.warn("Failed to fetch admins:", error);
-    return [];
+    await fetchWithAuth("admin-controller/logout", {
+      method: "POST",
+    }).catch(() => {});
+  } finally {
+    clearAuthData();
   }
 }
 
-export async function getAdminById(id: string): Promise<any> {
-  try {
-    if (!id) {
-      throw new Error("Admin ID is required");
-    }
-    
-    const endpoints = [
-      `admin-controller/profile/${id}`,
-      `admin-controller/${id}`,
-      `admin-controller/admins/${id}`,
-    ];
-    
-    let lastError: Error | null = null;
-    
-    for (const endpoint of endpoints) {
-      try {
-        console.log(`Trying admin fetch with endpoint: ${endpoint}`);
-        const response = await fetchWithAuth(endpoint, { method: "GET" });
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log(`Admin found with endpoint: ${endpoint}`);
-          return data;
-        }
-        
-        if (response.status === 404) {
-          console.warn(`Admin not found at ${endpoint}`);
-          continue;
-        }
-      } catch (error) {
-        console.warn(`Failed with endpoint ${endpoint}:`, error);
-        lastError = error instanceof Error ? error : new Error(String(error));
-      }
-    }
-    
-    throw lastError || new Error(`Admin with ID ${id} not found`);
-  } catch (error) {
-    console.error(`Failed to fetch admin ${id}:`, error);
-    throw error;
-  }
-}
+// ============ UPDATED SUPER ADMIN FUNCTIONS ============
 
-export async function addAdmin(adminData: {
+export async function createAdmin(adminData: {
   adminType?: string;
   firstName: string;
   surName?: string;
@@ -3758,30 +3781,462 @@ export async function addAdmin(adminData: {
   }
 }
 
-export async function assignRoleToUser(
-  id: string,
-  roles: string[],
-): Promise<any> {
+export const addAdmin = createAdmin;
+
+export async function getAllAdmins(params?: any): Promise<any[]> {
   try {
-    const response = await fetchWithAuth(`admin-controller/user/${id}/access`, {
-      method: "POST",
-      body: JSON.stringify({ roles }),
-    });
-    return response.json();
+    let endpoint = "admin-controller";
+    if (params) {
+      const query = new URLSearchParams(params).toString();
+      endpoint += `?${query}`;
+    }
+    
+    const response = await fetchWithAuth(endpoint, { method: "GET" });
+    const data = await response.json();
+    const admins = extractArrayFromResponse(data);
+    
+    console.log(`Fetched ${admins.length} admins`);
+    return admins;
   } catch (error) {
-    console.warn("Failed to assign roles:", error);
+    console.error("Failed to fetch admins:", error);
+    return [];
+  }
+}
+
+export const getAdmins = getAllAdmins;
+
+export async function getAdminById(id: string): Promise<any> {
+  try {
+    if (!id) {
+      throw new Error("Admin ID is required");
+    }
+    
+    const endpoints = [
+      `admin-controller/profile/${id}`,
+      `admin-controller/${id}`,
+      `admin-controller/admins/${id}`,
+    ];
+    
+    let lastError: Error | null = null;
+    
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`Trying admin fetch with endpoint: ${endpoint}`);
+        const response = await fetchWithAuth(endpoint, { method: "GET" });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`Admin found with endpoint: ${endpoint}`);
+          return data;
+        }
+        
+        if (response.status === 404) {
+          console.warn(`Admin not found at ${endpoint}`);
+          continue;
+        }
+      } catch (error) {
+        console.warn(`Failed with endpoint ${endpoint}:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+      }
+    }
+    
+    throw lastError || new Error(`Admin with ID ${id} not found`);
+  } catch (error) {
+    console.error(`Failed to fetch admin ${id}:`, error);
     throw error;
   }
 }
 
-export async function adminGetProfile(): Promise<any> {
+export async function updateAdmin(id: string, adminData: any): Promise<any> {
   try {
-    const response = await fetchWithAuth("admin-controller/profile", {
+    const endpoints = [
+      `admin-controller/profile/${id}`,
+      `admin-controller/admins/${id}`,
+      `admin-controller/admin/${id}`,
+      `admin-controller/users/${id}`,
+    ];
+    
+    let lastError: Error | null = null;
+    
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetchWithAuth(endpoint, {
+          method: "PUT",
+          body: JSON.stringify(adminData),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          return data;
+        }
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+      }
+    }
+    
+    throw lastError || new Error(`Failed to update admin ${id}`);
+    
+  } catch (error) {
+    console.error(`Failed to update admin ${id}:`, error);
+    throw error;
+  }
+}
+
+export async function deleteAdmin(id: string): Promise<void> {
+  await fetchWithAuth(`admin-controller/${id}`, { method: "DELETE" });
+}
+
+export async function assignRolesToUser(
+  userId: string,
+  roles: string[],
+  permissions?: string[]
+): Promise<any> {
+  try {
+    if (!userId) throw new Error("User ID is required");
+    if (!roles || roles.length === 0) throw new Error("At least one role is required");
+    
+    const payload: any = { roles };
+    if (permissions) payload.permissions = permissions;
+    
+    const response = await fetchWithAuth(`admin-controller/user/${userId}/access`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error("Failed to assign roles:", error);
+    throw error;
+  }
+}
+
+export const assignRoleToUser = assignRolesToUser;
+
+export async function removeRolesFromUser(
+  userId: string,
+  roles: string[]
+): Promise<any> {
+  try {
+    if (!userId) throw new Error("User ID is required");
+    if (!roles || roles.length === 0) throw new Error("At least one role is required to remove");
+    
+    const payload = { roles };
+    
+    const response = await fetchWithAuth(`admin-controller/user/${userId}/roles`, {
+      method: "DELETE",
+      body: JSON.stringify(payload),
+    });
+    
+    return response;
+  } catch (error) {
+    console.error("Failed to remove roles:", error);
+    throw error;
+  }
+}
+
+export async function getUserRolesAndPermissions(userId: string): Promise<any> {
+  try {
+    const response = await fetchWithAuth(`admin-controller/user/${userId}/access`, {
       method: "GET",
+    });
+    
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error("Failed to get user roles:", error);
+    throw error;
+  }
+}
+
+// ============ UPDATED BRAND OWNER FUNCTIONS ============
+
+export async function brandOwnerLogin(credentials: LoginRequest): Promise<LoginResponse> {
+  try {
+    console.log("Brand owner login attempt with:", { email: credentials.Email_PhoneNo });
+    
+    const endpoints = [
+      "admin-controller/login-manager-staff",
+      "admin-controller/brand-owner/login",
+      "admin-controller/login",
+    ];
+    
+    let lastError: Error | null = null;
+    
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`Trying brand owner login with endpoint: ${endpoint}`);
+        const response = await fetchPublic(endpoint, {
+          method: "POST",
+          body: JSON.stringify(credentials),
+        });
+        
+        if (!response.ok) {
+          console.warn(`Endpoint ${endpoint} returned ${response.status}`);
+          continue;
+        }
+        
+        const data = await response.json();
+        console.log(`Success with endpoint: ${endpoint}`);
+        
+        // Normalize user data
+        const userData = data.user || data;
+        const normalizedData = {
+          ...data,
+          ...userData,
+          userType: userData.userType || userData.staffType || userData.role || "BrandOwner",
+          staffType: userData.staffType || userData.userType || "BrandOwner",
+          userId: userData.userId || userData.id,
+          companyName: userData.companyName || userData.company?.name,
+          companyId: userData.companyId || userData.company?.id,
+          token: data.token || data.accessToken,
+          refreshToken: data.refreshToken || data.refresh_token,
+        };
+        
+        setAuthData(normalizedData);
+        return normalizedData;
+      } catch (error) {
+        console.warn(`Failed with endpoint ${endpoint}:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+      }
+    }
+    
+    console.error("All brand owner login endpoints failed");
+    throw lastError || new Error("Failed to login as brand owner. Please check your credentials.");
+  } catch (error) {
+    console.error("Brand owner login error:", error);
+    throw error;
+  }
+}
+
+export async function getBrandOwners(params?: any): Promise<any[]> {
+  try {
+    let endpoint = "admin-controller/company-manager-staff";
+    if (params) {
+      const query = new URLSearchParams(params).toString();
+      endpoint += `?${query}`;
+    }
+    
+    const response = await fetchWithAuth(endpoint, { method: "GET" });
+    const data = await response.json();
+    const owners = extractArrayFromResponse(data);
+    
+    console.log(`Fetched ${owners.length} brand owners`);
+    return owners;
+  } catch (error) {
+    console.warn("Failed to fetch brand owners:", error);
+    return [];
+  }
+}
+
+export async function getBrandOwnerById(id: string): Promise<any> {
+  try {
+    console.log(`Fetching brand owner by ID: ${id}`);
+    
+    if (!id) {
+      throw new Error("Brand owner ID is required");
+    }
+    
+    const endpoints = [
+      `admin-controller/company-manager-staff-profile/${id}`,
+      `admin-controller/brand-owner/${id}`,
+      `admin-controller/${id}`,
+    ];
+    
+    let lastError: Error | null = null;
+    
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`Trying brand owner fetch with endpoint: ${endpoint}`);
+        const response = await fetchWithAuth(endpoint, { method: "GET" });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`Brand owner found with endpoint: ${endpoint}`);
+          return data;
+        }
+        
+        if (response.status === 404) {
+          console.warn(`Brand owner not found at ${endpoint}`);
+          continue;
+        }
+      } catch (error) {
+        console.warn(`Failed with endpoint ${endpoint}:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+      }
+    }
+    
+    throw lastError || new Error(`Brand owner with ID ${id} not found`);
+  } catch (error) {
+    console.error(`Failed to fetch brand owner ${id}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Login as a manager/staff user
+ */
+export async function loginManager(
+  credentials: LoginRequest,
+): Promise<LoginResponse> {
+  try {
+    const endpoints = [
+      "admin-controller/login-manager-staff",
+      "admin-controller/login-manager",
+      "admin-controller/staff-login",
+      "admin-controller/login",
+    ];
+
+    let lastError: Error | null = null;
+
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`Trying manager login with endpoint: ${endpoint}`);
+        const response = await fetchPublic(endpoint, {
+          method: "POST",
+          body: JSON.stringify(credentials),
+        });
+
+        const data = await response.json();
+        console.log(`Manager login successful with endpoint: ${endpoint}`);
+        setAuthData(data);
+        return data;
+      } catch (error) {
+        console.warn(`Failed with endpoint ${endpoint}:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+        if (error instanceof Error) {
+          if (!error.message.includes("404") && !error.message.includes("405")) {
+            throw error;
+          }
+        }
+      }
+    }
+
+    throw lastError || new Error("Failed to login as manager. Please check your credentials.");
+  } catch (error) {
+    console.warn("Failed to login as manager:", error);
+    throw error;
+  }
+}
+
+// ============ STAFF MANAGEMENT FUNCTIONS ============
+
+export async function getStaff(params?: any): Promise<any[]> {
+  return getBrandOwners(params);
+}
+
+export async function getStaffById(id: string): Promise<any> {
+  return getBrandOwnerById(id);
+}
+
+export async function addStaff(data: any): Promise<any> {
+  try {
+    const requiredFields = ['staffType', 'firstName', 'surName', 'email', 'password', 'phoneNo', 'companyName'];
+    const missingFields = requiredFields.filter(field => !data[field as keyof typeof data]);
+    
+    if (missingFields.length > 0) {
+      throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+      throw new Error('Invalid email format');
+    }
+    
+    const normalizedPhone = data.phoneNo?.replace(/\s/g, "") || "";
+    if (!normalizedPhone || normalizedPhone.length < 10) {
+      throw new Error("Invalid phone number. Please use at least 10 digits.");
+    }
+    data.phoneNo = normalizedPhone;
+    
+    if (data.password.length < 8) {
+      throw new Error('Password must be at least 8 characters long');
+    }
+    
+    const payload = {
+      staffType: data.staffType,
+      firstName: data.firstName.trim(),
+      surName: data.surName.trim(),
+      email: data.email.trim().toLowerCase(),
+      password: data.password,
+      sex: data.sex || "Male",
+      staffCode: data.staffCode || `${data.firstName.slice(0, 3).toUpperCase()}${Math.floor(1000 + Math.random() * 9000)}`,
+      phoneNo: data.phoneNo,
+      address: data.address?.trim() || "N/A",
+      companyName: data.companyName.trim(),
+      companyUserName: data.companyUserName || data.companyName.toLowerCase().replace(/\s+/g, "_"),
+      companyType: data.companyType || [],
+      roles: data.roles || ["Staff"],
+      permissions: data.permissions || [],
+    };
+    
+    const response = await fetchWithAuth("admin-controller/add-staff-manager", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      
+      if (errorData.errors) {
+        const errorMessages = Object.values(errorData.errors).flat().join(" ");
+        throw new Error(errorMessages);
+      }
+      if (errorData.title) {
+        throw new Error(errorData.title);
+      }
+      throw new Error(`Failed to add staff: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    return result;
+    
+  } catch (error) {
+    console.error("Failed to add staff:", error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to add staff. Please try again.");
+  }
+}
+
+export async function updateStaff(data: any): Promise<any> {
+  const response = await fetchWithAuth("admin-controller/company-manager-staff/update", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
+
+export async function deleteStaff(id: string): Promise<void> {
+  await fetchWithAuth(`admin-controller/company-manager-staff/${id}`, { method: "DELETE" });
+}
+
+export async function getAllStaff(): Promise<any[]> {
+  try {
+    const response = await fetchWithAuth("admin-controller", {
+      method: "GET",
+    });
+    const data = await response.json();
+    return extractArrayFromResponse(data);
+  } catch (error) {
+    console.warn("Failed to fetch staff:", error);
+    return [];
+  }
+}
+
+export async function updateStaffStatus(
+  id: string,
+  data: { UserStatus: boolean; RejectionReason?: string },
+): Promise<any> {
+  try {
+    const response = await fetchWithAuth(`admin-controller/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
     });
     return response.json();
   } catch (error) {
-    console.warn("Failed to fetch admin profile:", error);
+    console.warn("Failed to update staff status:", error);
     throw error;
   }
 }
@@ -3847,6 +4302,8 @@ export async function getAllAdverts(): Promise<any[]> {
   }
 }
 
+export const getAdverts = getAllAdverts;
+
 export async function getAdvertById(id: string): Promise<any> {
   try {
     const response = await fetchWithAuth(`admin-controller/advert/${id}`, {
@@ -3885,6 +4342,10 @@ export async function updateAdvert(id: string, data: any): Promise<any> {
   }
 }
 
+export async function deleteAdvert(id: string): Promise<void> {
+  await fetchWithAuth(`admin-controller/advert/${id}`, { method: "DELETE" });
+}
+
 export async function initializeAdvertPaystackPayment(id: string): Promise<any> {
   try {
     const response = await fetchWithAuth(
@@ -3917,7 +4378,7 @@ export async function initializeAdvertFlutterwavePayment(id: string): Promise<an
 
 // ============ ADMIN DATA FUNCTIONS ============
 
-export async function getAllUsers(): Promise<any[]> {
+export async function getAllUsers(params?: any): Promise<any[]> {
   try {
     const response = await fetchWithAuth("auth-users", { method: "GET" });
     const data = await response.json();
@@ -4031,124 +4492,6 @@ export async function updateUserMoneyBox(
   }
 }
 
-// ============ STAFF/MANAGER MANAGEMENT FUNCTIONS ============
-
-export async function getAllStaff(): Promise<any[]> {
-  try {
-    const response = await fetchWithAuth("admin-controller", {
-      method: "GET",
-    });
-    const data = await response.json();
-    return extractArrayFromResponse(data);
-  } catch (error) {
-    console.warn("Failed to fetch staff:", error);
-    return [];
-  }
-}
-
-export async function updateStaffStatus(
-  id: string,
-  data: { UserStatus: boolean; RejectionReason?: string },
-): Promise<any> {
-  try {
-    const response = await fetchWithAuth(`admin-controller/${id}/status`, {
-      method: "PATCH",
-      body: JSON.stringify(data),
-    });
-    return response.json();
-  } catch (error) {
-    console.warn("Failed to update staff status:", error);
-    throw error;
-  }
-}
-
-export async function getStaffById(id: string): Promise<any> {
-  try {
-    const response = await fetchWithAuth(`admin-controller/${id}`, {
-      method: "GET",
-    });
-    return response.json();
-  } catch (error) {
-    console.warn("Failed to get staff by ID:", error);
-    throw error;
-  }
-}
-
-export async function deleteStaff(id: string): Promise<void> {
-  try {
-    await fetchWithAuth(`admin-controller/${id}`, {
-      method: "DELETE",
-    });
-  } catch (error) {
-    console.warn("Failed to delete staff:", error);
-    throw error;
-  }
-}
-
-export async function getBrandOwners(params?: any): Promise<any[]> {
-  try {
-    let endpoint = "admin-controller/company-manager-staff";
-    if (params) {
-      const query = new URLSearchParams(params).toString();
-      endpoint += `?${query}`;
-    }
-    
-    const response = await fetchWithAuth(endpoint, { method: "GET" });
-    const data = await response.json();
-    const owners = extractArrayFromResponse(data);
-    
-    console.log(`Fetched ${owners.length} brand owners`);
-    return owners;
-  } catch (error) {
-    console.warn("Failed to fetch brand owners:", error);
-    return [];
-  }
-}
-
-export async function getBrandOwnerById(id: string): Promise<any> {
-  try {
-    console.log(`Fetching brand owner by ID: ${id}`);
-    
-    if (!id) {
-      throw new Error("Brand owner ID is required");
-    }
-    
-    const endpoints = [
-      `admin-controller/company-manager-staff-profile/${id}`,
-      `admin-controller/brand-owner/${id}`,
-      `admin-controller/${id}`,
-    ];
-    
-    let lastError: Error | null = null;
-    
-    for (const endpoint of endpoints) {
-      try {
-        console.log(`Trying brand owner fetch with endpoint: ${endpoint}`);
-        const response = await fetchWithAuth(endpoint, { method: "GET" });
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log(`Brand owner found with endpoint: ${endpoint}`);
-          return data;
-        }
-        
-        if (response.status === 404) {
-          console.warn(`Brand owner not found at ${endpoint}`);
-          continue;
-        }
-      } catch (error) {
-        console.warn(`Failed with endpoint ${endpoint}:`, error);
-        lastError = error instanceof Error ? error : new Error(String(error));
-      }
-    }
-    
-    throw lastError || new Error(`Brand owner with ID ${id} not found`);
-  } catch (error) {
-    console.error(`Failed to fetch brand owner ${id}:`, error);
-    throw error;
-  }
-}
-
 // ============ BULK OPERATIONS ============
 
 export async function bulkUpdateUserStatus(
@@ -4178,6 +4521,56 @@ export async function bulkDeleteUsers(userIds: string[]): Promise<any> {
     console.warn("Failed to bulk delete users:", error);
     throw error;
   }
+}
+
+// ============ ROLES FUNCTIONS ============
+
+export async function getRoles(): Promise<any[]> {
+  try {
+    const endpoints = [
+      "admin-controller/roles",
+      "admin-controller/user-roles",
+      "admin-controller/role",
+    ];
+
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetchWithAuth(endpoint, { method: "GET" });
+        if (!response.ok) continue;
+        const data = await response.json();
+        const items = extractArrayFromResponse(data);
+        if (items.length > 0 || endpoint === endpoints[endpoints.length - 1]) {
+          return items;
+        }
+        return items;
+      } catch {
+        // try next endpoint
+      }
+    }
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+export async function createRole(data: any): Promise<any> {
+  const response = await fetchWithAuth("admin-controller/roles", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
+
+export async function updateRole(id: string, data: any): Promise<any> {
+  const response = await fetchWithAuth(`admin-controller/roles/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
+
+export async function deleteRole(id: string): Promise<void> {
+  await fetchWithAuth(`admin-controller/roles/${id}`, { method: "DELETE" });
 }
 
 // ============ EXPORT ALL FUNCTIONS ============
