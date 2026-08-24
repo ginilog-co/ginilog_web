@@ -45,7 +45,7 @@ function getProxyUrl(endpoint: string): string {
   );
 
   const proxyUrl = `/api/${cleanEndpoint}`;
-  console.log(`🔁 Proxying request through same-origin URL: ${proxyUrl}`);
+  console.log(`Proxying request through same-origin URL: ${proxyUrl}`);
   return proxyUrl;
 }
 
@@ -267,7 +267,7 @@ export function setupAutoRefresh(): void {
 
       if (timeUntilExpiry < 5 * 60 * 1000 && timeUntilExpiry > 0) {
         console.log(
-          `⏰ Token expires in ${Math.round(timeUntilExpiry / 60000)} minutes, refreshing...`,
+          `Token expires in ${Math.round(timeUntilExpiry / 60000)} minutes, refreshing...`,
         );
         await refreshAccessToken();
       }
@@ -287,11 +287,11 @@ export function setupAutoRefresh(): void {
 export async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = getRefreshToken();
   if (!refreshToken) {
-    console.warn("❌ No refresh token available");
+    console.warn("No refresh token available");
     return null;
   }
 
-  console.log("🔄 Attempting to refresh access token...");
+  console.log("Attempting to refresh access token...");
 
   const refreshEndpoints = [
     `${API_URL}/api/auth-users/tokens/refresh`,
@@ -337,13 +337,13 @@ export async function refreshAccessToken(): Promise<string | null> {
           if (data.refreshToken || data.refresh_token) {
             localStorage.setItem("refreshToken", data.refreshToken || data.refresh_token);
           }
-          console.log("✅ Access token refreshed successfully");
+          console.log("Access token refreshed successfully");
           return newToken;
         } else {
-          console.warn("⚠️ No token in refresh response:", Object.keys(data));
+          console.warn("No token in refresh response:", Object.keys(data));
         }
       } else {
-        console.warn(`⚠️ Refresh failed with status ${response.status} at ${endpoint}`);
+        console.warn(`Refresh failed with status ${response.status} at ${endpoint}`);
       }
     } catch (error) {
       console.warn(`Failed to refresh at ${endpoint}:`, error);
@@ -351,7 +351,7 @@ export async function refreshAccessToken(): Promise<string | null> {
     }
   }
 
-  console.error("❌ All refresh attempts failed");
+  console.error("All refresh attempts failed");
   clearAuthData();
   return null;
 }
@@ -380,8 +380,7 @@ async function fetchPublic(
       ? getProxyUrl(cleanEndpoint)
       : `${API_URL}/api/${cleanEndpoint}`;
 
-  console.log(`📡 Fetching (public): ${url}`);
-  console.log(`📤 Request body:`, options.body);
+  console.log(`Fetching (public): ${url}`);
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -397,11 +396,6 @@ async function fetchPublic(
       mode: "cors",
     });
 
-    const clonedResponse = response.clone();
-    const responseText = await clonedResponse.text();
-    console.log(`📥 Response status: ${response.status}`);
-    console.log(`📥 Response body:`, responseText);
-
     if (!response.ok) {
       let errorMessage = `HTTP error! status: ${response.status}`;
 
@@ -411,7 +405,6 @@ async function fetchPublic(
 
         if (contentType.includes("application/json")) {
           const errorData = await errorResponse.json();
-          console.log("📥 Error details:", JSON.stringify(errorData, null, 2));
 
           if (errorData.errors && typeof errorData.errors === "object") {
             const messages = Object.values(
@@ -430,7 +423,7 @@ async function fetchPublic(
         } else {
           const text = await errorResponse.text();
           if (text && text.length > 0) {
-            errorMessage = text.length > 300 ? text.slice(0, 300) + "…" : text;
+            errorMessage = text.length > 300 ? text.slice(0, 300) + "..." : text;
           }
         }
       } catch (error) {
@@ -459,11 +452,11 @@ async function fetchWithAuth(
       ? getProxyUrl(cleanEndpoint)
       : `${API_URL}/api/${cleanEndpoint}`;
 
-  console.log(`🔐 Fetching (auth): ${url}`);
+  console.log(`Fetching (auth): ${url}`);
 
   // Check token expiration BEFORE making the request
   if (!isRetry && isTokenExpired()) {
-    console.log("🔄 Token expired, attempting refresh before request...");
+    console.log("Token expired, attempting refresh before request...");
     const refreshed = await refreshAccessToken();
     if (!refreshed) {
       clearAuthData();
@@ -477,7 +470,7 @@ async function fetchWithAuth(
   const token = getToken();
 
   if (!token) {
-    console.warn(`⚠️ No token found for request to ${url}`);
+    console.warn(`No token found for request to ${url}`);
     throw new Error("Authentication required. Please log in.");
   }
 
@@ -499,14 +492,13 @@ async function fetchWithAuth(
 
     // Handle 500 Internal Server Error with more detail
     if (response.status === 500) {
-      console.error(`❌ Server Error (500) for ${url}`);
+      console.error(`Server Error (500) for ${url}`);
       
       let errorMessage = "Internal server error. Please try again later.";
       let errorDetails: any = null;
       
       try {
         const errorData = await response.clone().json();
-        console.error("📥 500 Error response:", JSON.stringify(errorData, null, 2));
         errorDetails = errorData;
         
         // Try to extract meaningful error message
@@ -525,7 +517,6 @@ async function fetchWithAuth(
       } catch (e) {
         try {
           const text = await response.clone().text();
-          console.error("📥 500 Error text:", text);
           if (text && text.length > 0 && text.length < 500) {
             errorMessage = text;
           }
@@ -535,7 +526,7 @@ async function fetchWithAuth(
       }
       
       // Log the full error details for debugging
-      console.error("❌ Server Error Details:", {
+      console.error("Server Error Details:", {
         status: 500,
         url: url,
         endpoint: endpoint,
@@ -550,17 +541,15 @@ async function fetchWithAuth(
 
     // Handle 403 Forbidden specifically
     if (response.status === 403) {
-      console.warn(`⚠️ 403 Forbidden for ${url}`);
+      console.warn(`403 Forbidden for ${url}`);
 
       let errorMessage = "You don't have permission to perform this action.";
       try {
         const errorData = await response.clone().json();
         errorMessage = errorData.message || errorData.title || errorMessage;
-        console.log("📥 403 Error details:", errorData);
       } catch (e) {
         try {
           const text = await response.clone().text();
-          console.log("📥 403 Error text:", text);
           if (text && text.length > 0 && text.length < 500) {
             errorMessage = text;
           }
@@ -590,11 +579,11 @@ async function fetchWithAuth(
 
     // Handle 401 Unauthorized - Token expired
     if (response.status === 401 && !isRetry) {
-      console.log(`🔄 Token expired (401), attempting refresh...`);
+      console.log(`Token expired (401), attempting refresh...`);
       const refreshed = await refreshAccessToken();
 
       if (refreshed) {
-        console.log(`✅ Token refreshed, retrying request...`);
+        console.log(`Token refreshed, retrying request...`);
         return fetchWithAuth(endpoint, options, true);
       } else {
         clearAuthData();
@@ -626,7 +615,7 @@ async function fetchWithAuth(
         } else {
           const text = await errorResponse.text();
           if (text && text.length > 0) {
-            errorMessage = text.length > 300 ? text.slice(0, 300) + "…" : text;
+            errorMessage = text.length > 300 ? text.slice(0, 300) + "..." : text;
           }
         }
       } catch (error) {
@@ -1223,7 +1212,7 @@ export async function logout(): Promise<void> {
 export async function googleAuth(
   data: GoogleAuthRequest,
 ): Promise<LoginResponse> {
-  console.log("🔄 googleAuth called with:", {
+  console.log("googleAuth called with:", {
     Email: data.Email,
     ExternalId: data.ExternalId,
   });
@@ -1235,14 +1224,12 @@ export async function googleAuth(
     });
 
     const loginData = await response.json();
-    console.log("✅ googleAuth response received");
 
     setAuthData(loginData);
-    console.log("✅ Auth data stored");
 
     return loginData;
   } catch (error: any) {
-    console.error("❌ googleAuth error:", error);
+    console.error("googleAuth error:", error);
     throw error;
   }
 }
@@ -1250,7 +1237,7 @@ export async function googleAuth(
 export async function firebaseAuth(
   data: FirebaseAuthRequest,
 ): Promise<LoginResponse> {
-  console.log("🔄 firebaseAuth called with:", {
+  console.log("firebaseAuth called with:", {
     provider: data.provider,
     email: data.email,
     firebaseUid: data.firebaseUid,
@@ -1268,7 +1255,7 @@ export async function firebaseAuth(
 
   for (const endpoint of endpoints) {
     try {
-      console.log(`📡 Trying firebase auth with endpoint: ${endpoint}`);
+      console.log(`Trying firebase auth with endpoint: ${endpoint}`);
       const response = await fetchPublic(endpoint, {
         method: "POST",
         body: JSON.stringify(data),
@@ -1276,10 +1263,10 @@ export async function firebaseAuth(
 
       const loginData = await response.json();
       setAuthData(loginData);
-      console.log(`✅ Success with endpoint: ${endpoint}`);
+      console.log(`Success with endpoint: ${endpoint}`);
       return loginData;
     } catch (error) {
-      console.warn(`❌ Failed with endpoint ${endpoint}:`, error);
+      console.warn(`Failed with endpoint ${endpoint}:`, error);
       lastError = error instanceof Error ? error : new Error(String(error));
       if (error instanceof Error) {
         if (!error.message.includes("404") && !error.message.includes("405")) {
@@ -1296,7 +1283,7 @@ export async function firebaseAuth(
 export async function socialLogin(
   data: SocialLoginRequest,
 ): Promise<LoginResponse> {
-  console.log("🔄 socialLogin called with:", {
+  console.log("socialLogin called with:", {
     provider: data.provider,
     email: data.email,
     hasToken: !!data.idToken,
@@ -1342,21 +1329,20 @@ export async function socialLogin(
 
   for (const attempt of attempts) {
     try {
-      console.log(`📡 Trying social login with endpoint: ${attempt.endpoint}`);
+      console.log(`Trying social login with endpoint: ${attempt.endpoint}`);
       const response = await fetchPublic(attempt.endpoint, {
         method: "POST",
         body: JSON.stringify(attempt.payload),
       });
 
       const loginData = await response.json();
-      console.log(`✅ Success with endpoint: ${attempt.endpoint}`);
+      console.log(`Success with endpoint: ${attempt.endpoint}`);
 
       setAuthData(loginData);
-      console.log("✅ Auth data stored");
 
       return loginData;
     } catch (error) {
-      console.warn(`❌ Failed with endpoint ${attempt.endpoint}:`, error);
+      console.warn(`Failed with endpoint ${attempt.endpoint}:`, error);
       lastError = error instanceof Error ? error : new Error(String(error));
     }
   }
@@ -1427,7 +1413,7 @@ export async function deleteDeliveryAddress(id: string): Promise<void> {
 export async function verifyAuthUserEmail(
   data: EmailVerificationRequest,
 ): Promise<LoginResponse> {
-  console.log("🔄 Verifying auth user email with:", {
+  console.log("Verifying auth user email with:", {
     Token: data.Token,
     hasPassword: !!data.Password,
   });
@@ -1447,7 +1433,7 @@ export async function verifyAuthUserEmail(
 export async function requestAuthUserEmailVerificationToken(
   email: string,
 ): Promise<string> {
-  console.log("🔄 Requesting auth user email verification token for:", email);
+  console.log("Requesting auth user email verification token for:", email);
 
   const response = await fetchPublic(
     "auth-users/email-verification-request-token",
@@ -1460,7 +1446,7 @@ export async function requestAuthUserEmailVerificationToken(
 }
 
 export async function resendAuthUserVerificationCode(email: string): Promise<string> {
-  console.log("🔄 Resending auth user verification code for:", email);
+  console.log("Resending auth user verification code for:", email);
   return requestAuthUserEmailVerificationToken(email);
 }
 
@@ -1472,7 +1458,7 @@ export async function resendAuthUserVerificationCode(email: string): Promise<str
  */
 export async function sendCompanyVerificationCode(email: string): Promise<{ message: string; code?: string }> {
   try {
-    console.log(`📧 Sending company verification code to: ${email}`);
+    console.log(`Sending company verification code to: ${email}`);
     
     const endpoints = [
       { endpoint: "admin-controller/send-verification", method: "POST" },
@@ -1484,38 +1470,38 @@ export async function sendCompanyVerificationCode(email: string): Promise<{ mess
     
     for (const attempt of endpoints) {
       try {
-        console.log(`📡 Trying company verification endpoint: ${attempt.endpoint} (${attempt.method})`);
+        console.log(`Trying company verification endpoint: ${attempt.endpoint} (${attempt.method})`);
         const response = await fetchPublic(attempt.endpoint, {
           method: attempt.method,
           body: JSON.stringify({ Email: email }),
         });
         
         const data = await response.json();
-        console.log(`✅ Company verification code sent via ${attempt.endpoint}`);
+        console.log(`Company verification code sent via ${attempt.endpoint}`);
         return data;
       } catch (error) {
-        console.warn(`❌ Failed with endpoint ${attempt.endpoint}:`, error);
+        console.warn(`Failed with endpoint ${attempt.endpoint}:`, error);
         lastError = error instanceof Error ? error : new Error(String(error));
       }
     }
     
     try {
-      console.log("📡 Falling back to auth-users endpoint for company verification");
+      console.log("Falling back to auth-users endpoint for company verification");
       const response = await fetchPublic("auth-users/email-verification-request-token", {
         method: "POST",
         body: JSON.stringify({ Email: email }),
       });
       const data = await response.json();
-      console.log("✅ Company verification code sent via fallback");
+      console.log("Company verification code sent via fallback");
       return data;
     } catch (error) {
-      console.warn("❌ Fallback also failed:", error);
+      console.warn("Fallback also failed:", error);
       if (lastError) throw lastError;
       throw error;
     }
     
   } catch (error) {
-    console.error("❌ Failed to send company verification code:", error);
+    console.error("Failed to send company verification code:", error);
     throw error;
   }
 }
@@ -1526,7 +1512,7 @@ export async function sendCompanyVerificationCode(email: string): Promise<{ mess
  */
 export async function verifyCompanyEmailWithCode(email: string, code: string): Promise<{ isValid: boolean; message?: string; token?: string }> {
   try {
-    console.log(`🔐 Verifying company email: ${email} with code: ${code}`);
+    console.log(`Verifying company email: ${email} with code: ${code}`);
     
     const endpoints = [
       { endpoint: "admin-controller/verify-email", method: "POST", body: { Email: email, Code: code } },
@@ -1539,7 +1525,7 @@ export async function verifyCompanyEmailWithCode(email: string, code: string): P
     
     for (const attempt of endpoints) {
       try {
-        console.log(`📡 Trying company verification with endpoint: ${attempt.endpoint} (${attempt.method})`);
+        console.log(`Trying company verification with endpoint: ${attempt.endpoint} (${attempt.method})`);
         const response = await fetchPublic(attempt.endpoint, {
           method: attempt.method,
           body: JSON.stringify(attempt.body),
@@ -1548,7 +1534,7 @@ export async function verifyCompanyEmailWithCode(email: string, code: string): P
         const data = await response.json();
         
         if (response.ok) {
-          console.log("✅ Company email verification successful");
+          console.log("Company email verification successful");
           return { 
             isValid: true, 
             message: data.message || "Company email verified successfully",
@@ -1557,21 +1543,21 @@ export async function verifyCompanyEmailWithCode(email: string, code: string): P
         }
         
         if (response.status === 405) {
-          console.warn(`⚠️ Method not allowed for ${attempt.endpoint}, trying next...`);
+          console.warn(`Method not allowed for ${attempt.endpoint}, trying next...`);
           continue;
         }
         
         lastError = new Error(data.message || data.error || `Verification failed with status ${response.status}`);
-        console.warn(`⚠️ Company verification attempt failed:`, lastError.message);
+        console.warn(`Company verification attempt failed:`, lastError.message);
         
       } catch (error) {
-        console.warn(`❌ Failed with endpoint ${attempt.endpoint}:`, error);
+        console.warn(`Failed with endpoint ${attempt.endpoint}:`, error);
         lastError = error instanceof Error ? error : new Error(String(error));
       }
     }
     
     try {
-      console.log("📡 Falling back to auth-users endpoint for company verification");
+      console.log("Falling back to auth-users endpoint for company verification");
       const response = await fetchPublic("auth-users/email-verification", {
         method: "POST",
         body: JSON.stringify({ Email: email, Token: code }),
@@ -1580,7 +1566,7 @@ export async function verifyCompanyEmailWithCode(email: string, code: string): P
       const data = await response.json();
       
       if (response.ok) {
-        console.log("✅ Company email verification successful via fallback");
+        console.log("Company email verification successful via fallback");
         return { 
           isValid: true, 
           message: data.message || "Company email verified successfully",
@@ -1588,7 +1574,7 @@ export async function verifyCompanyEmailWithCode(email: string, code: string): P
         };
       }
     } catch (error) {
-      console.warn("❌ Fallback verification failed:", error);
+      console.warn("Fallback verification failed:", error);
     }
     
     if (lastError) {
@@ -1598,7 +1584,7 @@ export async function verifyCompanyEmailWithCode(email: string, code: string): P
     throw new Error("Company verification failed. Please try again.");
     
   } catch (error) {
-    console.error("❌ Company email verification failed:", error);
+    console.error("Company email verification failed:", error);
     throw error;
   }
 }
@@ -1763,7 +1749,7 @@ export async function addCompany(companyData: {
   adminId?: string;
 }): Promise<Company> {
   try {
-    console.log("📤 Adding company with data:", JSON.stringify(companyData, null, 2));
+    console.log("Adding company with data:", JSON.stringify(companyData, null, 2));
     
     const requiredFields = ['companyName', 'companyEmail', 'phoneNumber', 'valueCharge'];
     const missingFields = requiredFields.filter(field => !companyData[field as keyof typeof companyData]);
@@ -1782,7 +1768,7 @@ export async function addCompany(companyData: {
     }
     
     const user = getStoredUser();
-    console.log("👤 Current user:", user?.userType || "Unknown");
+    console.log("Current user:", user?.userType || "Unknown");
     
     const payload = {
       companyName: companyData.companyName.trim(),
@@ -1808,7 +1794,7 @@ export async function addCompany(companyData: {
       adminId: companyData.adminId || user?.userId || "",
     };
     
-    console.log("📤 Sending payload:", JSON.stringify(payload, null, 2));
+    console.log("Sending payload:", JSON.stringify(payload, null, 2));
     
     const response = await fetchWithAuth("logistics-controller", {
       method: "POST",
@@ -1816,10 +1802,10 @@ export async function addCompany(companyData: {
     });
     
     const result = await response.json();
-    console.log("✅ Company added successfully:", result);
+    console.log("Company added successfully:", result);
     return result;
   } catch (error) {
-    console.error("❌ Failed to add company:", error);
+    console.error("Failed to add company:", error);
     if (error instanceof Error) {
       throw new Error(`Failed to add company: ${error.message}`);
     }
@@ -1999,7 +1985,7 @@ export async function registerBrandOwner(
   data: RegisterBrandOwnerRequest
 ): Promise<any> {
   try {
-    console.log("📤 Registering Brand Owner with data:", JSON.stringify(data, null, 2));
+    console.log("Registering Brand Owner with data:", JSON.stringify(data, null, 2));
     
     // Validate required fields
     const requiredFields = ['firstName', 'surName', 'email', 'password', 'phoneNo', 'companyName'];
@@ -2043,13 +2029,13 @@ export async function registerBrandOwner(
     for (const endpoint of endpoints) {
       try {
         console.log(`Trying Brand Owner registration endpoint: ${endpoint}`);
-        // ✅ FIXED: Use fetchPublic instead of fetchWithAuth
+        // Use fetchPublic instead of fetchWithAuth
         const response = await fetchPublic(endpoint, {
           method: "POST",
           body: JSON.stringify(apiPayload),
         });
         const result = await response.json();
-        console.log(`✅ Brand Owner registered successfully via ${endpoint}:`, result);
+        console.log(`Brand Owner registered successfully via ${endpoint}:`, result);
         
         // If the response contains authentication data, store it
         if (result.token) {
@@ -2081,7 +2067,7 @@ export async function registerBrandOwner(
     }
     throw new Error("Failed to register brand owner. Please contact support.");
   } catch (error) {
-    console.error("❌ Failed to register brand owner:", error);
+    console.error("Failed to register brand owner:", error);
     if (error instanceof Error) {
       throw new Error(`Failed to register brand owner: ${error.message}`);
     }
@@ -2096,7 +2082,7 @@ export async function registerStaff(
   data: RegisterStaffRequest
 ): Promise<any> {
   try {
-    console.log("📤 Registering Staff with data:", JSON.stringify(data, null, 2));
+    console.log("Registering Staff with data:", JSON.stringify(data, null, 2));
     
     const requiredFields = ['firstName', 'surName', 'email', 'password', 'phoneNo', 'companyId'];
     const missingFields = requiredFields.filter(field => !data[field as keyof typeof data]);
@@ -2124,10 +2110,10 @@ export async function registerStaff(
     });
     
     const result = await response.json();
-    console.log("✅ Staff registered successfully:", result);
+    console.log("Staff registered successfully:", result);
     return result;
   } catch (error) {
-    console.error("❌ Failed to register staff:", error);
+    console.error("Failed to register staff:", error);
     if (error instanceof Error) {
       throw new Error(`Failed to register staff: ${error.message}`);
     }
@@ -2219,7 +2205,7 @@ export async function registerCompanyAndSubmitForApproval(params: {
   const { companyData, ownerData, submitApplication = true } = params;
 
   try {
-    console.log("🔁 Starting company registration + submit for approval", {
+    console.log("Starting company registration + submit for approval", {
       companyName: companyData.companyName,
       hasOwnerData: !!ownerData,
       isAuthenticated: isAuthenticated(),
@@ -2230,7 +2216,7 @@ export async function registerCompanyAndSubmitForApproval(params: {
 
     if (ownerData && !isAuthenticated()) {
       try {
-        console.log("📡 Registering brand owner (will create user/company on backend)");
+        console.log("Registering brand owner (will create user/company on backend)");
         registrationResult = await registerBrandOwner(ownerData);
         if (registrationResult && registrationResult.company) {
           company = registrationResult.company as Company;
@@ -2302,9 +2288,9 @@ export async function registerCompanyAndSubmitForApproval(params: {
           status: "pending",
         };
 
-        console.log("📤 Submitting company application to admin:", applicationPayload);
+        console.log("Submitting company application to admin:", applicationPayload);
         applicationResult = await applyCompany(applicationPayload);
-        console.log("✅ Company application submitted:", applicationResult);
+        console.log("Company application submitted:", applicationResult);
       } catch (err) {
         console.warn("Failed to submit company application:", err);
         throw err;
@@ -2313,7 +2299,7 @@ export async function registerCompanyAndSubmitForApproval(params: {
 
     return { company, registrationResult, applicationResult };
   } catch (error) {
-    console.error("❌ registerCompanyAndSubmitForApproval failed:", error);
+    console.error("registerCompanyAndSubmitForApproval failed:", error);
     throw error;
   }
 }
@@ -2359,9 +2345,9 @@ export async function getRiderById(id: string): Promise<Driver> {
 // FIXED: Enhanced addRider with better error handling and logging
 export async function addRider(riderData: AddDriverRequest): Promise<Driver> {
   try {
-    console.log("📤 Adding rider with data:", JSON.stringify(riderData, null, 2));
-    console.log("🔑 Current token present:", !!getToken());
-    console.log("👤 Current user:", getStoredUser()?.userType || "Unknown");
+    console.log("Adding rider with data:", JSON.stringify(riderData, null, 2));
+    console.log("Current token present:", !!getToken());
+    console.log("Current user:", getStoredUser()?.userType || "Unknown");
 
     const companyId =
       riderData.companyId ||
@@ -2391,7 +2377,7 @@ export async function addRider(riderData: AddDriverRequest): Promise<Driver> {
         });
 
         const result = await response.json();
-        console.log(`✅ Rider added successfully via ${endpoint}:`, result);
+        console.log(`Rider added successfully via ${endpoint}:`, result);
         return result;
       } catch (error) {
         console.warn(`Failed to add rider with endpoint ${endpoint}:`, error);
@@ -2419,7 +2405,7 @@ export async function addRider(riderData: AddDriverRequest): Promise<Driver> {
     }
     throw new Error("Failed to add rider. Please contact support.");
   } catch (error) {
-    console.error("❌ Failed to add rider:", error);
+    console.error("Failed to add rider:", error);
     throw error;
   }
 }
@@ -3372,7 +3358,7 @@ export async function uploadToWebServer(file: File): Promise<any> {
   }
 }
 
-// ============ ADMIN FUNCTIONS ============
+// ============ UPDATED ADMIN FUNCTIONS ============
 
 export async function adminLogin(
   credentials: LoginRequest,
@@ -3406,7 +3392,7 @@ export async function adminLogin(
   }
 }
 
-// ============ BRAND OWNER FUNCTIONS ============
+// ============ UPDATED BRAND OWNER FUNCTIONS ============
 
 export async function brandOwnerLogin(credentials: LoginRequest): Promise<LoginResponse> {
   try {
@@ -3466,70 +3452,6 @@ export async function brandOwnerLogin(credentials: LoginRequest): Promise<LoginR
   }
 }
 
-export async function getBrandOwners(params?: any): Promise<any[]> {
-  try {
-    let endpoint = "admin-controller/company-manager-staff";
-    if (params) {
-      const query = new URLSearchParams(params).toString();
-      endpoint += `?${query}`;
-    }
-    
-    const response = await fetchWithAuth(endpoint, { method: "GET" });
-    const data = await response.json();
-    const owners = extractArrayFromResponse(data);
-    
-    console.log(`Fetched ${owners.length} brand owners`);
-    return owners;
-  } catch (error) {
-    console.warn("Failed to fetch brand owners:", error);
-    return [];
-  }
-}
-
-export async function getBrandOwnerById(id: string): Promise<any> {
-  try {
-    console.log(`Fetching brand owner by ID: ${id}`);
-    
-    if (!id) {
-      throw new Error("Brand owner ID is required");
-    }
-    
-    const endpoints = [
-      `admin-controller/company-manager-staff-profile/${id}`,
-      `admin-controller/brand-owner/${id}`,
-      `admin-controller/${id}`,
-    ];
-    
-    let lastError: Error | null = null;
-    
-    for (const endpoint of endpoints) {
-      try {
-        console.log(`Trying brand owner fetch with endpoint: ${endpoint}`);
-        const response = await fetchWithAuth(endpoint, { method: "GET" });
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log(`Brand owner found with endpoint: ${endpoint}`);
-          return data;
-        }
-        
-        if (response.status === 404) {
-          console.warn(`Brand owner not found at ${endpoint}`);
-          continue;
-        }
-      } catch (error) {
-        console.warn(`Failed with endpoint ${endpoint}:`, error);
-        lastError = error instanceof Error ? error : new Error(String(error));
-      }
-    }
-    
-    throw lastError || new Error(`Brand owner with ID ${id} not found`);
-  } catch (error) {
-    console.error(`Failed to fetch brand owner ${id}:`, error);
-    throw error;
-  }
-}
-
 /**
  * Login as a manager/staff user
  */
@@ -3548,18 +3470,18 @@ export async function loginManager(
 
     for (const endpoint of endpoints) {
       try {
-        console.log(`🔄 Trying manager login with endpoint: ${endpoint}`);
+        console.log(`Trying manager login with endpoint: ${endpoint}`);
         const response = await fetchPublic(endpoint, {
           method: "POST",
           body: JSON.stringify(credentials),
         });
 
         const data = await response.json();
-        console.log(`✅ Manager login successful with endpoint: ${endpoint}`);
+        console.log(`Manager login successful with endpoint: ${endpoint}`);
         setAuthData(data);
         return data;
       } catch (error) {
-        console.warn(`❌ Failed with endpoint ${endpoint}:`, error);
+        console.warn(`Failed with endpoint ${endpoint}:`, error);
         lastError = error instanceof Error ? error : new Error(String(error));
         if (error instanceof Error) {
           if (!error.message.includes("404") && !error.message.includes("405")) {
@@ -4159,6 +4081,70 @@ export async function deleteStaff(id: string): Promise<void> {
     });
   } catch (error) {
     console.warn("Failed to delete staff:", error);
+    throw error;
+  }
+}
+
+export async function getBrandOwners(params?: any): Promise<any[]> {
+  try {
+    let endpoint = "admin-controller/company-manager-staff";
+    if (params) {
+      const query = new URLSearchParams(params).toString();
+      endpoint += `?${query}`;
+    }
+    
+    const response = await fetchWithAuth(endpoint, { method: "GET" });
+    const data = await response.json();
+    const owners = extractArrayFromResponse(data);
+    
+    console.log(`Fetched ${owners.length} brand owners`);
+    return owners;
+  } catch (error) {
+    console.warn("Failed to fetch brand owners:", error);
+    return [];
+  }
+}
+
+export async function getBrandOwnerById(id: string): Promise<any> {
+  try {
+    console.log(`Fetching brand owner by ID: ${id}`);
+    
+    if (!id) {
+      throw new Error("Brand owner ID is required");
+    }
+    
+    const endpoints = [
+      `admin-controller/company-manager-staff-profile/${id}`,
+      `admin-controller/brand-owner/${id}`,
+      `admin-controller/${id}`,
+    ];
+    
+    let lastError: Error | null = null;
+    
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`Trying brand owner fetch with endpoint: ${endpoint}`);
+        const response = await fetchWithAuth(endpoint, { method: "GET" });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`Brand owner found with endpoint: ${endpoint}`);
+          return data;
+        }
+        
+        if (response.status === 404) {
+          console.warn(`Brand owner not found at ${endpoint}`);
+          continue;
+        }
+      } catch (error) {
+        console.warn(`Failed with endpoint ${endpoint}:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+      }
+    }
+    
+    throw lastError || new Error(`Brand owner with ID ${id} not found`);
+  } catch (error) {
+    console.error(`Failed to fetch brand owner ${id}:`, error);
     throw error;
   }
 }
