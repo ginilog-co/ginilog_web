@@ -1,4 +1,4 @@
-var R=require("../../../chunks/ssr/[turbopack]_runtime.js")("server/app/admin-dashboard/company-login/page.js")
+var R=require("../../../chunks/ssr/[turbopack]_runtime.js")("server/app/brand-owner/login/page.js")
 R.c("server/chunks/ssr/[root-of-the-server]__0if3lub._.js")
 R.c("server/chunks/ssr/19rx_next_dist_esm_build_templates_app-page_0023ipy.js")
 R.c("server/chunks/ssr/[root-of-the-server]__02zxs6-._.js")

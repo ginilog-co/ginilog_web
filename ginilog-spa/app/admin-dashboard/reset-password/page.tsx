@@ -1,175 +1,153 @@
+// app/admin-dashboard/reset-password/page.tsx
 "use client";
 
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useEffect, useState, Suspense } from "react"; // ✅ Import Suspense
-import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Lock, Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
-import { adminResetPassword } from "@/lib/api";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, Lock, Eye, EyeOff, ArrowLeft, CheckCircle } from "lucide-react";
+import { resetPassword } from "@/lib/api";
 
-// ✅ Keep this to ensure dynamic rendering
-export const dynamic = 'force-dynamic';
-
-// ✅ Create a separate component that uses useSearchParams
-function ResetPasswordForm() {
+export default function ResetPasswordPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [token, setToken] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    const tokenFromUrl = searchParams.get("token") || searchParams.get("resetToken") || "";
-    if (tokenFromUrl) {
-      setToken(tokenFromUrl);
+    const tokenParam = searchParams.get("token");
+    if (tokenParam) {
+      setToken(tokenParam);
+    } else {
+      setError("Invalid or missing reset token");
     }
   }, [searchParams]);
 
-  const handleReset = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
+    setError("");
 
-    if (!token.trim()) {
-      setError("Reset token is required.");
-      return;
-    }
-    if (!password) {
-      setError("Please enter a new password.");
-      return;
-    }
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
       return;
     }
 
     setIsLoading(true);
+
     try {
-      await adminResetPassword({ Token: token.trim(), Password: password });
-      setSuccess("Password has been reset successfully. You can now sign in with your new password.");
-      setPassword("");
-      setConfirmPassword("");
+      await resetPassword({ Token: token, Password: password });
+      setSuccess(true);
+      setTimeout(() => router.push("/admin-dashboard/login"), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to reset password.");
+      setError(err instanceof Error ? err.message : "Failed to reset password");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // ✅ Your existing form JSX goes here (the entire return statement from your original component)
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-10">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
-        <div className="px-8 py-8 sm:px-12">
-          <Link
-            href="/admin-dashboard/admin-login"
-            className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-6"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Sign In
-          </Link>
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">Password Reset!</h2>
+            <p className="text-gray-500 mt-2">
+              Your password has been reset successfully. Redirecting to login...
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Admin Reset Password</h1>
-          <p className="text-sm text-gray-500 mb-6">
-            Enter the reset token and choose a new password for your admin account.
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl text-center">Reset Password</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-500 text-center mb-6">
+            Enter your new password below.
           </p>
 
           {error && (
-            <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
               {error}
             </div>
           )}
 
-          {success && (
-            <div className="mb-4 rounded-lg bg-green-50 border border-green-200 p-3 text-sm text-green-700">
-              {success}
-            </div>
-          )}
-
-          <form onSubmit={handleReset} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="token" className="text-gray-700">
-                Reset Token
-              </Label>
-              <Input
-                id="token"
-                type="text"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                className="mt-1 h-12"
-                placeholder="Enter reset token"
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="password" className="text-gray-700">
-                New Password
-              </Label>
-              <div className="relative mt-1">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Label htmlFor="password">New Password</Label>
+              <div className="relative mt-1.5">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 h-12"
-                  placeholder="New password"
+                  className="pl-10 pr-10"
+                  placeholder="••••••••"
                   required
+                  minLength={8}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
 
             <div>
-              <Label htmlFor="confirmPassword" className="text-gray-700">
-                Confirm Password
-              </Label>
-              <div className="relative mt-1">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <div className="relative mt-1.5">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="confirmPassword"
                   type={showPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-10 h-12"
-                  placeholder="Confirm new password"
+                  className="pl-10"
+                  placeholder="••••••••"
                   required
                 />
               </div>
             </div>
 
-            <Button type="submit" className="w-full h-12" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading || !token}>
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               {isLoading ? "Resetting..." : "Reset Password"}
             </Button>
           </form>
-        </div>
-      </div>
-    </div>
-  );
-}
 
-// ✅ Main page export with Suspense boundary
-export default function AdminResetPasswordPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    }>
-      <ResetPasswordForm />
-    </Suspense>
+          <div className="mt-6 text-center">
+            <Link href="/admin-dashboard/login" className="text-sm text-primary hover:underline flex items-center justify-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Login
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

@@ -1,593 +1,485 @@
+// app/admin-dashboard/page.tsx
+
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
-  Package,
-  Hotel,
   Users,
-  Settings,
-  LogOut,
-  Bell,
-  Search,
-  ArrowUpRight,
-  MessageSquare,
-  User,
   Building2,
+  ShoppingBag,
+  Calendar,
+  Wallet,
+  Settings,
+  Shield,
+  Megaphone,
+  FileCheck,
+  UserCog,
+  LogOut,
+  Menu,
+  X,
+  ChevronDown,
+  Home,
+  Bell,
+  Package,
   Truck,
-  Loader2,
+  Hotel,
+  DollarSign,
+  TrendingUp,
+  ArrowUpRight,
+  ArrowDownRight,
+  Clock,
+  CheckCircle,
   AlertCircle,
+  BarChart3
 } from "lucide-react";
-import {
+import { 
+  adminGetProfile,
+  getAllAdmins,
+  getBrandOwners, 
+  getAllAdverts, 
+  getNotifications,
+  getPayouts,
+  getCompanyApplications,
+  getCompanies,
+  getPackageOrders,
+  getAccommodationReservations,
+  getAllUsers,
+  isAuthenticated,
   getStoredUser,
   logout,
-  adminGetProfile,
-  getAllUsers,
-  getAllOrders,
-  getAllReservations,
-  updateOrderStatus,
-  updateReservation,
+  validateSession
 } from "@/lib/api";
-import UsersPanel from "./registered-users/page";
-import CompaniesPanel from "./company-panel/page";
-
-const ORDER_STATUSES = [
-  "Pending",
-  "Processing",
-  "In_Transit",
-  "Delivered",
-  "Cancelled",
-];
-const BOOKING_STATUSES = ["Pending", "Confirmed", "Completed", "Cancelled"];
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [adminProfile, setAdminProfile] = useState<any>(null);
-  const [users, setUsers] = useState<any[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [reservations, setReservations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [adminProfile, setAdminProfile] = useState<any>(null);
+  const [usersList, setUsersList] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalCompanies: 0,
+    totalOrders: 0,
+    totalBookings: 0,
+    totalAdmins: 0,
+    totalAdverts: 0,
+    pendingApplications: 0,
+    totalRevenue: 0,
+  });
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [orderSearch, setOrderSearch] = useState("");
-  const [bookingSearch, setBookingSearch] = useState("");
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   useEffect(() => {
-    const stored = getStoredUser();
-    if (!stored) {
-      router.push("/admin-dashboard/admin-login");
+    if (!isAuthenticated() || !validateSession()) {
+      router.push("/admin-dashboard/login");
       return;
     }
-    const fetchData = async () => {
-      try {
-        const [profile, allUsers, allOrders, allReservations] =
-          await Promise.all([
-            adminGetProfile().catch(() => null),
-            getAllUsers().catch(() => []),
-            getAllOrders().catch(() => []),
-            getAllReservations().catch(() => []),
-          ]);
-        setAdminProfile(profile);
-        setUsers(allUsers || []);
-        setOrders(allOrders || []);
-        setReservations(allReservations || []);
-      } catch (err) {
-        setError("Failed to load dashboard data.");
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchData();
+    fetchDashboardData();
   }, [router]);
 
-  const handleOrderStatusChange = async (
-    orderId: string,
-    newStatus: string,
-  ) => {
-    setUpdatingId(orderId);
+  const fetchDashboardData = async () => {
+    setIsLoading(true);
+    setError(null);
     try {
-      await updateOrderStatus(orderId, { OrderStatus: newStatus });
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.id === orderId ? { ...o, orderStatus: newStatus } : o,
-        ),
+      // Fetch all data in parallel
+      const [
+        profile,
+        admins,
+        users,
+        companies,
+        orders,
+        bookings,
+        adverts,
+        applications,
+        notifications,
+        payouts
+      ] = await Promise.all([
+        adminGetProfile().catch(() => null),
+        getAllAdmins().catch(() => []),
+        getAllUsers().catch(() => []),
+        getCompanies().catch(() => []),
+        getPackageOrders().catch(() => []),
+        getAccommodationReservations().catch(() => []),
+        getAllAdverts().catch(() => []),
+        getCompanyApplications().catch(() => []),
+        getNotifications().catch(() => []),
+        getPayouts().catch(() => []),
+      ]);
+
+      setAdminProfile(profile);
+      setUsersList(users || []);
+
+      // Calculate stats
+      const totalRevenue = orders.reduce((sum: number, order: any) => 
+        sum + (order.itemCost || 0) + (order.shippingCost || 0), 0
+      ) + bookings.reduce((sum: number, booking: any) => 
+        sum + (booking.totalAmount || 0), 0
       );
+
+      setStats({
+        totalUsers: users?.length || 0,
+        totalCompanies: companies?.length || 0,
+        totalOrders: orders?.length || 0,
+        totalBookings: bookings?.length || 0,
+        totalAdmins: admins?.length || 0,
+        totalAdverts: adverts?.length || 0,
+        pendingApplications: applications?.filter((a: any) => a.status === "pending").length || 0,
+        totalRevenue: totalRevenue,
+      });
+
+      // Recent activities (combine recent notifications and applications)
+      const recentNotifications = (notifications || []).slice(0, 3).map((n: any) => ({
+        id: n.id,
+        type: "notification",
+        title: n.title,
+        description: n.body,
+        time: n.createdAt,
+        icon: Bell,
+        iconColor: "text-blue-500",
+        bgColor: "bg-blue-50",
+      }));
+
+      const recentApplications = (applications || [])
+        .filter((a: any) => a.status === "pending")
+        .slice(0, 3)
+        .map((a: any) => ({
+          id: a.id,
+          type: "application",
+          title: "New Company Application",
+          description: `${a.companyName} is requesting approval`,
+          time: a.createdAt,
+          icon: FileCheck,
+          iconColor: "text-yellow-500",
+          bgColor: "bg-yellow-50",
+        }));
+
+      setRecentActivities([...recentNotifications, ...recentApplications]);
+
     } catch (err) {
-      console.error("Failed to update order:", err);
+      console.error("❌ Failed to fetch dashboard data:", err);
+      setError("Failed to load dashboard data. Please refresh.");
     } finally {
-      setUpdatingId(null);
+      setIsLoading(false);
     }
   };
 
-  const handleBookingStatusChange = async (
-    bookingId: string,
-    newStatus: string,
-  ) => {
-    setUpdatingId(bookingId);
-    try {
-      await updateReservation(bookingId, { BookingStatus: newStatus });
-      setReservations((prev) =>
-        prev.map((r) =>
-          r.id === bookingId ? { ...r, bookingStatus: newStatus } : r,
-        ),
-      );
-    } catch (err) {
-      console.error("Failed to update booking:", err);
-    } finally {
-      setUpdatingId(null);
-    }
+  const handleLogout = async () => {
+    await logout();
+    router.push("/admin-dashboard/login");
   };
 
-  const totalRevenue =
-    orders.reduce(
-      (sum, o) => sum + (o.shippingCost || 0) + (o.itemCost || 0),
-      0,
-    ) + reservations.reduce((sum, r) => sum + (r.totalAmount || 0), 0);
-
-  const stats = [
+  const statCards = [
     {
       title: "Total Users",
-      value: users.length,
+      value: stats.totalUsers,
       icon: Users,
-      color: "bg-blue-100 text-blue-600",
+      color: "bg-blue-50 text-blue-600",
+      trend: "+12%",
+      trendUp: true,
     },
     {
-      title: "Total Orders",
-      value: orders.length,
-      icon: Truck,
-      color: "bg-primary/10 text-primary",
-    },
-    {
-      title: "Total Bookings",
-      value: reservations.length,
+      title: "Companies",
+      value: stats.totalCompanies,
       icon: Building2,
-      color: "bg-purple-100 text-purple-600",
+      color: "bg-purple-50 text-purple-600",
+      trend: "+5%",
+      trendUp: true,
     },
     {
-      title: "Total Revenue",
-      value: `₦${totalRevenue.toLocaleString()}`,
-      icon: ArrowUpRight,
-      color: "bg-green-100 text-green-600",
+      title: "Orders",
+      value: stats.totalOrders,
+      icon: ShoppingBag,
+      color: "bg-orange-50 text-orange-600",
+      trend: "+8%",
+      trendUp: true,
     },
-  ];
-
-  const filteredOrders = orders.filter(
-    (o) =>
-      !orderSearch ||
-      (o.trackingNum || "").toLowerCase().includes(orderSearch.toLowerCase()) ||
-      (o.itemName || "").toLowerCase().includes(orderSearch.toLowerCase()) ||
-      (o.senderName || "").toLowerCase().includes(orderSearch.toLowerCase()),
-  );
-
-  const filteredReservations = reservations.filter(
-    (r) =>
-      !bookingSearch ||
-      (r.bookingRefNo || "")
-        .toLowerCase()
-        .includes(bookingSearch.toLowerCase()) ||
-      (r.accomodationName || "")
-        .toLowerCase()
-        .includes(bookingSearch.toLowerCase()) ||
-      (r.guestName || "").toLowerCase().includes(bookingSearch.toLowerCase()),
-  );
-
-  const getStatusBadge = (status: string) => {
-    const s = (status || "").toLowerCase();
-    if (s === "delivered" || s === "confirmed" || s === "completed")
-      return "bg-green-100 text-green-800";
-    if (s === "in_transit" || s === "processing")
-      return "bg-blue-100 text-blue-800";
-    if (s === "cancelled") return "bg-red-100 text-red-800";
-    return "bg-yellow-100 text-yellow-800";
-  };
-
-  const navItems = [
     {
-      icon: LayoutDashboard,
-      label: "Dashboard",
-      href: "/admin-dashboard",
-      active: true,
+      title: "Bookings",
+      value: stats.totalBookings,
+      icon: Calendar,
+      color: "bg-green-50 text-green-600",
+      trend: "+3%",
+      trendUp: true,
     },
-    { icon: Package, label: "Orders", href: "#orders" },
-    { icon: Hotel, label: "Bookings", href: "#bookings" },
-    { icon: Users, label: "Users", href: "#users" },
-    { icon: Building2, label: "Companies", href: "#companies" },
     {
-      icon: Building2,
-      label: "Company Portal",
-      href: "/admin-dashboard/company",
+      title: "Revenue",
+      value: `₦${(stats.totalRevenue / 1000000).toFixed(1)}M`,
+      icon: DollarSign,
+      color: "bg-emerald-50 text-emerald-600",
+      trend: "+15%",
+      trendUp: true,
     },
-    { icon: Settings, label: "Settings", href: "#" },
+    {
+      title: "Pending Applications",
+      value: stats.pendingApplications,
+      icon: FileCheck,
+      color: "bg-yellow-50 text-yellow-600",
+      trend: `${stats.pendingApplications} pending`,
+      trendUp: false,
+    },
   ];
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-500">Loading dashboard...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <aside
-        className={`bg-gray-900 text-white transition-all duration-300 ${
-          isSidebarOpen ? "w-64" : "w-20"
-        } fixed h-full z-40`}
-      >
-        <div className="h-16 flex items-center justify-center border-b border-gray-800">
-          <Link href="/admin-dashboard" className="text-xl font-bold">
-            {isSidebarOpen ? "GINILOG Admin" : "GNL"}
-          </Link>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Welcome back, {adminProfile?.firstName || "Admin"}! Here's what's happening.
+          </p>
         </div>
-        <nav className="mt-6 px-3">
-          {navItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`flex items-center gap-3 px-3 py-3 rounded-lg mb-1 transition-colors ${
-                item.active
-                  ? "bg-primary text-white"
-                  : "text-gray-400 hover:bg-gray-800 hover:text-white"
-              }`}
-            >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
-              {isSidebarOpen && (
-                <span className="text-sm font-medium">{item.label}</span>
-              )}
+        <div className="flex gap-2">
+          <Button onClick={fetchDashboardData} variant="outline" size="sm">
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        {statCards.map((stat, index) => {
+          const Icon = stat.icon;
+          return (
+            <Card key={index} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium">{stat.title}</p>
+                    <p className="text-xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                    {stat.trend && (
+                      <div className="flex items-center gap-1 mt-1">
+                        {stat.trendUp ? (
+                          <ArrowUpRight className="h-3 w-3 text-green-500" />
+                        ) : (
+                          <ArrowDownRight className="h-3 w-3 text-red-500" />
+                        )}
+                        <span className={`text-xs ${stat.trendUp ? 'text-green-600' : 'text-red-600'}`}>
+                          {stat.trend}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className={`p-2 rounded-lg ${stat.color}`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Link
+          href="/admin-dashboard/applications"
+          className="p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all text-center"
+        >
+          <FileCheck className="h-6 w-6 text-primary mx-auto mb-2" />
+          <p className="text-sm font-medium text-gray-900">Applications</p>
+          {stats.pendingApplications > 0 && (
+            <Badge className="mt-1 bg-yellow-500 text-white">
+              {stats.pendingApplications} pending
+            </Badge>
+          )}
+        </Link>
+        <Link
+          href="/admin-dashboard/admins"
+          className="p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all text-center"
+        >
+          <Shield className="h-6 w-6 text-primary mx-auto mb-2" />
+          <p className="text-sm font-medium text-gray-900">Admins</p>
+          <p className="text-xs text-gray-500">{stats.totalAdmins} total</p>
+        </Link>
+        <Link
+          href="/admin-dashboard/users"
+          className="p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all text-center"
+        >
+          <Users className="h-6 w-6 text-primary mx-auto mb-2" />
+          <p className="text-sm font-medium text-gray-900">Users</p>
+          <p className="text-xs text-gray-500">{stats.totalUsers} total</p>
+        </Link>
+        <Link
+          href="/admin-dashboard/companies"
+          className="p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all text-center"
+        >
+          <Building2 className="h-6 w-6 text-primary mx-auto mb-2" />
+          <p className="text-sm font-medium text-gray-900">Companies</p>
+          <p className="text-xs text-gray-500">{stats.totalCompanies} registered</p>
+        </Link>
+      </div>
+
+      {/* Recent Users Table */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Recent Users</CardTitle>
+            <Link href="/admin-dashboard/users">
+              <Button variant="ghost" size="sm">View All</Button>
             </Link>
-          ))}
-        </nav>
-        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-gray-800">
-          <button
-            onClick={() => {
-              logout();
-              router.push("/admin-dashboard/admin-login");
-            }}
-            className="flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition-colors w-full"
-          >
-            <LogOut className="h-5 w-5 flex-shrink-0" />
-            {isSidebarOpen && (
-              <span className="text-sm font-medium">Logout</span>
-            )}
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <div
-        className={`flex-1 transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-20"}`}
-      >
-        {/* Header */}
-        <header className="bg-white border-b sticky top-0 z-30">
-          <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="p-2 hover:bg-gray-100 rounded-lg"
-              >
-                <LayoutDashboard className="h-5 w-5 text-gray-600" />
-              </button>
-            </div>
-            <div className="flex items-center gap-4">
-              <button className="relative p-2 hover:bg-gray-100 rounded-lg">
-                <Bell className="h-5 w-5 text-gray-600" />
-                <span className="absolute top-1 right-1 h-2 w-2 bg-primary rounded-full" />
-              </button>
-              <button className="relative p-2 hover:bg-gray-100 rounded-lg">
-                <MessageSquare className="h-5 w-5 text-gray-600" />
-              </button>
-              <div className="flex items-center gap-3 pl-4 border-l">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                  {adminProfile?.profilePicture ? (
-                    <img
-                      src={adminProfile.profilePicture}
-                      alt="Admin"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <User className="h-5 w-5 text-primary" />
-                  )}
-                </div>
-                <div className="hidden md:block">
-                  <p className="text-sm font-medium text-gray-900">
-                    {adminProfile?.firstName || "Admin"}{" "}
-                    {adminProfile?.lastName || ""}
-                  </p>
-                  <p className="text-xs text-gray-500">Super Admin</p>
-                </div>
-              </div>
-            </div>
           </div>
-        </header>
-
-        <main className="p-6">
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-600 text-sm">
-              <AlertCircle className="h-4 w-4" />
-              <span>{error}</span>
+        </CardHeader>
+        <CardContent>
+          {usersList.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <Users className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+              <p>No users found</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 font-medium text-gray-500">User</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-500">Email</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-500">Phone</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-500">Type</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-500">Status</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-500">Joined</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {usersList.slice(0, 5).map((user: any) => (
+                    <tr key={user.id || user.userId} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          {user.profilePicture || user.profileImage ? (
+                            <img 
+                              src={user.profilePicture || user.profileImage} 
+                              alt={user.firstName} 
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                              {(user.firstName?.[0] || user.email?.[0] || 'U').toUpperCase()}
+                            </div>
+                          )}
+                          <span className="font-medium">
+                            {user.firstName || ''} {user.lastName || user.surName || ''}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-gray-600">{user.email || 'N/A'}</td>
+                      <td className="py-3 px-4 text-gray-600">{user.phoneNo || user.phoneNumber || 'N/A'}</td>
+                      <td className="py-3 px-4">
+                        <Badge variant="outline">
+                          {user.userType || user.staffType || 'User'}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge className={user.userStatus !== false ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
+                          {user.userStatus !== false ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-gray-500 text-xs">
+                        {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
+        </CardContent>
+      </Card>
 
-          {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {stats.map((stat) => (
-              <Card
-                key={stat.title}
-                className="hover:shadow-md transition-shadow"
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-gray-500 text-sm">{stat.title}</p>
-                      <h3 className="text-2xl font-bold text-gray-900 mt-1">
-                        {stat.value}
-                      </h3>
+      {/* Recent Activity */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Recent Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {recentActivities.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <Bell className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+              <p>No recent activity</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {recentActivities.map((activity) => {
+                const Icon = activity.icon;
+                return (
+                  <div key={activity.id} className="flex items-start gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className={`p-2 rounded-full ${activity.bgColor}`}>
+                      <Icon className={`h-4 w-4 ${activity.iconColor}`} />
                     </div>
-                    <div className={`p-3 rounded-lg ${stat.color}`}>
-                      <stat.icon className="h-5 w-5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                      <p className="text-sm text-gray-500">{activity.description}</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {activity.time ? new Date(activity.time).toLocaleString() : "Just now"}
+                      </p>
                     </div>
+                    <Badge variant="outline" className="flex-shrink-0">
+                      {activity.type === "notification" ? "Info" : "Action Required"}
+                    </Badge>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-          {/* Users - self-fetching paginated panel */}
-          <div className="mb-8">
-            <UsersPanel />
-          </div>
-
-          {/* Companies - self-fetching paginated panel */}
-          <div className="mb-8">
-            <CompaniesPanel />
-          </div>
-
-          {/* Orders Table */}
-          <Card className="mb-8" id="orders">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>All Orders ({orders.length})</CardTitle>
-              <div className="relative w-52">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search orders..."
-                  value={orderSearch}
-                  onChange={(e) => setOrderSearch(e.target.value)}
-                  className="pl-9 pr-3 py-1.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full"
-                />
+      {/* System Status */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">System Status</p>
+                <p className="text-xs text-gray-500">All systems operational</p>
               </div>
-            </CardHeader>
-            <CardContent>
-              {filteredOrders.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">
-                  No orders found.
-                </p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-gray-50">
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">
-                          Tracking #
-                        </th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">
-                          Item
-                        </th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">
-                          Sender
-                        </th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">
-                          Receiver
-                        </th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">
-                          Company
-                        </th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">
-                          Shipping
-                        </th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">
-                          Item Cost
-                        </th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">
-                          Status
-                        </th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">
-                          Date
-                        </th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">
-                          Update
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredOrders.map((order) => (
-                        <tr
-                          key={order.id}
-                          className="border-b hover:bg-gray-50"
-                        >
-                          <td className="py-3 px-4 font-mono text-xs">
-                            {order.trackingNum || order.id?.slice(0, 8)}
-                          </td>
-                          <td className="py-3 px-4">{order.itemName}</td>
-                          <td className="py-3 px-4">{order.senderName}</td>
-                          <td className="py-3 px-4">{order.recieverName}</td>
-                          <td className="py-3 px-4">
-                            {order.companyName || "—"}
-                          </td>
-                          <td className="py-3 px-4">
-                            ₦{(order.shippingCost || 0).toLocaleString()}
-                          </td>
-                          <td className="py-3 px-4">
-                            ₦{(order.itemCost || 0).toLocaleString()}
-                          </td>
-                          <td className="py-3 px-4">
-                            <Badge
-                              className={getStatusBadge(order.orderStatus)}
-                            >
-                              {order.orderStatus || "Pending"}
-                            </Badge>
-                          </td>
-                          <td className="py-3 px-4 text-gray-500">
-                            {order.createdAt
-                              ? new Date(order.createdAt).toLocaleDateString()
-                              : "—"}
-                          </td>
-                          <td className="py-3 px-4">
-                            {updatingId === order.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                            ) : (
-                              <select
-                                value={order.orderStatus || "Pending"}
-                                onChange={(e) =>
-                                  handleOrderStatusChange(
-                                    order.id,
-                                    e.target.value,
-                                  )
-                                }
-                                className="text-xs border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
-                              >
-                                {ORDER_STATUSES.map((s) => (
-                                  <option key={s} value={s}>
-                                    {s}
-                                  </option>
-                                ))}
-                              </select>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Reservations Table */}
-          <Card id="bookings">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>All Reservations ({reservations.length})</CardTitle>
-              <div className="relative w-52">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search bookings..."
-                  value={bookingSearch}
-                  onChange={(e) => setBookingSearch(e.target.value)}
-                  className="pl-9 pr-3 py-1.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full"
-                />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-3 w-3 rounded-full bg-blue-500" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">API Status</p>
+                <p className="text-xs text-gray-500">Connected and healthy</p>
               </div>
-            </CardHeader>
-            <CardContent>
-              {filteredReservations.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">
-                  No reservations found.
-                </p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-gray-50">
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">
-                          Accommodation
-                        </th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">
-                          Guest
-                        </th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">
-                          Ref #
-                        </th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">
-                          Check-in
-                        </th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">
-                          Check-out
-                        </th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">
-                          Nights
-                        </th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">
-                          Amount
-                        </th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">
-                          Status
-                        </th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600">
-                          Update
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredReservations.map((res) => (
-                        <tr key={res.id} className="border-b hover:bg-gray-50">
-                          <td className="py-3 px-4">{res.accomodationName}</td>
-                          <td className="py-3 px-4">{res.guestName}</td>
-                          <td className="py-3 px-4 font-mono text-xs">
-                            {res.bookingRefNo || res.id?.slice(0, 8)}
-                          </td>
-                          <td className="py-3 px-4">
-                            {res.checkInDate
-                              ? new Date(res.checkInDate).toLocaleDateString()
-                              : "—"}
-                          </td>
-                          <td className="py-3 px-4">
-                            {res.checkOutDate
-                              ? new Date(res.checkOutDate).toLocaleDateString()
-                              : "—"}
-                          </td>
-                          <td className="py-3 px-4">
-                            {res.numberOfNights || "—"}
-                          </td>
-                          <td className="py-3 px-4 font-medium text-primary">
-                            ₦{(res.totalAmount || 0).toLocaleString()}
-                          </td>
-                          <td className="py-3 px-4">
-                            <Badge
-                              className={getStatusBadge(res.bookingStatus)}
-                            >
-                              {res.bookingStatus || "Pending"}
-                            </Badge>
-                          </td>
-                          <td className="py-3 px-4">
-                            {updatingId === res.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                            ) : (
-                              <select
-                                value={res.bookingStatus || "Pending"}
-                                onChange={(e) =>
-                                  handleBookingStatusChange(
-                                    res.id,
-                                    e.target.value,
-                                  )
-                                }
-                                className="text-xs border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
-                              >
-                                {BOOKING_STATUSES.map((s) => (
-                                  <option key={s} value={s}>
-                                    {s}
-                                  </option>
-                                ))}
-                              </select>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </main>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-3 w-3 rounded-full bg-yellow-500" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Pending Tasks</p>
+                <p className="text-xs text-gray-500">{stats.pendingApplications} applications to review</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

@@ -3377,13 +3377,157 @@ export async function uploadToWebServer(file: File): Promise<any> {
 export async function adminLogin(
   credentials: LoginRequest,
 ): Promise<LoginResponse> {
-  const response = await fetchPublic("admin-controller/login", {
-    method: "POST",
-    body: JSON.stringify(credentials),
-  });
-  const data = await response.json();
-  setAuthData(data);
-  return data;
+  try {
+    console.log("Admin login attempt with:", { email: credentials.Email_PhoneNo });
+    
+    const response = await fetchPublic("admin-controller/login", {
+      method: "POST",
+      body: JSON.stringify(credentials),
+    });
+    
+    const data = await response.json();
+    console.log("Admin login response received");
+    
+    // Normalize the response data
+    const normalizedData = {
+      ...data,
+      userType: data.userType || data.adminType || "Admin",
+      staffType: data.staffType || data.adminType || "Admin",
+      userId: data.userId || data.id,
+      token: data.token || data.accessToken,
+      refreshToken: data.refreshToken || data.refresh_token,
+    };
+    
+    setAuthData(normalizedData);
+    return normalizedData;
+  } catch (error) {
+    console.error("Admin login error:", error);
+    throw error;
+  }
+}
+
+// ============ BRAND OWNER FUNCTIONS ============
+
+export async function brandOwnerLogin(credentials: LoginRequest): Promise<LoginResponse> {
+  try {
+    console.log("Brand owner login attempt with:", { email: credentials.Email_PhoneNo });
+    
+    const endpoints = [
+      "admin-controller/login-manager-staff",
+      "admin-controller/brand-owner/login",
+      "admin-controller/login",
+    ];
+    
+    let lastError: Error | null = null;
+    
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`Trying brand owner login with endpoint: ${endpoint}`);
+        const response = await fetchPublic(endpoint, {
+          method: "POST",
+          body: JSON.stringify(credentials),
+        });
+        
+        if (!response.ok) {
+          console.warn(`Endpoint ${endpoint} returned ${response.status}`);
+          continue;
+        }
+        
+        const data = await response.json();
+        console.log(`Success with endpoint: ${endpoint}`);
+        
+        // Normalize user data
+        const userData = data.user || data;
+        const normalizedData = {
+          ...data,
+          ...userData,
+          userType: userData.userType || userData.staffType || userData.role || "BrandOwner",
+          staffType: userData.staffType || userData.userType || "BrandOwner",
+          userId: userData.userId || userData.id,
+          companyName: userData.companyName || userData.company?.name,
+          companyId: userData.companyId || userData.company?.id,
+          token: data.token || data.accessToken,
+          refreshToken: data.refreshToken || data.refresh_token,
+        };
+        
+        setAuthData(normalizedData);
+        return normalizedData;
+      } catch (error) {
+        console.warn(`Failed with endpoint ${endpoint}:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+      }
+    }
+    
+    console.error("All brand owner login endpoints failed");
+    throw lastError || new Error("Failed to login as brand owner. Please check your credentials.");
+  } catch (error) {
+    console.error("Brand owner login error:", error);
+    throw error;
+  }
+}
+
+export async function getBrandOwners(params?: any): Promise<any[]> {
+  try {
+    let endpoint = "admin-controller/company-manager-staff";
+    if (params) {
+      const query = new URLSearchParams(params).toString();
+      endpoint += `?${query}`;
+    }
+    
+    const response = await fetchWithAuth(endpoint, { method: "GET" });
+    const data = await response.json();
+    const owners = extractArrayFromResponse(data);
+    
+    console.log(`Fetched ${owners.length} brand owners`);
+    return owners;
+  } catch (error) {
+    console.warn("Failed to fetch brand owners:", error);
+    return [];
+  }
+}
+
+export async function getBrandOwnerById(id: string): Promise<any> {
+  try {
+    console.log(`Fetching brand owner by ID: ${id}`);
+    
+    if (!id) {
+      throw new Error("Brand owner ID is required");
+    }
+    
+    const endpoints = [
+      `admin-controller/company-manager-staff-profile/${id}`,
+      `admin-controller/brand-owner/${id}`,
+      `admin-controller/${id}`,
+    ];
+    
+    let lastError: Error | null = null;
+    
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`Trying brand owner fetch with endpoint: ${endpoint}`);
+        const response = await fetchWithAuth(endpoint, { method: "GET" });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`Brand owner found with endpoint: ${endpoint}`);
+          return data;
+        }
+        
+        if (response.status === 404) {
+          console.warn(`Brand owner not found at ${endpoint}`);
+          continue;
+        }
+      } catch (error) {
+        console.warn(`Failed with endpoint ${endpoint}:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+      }
+    }
+    
+    throw lastError || new Error(`Brand owner with ID ${id} not found`);
+  } catch (error) {
+    console.error(`Failed to fetch brand owner ${id}:`, error);
+    throw error;
+  }
 }
 
 /**
@@ -3464,13 +3608,20 @@ export async function adminResetPassword(data: {
   }
 }
 
-export async function getAdmins(): Promise<any[]> {
+export async function getAdmins(params?: any): Promise<any[]> {
   try {
-    const response = await fetchWithAuth("admin-controller", {
-      method: "GET",
-    });
+    let endpoint = "admin-controller";
+    if (params) {
+      const query = new URLSearchParams(params).toString();
+      endpoint += `?${query}`;
+    }
+    
+    const response = await fetchWithAuth(endpoint, { method: "GET" });
     const data = await response.json();
-    return extractArrayFromResponse(data);
+    const admins = extractArrayFromResponse(data);
+    
+    console.log(`Fetched ${admins.length} admins`);
+    return admins;
   } catch (error) {
     console.warn("Failed to fetch admins:", error);
     return [];
@@ -3479,25 +3630,208 @@ export async function getAdmins(): Promise<any[]> {
 
 export async function getAdminById(id: string): Promise<any> {
   try {
-    const response = await fetchWithAuth(`admin-controller/${id}`, {
-      method: "GET",
-    });
-    return response.json();
+    if (!id) {
+      throw new Error("Admin ID is required");
+    }
+    
+    const endpoints = [
+      `admin-controller/profile/${id}`,
+      `admin-controller/${id}`,
+      `admin-controller/admins/${id}`,
+    ];
+    
+    let lastError: Error | null = null;
+    
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`Trying admin fetch with endpoint: ${endpoint}`);
+        const response = await fetchWithAuth(endpoint, { method: "GET" });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`Admin found with endpoint: ${endpoint}`);
+          return data;
+        }
+        
+        if (response.status === 404) {
+          console.warn(`Admin not found at ${endpoint}`);
+          continue;
+        }
+      } catch (error) {
+        console.warn(`Failed with endpoint ${endpoint}:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+      }
+    }
+    
+    throw lastError || new Error(`Admin with ID ${id} not found`);
   } catch (error) {
-    console.warn("Failed to fetch admin:", error);
+    console.error(`Failed to fetch admin ${id}:`, error);
     throw error;
   }
 }
 
-export async function addAdmin(adminData: any): Promise<any> {
+export async function addAdmin(adminData: {
+  adminType?: string;
+  firstName: string;
+  surName?: string;
+  lastName?: string;
+  email: string;
+  password: string;
+  sex?: string;
+  staffCode?: string;
+  phoneNo?: string;
+  phoneNumber?: string;
+  state?: string;
+  locality?: string;
+  address?: string;
+  branch?: string;
+  roles?: string[];
+  permissions?: string[];
+}): Promise<any> {
   try {
-    const response = await fetchWithAuth("admin-controller", {
-      method: "POST",
-      body: JSON.stringify(adminData),
-    });
-    return response.json();
+    console.log("Creating admin account with data:", JSON.stringify(adminData, null, 2));
+    
+    // Normalize field names
+    const adminType = adminData.adminType || "Super_Admin";
+    const firstName = adminData.firstName || "";
+    const surName = adminData.surName || adminData.lastName || "";
+    const email = adminData.email || "";
+    const password = adminData.password || "";
+    const sex = adminData.sex || "Male";
+    const staffCode = adminData.staffCode || `ADMIN${Math.floor(1000 + Math.random() * 9000)}`;
+    const phoneNo = adminData.phoneNo || adminData.phoneNumber || "";
+    const state = adminData.state || "Lagos";
+    const locality = adminData.locality || "Ikeja";
+    const address = adminData.address || "N/A";
+    const branch = adminData.branch || "Main";
+    const roles = adminData.roles || ["Super_Admin"];
+    
+    const defaultPermissions = [
+      "CanAccessAllData",
+      "CanDeleteAllData",
+      "CanAssignRoles",
+      "CanViewAdmin",
+      "CanDeleteAdmin",
+      "CanUpdateAdmin",
+      "CanCreateAdmin",
+      "CanManageUsers",
+      "CanDeleteUsers",
+      "CanCreateStaff",
+      "CanManageStaff",
+      "CanViewStaff",
+      "CanDeleteStaff",
+      "CanViewBrands",
+      "CanManageBrands",
+      "CanDeleteBrands",
+      "CanCreateProduct",
+      "CanViewProduct",
+      "CanManageProduct",
+      "CanDeleteProduct",
+      "CanViewWallet",
+      "CanManageWallet",
+      "CanViewOrders",
+      "CanManageOrders",
+      "CanDeleteOrders",
+      "CanViewBookings",
+      "CanManageBookings",
+      "CanDeleteBookings"
+    ];
+    
+    const permissions = adminData.permissions && adminData.permissions.length > 0 
+      ? adminData.permissions 
+      : defaultPermissions;
+    
+    // Validate required fields
+    const requiredFields: string[] = [];
+    if (!firstName) requiredFields.push('firstName');
+    if (!surName) requiredFields.push('surName');
+    if (!email) requiredFields.push('email');
+    if (!password) requiredFields.push('password');
+    if (!phoneNo) requiredFields.push('phoneNo');
+    
+    if (requiredFields.length > 0) {
+      throw new Error(`Missing required fields: ${requiredFields.join(', ')}`);
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new Error('Invalid email format');
+    }
+    
+    if (password.length < 8) {
+      throw new Error('Password must be at least 8 characters long');
+    }
+    
+    const payload = {
+      adminType: adminType,
+      firstName: firstName,
+      surName: surName,
+      email: email,
+      password: password,
+      sex: sex,
+      staffCode: staffCode,
+      phoneNo: phoneNo,
+      state: state,
+      locality: locality,
+      address: address,
+      branch: branch,
+      roles: roles,
+      permissions: permissions,
+    };
+    
+    console.log("Sending admin payload:", JSON.stringify(payload, null, 2));
+    
+    // Try multiple endpoints for admin creation
+    const endpoints = [
+      "admin-controller",
+      "admin-controller/admins",
+      "admin-controller/create",
+    ];
+    
+    let lastError: Error | null = null;
+    
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`Trying admin creation with endpoint: ${endpoint}`);
+        const response = await fetchWithAuth(endpoint, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          console.log(`Admin created successfully with endpoint: ${endpoint}`, result);
+          return result;
+        }
+        
+        // Handle validation errors
+        if (response.status === 400) {
+          const errorData = await response.clone().json();
+          if (errorData.errors) {
+            const errorMessages = Object.entries(errorData.errors)
+              .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+              .join('; ');
+            throw new Error(`Validation failed: ${errorMessages}`);
+          }
+          if (errorData.title) {
+            throw new Error(errorData.title);
+          }
+        }
+        
+        lastError = new Error(`Failed with status ${response.status}`);
+      } catch (error) {
+        console.warn(`Failed with endpoint ${endpoint}:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+        // If it's a validation error, stop trying other endpoints
+        if (error instanceof Error && error.message.includes('Validation failed')) {
+          throw error;
+        }
+      }
+    }
+    
+    throw lastError || new Error("Failed to create admin. Please try again.");
   } catch (error) {
-    console.warn("Failed to add admin:", error);
+    console.error("Failed to create admin:", error);
     throw error;
   }
 }

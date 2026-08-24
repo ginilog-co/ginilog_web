@@ -100,7 +100,7 @@ Set any that are missing (values are secrets — do not commit them):
 
 ### Company (manager)
 
-1. Open `/admin-dashboard/company-login`.
+1. Open `/brand-owner/login`.
 2. Sign in with a manager account.
 3. Confirm request to `https://api-data-connection.ginilog.org/api/Admin/login-manager` returns **200**.
 

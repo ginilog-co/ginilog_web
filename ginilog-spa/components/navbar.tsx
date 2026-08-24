@@ -31,7 +31,7 @@ export function Navbar() {
               </Link>
             ))}
             <Link
-              href="/admin-dashboard/company-login"
+              href="/brand-owner/login"
               className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors text-center"
             >
               Manage Services
@@ -67,7 +67,7 @@ export function Navbar() {
                 </Link>
               ))}
               <Link
-                href="/admin-dashboard/company-login"
+                href="/brand-owner/login"
                 className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors text-center"
                 onClick={() => setIsOpen(false)}
               >
