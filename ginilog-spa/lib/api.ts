@@ -157,6 +157,32 @@ export function getStoredUser(): LoginResponse | null {
   return null;
 }
 
+export function getCurrentBrandOwnerId(): string | null {
+  if (typeof window === "undefined") return null;
+
+  const user = getStoredUser() as any;
+  if (!user) return null;
+
+  const candidates = [
+    user.userId,
+    user.id,
+    user.Id,
+    user.companyId,
+    user.CompanyId,
+    user.CompanyID,
+    user.brandOwnerId,
+    user.ownerId,
+    user.company?.id,
+    user.company?.companyId,
+  ];
+
+  return (
+    candidates.find(
+      (value) => typeof value === "string" && value.trim().length > 0,
+    ) || null
+  );
+}
+
 export function setAuthData(data: LoginResponse): void {
   if (typeof window !== "undefined") {
     localStorage.setItem("token", data.token);
@@ -726,17 +752,31 @@ export interface LoginRequest {
 export interface LoginResponse {
   token: string;
   refreshToken: string;
-  refreshTokenExpiryTime: string;
-  userId: string;
+  refreshTokenExpiryTime?: string;
+  userId?: string;
+  id?: string;
+  Id?: string;
+  CompanyId?: string;
+  CompanyID?: string;
   email: string;
-  userType: string;
-  emailVerified: boolean;
-  phoneVerified: boolean;
+  userType?: string;
+  staffType?: string;
+  role?: string;
+  roles?: string[];
+  adminType?: string;
+  emailVerified?: boolean;
+  phoneVerified?: boolean;
   phoneNo?: string;
-  fullName: string;
-  profileImage: string;
+  fullName?: string;
+  profileImage?: string;
   companyName?: string;
   companyId?: string;
+  company?: {
+    id?: string;
+    companyId?: string;
+    name?: string;
+  };
+  [key: string]: any;
 }
 
 export interface RegisterRequest {
@@ -1542,9 +1582,23 @@ export async function requestAuthUserEmailVerificationToken(
   return response.json();
 }
 
+export async function requestEmailVerificationToken(
+  email: string,
+): Promise<string> {
+  return requestAuthUserEmailVerificationToken(email);
+}
+
 export async function resendAuthUserVerificationCode(email: string): Promise<string> {
   console.log("Resending auth user verification code for:", email);
   return requestAuthUserEmailVerificationToken(email);
+}
+
+export async function resendVerificationCode(email: string): Promise<string> {
+  return resendAuthUserVerificationCode(email);
+}
+
+export async function verifyEmail(data: EmailVerificationRequest): Promise<LoginResponse> {
+  return verifyAuthUserEmail(data);
 }
 
 // ============ COMPANY/BRAND OWNER VERIFICATION ============
@@ -2709,7 +2763,9 @@ export async function initializePackageFlutterwavePayment(
 
 // ============ ACCOMMODATION FUNCTIONS ============
 
-export async function getAccommodations(): Promise<Accommodation[]> {
+export async function getAccommodations(
+  _params?: Record<string, any>,
+): Promise<Accommodation[]> {
   try {
     const response = await fetchWithAuth("bookings/accomodation", {
       method: "GET",
@@ -2722,7 +2778,27 @@ export async function getAccommodations(): Promise<Accommodation[]> {
   }
 }
 
-export async function getAccommodationById(id: string): Promise<Accommodation> {
+export async function getBrandOwnerAccommodations(
+  brandOwnerId: string,
+): Promise<Accommodation[]> {
+  try {
+    const accommodations = await getAccommodations();
+    if (!brandOwnerId) return accommodations;
+    return accommodations.filter((item: any) => {
+      const itemBrandOwnerId =
+        item.userId || item.ownerId || item.brandOwnerId || item.companyId || item.managerId;
+      return !itemBrandOwnerId || itemBrandOwnerId === brandOwnerId;
+    });
+  } catch (error) {
+    console.warn("Failed to fetch brand owner accommodations:", error);
+    return [];
+  }
+}
+
+export async function getAccommodationById(
+  id: string,
+  _brandOwnerId?: string,
+): Promise<Accommodation> {
   try {
     const response = await fetchWithAuth(`bookings/accomodation/${id}`, {
       method: "GET",
@@ -2750,6 +2826,7 @@ export async function addAccommodation(accommodationData: any): Promise<any> {
 export async function updateAccommodation(
   id: string,
   data: any,
+  _brandOwnerId?: string,
 ): Promise<any> {
   try {
     const response = await fetchWithAuth(`bookings/accomodation/${id}`, {
@@ -2763,7 +2840,10 @@ export async function updateAccommodation(
   }
 }
 
-export async function deleteAccommodation(id: string): Promise<void> {
+export async function deleteAccommodation(
+  id: string,
+  _brandOwnerId?: string,
+): Promise<void> {
   try {
     await fetchWithAuth(`bookings/accomodation/${id}`, {
       method: "DELETE",
@@ -2830,6 +2910,50 @@ export async function addAccommodationReservation(data: any): Promise<any> {
     return response.json();
   } catch (error) {
     console.warn("Failed to add accommodation reservation:", error);
+    throw error;
+  }
+}
+
+export async function addReservationRoom(
+  accommodationId: string,
+  data: any,
+): Promise<any> {
+  try {
+    const response = await fetchWithAuth(
+      `bookings/accomodation/${accommodationId}/rooms`,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+    );
+    return response.json();
+  } catch (error) {
+    console.warn("Failed to add reservation room:", error);
+    throw error;
+  }
+}
+
+export async function getReservationRooms(accommodationId: string): Promise<any[]> {
+  try {
+    const response = await fetchWithAuth(
+      `bookings/accomodation/${accommodationId}/rooms`,
+      { method: "GET" },
+    );
+    const data = await response.json();
+    return extractArrayFromResponse(data);
+  } catch (error) {
+    console.warn("Failed to fetch reservation rooms:", error);
+    return [];
+  }
+}
+
+export async function deleteReservationRoom(id: string): Promise<void> {
+  try {
+    await fetchWithAuth(`bookings/accomodation-rooms/${id}`, {
+      method: "DELETE",
+    });
+  } catch (error) {
+    console.warn("Failed to delete reservation room:", error);
     throw error;
   }
 }

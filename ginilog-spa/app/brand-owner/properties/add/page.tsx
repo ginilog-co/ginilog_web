@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-// ❌ Remove this import: import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -23,7 +22,7 @@ import {
   AlertCircle,
   CheckCircle2,
 } from "lucide-react";
-import { uploadImage, uploadImages } from "@/lib/api";
+import { uploadImage, uploadImages, getStoredUser, getToken } from "@/lib/api";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -93,30 +92,6 @@ interface FormData {
   accomodationFacilities: string[];
   timeSchedule: Record<string, TimeSlot>;
 }
-
-// ─── Helper Functions ────────────────────────────────────────────────────────
-
-const getToken = (): string | null => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("token");
-  }
-  return null;
-};
-
-const getUserId = (): string | null => {
-  if (typeof window !== "undefined") {
-    const user = localStorage.getItem("user");
-    if (user) {
-      try {
-        const userData = JSON.parse(user);
-        return userData.userId || userData.id || null;
-      } catch {
-        return null;
-      }
-    }
-  }
-  return null;
-};
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -189,29 +164,63 @@ export default function AddAccommodation() {
     setUploadProgress(`Uploading ${toUpload.length} image(s)...`);
 
     try {
-      // Use batch upload helper for reliability
-      const results = await uploadImages(toUpload);
-
-      // Normalize results to array of URLs/objects
-      const urls: string[] = results.map((r: any) => (r?.url ?? r?.imageUrl ?? r ?? "")).filter(Boolean);
+      // Upload each file individually using the uploadImage function
+      const uploadedUrls: string[] = [];
+      
+      for (let i = 0; i < toUpload.length; i++) {
+        const file = toUpload[i];
+        try {
+          setUploadProgress(`Uploading ${i + 1}/${toUpload.length}: ${file.name}`);
+          const result = await uploadImage(file);
+          console.log(`✅ Image ${i + 1} uploaded:`, result);
+          
+          // Extract URL from response
+          const url = result?.url || result?.imageUrl || result?.data?.url || result?.data?.imageUrl || result?.fileUrl;
+          if (url) {
+            uploadedUrls.push(url);
+          } else {
+            console.warn("No URL in upload response:", result);
+            // Mark as error if no URL
+            setImageFiles((prev) =>
+              prev.map((img) => {
+                if (img.url === entries[i].url) {
+                  return { ...img, uploading: false, error: true };
+                }
+                return img;
+              })
+            );
+            continue;
+          }
+          
+          // Update the entry to uploaded state
+          setImageFiles((prev) =>
+            prev.map((img) => {
+              if (img.url === entries[i].url) {
+                return { ...img, url: url, uploading: false, uploaded: true };
+              }
+              return img;
+            })
+          );
+        } catch (err) {
+          console.error(`Failed to upload ${file.name}:`, err);
+          setImageFiles((prev) =>
+            prev.map((img) => {
+              if (img.url === entries[i].url) {
+                return { ...img, uploading: false, error: true };
+              }
+              return img;
+            })
+          );
+        }
+      }
 
       // Append uploaded URLs to form data
       setFormData((prev) => ({
         ...prev,
-        accomodationImages: [...prev.accomodationImages, ...urls],
+        accomodationImages: [...prev.accomodationImages, ...uploadedUrls],
       }));
-
-      // Replace preview URLs with real URLs in imageFiles state
-      setImageFiles((prev) =>
-        prev.map((img) => {
-          const match = entries.find((e) => e.url === img.url);
-          if (!match) return img;
-          const idx = entries.indexOf(match);
-          const uploaded = urls[idx];
-          if (uploaded) return { ...img, url: uploaded, uploading: false, uploaded: true };
-          return { ...img, uploading: false, error: true };
-        })
-      );
+      
+      setUploadProgress("");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Image upload failed";
       setError(message);
@@ -300,7 +309,7 @@ export default function AddAccommodation() {
 
     try {
       const token = getToken();
-      const userId = getUserId();
+      const user = getStoredUser();
 
       if (!token) {
         throw new Error("Authentication required. Please login again.");
@@ -312,6 +321,7 @@ export default function AddAccommodation() {
         noOfRooms: Number(formData.noOfRooms),
         latitude: parseFloat(formData.latitude) || 0,
         longitude: parseFloat(formData.longitude) || 0,
+        managerId: user?.userId || user?.id || "",
       };
 
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://api-data-connection.ginilog.org";
@@ -324,7 +334,7 @@ export default function AddAccommodation() {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-          ...(userId ? { userId } : {}),
+          ...(user?.userId ? { userId: user.userId } : {}),
         },
         body: JSON.stringify(payload),
       });
@@ -446,7 +456,6 @@ export default function AddAccommodation() {
 
           <div>
             <Label>Description</Label>
-            {/* ✅ Replaced Textarea with native HTML textarea */}
             <textarea
               value={formData.accomodationDescription}
               onChange={(e) => setField("accomodationDescription", e.target.value)}

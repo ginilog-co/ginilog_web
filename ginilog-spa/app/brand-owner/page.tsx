@@ -64,6 +64,7 @@ export default function BrandOwnerDashboard() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated() || !validateSession()) {
@@ -75,7 +76,15 @@ export default function BrandOwnerDashboard() {
     setUser(stored);
 
     if (stored) {
-      fetchDashboardData(stored);
+      // Extract company ID from stored user
+      const id =
+        stored?.companyId ||
+        stored?.company?.id ||
+        stored?.company?.companyId ||
+        stored?.id ||
+        null;
+      setCompanyId(id ?? null);
+      fetchDashboardData(stored, id ?? null);
     } else {
       setIsLoading(false);
     }
@@ -83,92 +92,134 @@ export default function BrandOwnerDashboard() {
 
   const formatCurrency = (amount: number) => `₦${(amount || 0).toLocaleString("en-NG")}`;
 
-  const fetchDashboardData = async (userData: any) => {
-    setIsLoading(true);
-    setError(null);
+ const fetchDashboardData = async (userData: any, companyIdParam: string | null) => {
+  setIsLoading(true);
+  setError(null);
 
-    try {
-      const companyId = userData?.companyId || userData?.company?.id || userData?.company?.companyId;
+  try {
+    // ✅ Get the brand owner's user ID
+    const brandOwnerId = userData?.userId || userData?.id || userData?.user?.id;
+    
+    console.log("👤 Brand Owner ID:", brandOwnerId);
+    console.log("🏢 Company ID:", companyIdParam);
 
-      const [accommodations, reservations, ordersData, companyList, riderList, notificationsData, payoutsData] = await Promise.all([
-        getAccommodations().catch(() => []),
-        getAccommodationReservations().catch(() => []),
-        getPackageOrders().catch(() => []),
-        getCompanies().catch(() => []),
-        getAllRiders().catch(() => []),
-        getNotifications().catch(() => []),
-        getPayouts().catch(() => []),
-      ]);
+    // ✅ Fetch accommodations with UserId filter - ONLY gets this brand owner's properties
+    const accommodations = await getAccommodations({ UserId: brandOwnerId }).catch(() => []);
+    
+    // Fetch other data with company filters
+    const [
+      allReservations,
+      ordersData,
+      companyList,
+      riderList,
+      notificationsData,
+      payoutsData,
+    ] = await Promise.all([
+      getAccommodationReservations().catch(() => []),
+      getPackageOrders().catch(() => []),
+      getCompanies().catch(() => []),
+      getAllRiders().catch(() => []),
+      getNotifications().catch(() => []),
+      getPayouts().catch(() => []),
+    ]);
 
-      setProperties(accommodations || []);
-      setBookings(reservations || []);
-      setOrders(ordersData || []);
-      setRiders(riderList || []);
-      setNotifications((notificationsData || []).slice(0, 5));
-      setPayouts(payoutsData || []);
+    // ✅ Now filter other data by company ID
+    const propertyIds = (accommodations || []).map((p: any) => p.id);
+    
+    const filteredBookings = (allReservations || []).filter((item: any) => {
+      return propertyIds.includes(item.accomodationId) ||
+             propertyIds.includes(item.propertyId) ||
+             item.accomodationName === item.accomodationName;
+    });
 
-      const matchedCompany =
-        (companyList || []).find((item: any) =>
-          item.id === companyId ||
-          item.companyId === companyId ||
-          item.adminId === userData?.userId ||
-          item.companyName === userData?.companyName ||
-          item.name === userData?.companyName
-        ) ||
-        (companyList || [])[0] ||
-        null;
+    const filteredOrders = (ordersData || []).filter((item: any) => {
+      return item.companyId === companyIdParam ||
+             item.company?.id === companyIdParam ||
+             item.brandOwnerId === brandOwnerId;
+    });
 
-      setCompany(matchedCompany);
+    const filteredRiders = (riderList || []).filter((item: any) => {
+      return item.companyId === companyIdParam ||
+             item.company?.id === companyIdParam;
+    });
 
-      const activeProperties = (accommodations || []).filter((item: any) =>
-        item.isAvailable !== false && item.available !== false
-      ).length;
+    const filteredPayouts = (payoutsData || []).filter((item: any) => {
+      return item.companyId === companyIdParam ||
+             item.company?.id === companyIdParam ||
+             item.brandOwnerId === brandOwnerId;
+    });
 
-      const pendingBookings = (reservations || []).filter((item: any) => {
-        const status = (item.bookingStatus || item.status || "").toLowerCase();
-        return status === "pending" || status === "in_review";
-      }).length;
+    const filteredNotifications = (notificationsData || []).filter((item: any) => {
+      return item.userId === brandOwnerId ||
+             item.companyId === companyIdParam;
+    });
 
-      const pendingOrders = (ordersData || []).filter((item: any) => {
-        const status = (item.orderStatus || item.status || "").toLowerCase();
-        return ["pending", "processing", "in_transit", "assigned", "awaiting_payment"].includes(status);
-      }).length;
+    setProperties(accommodations || []);
+    setBookings(filteredBookings);
+    setOrders(filteredOrders);
+    setRiders(filteredRiders);
+    setNotifications((filteredNotifications || []).slice(0, 5));
+    setPayouts(filteredPayouts || []);
 
-      const totalRevenue = (reservations || []).reduce((sum: number, item: any) => {
-        return sum + Number(item.totalAmount || item.bookingAmount || 0);
-      }, 0) + (ordersData || []).reduce((sum: number, item: any) => {
-        return sum + Number(item.itemCost || item.amount || 0);
-      }, 0);
+    // Find the company that matches
+    const matchedCompany = (companyList || []).find((item: any) =>
+      item.id === companyIdParam ||
+      item.companyId === companyIdParam ||
+      item.adminId === brandOwnerId ||
+      item.companyName === userData?.companyName ||
+      item.name === userData?.companyName
+    ) || null;
 
-      const pendingPayouts = (payoutsData || []).filter((item: any) => {
-        const status = (item.status || item.payoutStatus || "").toLowerCase();
+    setCompany(matchedCompany);
+
+    // Calculate stats based on filtered data
+    const activeProperties = accommodations.filter((item: any) =>
+      item.isAvailable !== false && item.available !== false
+    ).length;
+
+    const pendingBookings = filteredBookings.filter((item: any) => {
+      const status = (item.bookingStatus || item.status || "").toLowerCase();
+      return status === "pending" || status === "in_review";
+    }).length;
+
+    const pendingOrders = filteredOrders.filter((item: any) => {
+      const status = (item.orderStatus || item.status || "").toLowerCase();
+      return ["pending", "processing", "in_transit", "assigned", "awaiting_payment"].includes(status);
+    }).length;
+
+    const totalRevenue = filteredBookings.reduce((sum: number, item: any) => {
+      return sum + Number(item.totalAmount || item.bookingAmount || 0);
+    }, 0) + filteredOrders.reduce((sum: number, item: any) => {
+      return sum + Number(item.itemCost || item.amount || 0);
+    }, 0);
+
+    const avgRating = accommodations.reduce((sum: number, item: any) => {
+      const ratingValue = Number(item.rating ?? 4.5);
+      return sum + (Number.isFinite(ratingValue) ? ratingValue : 4.5);
+    }, 0) / Math.max(accommodations.length, 1);
+
+    setStats({
+      totalProperties: accommodations.length || 0,
+      activeProperties,
+      totalBookings: filteredBookings.length || 0,
+      pendingBookings,
+      totalOrders: filteredOrders.length || 0,
+      pendingOrders,
+      totalRiders: filteredRiders.length || 0,
+      totalRevenue,
+      totalPayouts: filteredPayouts.filter((p: any) => {
+        const status = (p.status || p.payoutStatus || "").toLowerCase();
         return status === "pending" || status === "processing";
-      }).length;
-
-      const avgRating = (accommodations || []).reduce((sum: number, item: any) => {
-        const ratingValue = Number(item.rating ?? 4.5);
-        return sum + (Number.isFinite(ratingValue) ? ratingValue : 4.5);
-      }, 0) / Math.max((accommodations || []).length, 1);
-
-      setStats({
-        totalProperties: accommodations?.length || 0,
-        activeProperties,
-        totalBookings: reservations?.length || 0,
-        pendingBookings,
-        totalOrders: ordersData?.length || 0,
-        pendingOrders,
-        totalRiders: riderList?.length || 0,
-        totalRevenue,
-        totalPayouts: pendingPayouts,
-        rating: Number(avgRating.toFixed(1)),
-      });
-    } catch (err) {
-      console.error("❌ Failed to fetch brand owner dashboard data:", err);
-      setError("Failed to load your dashboard. Please refresh the page.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      }).length,
+      rating: Number(avgRating.toFixed(1)),
+    });
+  } catch (err) {
+    console.error("❌ Failed to fetch brand owner dashboard data:", err);
+    setError("Failed to load your dashboard. Please refresh the page.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleLogout = async () => {
     await logout();

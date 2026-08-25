@@ -24,7 +24,7 @@ import {
   ChevronDown,
   ArrowRight
 } from "lucide-react";
-import { getAccommodations, deleteAccommodation } from "@/lib/api";
+import { getBrandOwnerAccommodations, deleteAccommodation, getCurrentBrandOwnerId } from "@/lib/api";
 
 export default function PropertiesPage() {
   const router = useRouter();
@@ -62,11 +62,14 @@ export default function PropertiesPage() {
   const fetchProperties = async () => {
     try {
       setIsLoading(true);
-      const data = await getAccommodations();
+      const brandOwnerId = getCurrentBrandOwnerId();
+      const data = brandOwnerId ? await getBrandOwnerAccommodations(brandOwnerId) : [];
       setProperties(data || []);
       setFilteredProperties(data || []);
     } catch (error) {
       console.error("Failed to fetch properties:", error);
+      setProperties([]);
+      setFilteredProperties([]);
     } finally {
       setIsLoading(false);
     }
@@ -76,7 +79,8 @@ export default function PropertiesPage() {
     if (!confirm("Are you sure you want to delete this property?")) return;
     setDeletingId(id);
     try {
-      await deleteAccommodation(id);
+      const brandOwnerId = getCurrentBrandOwnerId();
+      await deleteAccommodation(id, brandOwnerId || undefined);
       await fetchProperties();
     } catch (error) {
       console.error("Failed to delete property:", error);
